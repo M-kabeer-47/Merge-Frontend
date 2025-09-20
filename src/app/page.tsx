@@ -9,8 +9,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold font-roboto text-primary">
-                Merge<span className="text-normal-text font-normal">Learn</span>
+              <h1 className="text-3xl font-bold font-raleway text-primary">
+                Merge
               </h1>
             </div>
             <div className="hidden md:flex space-x-12">
