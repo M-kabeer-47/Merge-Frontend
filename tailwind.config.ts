@@ -12,10 +12,15 @@ export default {
         raleway: ["var(--font-raleway)"],
       },
       colors: {
-        "primary": "#2C3E50",
-        "secondary": "#ECF0F1",
-        "accent": "#3498DB",
-        "destructive": "#CE4760",
+       "primary": "var(--primary)",
+       "secondary": "var(--secondary)",
+       "accent": "var(--accent)",
+       "destructive": "var(--destructive)",
+        "heading": "var(--heading)",
+        "normal-text": "var(--normal-text)",
+        "normal-text-muted": "var(--normal-text-muted)",
+        "button": "var(--button)",
+
       }
     },
   },

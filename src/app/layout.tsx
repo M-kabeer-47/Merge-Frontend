@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${roboto.variable} ${raleway.variable}`}>
+      <body className={`${roboto.variable} ${raleway.variable} bg-secondary`}>
         {children}
       </body>
     </html>
