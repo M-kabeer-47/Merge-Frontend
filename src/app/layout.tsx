@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
 import "./globals.css";
-
+import { Toaster } from "sonner";
 import { Roboto, Raleway } from "next/font/google";
+import { CircleCheck } from "lucide-react";
 const roboto = Roboto({
   subsets: ["latin"],
   variable: "--font-roboto",
@@ -24,8 +25,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${roboto.variable} ${raleway.variable} bg-secondary`}>
+      <body className={`${roboto.variable} ${raleway.variable} `}>
         {children}
+        <Toaster
+          icons={{
+            success: (
+              <CircleCheck className="h-5 w-5 text-green-600 text-center" />
+            ),
+          }}
+        />
       </body>
     </html>
   );
