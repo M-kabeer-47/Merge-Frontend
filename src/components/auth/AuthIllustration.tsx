@@ -92,23 +92,24 @@ export default function AuthIllustration({
           <motion.img
             src={imageUrl}
             alt="Authentication illustration"
-            className={`w-full h-auto ${page === "sign-in" ? "scale-120" : "scale-130"}`}
+            className={`w-full h-auto ${
+              page === "sign-in" ? "scale-120 relative top-[-30px]" : "scale-120"
+            }`}
           />
         </motion.div>
       </div>
 
       {/* Bottom Text */}
-      {page === "sign-up" && (
-        <motion.div
-          className={`text-center relative  top-[-50px]`}
-          variants={itemVariants}
-        >
-          <h2 className="text-2xl font-raleway font-semibold text-heading mb-2">
-            {title}
-          </h2>
-          <p className="text-normal-text-muted">{subtitle}</p>
-        </motion.div>
-      )}
+
+      <motion.div
+        className={`text-center relative  top-[-50px]`}
+        variants={itemVariants}
+      >
+        <h2 className="text-2xl font-raleway font-semibold text-heading mb-2">
+          {title}
+        </h2>
+        <p className="text-normal-text-muted">{subtitle}</p>
+      </motion.div>
     </motion.div>
   );
 }

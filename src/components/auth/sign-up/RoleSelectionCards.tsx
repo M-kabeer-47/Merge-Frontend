@@ -31,7 +31,7 @@ export default function RoleSelectionCards({
               <img
                 src="/illustrations/student.png"
                 alt="Student"
-                className="w-15 h-15 mt-1 flex-shrink-0 scale-140"
+                className="w-15 h-15 mt-1 flex-shrink-0 scale-100  bg-blend-multiply"
               />
               <h3 className="font-raleway text-center font-semibold text-heading text-lg mb-1">
                 Student
@@ -56,7 +56,7 @@ export default function RoleSelectionCards({
               <img
                 src="/illustrations/instructor.png"
                 alt="Instructor"
-                className="w-15 h-15 mt-1 flex-shrink-0 scale-130"
+                className="w-15 h-15 mt-1 flex-shrink-0 scale-140"
               />
               <h3 className="font-raleway font-semibold text-heading text-lg mb-1">
                 Instructor

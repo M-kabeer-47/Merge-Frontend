@@ -13,7 +13,7 @@ const SignInPage = () => {
             <AuthIllustration
               page="sign-in"
               imageUrl="/illustrations/sign-in-illustration.png"
-              title="Welcome Back"
+              title="Glad to see you again!"
               subtitle="Continue your learning journey with thousands of courses and expert instructors"
             />
           </div>
