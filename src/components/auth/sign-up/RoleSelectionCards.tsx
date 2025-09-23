@@ -27,11 +27,11 @@ export default function RoleSelectionCards({
                 : "border-gray-200 hover:border-secondary/50 hover:bg-secondary/5 bg-white"
             }`}
           >
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-8">
               <img
                 src="/illustrations/student.png"
                 alt="Student"
-                className="w-15 h-15 mt-1 flex-shrink-0 scale-100  bg-blend-multiply"
+                className="w-15 h-15 mt-1 flex-shrink-0 scale-160  "
               />
               <h3 className="font-raleway text-center font-semibold text-heading text-lg mb-1">
                 Student
@@ -52,11 +52,11 @@ export default function RoleSelectionCards({
                 : "border-gray-200 hover:border-secondary/50 hover:bg-secondary/5 bg-white"
             }`}
           >
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-10">
               <img
                 src="/illustrations/instructor.png"
                 alt="Instructor"
-                className="w-15 h-15 mt-1 flex-shrink-0 scale-140"
+                className="w-15 h-15 mt-1 flex-shrink-0 scale-160"
               />
               <h3 className="font-raleway font-semibold text-heading text-lg mb-1">
                 Instructor

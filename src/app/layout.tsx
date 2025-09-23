@@ -30,7 +30,7 @@ export default function RootLayout({
         <Toaster
           icons={{
             success: (
-              <CircleCheck className="h-5 w-5 text-green-600 text-center" />
+              <CircleCheck className="h-[22px] w-[22px] text-white text-center" fill="#4CAF50" />
             ),
           }}
         />
