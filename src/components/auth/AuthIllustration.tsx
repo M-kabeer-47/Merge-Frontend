@@ -73,14 +73,8 @@ export default function AuthIllustration({
       {/* Logo */}
       <motion.div className="mb-8" variants={logoVariants}>
         <div className="flex items-center space-x-2">
-          <motion.div
-            className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ duration: 0.2 }}
-          >
-            <span className="text-white font-bold text-sm">M</span>
-          </motion.div>
-          <span className="text-xl font-raleway font-semibold text-heading">
+          <img src={"/logo.svg"} alt="Logo" className="h-10 w-10" />
+          <span className="text-2xl font-raleway font-bold text-heading">
             Merge
           </span>
         </div>
@@ -93,7 +87,9 @@ export default function AuthIllustration({
             src={imageUrl}
             alt="Authentication illustration"
             className={`w-full h-auto ${
-              page === "sign-in" ? "scale-120 relative top-[-30px]" : "scale-120"
+              page === "sign-in"
+                ? "scale-120 relative top-[-30px]"
+                : "scale-120"
             }`}
           />
         </motion.div>
