@@ -1,0 +1,103 @@
+"use client";
+import React from "react";
+import { IconSettings, IconUser } from "@tabler/icons-react";
+import ToggleSwitch from "@/components/Navbar/DarkModeToggle";
+import NotificationDropdown from "@/components/Navbar/Notifications";
+import ProfileDropdown from "@/components/Navbar/ProfileDropdown";
+
+interface UserProfile {
+  name: string;
+  role: string;
+  initials: string;
+  image?: string;
+}
+
+interface NavbarProps {
+  user: UserProfile;
+  isDarkMode?: boolean;
+  setIsDarkMode: (isDark: boolean) => void;
+  onThemeToggle?: () => void;
+  notificationCount?: number;
+}
+
+export default function Navbar({
+  user,
+  isDarkMode = false,
+  onThemeToggle,
+  notificationCount = 3,
+  setIsDarkMode,
+}: NavbarProps) {
+  const handleThemeToggle = () => {
+    setIsDarkMode(!isDarkMode);
+    console.log("Theme toggled:", isDarkMode ? "light" : "dark");
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    console.log("Notification clicked:", notification);
+    // Handle notification click logic here
+  };
+
+  const handleViewAllNotifications = () => {
+    console.log("View all notifications");
+    // Navigate to notifications page
+  };
+
+  const handleMarkAllRead = () => {
+    console.log("Mark all notifications as read");
+    // Mark all notifications as read logic
+  };
+
+  const handleSignOut = () => {
+    console.log("User signing out");
+    // Handle sign out logic here
+  };
+
+  // Profile dropdown options
+  const profileOptions = [
+    {
+      label: "Profile",
+      href: "/profile",
+      icon: <IconUser className="h-4 w-4" />,
+    },
+    {
+      label: "Settings",
+      href: "/settings",
+      icon: <IconSettings className="h-4 w-4" />,
+    },
+  ];
+
+  return (
+    <nav className="bg-[#f7f7f7] border-b border-gray-200 px-6 py-3 shadow-sm">
+      <div className="flex items-center justify-end">
+        {/* Navigation items */}
+        <div className="flex items-center space-x-6">
+          {/* Dark/Light Mode Toggle Switch */}
+          <ToggleSwitch
+            isDarkMode={isDarkMode}
+            onToggle={handleThemeToggle}
+            size="md"
+          />
+
+          {/* Notifications */}
+          <NotificationDropdown
+            notificationCount={notificationCount}
+            onNotificationClick={handleNotificationClick}
+            onViewAll={handleViewAllNotifications}
+            onMarkAllRead={handleMarkAllRead}
+          />
+
+          {/* User Profile Dropdown */}
+          <ProfileDropdown
+            userName={user.name}
+            userRole={user.role}
+            profileImage={user.image}
+            onSignOut={handleSignOut}
+            options={profileOptions}
+            variant="navbar"
+            showRole={true}
+          />
+        </div>
+      </div>
+    </nav>
+  );
+}

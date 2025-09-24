@@ -6,9 +6,7 @@ import {
   IconNotes,
   IconPalette,
   IconVideo,
-  IconTrendingUp,
   IconClock,
-  IconTarget,
 } from "@tabler/icons-react";
 
 const statsData = [

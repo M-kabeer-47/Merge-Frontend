@@ -94,11 +94,11 @@ export const DesktopSidebar = ({
     <>
       <motion.div
         className={cn(
-          "h-full px-4 py-4 hidden md:flex md:flex-col bg-[#F7FAFC] border-r border-gray-200 w-[300px] shrink-0 shadow-sm",
+          "h-full px-4 py-4 hidden md:flex md:flex-col bg-[#f7f7f7] border-r border-gray-200 w-[300px] shrink-0 shadow-sm",
           className
         )}
         animate={{
-          width: animate ? (open ? "240px" : "90px") : "240px",
+          width: animate ? (open ? "240px" : "80px") : "240px",
         }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -161,12 +161,14 @@ export const MobileSidebar = ({
 };
 
 export const SidebarLink = ({
+  isActive,
   link,
   className,
   ...props
 }: {
   link: Links;
   className?: string;
+  isActive?: boolean;
 }) => {
   const { open, animate } = useSidebar();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -190,14 +192,19 @@ export const SidebarLink = ({
       <a
         href={hasChildren ? "#" : link.href}
         className={cn(
-          "flex items-center justify-between gap-3 group/sidebar py-2.5 hover:bg-secondary/10 rounded-lg px-3 transition-all duration-200 text-normal-text hover:text-primary border-transparent hover:border-primary/20",
+          "flex items-center justify-between gap-3 group/sidebar py-2.5 hover:bg-secondary/5 rounded-lg px-3 transition-all duration-200  hover:text-primary border-transparent hover:border-primary/20",
+          isActive && "bg-secondary/5 text-primary",
           className
         )}
         onClick={handleClick}
         {...props}
       >
         <div className="flex items-center gap-3">
-          <div className="text-normal-text group-hover/sidebar:text-primary transition-colors duration-200">
+          <div
+            className={` group-hover/sidebar:text-primary transition-colors duration-200 ${
+              isActive ? "text-primary" : "text-normal-text-muted"
+            }`}
+          >
             {link.icon}
           </div>
           <motion.span
@@ -209,7 +216,7 @@ export const SidebarLink = ({
                 : "inline-block",
               opacity: animate ? (open ? 1 : 0) : 1,
             }}
-            className="font-bold text-sm  transition-transform duration-200 whitespace-pre inline-block !p-0 !m-0"
+            className="font-bold text-sm transition-transform duration-200 whitespace-pre inline-block !p-0 !m-0"
           >
             {link.label}
           </motion.span>

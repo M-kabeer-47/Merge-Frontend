@@ -31,66 +31,66 @@ interface Links {
 const sidebarLinks: Links[] = [
   {
     label: "Dashboard",
-    href: "/with-layout/dashboard",
+    href: "/dashboard",
     icon: <IconHome className="h-5 w-5" />,
   },
   {
     label: "Discover",
-    href: "/with-layout/discover",
+    href: "/discover",
     icon: <IconCompass className="h-5 w-5" />,
   },
   {
     label: "Rooms",
-    href: "/with-layout/rooms",
+    href: "/rooms",
     icon: <IconUsers className="h-5 w-5" />,
     children: [
       {
         label: "Create Room",
-        href: "/with-layout/rooms/create",
+        href: "/rooms/create",
         icon: <IconPlus className="h-4 w-4" />,
       },
       {
         label: "Join Room",
-        href: "/with-layout/rooms/join",
+        href: "/rooms/join",
         icon: <IconLogin className="h-4 w-4" />,
       },
       {
         label: "My Rooms",
-        href: "/with-layout/rooms/my-rooms",
+        href: "/rooms/my-rooms",
         icon: <IconFolder className="h-4 w-4" />,
       },
     ],
   },
   {
     label: "Live Session",
-    href: "/with-layout/live-session",
+    href: "/live-session",
     icon: <IconVideo className="h-5 w-5" />,
   },
   {
     label: "Notes",
-    href: "/with-layout/notes",
+    href: "/notes",
     icon: <IconNotes className="h-5 w-5" />,
   },
   {
     label: "Canvas",
-    href: "/with-layout/canvas",
+    href: "/canvas",
     icon: <IconPalette className="h-5 w-5" />,
     children: [
       {
         label: "Create Canvas",
-        href: "/with-layout/canvas/create",
+        href: "/canvas/create",
         icon: <IconBrush className="h-4 w-4" />,
       },
       {
         label: "My Canvases",
-        href: "/with-layout/canvas/my-canvases",
+        href: "/canvas/my-canvases",
         icon: <IconFolderOpen className="h-4 w-4" />,
       },
     ],
   },
   {
     label: "AI Assistant",
-    href: "/with-layout/ai-assistant",
+    href: "/ai-assistant",
     icon: <IconRobot className="h-5 w-5" />,
   },
 ];
@@ -101,8 +101,9 @@ export default function AppSidebar({
 }: {
   user: { name: string; role: string; initials: string; avatar?: string };
 }) {
-  const pathname = usePathname();
   const [open, setOpen] = useState(true);
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname.endsWith(href);
   const links = sidebarLinks;
   return (
     <Sidebar open={open} setOpen={setOpen}>
@@ -114,7 +115,11 @@ export default function AppSidebar({
           </div>
           <div className="mt-8 flex flex-col gap-2">
             {links.map((link, idx) => (
-              <SidebarLink key={idx} link={link} />
+              <SidebarLink
+                key={idx}
+                link={link}
+                isActive={isActive(link.href)}
+              />
             ))}
           </div>
         </div>

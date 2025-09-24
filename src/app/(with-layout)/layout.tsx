@@ -1,13 +1,13 @@
 "use client";
 import React, { useState } from "react";
-import AppSidebar from "@/components/home/AppSidebar";
-import Navbar from "@/components/home/Navbar";
+import AppSidebar from "@/components/layout/AppSidebar";
+import Navbar from "@/components/layout/Navbar";
 
 interface UserProfile {
   name: string;
   role: string;
   initials: string;
-  avatar?: string;
+  image?: string;
 }
 
 // This would typically come from auth context or API
@@ -16,6 +16,7 @@ const getCurrentUser = (): UserProfile => {
     name: "John Doe",
     role: "Student",
     initials: "JD",
+    image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlciUyMHByb2ZpbGV8ZW58MHx8MHx8fDA%3D"
   };
 };
 
@@ -35,7 +36,7 @@ export default function WithLayoutLayout({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Navbar */}
-        <Navbar user={user} setIsDarkMode={setIsDarkMode} />
+        <Navbar user={user} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto p-6 bg-gray-50">

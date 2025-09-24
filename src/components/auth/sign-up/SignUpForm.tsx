@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { easeOut, motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 import { FormField } from "@/components/ui/FormField";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import RoleSelectionCards from "./RoleSelectionCards";
 import { partialUserSchema, userSchema, UserType } from "@/schemas/user/user";
 import { useForm, Controller } from "react-hook-form";
