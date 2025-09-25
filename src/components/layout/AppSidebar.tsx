@@ -20,7 +20,7 @@ import {
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
-
+import MobileNavbarOptions from "../navbar/MobileNavbarOptions";
 interface Links {
   label: string;
   href: string;
@@ -43,23 +43,6 @@ const sidebarLinks: Links[] = [
     label: "Rooms",
     href: "/rooms",
     icon: <IconUsers className="h-5 w-5" />,
-    children: [
-      {
-        label: "Create Room",
-        href: "/rooms/create",
-        icon: <IconPlus className="h-4 w-4" />,
-      },
-      {
-        label: "Join Room",
-        href: "/rooms/join",
-        icon: <IconLogin className="h-4 w-4" />,
-      },
-      {
-        label: "My Rooms",
-        href: "/rooms/my-rooms",
-        icon: <IconFolder className="h-4 w-4" />,
-      },
-    ],
   },
   {
     label: "Live Session",
@@ -122,6 +105,11 @@ export default function AppSidebar({
               />
             ))}
           </div>
+          <MobileNavbarOptions
+            user={user}
+            onSignOut={() => console.log("Sign out")}
+            onThemeToggle={() => console.log("Toggle theme")}
+          />
         </div>
         <div></div>
       </SidebarBody>

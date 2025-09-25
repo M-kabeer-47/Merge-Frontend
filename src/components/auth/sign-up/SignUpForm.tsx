@@ -72,7 +72,7 @@ export default function SignUpForm() {
           <h1 className="text-3xl font-raleway font-bold text-heading mb-2">
             Create Account
           </h1>
-          <p className="text-normal-text-muted">
+          <p className="text-para-muted">
             Choose your role and get started with Merge
           </p>
         </motion.div>
@@ -221,7 +221,7 @@ export default function SignUpForm() {
 
         {/* Sign In Link */}
         <motion.div className="mt-4 text-center" variants={itemVariants}>
-          <p className="text-normal-text-muted text-sm">
+          <p className="text-para-muted text-sm">
             Already have an account?{" "}
             <motion.a
               href="/signin"

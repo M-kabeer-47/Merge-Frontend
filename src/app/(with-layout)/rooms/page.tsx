@@ -5,87 +5,7 @@ import { IconPlus, IconUsers, IconSearch } from "@tabler/icons-react";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import RoomCard from "@/components/rooms/RoomCard";
-
-// Sample data - this would come from your API
-const sampleRooms = [
-  {
-    id: "1",
-    title: "Advanced React Patterns",
-    description: "Deep dive into advanced React patterns including hooks, context, and performance optimization techniques.",
-    memberCount: 12,
-    maxMembers: 20,
-    createdBy: { name: "Sarah Chen", image: undefined },
-    createdAt: "2 days ago",
-    isPrivate: false,
-    tags: ["React", "JavaScript", "Frontend"],
-    isOwner: false,
-    isMember: true
-  },
-  {
-    id: "2", 
-    title: "Machine Learning Study Group",
-    description: "Weekly discussions on ML algorithms, papers, and practical implementations using Python and TensorFlow.",
-    memberCount: 8,
-    maxMembers: 15,
-    createdBy: { name: "Dr. Michael Rodriguez", image: undefined },
-    createdAt: "5 days ago",
-    isPrivate: true,
-    tags: ["ML", "Python", "TensorFlow", "AI"],
-    isOwner: true,
-    isMember: true
-  },
-  {
-    id: "3",
-    title: "UI/UX Design Workshop",
-    description: "Learn modern design principles, create beautiful interfaces, and improve user experience design skills.",
-    memberCount: 15,
-    maxMembers: 25,
-    createdBy: { name: "Emma Thompson", image: undefined },
-    createdAt: "1 week ago",
-    isPrivate: false,
-    tags: ["Design", "UI/UX", "Figma"],
-    isOwner: false,
-    isMember: false
-  },
-  {
-    id: "4",
-    title: "Data Structures & Algorithms",
-    description: "Master DSA concepts through collaborative problem solving and code reviews. Perfect for interview prep.",
-    memberCount: 20,
-    maxMembers: 30,
-    createdBy: { name: "John Smith", image: undefined },
-    createdAt: "3 days ago",
-    isPrivate: false,
-    tags: ["DSA", "Programming", "Interview"],
-    isOwner: false,
-    isMember: true
-  },
-  {
-    id: "5",
-    title: "Blockchain Development",
-    description: "Explore blockchain technology, smart contracts, and decentralized applications using Solidity and Web3.",
-    memberCount: 6,
-    maxMembers: 12,
-    createdBy: { name: "Alex Kumar", image: undefined },
-    createdAt: "1 day ago",
-    isPrivate: true,
-    tags: ["Blockchain", "Solidity", "Web3"],
-    isOwner: false,
-    isMember: false
-  },
-  {
-    id: "6",
-    title: "System Design Interviews",
-    description: "Practice system design problems and learn how to architect scalable distributed systems.",
-    memberCount: 18,
-    createdBy: { name: "Lisa Wang", image: undefined },
-    createdAt: "6 days ago",
-    isPrivate: false,
-    tags: ["System Design", "Architecture", "Interview"],
-    isOwner: true,
-    isMember: true
-  }
-];
+import { sampleRooms } from "@/lib/constants/mockData";
 
 export default function RoomsPage() {
   const [activeTab, setActiveTab] = useState("all");
@@ -95,9 +15,9 @@ export default function RoomsPage() {
   const filteredRoomsByTab = useMemo(() => {
     switch (activeTab) {
       case "my-rooms":
-        return sampleRooms.filter(room => room.isOwner);
+        return sampleRooms.filter((room) => room.isOwner);
       case "joined":
-        return sampleRooms.filter(room => room.isMember && !room.isOwner);
+        return sampleRooms.filter((room) => room.isMember && !room.isOwner);
       case "all":
       default:
         return sampleRooms;
@@ -107,32 +27,34 @@ export default function RoomsPage() {
   // Further filter by search term
   const filteredRooms = useMemo(() => {
     if (!searchTerm.trim()) return filteredRoomsByTab;
-    
+
     const searchLower = searchTerm.toLowerCase();
-    return filteredRoomsByTab.filter(room =>
-      room.title.toLowerCase().includes(searchLower) ||
-      room.description.toLowerCase().includes(searchLower) ||
-      room.tags?.some(tag => tag.toLowerCase().includes(searchLower)) ||
-      room.createdBy.name.toLowerCase().includes(searchLower)
+    return filteredRoomsByTab.filter(
+      (room) =>
+        room.title.toLowerCase().includes(searchLower) ||
+        room.description.toLowerCase().includes(searchLower) ||
+        room.tags?.some((tag) => tag.toLowerCase().includes(searchLower)) ||
+        room.createdBy.name.toLowerCase().includes(searchLower)
     );
   }, [filteredRoomsByTab, searchTerm]);
 
   const tabOptions = [
-    { 
-      key: "all", 
-      label: "All Rooms", 
-      count: sampleRooms.length 
+    {
+      key: "all",
+      label: "All Rooms",
+      count: sampleRooms.length,
     },
-    { 
-      key: "joined", 
-      label: "Joined", 
-      count: sampleRooms.filter(room => room.isMember && !room.isOwner).length 
+    {
+      key: "joined",
+      label: "Joined",
+      count: sampleRooms.filter((room) => room.isMember && !room.isOwner)
+        .length,
     },
-    { 
-      key: "my-rooms", 
-      label: "My Rooms", 
-      count: sampleRooms.filter(room => room.isOwner).length 
-    }
+    {
+      key: "my-rooms",
+      label: "My Rooms",
+      count: sampleRooms.filter((room) => room.isOwner).length,
+    },
   ];
 
   const getPageTitle = () => {
@@ -171,14 +93,18 @@ export default function RoomsPage() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-raleway font-bold text-heading">{getPageTitle()}</h1>
-          <p className="text-normal-text-muted mt-2">
-            {activeTab === "all" && "Discover and join collaborative learning rooms"}
-            {activeTab === "joined" && "Rooms you're currently participating in"}
+          <h1 className="text-3xl font-raleway font-bold text-heading">
+            {getPageTitle()}
+          </h1>
+          <p className="text-para-muted mt-2">
+            {activeTab === "all" &&
+              "Discover and join collaborative learning rooms"}
+            {activeTab === "joined" &&
+              "Rooms you're currently participating in"}
             {activeTab === "my-rooms" && "Rooms you've created and manage"}
           </p>
         </div>
-        
+
         <motion.button
           className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
           whileHover={{ scale: 1.02 }}
@@ -197,7 +123,7 @@ export default function RoomsPage() {
         className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between"
       >
         {/* Tabs */}
-        <div className="lg:flex-1 lg:max-w-lg">
+        <div className="w-full flex-1 lg:max-w-md">
           <Tabs
             options={tabOptions}
             activeKey={activeTab}
@@ -206,7 +132,7 @@ export default function RoomsPage() {
         </div>
 
         {/* Search */}
-        <div className="lg:w-[40%]">
+        <div className="lg:w-80">
           <SearchBar
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -220,16 +146,21 @@ export default function RoomsPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="flex items-center justify-between text-sm text-normal-text-muted"
+        className="flex items-center justify-between text-sm text-para-muted"
       >
         <span>
-          {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} found
+          {filteredRooms.length} room{filteredRooms.length !== 1 ? "s" : ""}{" "}
+          found
           {searchTerm && ` for "${searchTerm}"`}
         </span>
         {filteredRooms.length > 0 && (
           <span className="flex items-center gap-1">
             <IconUsers className="h-4 w-4" />
-            {filteredRooms.reduce((acc, room) => acc + room.memberCount, 0)} total members
+            {filteredRooms.reduce(
+              (acc, room) => acc + room.members.length,
+              0
+            )}{" "}
+            total members
           </span>
         )}
       </motion.div>
@@ -237,17 +168,34 @@ export default function RoomsPage() {
       {/* Rooms Grid */}
       {filteredRooms.length > 0 ? (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                delay: 0.3,
+                staggerChildren: 0.1,
+              },
+            },
+          }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {filteredRooms.map((room, index) => (
+          {filteredRooms.map((room) => (
             <motion.div
               key={room.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    duration: 0.4,
+                    ease: "easeOut",
+                  },
+                },
+              }}
             >
               <RoomCard
                 room={room}
@@ -267,10 +215,12 @@ export default function RoomsPage() {
           className="text-center py-12"
         >
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <IconSearch className="h-8 w-8 text-normal-text-muted" />
+            <IconSearch className="h-8 w-8 text-para-muted" />
           </div>
-          <h3 className="text-lg font-semibold text-heading mb-2">No rooms found</h3>
-          <p className="text-normal-text-muted mb-4">
+          <h3 className="text-lg font-semibold text-heading mb-2">
+            No rooms found
+          </h3>
+          <p className="text-para-muted mb-4">
             {searchTerm
               ? `No rooms match your search "${searchTerm}"`
               : "There are no rooms in this category yet"}

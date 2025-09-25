@@ -104,7 +104,7 @@ export default function AuthIllustration({
         <h2 className="text-2xl font-raleway font-semibold text-heading mb-2">
           {title}
         </h2>
-        <p className="text-normal-text-muted">{subtitle}</p>
+        <p className="text-para-muted">{subtitle}</p>
       </motion.div>
     </motion.div>
   );

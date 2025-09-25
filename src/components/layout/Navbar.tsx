@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
 import { IconSettings, IconUser } from "@tabler/icons-react";
-import ToggleSwitch from "@/components/Navbar/DarkModeToggle";
-import NotificationDropdown from "@/components/Navbar/Notifications";
-import ProfileDropdown from "@/components/Navbar/ProfileDropdown";
+import ToggleSwitch from "@/components/navbar/DarkModeToggle";
+import NotificationDropdown from "@/components/navbar/Notifications";
+import ProfileDropdown from "@/components/navbar/ProfileDropdown";
 
 interface UserProfile {
   name: string;

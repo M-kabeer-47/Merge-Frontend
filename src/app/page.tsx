@@ -116,7 +116,7 @@ export default function Home() {
 
           {/* Bottom Section */}
           <div className="border-t border-gray-200 pt-4">
-            <div className="flex items-center gap-3 px-3 py-2 text-sm text-normal-text-muted">
+            <div className="flex items-center gap-3 px-3 py-2 text-sm text-para-muted">
               <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                 <span className="text-white font-medium text-sm">JD</span>
               </div>
@@ -124,7 +124,7 @@ export default function Home() {
                 <p className="text-sm font-medium text-heading truncate">
                   John Doe
                 </p>
-                <p className="text-xs text-normal-text-muted truncate">
+                <p className="text-xs text-para-muted truncate">
                   Student
                 </p>
               </div>
@@ -142,7 +142,7 @@ export default function Home() {
               <h1 className="text-2xl font-raleway font-bold text-heading">
                 Welcome to Merge
               </h1>
-              <p className="text-normal-text-muted mt-1">
+              <p className="text-para-muted mt-1">
                 Your collaborative learning platform
               </p>
             </div>
@@ -170,7 +170,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-heading">Create Room</h3>
-                    <p className="text-sm text-normal-text-muted">
+                    <p className="text-sm text-para-muted">
                       Start collaborating
                     </p>
                   </div>
@@ -188,7 +188,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-heading">New Canvas</h3>
-                    <p className="text-sm text-normal-text-muted">
+                    <p className="text-sm text-para-muted">
                       Create & draw
                     </p>
                   </div>
@@ -206,7 +206,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-heading">Live Session</h3>
-                    <p className="text-sm text-normal-text-muted">
+                    <p className="text-sm text-para-muted">
                       Join live learning
                     </p>
                   </div>
@@ -224,7 +224,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-heading">AI Assistant</h3>
-                    <p className="text-sm text-normal-text-muted">
+                    <p className="text-sm text-para-muted">
                       Get help & guidance
                     </p>
                   </div>
@@ -246,7 +246,7 @@ export default function Home() {
                     <p className="font-medium text-heading">
                       Joined "Math Study Group"
                     </p>
-                    <p className="text-sm text-normal-text-muted">
+                    <p className="text-sm text-para-muted">
                       2 hours ago
                     </p>
                   </div>
@@ -259,7 +259,7 @@ export default function Home() {
                     <p className="font-medium text-heading">
                       Created new canvas "Project Ideas"
                     </p>
-                    <p className="text-sm text-normal-text-muted">1 day ago</p>
+                    <p className="text-sm text-para-muted">1 day ago</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
@@ -270,7 +270,7 @@ export default function Home() {
                     <p className="font-medium text-heading">
                       Added notes to "React Fundamentals"
                     </p>
-                    <p className="text-sm text-normal-text-muted">3 days ago</p>
+                    <p className="text-sm text-para-muted">3 days ago</p>
                   </div>
                 </div>
               </div>

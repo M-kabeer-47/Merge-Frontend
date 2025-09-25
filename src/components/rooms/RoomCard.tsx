@@ -1,31 +1,10 @@
 "use client";
 import React from "react";
 import { motion } from "motion/react";
-import {
-  IconUsers,
-  IconCalendar,
-  IconDots,
-  IconLock,
-  IconGlobe,
-} from "@tabler/icons-react";
+import { IconCalendar, IconLock, IconGlobe } from "@tabler/icons-react";
 import Avatar from "@/components/ui/Avatar";
-
-interface Room {
-  id: string;
-  title: string;
-  description: string;
-  memberCount: number;
-  maxMembers?: number;
-  createdBy: {
-    name: string;
-    image?: string;
-  };
-  createdAt: string;
-  isPrivate: boolean;
-  tags?: string[];
-  isOwner?: boolean;
-  isMember?: boolean;
-}
+import MemberAvatars from "./MembersAvatar";
+import { Room } from "@/lib/constants/mockData";
 
 interface RoomCardProps {
   room: Room;
@@ -59,7 +38,7 @@ export default function RoomCard({
   const statusBadge = getStatusBadge();
 
   return (
-    <motion.div
+    <div
       className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
       onClick={handleViewRoom}
     >
@@ -71,9 +50,9 @@ export default function RoomCard({
               {room.title}
             </h3>
             {room.isPrivate ? (
-              <IconLock className="h-4 w-4 text-normal-text-muted" />
+              <IconLock className="h-4 w-4 text-para-muted" />
             ) : (
-              <IconGlobe className="h-4 w-4 text-normal-text-muted" />
+              <IconGlobe className="h-4 w-4 text-para-muted" />
             )}
           </div>
 
@@ -87,7 +66,7 @@ export default function RoomCard({
           )}
         </div>
 
-        <p className="text-normal-text text-sm line-clamp-2 mb-4">
+        <p className="text-para text-sm line-clamp-2 mb-4">
           {room.description}
         </p>
 
@@ -97,13 +76,13 @@ export default function RoomCard({
             {room.tags.slice(0, 3).map((tag, index) => (
               <span
                 key={index}
-                className="px-2 py-1 bg-accent/10 text-accent text-xs rounded-full font-medium"
+                className="px-2 py-1 bg-accent/15 text-accent text-xs rounded-full font-medium"
               >
                 {tag}
               </span>
             ))}
             {room.tags.length > 3 && (
-              <span className="px-2 py-1 bg-gray-100 text-normal-text-muted text-xs rounded-full font-medium">
+              <span className="px-2 py-1 bg-gray-100 text-para-muted text-xs rounded-full font-medium">
                 +{room.tags.length - 3} more
               </span>
             )}
@@ -113,44 +92,43 @@ export default function RoomCard({
 
       {/* Card Footer */}
       <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           {/* Creator Info */}
           <div className="flex items-center gap-2">
-            <Avatar profileImage={room.createdBy.image} size="sm" />
+            <Avatar profileImage={room.createdBy.image} size="md" />
             <div className="text-xs">
-              <p className="text-normal-text-muted">Created by</p>
+              <p className="text-para-muted">Created by</p>
               <p className="text-heading font-medium">{room.createdBy.name}</p>
             </div>
           </div>
 
-          {/* Members & Date */}
-          <div className="flex items-center gap-4 text-xs text-normal-text-muted">
-            <div className="flex items-center gap-1">
-              <IconUsers className="h-4 w-4" />
-              <span>
-                {room.memberCount}
-                {room.maxMembers ? `/${room.maxMembers}` : ""}
+          {/* Date */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <MemberAvatars members={room.members} maxVisible={4} size="sm" />
+              <span className="text-xs text-para-muted">
+                {room.members.length} member
+                {room.members.length !== 1 ? "s" : ""}
               </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <IconCalendar className="h-4 w-4" />
-              <span>{room.createdAt}</span>
             </div>
           </div>
         </div>
-        <div className="border-t border-gray-100 my-3  "></div>
-          {/* Action Button */}
-          <div className="mt-3 flex gap-2 w-full">
-            <motion.button className="px-4 py-2 bg-white border-2 border-secondary rounded-lg text-primary font-medium transition-colors text-sm w-[40%]">
-              {room.isOwner ? "Delete" : "Leave"}
-            </motion.button>
 
-            <motion.button className="px-4 py-2 bg-primary rounded-lg text-white font-medium transition-colors text-sm w-[60%] hover:bg-primary/90">
-              {room.isMember || room.isOwner ? "Enter" : "View"}
-            </motion.button>
-          </div>
-        
+        {/* Members Section */}
+
+        <div className="border-t border-gray-100 my-3"></div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 w-full">
+          <motion.button className="px-4 sm:py-2 py-1.5 bg-white border-2 border-secondary rounded-lg text-primary font-medium transition-colors text-sm w-[40%] hover:bg-secondary/5">
+            {room.isOwner ? "Delete" : "Leave"}
+          </motion.button>
+
+          <motion.button className="px-4 sm:py-2 py-1.5 bg-primary rounded-lg text-white font-medium transition-colors text-sm w-[60%] hover:bg-primary/90">
+            {room.isMember || room.isOwner ? "Enter" : "View"}
+          </motion.button>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

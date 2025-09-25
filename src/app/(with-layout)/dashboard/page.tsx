@@ -134,7 +134,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-raleway font-bold text-heading">
             Dashboard
           </h1>
-          <p className="text-normal-text-muted mt-2">
+          <p className="text-para-muted mt-2">
             Welcome back! Here's what's happening with your learning journey.
           </p>
         </div>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
               <h3 className="text-2xl font-bold text-heading mb-1">
                 {stat.value}
               </h3>
-              <p className="text-sm text-normal-text-muted">{stat.title}</p>
+              <p className="text-sm text-para-muted">{stat.title}</p>
             </motion.div>
           );
         })}
@@ -212,7 +212,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-heading">{activity.title}</p>
-                    <p className="text-sm text-normal-text-muted">
+                    <p className="text-sm text-para-muted">
                       {activity.time}
                     </p>
                   </div>
@@ -249,12 +249,12 @@ export default function DashboardPage() {
                     {session.type}
                   </span>
                 </div>
-                <p className="text-sm text-normal-text-muted mb-2">
+                <p className="text-sm text-para-muted mb-2">
                   {session.time}
                 </p>
                 <div className="flex items-center gap-2">
-                  <IconUsers className="h-4 w-4 text-normal-text-muted" />
-                  <span className="text-sm text-normal-text-muted">
+                  <IconUsers className="h-4 w-4 text-para-muted" />
+                  <span className="text-sm text-para-muted">
                     {session.participants} participants
                   </span>
                 </div>

@@ -81,7 +81,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
             </div>
             {showRole && userRole && (
               <div
-                className={`text-xs font-raleway font-semibold text-normal-text-muted`}
+                className={`text-xs font-raleway font-semibold text-para-muted`}
               >
                 {userRole}
               </div>
@@ -89,7 +89,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           </div>
           <IconChevronDown
             className={`h-4 w-4 ${
-              variant === "navbar" ? "text-white/70" : "text-normal-text-muted"
+              variant === "navbar" ? "text-white/70" : "text-para-muted"
             }`}
           />
         </div>
@@ -111,11 +111,11 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 <Link
                   key={index}
                   href={option.href}
-                  className="flex items-center px-4 py-2 text-sm  text-normal-text hover:bg-gray-100 transition-colors"
+                  className="flex items-center px-4 py-2 text-sm  text-para hover:bg-gray-100 transition-colors"
                   onClick={() => setProfileOpen(false)}
                 >
                   {option.icon && (
-                    <span className="mr-3 text-normal-text-muted">
+                    <span className="mr-3 text-para-muted">
                       {option.icon}
                     </span>
                   )}

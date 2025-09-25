@@ -89,7 +89,7 @@ export default function SignUpIllustration() {
         <h2 className="text-2xl font-raleway font-semibold text-heading mb-2">
           Join Our Community
         </h2>
-        <p className="text-normal-text-muted">
+        <p className="text-para-muted">
           Connect, learn, and grow with students and instructors worldwide
         </p>
       </motion.div>

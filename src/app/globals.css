@@ -9,10 +9,10 @@
   --primary:#2F1A58;
   --accent: #FFB84D;
   --secondary: #8668C0;
-  --heading: #111827; /* normal-text-gray-900 */
-  --normal-text: #4b5563; /* normal-text-gray-600 */
-  --normal-text-muted: #6b7280; /* normal-text-gray-500 */
-  --button: #374151; /* normal-text-gray-700 */
+  --heading: #111827; /* para-gray-900 */
+  --para: #4b5563; /* para-gray-600 */
+  --para-muted: #6b7280; /* para-gray-500 */
+  --button: #374151; /* para-gray-700 */
   --radius: 0.625rem;
 }
 
@@ -30,8 +30,8 @@ body{
   --color-accent: var(--accent);
   --color-destructive: var(--destructive);
   --color-heading: var(--heading);
-  --color-normal-text: var(--normal-text);
-  --color-normal-text-muted: var(--normal-text-muted);
+  --color-para: var(--para);
+  --color-para-muted: var(--para-muted);
   --color-button: var(--button);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);

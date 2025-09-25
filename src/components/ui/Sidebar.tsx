@@ -8,6 +8,7 @@ import {
   IconChevronDown,
   IconChevronRight,
 } from "@tabler/icons-react";
+import NotificationDropdown from "../navbar/Notifications";
 
 interface Links {
   label: string;
@@ -124,11 +125,21 @@ export const MobileSidebar = ({
         )}
         {...props}
       >
-        <div className="flex justify-end z-20 w-full">
-          <IconMenu2
-            className="text-heading cursor-pointer hover:text-primary transition-colors"
-            onClick={() => setOpen(!open)}
-          />
+        <div className="w-full flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src={"/logo.svg"} alt="Logo" className="h-8 w-8" />
+            <span className="text-xl font-raleway font-bold text-heading">
+              Merge
+            </span>
+          </div>
+          <div className="flex items-center gap-5 h-full">
+            <NotificationDropdown />
+            {/* Menu Button */}
+            <IconMenu2
+              className="text-heading cursor-pointer hover:text-primary transition-colors h-6 w-6"
+              onClick={() => setOpen(!open)}
+            />
+          </div>
         </div>
         <AnimatePresence>
           {open && (
@@ -202,7 +213,7 @@ export const SidebarLink = ({
         <div className="flex items-center gap-3">
           <div
             className={` group-hover/sidebar:text-primary transition-colors duration-200 ${
-              isActive ? "text-primary" : "text-normal-text-muted"
+              isActive ? "text-primary" : "text-para-muted"
             }`}
           >
             {link.icon}
@@ -229,7 +240,7 @@ export const SidebarLink = ({
               animate={{ rotate: isExpanded ? 0 : -90 }}
               transition={{ duration: 0.2 }}
             >
-              <IconChevronDown className="h-4 w-4 text-normal-text-muted group-hover/sidebar:text-primary transition-colors" />
+              <IconChevronDown className="h-4 w-4 text-para-muted group-hover/sidebar:text-primary transition-colors" />
             </motion.div>
           </motion.div>
         )}
@@ -263,7 +274,7 @@ export const SidebarLink = ({
 
                       <a
                         href={child.href}
-                        className="flex items-center gap-3 py-2 px-3 text-sm text-normal-text hover:text-primary hover:bg-secondary/10 rounded-md transition-all duration-200 group/child"
+                        className="flex items-center gap-3 py-2 px-3 text-sm text-para hover:text-primary hover:bg-secondary/10 rounded-md transition-all duration-200 group/child"
                       >
                         <span className="font-bold  transition-transform duration-200">
                           {child.label}

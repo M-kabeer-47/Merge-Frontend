@@ -12,16 +12,15 @@ export default {
         raleway: ["var(--font-raleway)"],
       },
       colors: {
-       "primary": "var(--primary)",
-       "secondary": "var(--secondary)",
-       "accent": "var(--accent)",
-       "destructive": "var(--destructive)",
-        "heading": "var(--heading)",
-        "normal-text": "var(--normal-text)",
-        "normal-text-muted": "var(--normal-text-muted)",
-        "button": "var(--button)",
-
-      }
+        primary: "var(--primary)",
+        secondary: "var(--secondary)",
+        accent: "var(--accent)",
+        destructive: "var(--destructive)",
+        heading: "var(--heading)",
+        "para": "var(--para)",
+        "para-muted": "var(--para-muted)",
+        button: "var(--button)",
+      },
     },
   },
 } satisfies Config;

@@ -72,7 +72,7 @@ export default function SignInForm() {
           <h1 className="text-3xl font-raleway font-bold text-heading mb-2">
             Welcome Back
           </h1>
-          <p className="text-normal-text-muted">
+          <p className="text-para-muted">
             Sign in to continue your learning journey
           </p>
         </motion.div>
@@ -109,7 +109,7 @@ export default function SignInForm() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              <span className="text-normal-text font-medium">
+              <span className="text-para font-medium">
                 Continue with Google
               </span>
             </motion.div>
@@ -123,7 +123,7 @@ export default function SignInForm() {
               <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-normal-text-muted">
+              <span className="px-4 bg-white text-para-muted">
                 Or continue with email
               </span>
             </div>
@@ -206,7 +206,7 @@ export default function SignInForm() {
 
         {/* Sign Up Link */}
         <motion.div className="mt-6 text-center" variants={itemVariants}>
-          <p className="text-normal-text-muted text-sm">
+          <p className="text-para-muted text-sm">
             Don't have an account?{" "}
             <Link
               href="/sign-up"

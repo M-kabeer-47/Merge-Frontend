@@ -22,17 +22,17 @@ const SearchBar: React.FC<SearchBarProps> = ({
         placeholder={placeholder}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="block w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-lg text-heading focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 placeholder:text-normal-text-muted transition-all duration-200"
+        className="block w-full pl-10 pr-10 py-2 bg-white border border-gray-200 rounded-lg text-heading focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 placeholder:text-para-muted transition-all duration-200"
       />
       
-      <IconSearch className="absolute left-3 h-5 w-5 text-normal-text-muted" />
+      <IconSearch className="absolute left-3 h-5 w-5 text-para-muted" />
       
       {searchTerm && (
         <button
           onClick={() => setSearchTerm("")}
           className="absolute right-3 p-1 hover:bg-gray-100 rounded-full transition-colors"
         >
-          <IconX className="h-4 w-4 text-normal-text-muted hover:text-heading" />
+          <IconX className="h-4 w-4 text-para-muted hover:text-heading" />
         </button>
       )}
     </div>

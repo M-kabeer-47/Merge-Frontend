@@ -97,14 +97,14 @@ export default function NotificationDropdown({
   };
 
   return (
-    <div className="relative">
+    <div className="relative top-[3px] sm:top-0">
       {/* Notification Bell */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className=" relative cursor-pointer group"
       >
         <IoNotificationsOutline
-          className="h-5 w-5 text-normal-text-muted group-hover:text-primary transition-colors"
+          className="h-5 w-5 text-para-muted group-hover:text-primary transition-colors"
           strokeWidth={2}
         />
         {unreadCount > 0 && (
@@ -145,7 +145,7 @@ export default function NotificationDropdown({
               {notifications.length === 0 ? (
                 <div className="p-8 text-center">
                   <div className="text-4xl mb-2">🔔</div>
-                  <p className="text-normal-text-muted">No notifications yet</p>
+                  <p className="text-para-muted">No notifications yet</p>
                 </div>
               ) : (
                 notifications.map((notification, index) => (
@@ -169,12 +169,12 @@ export default function NotificationDropdown({
                           className={`text-sm ${
                             notification.unread
                               ? "font-medium text-heading"
-                              : "text-normal-text"
+                              : "text-para"
                           }`}
                         >
                           {notification.title}
                         </p>
-                        <p className="text-xs text-normal-text-muted mt-1">
+                        <p className="text-xs text-para-muted mt-1">
                           {notification.time}
                         </p>
                       </div>

@@ -36,7 +36,7 @@ export default function Avatar({
           alt="User Profile"
           fill
           className="object-cover"
-          sizes="(max-width: 768px) 34px, 34px"
+          
         />
       ) : (
         <User size={iconSizes[size]} className="text-gray-500" />
