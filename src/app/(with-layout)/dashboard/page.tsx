@@ -116,7 +116,7 @@ const getColorClasses = (color: string) => {
       return {
         bg: "bg-gray-100",
         text: "text-gray-600",
-        border: "border-gray-200",
+        border: "border-light-border",
       };
   }
 };
@@ -159,7 +159,7 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+              className="bg-background p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between mb-4">
                 <div
@@ -187,7 +187,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+          className="lg:col-span-2 bg-background rounded-xl shadow-sm border border-gray-100 p-6"
         >
           <h2 className="text-xl font-semibold text-heading mb-6">
             Recent Activity
@@ -227,7 +227,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+          className="bg-background rounded-xl shadow-sm border border-gray-100 p-6"
         >
           <h2 className="text-xl font-semibold text-heading mb-6">
             Upcoming Sessions
@@ -277,7 +277,7 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+        className="bg-background rounded-xl shadow-sm border border-gray-100 p-6"
       >
         <h2 className="text-xl font-semibold text-heading mb-6">
           Quick Actions
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 + index * 0.1 }}
-                className="flex items-center gap-3 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100 hover:border-gray-200"
+                className="flex items-center gap-3 p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100 hover:border-light-border"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

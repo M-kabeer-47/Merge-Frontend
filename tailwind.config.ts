@@ -1,5 +1,7 @@
+import { backIn } from "framer-motion";
 import type { Config } from "tailwindcss";
 export default {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -17,9 +19,13 @@ export default {
         accent: "var(--accent)",
         destructive: "var(--destructive)",
         heading: "var(--heading)",
-        "para": "var(--para)",
+        para: "var(--para)",
         "para-muted": "var(--para-muted)",
         button: "var(--button)",
+        background: "var(--background)",
+        "main-background": "var(--main-background)",
+        "light-border": "var(--light-border)",
+        "sidebar-text": "var(--sidebar-text)",
       },
     },
   },

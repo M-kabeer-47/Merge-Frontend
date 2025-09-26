@@ -70,7 +70,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
         <div
           className={`flex items-center gap-2 px-2 py-1.5 rounded-full transition-colors
           
-            bg-secondary/10 backdrop-blur-sm border border-white/20 hover:bg-white/20"
+            bg-secondary/10 backdrop-blur-sm border border-white/20 hover:bg-background/20"
             hover:bg-gray-100"
           `}
         >
@@ -102,7 +102,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="origin-top-right absolute right-0 mt-2 w-45 rounded-lg shadow-lg bg-[#f7f7f7] border border-gray-200 z-50 overflow-hidden"
+            className="origin-top-right absolute right-0 mt-2 w-45 rounded-lg shadow-lg bg-main-background border border-light-border z-50 overflow-hidden"
           >
             {/* User Info Header */}
 

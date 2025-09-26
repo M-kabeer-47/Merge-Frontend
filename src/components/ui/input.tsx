@@ -15,7 +15,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           // Dynamic border colors based on error state
           error
             ? "border-red-300 hover:border-red-400 focus:border-red-400 "
-            : "border-gray-200 hover:border-secondary/30 focus:border-1 focus:border-white focus:ring-2 focus:ring-secondary/70",
+            : "border-light-border hover:border-secondary/30 focus:border-1 focus:border-white focus:ring-2 focus:ring-secondary/70",
           className
         )}
         ref={ref}

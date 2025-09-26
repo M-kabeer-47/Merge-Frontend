@@ -24,7 +24,7 @@ export default function RoleSelectionCards({
             className={` rounded-lg border-2 p-2 transition-all duration-200 hover:shadow-md group-hover:scale-[1.01] ${
               value === "student"
                 ? "border-secondary bg-secondary/5"
-                : "border-gray-200 hover:border-secondary/50 hover:bg-secondary/5 bg-white"
+                : "border-light-border hover:border-secondary/50 hover:bg-secondary/5 bg-background"
             }`}
           >
             <div className="flex items-center space-x-8">
@@ -49,7 +49,7 @@ export default function RoleSelectionCards({
             className={` rounded-lg border-2 p-2 transition-all duration-200 hover:shadow-md group-hover:scale-[1.01] ${
               value === "instructor"
                 ? "border-secondary bg-secondary/5"
-                : "border-gray-200 hover:border-secondary/50 hover:bg-secondary/5 bg-white"
+                : "border-light-border hover:border-secondary/50 hover:bg-secondary/5 bg-background"
             }`}
           >
             <div className="flex items-center space-x-10">

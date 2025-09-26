@@ -31,7 +31,7 @@ export default function WithLayoutLayout({
   const user = getCurrentUser();
 
   return (
-    <div className="flex md:flex-row flex-col h-screen w-full bg-gray-50">
+    <div className=" flex md:flex-row flex-col h-screen w-full bg-gray-50">
       {/* Sidebar */}
       <AppSidebar user={user} />
 
@@ -47,7 +47,7 @@ export default function WithLayoutLayout({
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-6 bg-gray-50">
+        <main className="flex-1 overflow-auto p-6 bg-background">
           <div className="max-w-full mx-auto">{children}</div>
         </main>
       </div>

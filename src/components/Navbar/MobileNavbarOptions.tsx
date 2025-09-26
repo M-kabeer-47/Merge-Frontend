@@ -55,7 +55,7 @@ export default function MobileNavbarOptions({
       {/* User Profile Section */}
 
       {/* Divider */}
-      <div className="border-t  border-gray-200 relative top-[10px]"></div>
+      <div className="border-t  border-light-border relative top-[10px]"></div>
 
       {/* Menu Items */}
       <div className="space-y-2">
@@ -91,7 +91,7 @@ export default function MobileNavbarOptions({
       </div>
 
       {/* Divider */}
-      <div className="border-t border-gray-200"></div>
+      <div className="border-t border-light-border"></div>
 
       {/* Sign Out Button */}
       <motion.button

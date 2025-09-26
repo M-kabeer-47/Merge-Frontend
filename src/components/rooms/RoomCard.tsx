@@ -1,11 +1,11 @@
 "use client";
 import React from "react";
 import { motion } from "motion/react";
-import { IconCalendar, IconLock, IconGlobe } from "@tabler/icons-react";
 import Avatar from "@/components/ui/Avatar";
 import MemberAvatars from "./MembersAvatar";
 import { Room } from "@/lib/constants/mockData";
-
+import { useWindowSize } from "@uidotdev/usehooks";
+import { Button } from "@/components/ui/Button";
 interface RoomCardProps {
   room: Room;
   onJoin?: (roomId: string) => void;
@@ -19,6 +19,7 @@ export default function RoomCard({
   onView,
   onEdit,
 }: RoomCardProps) {
+  const { width } = useWindowSize();
   const handleJoinRoom = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onJoin) onJoin(room.id);
@@ -39,21 +40,16 @@ export default function RoomCard({
 
   return (
     <div
-      className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
+      className="sm:p-6 p-4 bg-sidebar-text rounded-xl border border-light-border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
       onClick={handleViewRoom}
     >
       {/* Card Header */}
-      <div className="p-6 pb-4">
+      <div className="">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-semibold text-heading group-hover:text-primary transition-colors font-raleway line-clamp-1">
               {room.title}
             </h3>
-            {room.isPrivate ? (
-              <IconLock className="h-4 w-4 text-para-muted" />
-            ) : (
-              <IconGlobe className="h-4 w-4 text-para-muted" />
-            )}
           </div>
 
           {/* Status Badge */}
@@ -82,7 +78,7 @@ export default function RoomCard({
               </span>
             ))}
             {room.tags.length > 3 && (
-              <span className="px-2 py-1 bg-gray-100 text-para-muted text-xs rounded-full font-medium">
+              <span className="px-2 py-1 bg-light-border/50 text-para-muted text-xs rounded-full font-medium">
                 +{room.tags.length - 3} more
               </span>
             )}
@@ -91,7 +87,7 @@ export default function RoomCard({
       </div>
 
       {/* Card Footer */}
-      <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+      <div className="py-3 ">
         <div className="flex items-center justify-between mb-3">
           {/* Creator Info */}
           <div className="flex items-center gap-2">
@@ -105,7 +101,20 @@ export default function RoomCard({
           {/* Date */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <MemberAvatars members={room.members} maxVisible={4} size="sm" />
+              {width && width > 640 ? (
+                <MemberAvatars
+                  members={room.members}
+                  maxVisible={4}
+                  size="sm"
+                />
+              ) : (
+                <MemberAvatars
+                  members={room.members}
+                  maxVisible={2}
+                  size="sm"
+                />
+              )}
+
               <span className="text-xs text-para-muted">
                 {room.members.length} member
                 {room.members.length !== 1 ? "s" : ""}
@@ -120,13 +129,16 @@ export default function RoomCard({
 
         {/* Action Buttons */}
         <div className="flex gap-2 w-full">
-          <motion.button className="px-4 sm:py-2 py-1.5 bg-white border-2 border-secondary rounded-lg text-primary font-medium transition-colors text-sm w-[40%] hover:bg-secondary/5">
+          <Button
+            className="px-4 rounded-lg font-medium transition-colors text-sm w-[40%]"
+            variant="outline"
+          >
             {room.isOwner ? "Delete" : "Leave"}
-          </motion.button>
+          </Button>
 
-          <motion.button className="px-4 sm:py-2 py-1.5 bg-primary rounded-lg text-white font-medium transition-colors text-sm w-[60%] hover:bg-primary/90">
+          <Button className="px-4 rounded-lg text-white font-medium transition-colors text-sm w-[60%] ">
             {room.isMember || room.isOwner ? "Enter" : "View"}
-          </motion.button>
+          </Button>
         </div>
       </div>
     </div>

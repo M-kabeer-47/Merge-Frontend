@@ -125,10 +125,10 @@ export default function NotificationDropdown({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+            className="absolute right-0 top-12 w-80 bg-background rounded-lg shadow-lg border border-light-border z-50"
           >
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="p-4 border-b border-light-border flex items-center justify-between">
               <h3 className="font-semibold text-heading">Notifications</h3>
               {unreadCount > 0 && (
                 <motion.button

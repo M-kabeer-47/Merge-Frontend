@@ -27,7 +27,7 @@ export default function Avatar({
       className={`${sizeClasses[size]} rounded-full overflow-hidden relative ${
         variant === "navbar"
           ? "border-2 border-white/20"
-          : "border border-gray-200"
+          : "border border-light-border"
       } ${!profileImage && "bg-gray-200 flex items-center justify-center"}`}
     >
       {profileImage ? (

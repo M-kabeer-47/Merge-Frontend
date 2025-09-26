@@ -66,7 +66,7 @@ export default function ToggleSwitch({
 
       {/* Thumb */}
       <motion.div
-        className={`${currentSize.thumb} bg-white rounded-full shadow-lg flex items-center justify-center relative z-10`}
+        className={`${currentSize.thumb} bg-background rounded-full shadow-lg flex items-center justify-center relative z-10`}
         animate={{
           x: isDarkMode ? `calc(100% + 2px)` : 0,
         }}

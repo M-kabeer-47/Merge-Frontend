@@ -4,9 +4,9 @@ import SignUpForm from "@/components/auth/sign-up/SignUpForm";
 
 const SignUpPage = () => {
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       {/* Main Container */}
-      <div className="w-full max-w-7xl bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div className="w-full max-w-7xl bg-background rounded-2xl shadow-lg overflow-hidden">
         <div className="flex min-h-[600px]">
           {/* Left Column - Illustration */}
           <div className="hidden lg:flex lg:w-1/2">

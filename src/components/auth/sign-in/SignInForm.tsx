@@ -83,7 +83,7 @@ export default function SignInForm() {
             type="button"
             variant="outline"
             size="lg"
-            className="w-full border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+            className="w-full border-2 border-light-border hover:border-gray-300 hover:bg-gray-50"
             onClick={signInWithGoogle}
           >
             <motion.div
@@ -120,10 +120,10 @@ export default function SignInForm() {
         <motion.div className="mb-6" variants={itemVariants}>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-light-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-para-muted">
+              <span className="px-4 bg-background text-para-muted">
                 Or continue with email
               </span>
             </div>

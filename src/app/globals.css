@@ -2,26 +2,46 @@
 
 @plugin "tailwindcss-animate";
 
-
-@custom-variant dark (&:is(.dark *));
-
-:root {
-  --primary:#2F1A58;
-  --accent: #FFB84D;
-  --secondary: #8668C0;
+.light {
+  --primary: #2f1a58;
+  --accent: #ffb84d;
+  --secondary: #8668c0;
   --heading: #111827; /* para-gray-900 */
   --para: #4b5563; /* para-gray-600 */
   --para-muted: #6b7280; /* para-gray-500 */
   --button: #374151; /* para-gray-700 */
   --radius: 0.625rem;
+  --background: #ffffff;
+  --main-background: #f7f7f7;
+  --light-border: #e5e7eb;
+  /* para-gray-800 */
 }
-
-body{
-  font-family: var(--font-roboto)
+.dark {
+  --primary: #6526ad; /* Lighter purple for better contrast on dark */
+  --accent: #fbbf24; /* Brighter amber for visibility */
+  --secondary: #a78bfa; /* Light purple variant */
+  --heading: #ffffff; /* Pure white for headings */
+  --para: #e5e7eb; /* Light gray for regular text */
+  --para-muted: #9ca3af; /* Medium gray for secondary text */
+  --button: #f3f4f6; /* Very light gray for button text */
+  --radius: 0.625rem;
+  --background: #130c20; /* Dark blue-gray background */
+  --main-background:#120b1f; /* Darker main background */
+  --border: #374151; /* Dark gray borders */
+  --card: #1f2937; /* Same as background for cards */
+  --input: #374151; /* Dark gray for inputs */
+  --muted: #111827; /* Very dark for muted sections */
+  --popover: #1f2937; /* Dark for popovers */
+  --light-border: #363e4e; /* Dark gray for light borders */ /* White text */
+}
+body {
+  font-family: var(--font-roboto);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-main-background: var(--main-background);
+  --color-light-border: var(--light-border);
   --color-foreground: var(--foreground);
   --font-roboto: var(--font-roboto);
   --font-raleway: var(--font-raleway);
@@ -30,6 +50,7 @@ body{
   --color-accent: var(--accent);
   --color-destructive: var(--destructive);
   --color-heading: var(--heading);
+
   --color-para: var(--para);
   --color-para-muted: var(--para-muted);
   --color-button: var(--button);
@@ -62,41 +83,6 @@ body{
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {

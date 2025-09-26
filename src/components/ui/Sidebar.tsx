@@ -95,7 +95,7 @@ export const DesktopSidebar = ({
     <>
       <motion.div
         className={cn(
-          "h-full px-4 py-4 hidden md:flex md:flex-col bg-[#f7f7f7] border-r border-gray-200 w-[300px] shrink-0 shadow-sm",
+          "h-full px-4 py-4 hidden md:flex md:flex-col bg-main-background border-r border-light-border w-[300px] shrink-0 shadow-sm",
           className
         )}
         animate={{
@@ -121,7 +121,7 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "h-16 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-white border-b border-gray-200 w-full shadow-sm"
+          "h-16 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-main-background border-b border-light-border w-full shadow-sm"
         )}
         {...props}
       >
@@ -203,7 +203,7 @@ export const SidebarLink = ({
       <a
         href={hasChildren ? "#" : link.href}
         className={cn(
-          "flex items-center justify-between gap-3 group/sidebar py-2.5 hover:bg-secondary/5 rounded-lg px-3 transition-all duration-200  hover:text-primary border-transparent hover:border-primary/20",
+          "text-para flex items-center justify-between gap-3 group/sidebar py-2.5 hover:bg-secondary/5 rounded-lg px-3 transition-all duration-200  hover:text-primary border-transparent hover:border-primary/20",
           isActive && "bg-secondary/5 text-primary",
           className
         )}

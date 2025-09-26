@@ -48,7 +48,7 @@ export default function MemberAvatars({
         {visibleMembers.map((member, index) => (
           <div
             key={member.id}
-            className={`${sizeClasses[size]} rounded-full border-2 border-white bg-gray-100 overflow-hidden relative z-10`}
+            className={`${sizeClasses[size]} rounded-full border-2 border-light-border bg-gray-100 overflow-hidden relative z-10`}
             style={{ zIndex: maxVisible - index }}
           >
             <Image
@@ -65,7 +65,7 @@ export default function MemberAvatars({
       {/* Remaining count */}
       {remainingCount > 0 && (
         <div
-          className={`${sizeClasses[size]} rounded-full bg-secondary/10 text-white flex items-center justify-center ml-1 border-2 border-white`}
+          className={`${sizeClasses[size]} rounded-full bg-secondary/10 text-white flex items-center justify-center  border-2 border-light-border ml-1`}
         >
           <span className={`${textSizes[size]} font-medium text-primary`}>
             +{remainingCount > 99 ? "99" : remainingCount}

@@ -6,6 +6,8 @@ import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import RoomCard from "@/components/rooms/RoomCard";
 import { sampleRooms } from "@/lib/constants/mockData";
+import { Button } from "@/components/ui/Button";
+import { Link } from "lucide-react";
 
 export default function RoomsPage() {
   const [activeTab, setActiveTab] = useState("all");
@@ -104,15 +106,19 @@ export default function RoomsPage() {
             {activeTab === "my-rooms" && "Rooms you've created and manage"}
           </p>
         </div>
-
-        <motion.button
-          className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <IconPlus className="h-4 w-4" />
-          Create Room
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <Button
+            className="px-4 py-2 rounded-lg font-medium  transition-colors flex items-center gap-2"
+            variant="outline"
+          >
+            <Link className="h-4 w-4" />
+            Join Room
+          </Button>
+          <Button className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <IconPlus className="h-4 w-4" />
+            Create Room
+          </Button>
+        </div>
       </motion.div>
 
       {/* Controls */}
@@ -153,16 +159,6 @@ export default function RoomsPage() {
           found
           {searchTerm && ` for "${searchTerm}"`}
         </span>
-        {filteredRooms.length > 0 && (
-          <span className="flex items-center gap-1">
-            <IconUsers className="h-4 w-4" />
-            {filteredRooms.reduce(
-              (acc, room) => acc + room.members.length,
-              0
-            )}{" "}
-            total members
-          </span>
-        )}
       </motion.div>
 
       {/* Rooms Grid */}
@@ -226,11 +222,7 @@ export default function RoomsPage() {
               : "There are no rooms in this category yet"}
           </p>
           {activeTab === "my-rooms" && (
-            <motion.button
-              className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
+            <motion.button className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
               Create Your First Room
             </motion.button>
           )}

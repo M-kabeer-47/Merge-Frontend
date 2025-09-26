@@ -43,7 +43,7 @@ export default function Tabs({
 
   return (
     <div
-      className={`relative flex bg-white shadow-sm rounded-lg border border-gray-200 sm:h-[42px] h-[38px] overflow-x-auto ${className}`}
+      className={`relative flex bg-background shadow-sm rounded-lg border border-light-border sm:h-[42px] h-[38px] overflow-x-auto ${className}`}
     >
       {/* Sliding Box Indicator */}
       <motion.div
@@ -61,11 +61,11 @@ export default function Tabs({
               tabRefs.current[idx] = el;
             }}
             onClick={() => onChange(tab.key)}
-            className={`relative flex-1 sm:px-5 sm:py-2 px-4 py-2 font-medium whitespace-nowrap transition-all duration-200 z-10 rounded-md ${
+            className={`relative flex-1 sm:px-5 sm:py-2 px-4 py-2  whitespace-nowrap transition-all duration-200 z-10 rounded-md ${
               isActive ? "text-primary" : "text-para hover:text-primary"
             }`}
           >
-            <span className="flex items-center justify-center gap-2 sm:text-sm text-xs font-semibold font-raleway">
+            <span className="flex items-center justify-center gap-2 sm:text-sm text-xs font-bold font-raleway">
               {tab.label}
             </span>
           </button>
