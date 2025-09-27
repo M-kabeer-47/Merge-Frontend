@@ -87,7 +87,7 @@ export default function RoomsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
