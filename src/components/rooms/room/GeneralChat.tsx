@@ -89,22 +89,13 @@ const GeneralChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-main-background pb-[80px]">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         {/* Welcome Message */}
-        <div className="px-6 py-4 border-b border-light-border bg-gray-50/50">
-          <h3 className="font-semibold text-heading mb-1">
-            Welcome to General Chat
-          </h3>
-          <p className="text-sm text-para-muted">
-            This is where you can chat with other participants in the room. Be
-            respectful and keep discussions relevant to the course.
-          </p>
-        </div>
 
         {/* Messages List */}
-        <div className="space-y-0">
+        <div className="space-y-0 py-5 px-4">
           {messages.map((message) => {
             const user = getUserById(message.userId);
             const replyToMessage = message.replyTo
@@ -131,14 +122,17 @@ const GeneralChat: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
       </div>
-
+      <div className="fixed bottom-0 bg-background border-t border-light-border w-full">
+        <MessageComposer
+          onSendMessage={handleSendMessage}
+          replyingTo={replyingTo}
+          replyingToUser={
+            replyingTo ? getUserById(replyingTo.userId) : undefined
+          }
+          onCancelReply={handleCancelReply}
+        />
+      </div>
       {/* Message Composer */}
-      <MessageComposer
-        onSendMessage={handleSendMessage}
-        replyingTo={replyingTo}
-        replyingToUser={replyingTo ? getUserById(replyingTo.userId) : undefined}
-        onCancelReply={handleCancelReply}
-      />
     </div>
   );
 };
