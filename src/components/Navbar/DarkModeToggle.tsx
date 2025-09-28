@@ -3,6 +3,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { IconSun, IconMoon } from "@tabler/icons-react";
 import { Moon } from "lucide-react";
+import { useTheme } from "../layout/ThemeProvider";
 
 interface ToggleSwitchProps {
   isDarkMode: boolean;
@@ -11,8 +12,6 @@ interface ToggleSwitchProps {
 }
 
 export default function ToggleSwitch({
-  isDarkMode,
-  onToggle,
   size = "md",
 }: ToggleSwitchProps) {
   const sizeClasses = {
@@ -31,13 +30,13 @@ export default function ToggleSwitch({
       thumb: "w-6 h-6",
       icon: "h-4 w-4",
     },
-  };
-
+  };  
+  const {isDarkMode,toggleTheme,theme} = useTheme()
   const currentSize = sizeClasses[size];
 
   return (
     <motion.button
-      onClick={onToggle}
+      onClick={toggleTheme}
       className={`${
         currentSize.switch
       } relative rounded-full p-0.5 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-200 ${

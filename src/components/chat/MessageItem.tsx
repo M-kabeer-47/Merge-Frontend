@@ -1,8 +1,17 @@
 // File: src/components/chat/MessageItem.tsx
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChatMessage, User, currentUserId } from "@/lib/constants/mockChatData";
 import { Reply, MoreHorizontal, Smile, FileText, Download } from "lucide-react";
 import { format } from "date-fns";
+import {
+  EmojiPicker,
+  EmojiPickerSearch,
+  EmojiPickerContent,
+  EmojiPickerFooter,
+} from "@/components/ui/EmojiPicker";
+import MessageHeader from "./MessageHeader";
+import MessageAvatar from "./MessageAvatar";
+import RepliedMessage from "./RepliedMessage";
 
 interface MessageItemProps {
   message: ChatMessage;
@@ -11,6 +20,8 @@ interface MessageItemProps {
   replyToUser?: User;
   onReply: (messageId: string) => void;
   onReaction: (messageId: string, emoji: string) => void;
+  onScrollToMessage: (messageId: string) => void;
+  ref: React.Ref<HTMLDivElement> | null;
 }
 
 const MessageItem: React.FC<MessageItemProps> = ({
@@ -20,18 +31,73 @@ const MessageItem: React.FC<MessageItemProps> = ({
   replyToUser,
   onReply,
   onReaction,
+  onScrollToMessage,
+  ref,
 }) => {
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const isOwnMessage = message.userId === currentUserId;
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "instructor":
-        return isOwnMessage ? "text-white" : "text-primary";
-      case "admin":
-        return isOwnMessage ? "text-white" : "text-accent";
-      default:
-        return isOwnMessage ? "text-white" : "text-heading";
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
+  const handleReplyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (replyToMessage) {
+      onScrollToMessage(replyToMessage.id);
+    }
+  };
+
+  // Fixed emoji selection handler
+  const handleEmojiSelect = (emojiData: any) => {
+    // Handle different possible emoji data structures
+    let emojiString = "";
+
+    if (typeof emojiData === "string") {
+      emojiString = emojiData;
+    } else if (emojiData?.emoji) {
+      emojiString = emojiData.emoji;
+    } else if (emojiData?.native) {
+      emojiString = emojiData.native;
+    } else if (emojiData?.unified) {
+      // Convert unified code to emoji if needed
+      emojiString = String.fromCodePoint(
+        ...emojiData.unified.split("-").map((hex: string) => parseInt(hex, 16))
+      );
+    }
+
+    alert("Emoji selected:" + JSON.stringify({ emojiData, emojiString })); // Debug log
+
+    if (emojiString) {
+      onReaction(message.id, emojiString);
+      setShowEmojiPicker(false);
+    } else {
+      console.warn("Could not extract emoji from data:", emojiData);
+    }
+  };
+
+  const toggleEmojiPicker = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowEmojiPicker(!showEmojiPicker);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -44,128 +110,39 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
   return (
     <div
-      className={`group flex gap-3 py-3 px-6 min-h-[120px] rounded-xl max-w-5xl mb-6 transition-colors duration-200 ${
-        isOwnMessage ? "bg-primary/90 ml-auto " : "bg-secondary/5"
+      className={`group flex gap-3 py-4 px-4 min-h-fit rounded-xl sm:max-w-5xl max-w-sm mb-6 transition-colors duration-200 relative ${
+        isOwnMessage ? "bg-primary ml-auto " : "bg-secondary/10"
       }`}
+      ref={ref}
     >
       {/* Avatar */}
-      <div className="flex-shrink-0">
-        {user.avatar ? (
-          <img
-            src={user.avatar}
-            alt={user.name}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-        ) : (
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              isOwnMessage ? "bg-white/20" : "bg-primary/10"
-            }`}
-          >
-            <span
-              className={`text-xs font-medium ${
-                isOwnMessage ? "text-white" : "text-primary"
-              }`}
-            >
-              {user.initials}
-            </span>
-          </div>
-        )}
-        {user.isOnline && (
-          <div
-            className={`w-3 h-3 bg-green-500 rounded-full border-2 border-background -mt-2 ml-6`}
-          ></div>
-        )}
-      </div>
+      {!isOwnMessage && (
+        <MessageAvatar user={user} isOwnMessage={isOwnMessage} />
+      )}
 
       {/* Message Content */}
       <div className="flex-1 min-w-0">
         {/* Message Header */}
-        <div
-          className={`flex items-baseline gap-2 mb-1 ${
-            isOwnMessage ? "" : ""
-          }`}
-        >
-          <span className={`font-semibold text-sm ${getRoleColor(user.role)}`}>
-            {isOwnMessage ? "You" : user.name}
-          </span>
-          {user.role === "instructor" && (
-            <span
-              className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                isOwnMessage
-                  ? "bg-white/20 text-white"
-                  : "bg-primary/10 text-primary"
-              }`}
-            >
-              Instructor
-            </span>
-          )}
-          {user.role === "admin" && (
-            <span
-              className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                isOwnMessage
-                  ? "bg-white/20 text-white"
-                  : "bg-accent/10 text-accent"
-              }`}
-            >
-              Admin
-            </span>
-          )}
-          <span
-            className={`text-xs ${
-              isOwnMessage ? "text-white/70" : "text-para-muted"
-            }`}
-          >
-            {/* {format(message.timestamp, { addSuffix: true })} */}
-          </span>
-          {message.edited && (
-            <span
-              className={`text-xs ${
-                isOwnMessage ? "text-white/70" : "text-para-muted"
-              }`}
-            >
-              (edited)
-            </span>
-          )}
-        </div>
+        <MessageHeader
+          user={user}
+          message={message}
+          isOwnMessage={isOwnMessage}
+        />
 
-        {/* Reply Context */}
+        {/* Reply Context - Fixed click handling */}
         {replyToMessage && replyToUser && (
-          <div
-            className={`mb-2 p-3 rounded-md py-1 ${
-              isOwnMessage
-                ? "border-r-2 border-white/30 bg-white/10 "
-                : "border-l-2 border-gray-200 bg-gray-50/50"
-            }`}
-          >
-            <div
-              className={`text-xs mb-1 ${
-                isOwnMessage ? "text-white/80" : "text-para-muted"
-              }`}
-            >
-              Replying to{" "}
-              <span
-                className={`font-medium ${
-                  isOwnMessage ? "text-white" : "text-heading"
-                }`}
-              >
-                {replyToUser.name}
-              </span>
-            </div>
-            <div
-              className={`text-sm line-clamp-2 ${
-                isOwnMessage ? "text-white/90" : "text-para"
-              }`}
-            >
-              {replyToMessage.content}
-            </div>
-          </div>
+          <RepliedMessage
+            isOwnMessage={isOwnMessage}
+            replyToMessage={replyToMessage}
+            replyToUser={replyToUser}
+            handleReplyClick={handleReplyClick}
+          />
         )}
 
         {/* Message Text */}
         <div
           className={`text-sm leading-relaxed mb-2 whitespace-pre-wrap ${
-            isOwnMessage ? "text-white" : "text-para"
+            isOwnMessage ? "text-white/95" : "text-para"
           }`}
         >
           {message.content}
@@ -181,10 +158,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
             {message.attachments.map((attachment) => (
               <div
                 key={attachment.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border w-fit ${
+                className={`flex items-center gap-3 p-3 rounded-lg  w-fit ${
                   isOwnMessage
                     ? "bg-white/10 border-white/20"
-                    : "bg-gray-50 border-gray-200"
+                    : "bg-secondary/15"
                 }`}
               >
                 <FileText
@@ -210,11 +187,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     </div>
                   )}
                 </div>
-                <button
-                  className={`p-1 rounded transition-colors ${
-                    isOwnMessage ? "hover:bg-white/20" : "hover:bg-gray-200"
-                  }`}
-                >
+                <button className="p-1 rounded transition-colors">
                   <Download
                     className={`h-4 w-4 ${
                       isOwnMessage ? "text-white/80" : "text-para-muted"
@@ -229,23 +202,19 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* Reactions */}
         {message.reactions.length > 0 && (
           <div
-            className={`flex items-center gap-1 mb-2 ${
+            className={`flex items-center gap-1 mb-2 flex-wrap ${
               isOwnMessage ? "justify-end" : ""
             }`}
           >
             {message.reactions.map((reaction, index) => (
               <button
                 key={index}
-                onClick={() => onReaction(message.id, reaction.emoji)}
-                className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full border transition-colors ${
-                  reaction.users.includes(currentUserId)
-                    ? isOwnMessage
-                      ? "bg-white/20 border-white/30 text-white"
-                      : "bg-primary/10 border-primary/20 text-primary"
-                    : isOwnMessage
-                    ? "bg-white/10 border-white/20 text-white/80 hover:bg-white/20"
-                    : "bg-gray-50 border-gray-200 text-para-muted hover:bg-gray-100"
-                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onReaction(message.id, reaction.emoji);
+                }}
+                className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full transition-colors bg-primary/15 text-heading`}
               >
                 <span>{reaction.emoji}</span>
                 <span className="font-medium">{reaction.count}</span>
@@ -256,12 +225,16 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
         {/* Message Actions */}
         <div
-          className={`flex items-center gap-1 opacity-100 transition-opacity ${
+          className={`flex items-center gap-1 opacity-100 transition-opacity relative ${
             isOwnMessage ? "justify-end" : ""
           }`}
         >
           <button
-            onClick={() => onReply(message.id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onReply(message.id);
+            }}
             className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
               isOwnMessage
                 ? "text-white/80 hover:text-white hover:bg-white/10"
@@ -271,16 +244,46 @@ const MessageItem: React.FC<MessageItemProps> = ({
             <Reply className="h-3 w-3" />
             Reply
           </button>
-          <button
-            className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
-              isOwnMessage
-                ? "text-white/80 hover:text-white hover:bg-white/10"
-                : "text-para-muted hover:text-primary hover:bg-primary/5"
-            }`}
-          >
-            <Smile className="h-3 w-3" />
-            React
-          </button>
+
+          {/* React Button with Emoji Picker */}
+          <div className="relative">
+            <button
+              onClick={toggleEmojiPicker}
+              className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
+                isOwnMessage
+                  ? "text-white/80 hover:text-white hover:bg-white/10"
+                  : "text-para-muted hover:text-primary hover:bg-primary/5"
+              } ${
+                showEmojiPicker
+                  ? isOwnMessage
+                    ? "bg-white/10"
+                    : "bg-primary/5"
+                  : ""
+              }`}
+            >
+              <Smile className="h-3 w-3" />
+              React
+            </button>
+
+            {/* Emoji Picker Popup - Fixed positioning and event handling */}
+            {showEmojiPicker && (
+              <div
+                ref={emojiPickerRef}
+                className={`absolute z-[60] top-[35px] ${
+                  isOwnMessage ? "right-0" : "left-0"
+                } shadow-xl border border-border rounded-lg bg-background overflow-hidden`}
+                style={{ width: "280px", height: "400px" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <EmojiPicker onEmojiSelect={handleEmojiSelect}>
+                  <EmojiPickerSearch placeholder="Search emojis..." />
+                  <EmojiPickerContent />
+                  <EmojiPickerFooter />
+                </EmojiPicker>
+              </div>
+            )}
+          </div>
+
           <button
             className={`p-1 rounded transition-colors ${
               isOwnMessage

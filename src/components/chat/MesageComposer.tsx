@@ -51,10 +51,10 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
   };
 
   return (
-    <div className="border-t border-light-border bg-background w-full ">
+    <div className="border-t border-light-border bg-main-background w-full ">
       {/* Reply Context */}
       {replyingTo && replyingToUser && (
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="px-6 py-3 ">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="text-xs text-para-muted mb-1">
@@ -71,24 +71,24 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
               onClick={onCancelReply}
               className="p-1 hover:bg-gray-200 rounded transition-colors ml-2"
             >
-              <X className="h-4 w-4 text-para-muted" />
+              <X className="h-4 w-4 text-heading relative right-[70px] " />
             </button>
           </div>
         </div>
       )}
 
       {/* Composer */}
-      <div className="px-4 py-3 w-[96%]">
+      <div className="px-4 py-3 ">
         <div className="flex items-center gap-3">
           {/* Message Input */}
-          <div className="flex-1 relative">
+          <div className="w-[93%] relative">
             <textarea
               ref={textareaRef}
               value={message}
               onChange={handleTextareaChange}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
-              className="w-full px-4 py-3 pr-12 border border-light-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none overflow-hidden min-h-[44px] max-h-[120px] text-sm"
+              className="text-para w-full px-4 py-3 pr-12 border border-light-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none overflow-hidden min-h-[44px] max-h-[120px] text-sm"
               rows={1}
             />
 

@@ -9,6 +9,7 @@ import {
   IconChevronRight,
 } from "@tabler/icons-react";
 import NotificationDropdown from "../navbar/Notifications";
+import { useTheme } from "../layout/ThemeProvider";
 
 interface Links {
   label: string;
@@ -117,6 +118,8 @@ export const MobileSidebar = ({
   ...props
 }: React.ComponentProps<"div">) => {
   const { open, setOpen } = useSidebar();
+  const { isDarkMode } = useTheme();
+
   return (
     <>
       <div
@@ -127,7 +130,11 @@ export const MobileSidebar = ({
       >
         <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={"/logo.svg"} alt="Logo" className="h-8 w-8" />
+            {isDarkMode ? (
+              <img src={"/dark-mode-logo.svg"} alt="Logo" className="h-8 w-8" />
+            ) : (
+              <img src={"/logo.svg"} alt="Logo" className="h-8 w-8" />
+            )}
             <span className="text-xl font-raleway font-bold text-heading">
               Merge
             </span>
@@ -152,7 +159,7 @@ export const MobileSidebar = ({
                 ease: "easeInOut",
               }}
               className={cn(
-                "fixed h-full w-full inset-0 bg-white p-6 z-[100] flex flex-col",
+                "fixed h-full w-full inset-0 bg-main-background p-6 z-[100] flex flex-col",
                 className
               )}
             >

@@ -21,6 +21,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import MobileNavbarOptions from "../navbar/MobileNavbarOptions";
+import { useTheme } from "./ThemeProvider";
 interface Links {
   label: string;
   href: string;
@@ -86,6 +87,7 @@ export default function AppSidebar({
 }) {
   const [open, setOpen] = useState(true);
   const pathname = usePathname();
+  const { isDarkMode } = useTheme();
   const isActive = (href: string) => pathname.endsWith(href);
   const links = sidebarLinks;
   return (
@@ -93,7 +95,15 @@ export default function AppSidebar({
       <SidebarBody className="justify-between gap-10">
         <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
           <div className="text-2xl font-raleway font-bold text-heading flex items-center gap-2 justify-start ml-2">
-            <img src={"/logo.svg"} alt="Logo" className="h-10 w-10" />
+            {isDarkMode ? (
+              <img
+                src={"/dark-mode-logo.svg"}
+                alt="Logo"
+                className="h-10 w-10"
+              />
+            ) : (
+              <img src={"/logo.svg"} alt="Logo" className="h-10 w-10" />
+            )}
             {open ? <span>Merge</span> : null}
           </div>
           <div className="mt-8 flex flex-col gap-2">

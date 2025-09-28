@@ -14,6 +14,7 @@ const GeneralChat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -45,10 +46,14 @@ const GeneralChat: React.FC = () => {
   };
 
   const handleReaction = (messageId: string, emoji: string) => {
+    console.log("Reaction added:", { messageId, emoji }); // Better than alert
+
     setMessages((prev) =>
       prev.map((message) => {
         if (message.id === messageId) {
-          const existingReaction = message.reactions.find(
+          // Create a new message object to avoid mutation
+          const updatedMessage = { ...message };
+          const existingReaction = updatedMessage.reactions.find(
             (r) => r.emoji === emoji
           );
 
@@ -56,32 +61,60 @@ const GeneralChat: React.FC = () => {
             // Toggle user's reaction
             const userIndex = existingReaction.users.indexOf(currentUserId);
             if (userIndex > -1) {
-              // Remove reaction
-              existingReaction.users.splice(userIndex, 1);
+              // Remove reaction - create new arrays to avoid mutation
+              existingReaction.users = existingReaction.users.filter(
+                (id) => id !== currentUserId
+              );
               existingReaction.count--;
+
               // Remove reaction if no users left
               if (existingReaction.count === 0) {
-                message.reactions = message.reactions.filter(
+                updatedMessage.reactions = updatedMessage.reactions.filter(
                   (r) => r.emoji !== emoji
                 );
               }
             } else {
               // Add reaction
-              existingReaction.users.push(currentUserId);
+              existingReaction.users = [
+                ...existingReaction.users,
+                currentUserId,
+              ];
               existingReaction.count++;
             }
           } else {
             // Add new reaction
-            message.reactions.push({
-              emoji,
-              users: [currentUserId],
-              count: 1,
-            });
+            updatedMessage.reactions = [
+              ...updatedMessage.reactions,
+              {
+                emoji,
+                users: [currentUserId],
+                count: 1,
+              },
+            ];
           }
+
+          return updatedMessage;
         }
         return message;
       })
     );
+  };
+
+  // Function to scroll to a specific message
+  const scrollToMessage = (messageId: string) => {
+    const messageElement = messageRefs.current[messageId];
+    if (messageElement) {
+      messageElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      // Add a brief highlight effect
+      messageElement.style.border = "2px solid var(--heading)";
+      setTimeout(() => {
+        messageElement.style.border = "";
+      }, 2000);
+    }
   };
 
   const getUserById = (userId: string) => {
@@ -110,12 +143,16 @@ const GeneralChat: React.FC = () => {
             return (
               <MessageItem
                 key={message.id}
+                ref={(el) => {
+                  messageRefs.current[message.id] = el;
+                }}
                 message={message}
                 user={user}
                 replyToMessage={replyToMessage}
                 replyToUser={replyToUser}
                 onReply={handleReply}
                 onReaction={handleReaction}
+                onScrollToMessage={scrollToMessage}
               />
             );
           })}
