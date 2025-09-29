@@ -1,22 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  IconChevronDown,
-  IconLogout,
-  IconSettings,
-  IconUser,
-} from "@tabler/icons-react";
+import { IconChevronDown, IconLogout } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "motion/react";
 import Avatar from "../ui/Avatar";
-
-interface DropdownOption {
-  label: string;
-  href: string;
-  icon?: React.ReactNode;
-}
+import DropdownMenu, { DropdownOption } from "@/components/ui/Dropdown";
 
 interface ProfileDropdownProps {
   userName: string;
@@ -26,7 +14,7 @@ interface ProfileDropdownProps {
   className?: string;
   showRole?: boolean;
   variant?: "default" | "navbar";
-  options?: DropdownOption[];
+  options?: DropdownOption[]; // reuse our DropdownOption type
 }
 
 const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
@@ -68,11 +56,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
         className="flex items-center max-w-xs rounded-full focus:outline-none"
       >
         <div
-          className={`flex items-center gap-2 px-2 py-1.5 rounded-full transition-colors
-          
-            bg-secondary/10 backdrop-blur-sm border border-white/20 hover:bg-background/20"
-            hover:bg-gray-100"
-          `}
+          className={`flex items-center gap-2 px-2 py-1.5 rounded-full transition-colors bg-secondary/10 backdrop-blur-sm border border-white/20`}
         >
           <Avatar profileImage={profileImage} variant={variant} />
           <div className="hidden md:block text-left">
@@ -101,46 +85,32 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="origin-top-right absolute right-0 mt-2 w-45 rounded-lg shadow-lg bg-main-background border border-light-border z-50 overflow-hidden"
+            transition={{ duration: 0.18 }}
+            className="origin-top-right absolute right-0 mt-2 rounded-lg z-50"
           >
-            {/* User Info Header */}
+            {/* Use the reusable DropdownMenu */}
+            <DropdownMenu
+              options={options}
+              onClose={() => setProfileOpen(false)}
+              align="right"
+            />
 
-            <div className="py-1">
-              {options.map((option, index) => (
-                <Link
-                  key={index}
-                  href={option.href}
-                  className="flex items-center px-4 py-2 text-sm  text-para hover:bg-gray-100 transition-colors"
-                  onClick={() => setProfileOpen(false)}
-                >
-                  {option.icon && (
-                    <span className="mr-3 text-para-muted">
-                      {option.icon}
-                    </span>
-                  )}
-                  {option.label}
-                </Link>
-              ))}
+            {/* Separator + Sign out (handled here so it remains simple) */}
+            {options.length > 0 && onSignOut && <div className="mt-1" />}
 
-              {options.length > 0 && onSignOut && (
-                <div className="border-t border-gray-100 my-1"></div>
-              )}
-
-              {onSignOut && (
-                <motion.button
-                  onClick={() => {
-                    onSignOut();
-                    setProfileOpen(false);
-                  }}
-                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  whileHover={{ backgroundColor: "#fef2f2" }}
-                >
-                  <IconLogout className="h-4 w-4 mr-3" />
-                  Sign out
-                </motion.button>
-              )}
-            </div>
+            {onSignOut && (
+              <motion.button
+                onClick={() => {
+                  onSignOut();
+                  setProfileOpen(false);
+                }}
+                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors rounded-b-md bg-main-background border border-light-border"
+                whileHover={{ backgroundColor: "#fef2f2" }}
+              >
+                <IconLogout className="h-4 w-4 mr-3" />
+                Sign out
+              </motion.button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

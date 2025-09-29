@@ -1,7 +1,7 @@
 // File: src/components/rooms/chat/MessageComposer.tsx
 import React, { useState, useRef } from "react";
 import { Send, Paperclip, Smile, X, AtSign } from "lucide-react";
-import { ChatMessage, User } from "@/lib/constants/mockChatData";
+import { ChatMessage, User } from "@/lib/constants/mock-chat-data";
 
 interface MessageComposerProps {
   onSendMessage: (content: string, replyToId?: string) => void;
@@ -51,10 +51,10 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
   };
 
   return (
-    <div className="border-t border-light-border bg-main-background w-full ">
+    <div className="border-t border-light-border w-full md:w-[92%] lg:w-[93%] xl:w-[94%] 2xl:w-[95.1%]  bg-background">
       {/* Reply Context */}
       {replyingTo && replyingToUser && (
-        <div className="px-6 py-3 ">
+        <div className="px-6 py-3 relative ">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="text-xs text-para-muted mb-1">
@@ -69,19 +69,19 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
             </div>
             <button
               onClick={onCancelReply}
-              className="p-1 hover:bg-gray-200 rounded transition-colors ml-2"
+              className="p-1  rounded transition-colors ml-2"
             >
-              <X className="h-4 w-4 text-heading relative right-[70px] " />
+              <X className="h-4 w-4 text-heading absolute right-[25px] " />
             </button>
           </div>
         </div>
       )}
 
       {/* Composer */}
-      <div className="px-4 py-3 ">
-        <div className="flex items-center gap-3">
+      <div className="px-4 py-3 w-full ">
+        <div className="flex items-center gap-3 w-full">
           {/* Message Input */}
-          <div className="w-[93%] relative">
+          <div className="flex-1 relative">
             <textarea
               ref={textareaRef}
               value={message}
@@ -110,7 +110,7 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
           <button
             onClick={handleSend}
             disabled={!message.trim()}
-            className={`px-3.5 py-3 h-[42px] rounded-lg relative top-[-5px] transition-all duration-200 ${
+            className={`px-3.5 py-3 flex-shrink-0 h-[42px] rounded-lg relative top-[-5px] transition-all duration-200 ${
               message.trim()
                 ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
                 : "bg-primary/50 text-white cursor-not-allowed"

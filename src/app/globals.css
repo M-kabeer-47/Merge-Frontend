@@ -7,13 +7,14 @@
   --accent: #e69a29;
   --secondary: #8668c0;
   --heading: #111827; /* para-gray-900 */
-  --para: #4b5563; /* para-gray-600 */
+  --para: #3a424d; /* para-gray-600 */
   --para-muted: #6b7280; /* para-gray-500 */
   --button: #374151; /* para-gray-700 */
   --radius: 0.625rem;
   --background: #ffffff;
   --main-background: #f7f7f7;
   --light-border: #e5e7eb;
+  --destructive: #ef4444;
   /* para-gray-800 */
 }
 .dark {
@@ -26,12 +27,13 @@
   --button: #f3f4f6; /* Very light gray for button text */
   --radius: 0.625rem;
   --background: #130c20; /* Dark blue-gray background */
-  --main-background:#120b1f; /* Darker main background */
+  --main-background: #120b1f; /* Darker main background */
   --border: #374151; /* Dark gray borders */
   --card: #1f2937; /* Same as background for cards */
   --input: #374151; /* Dark gray for inputs */
   --muted: #111827; /* Very dark for muted sections */
   --popover: #1f2937; /* Dark for popovers */
+  --destructive: #ff6b6b;
   --light-border: #363e4e; /* Dark gray for light borders */ /* White text */
 }
 body {
@@ -50,7 +52,7 @@ body {
   --color-accent: var(--accent);
   --color-destructive: var(--destructive);
   --color-heading: var(--heading);
-
+  --color-destructive: var(--destructive);
   --color-para: var(--para);
   --color-para-muted: var(--para-muted);
   --color-button: var(--button);

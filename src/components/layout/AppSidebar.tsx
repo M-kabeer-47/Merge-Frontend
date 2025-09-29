@@ -85,7 +85,7 @@ export default function AppSidebar({
 }: {
   user: { name: string; role: string; initials: string; avatar?: string };
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { isDarkMode } = useTheme();
   const isActive = (href: string) => pathname.endsWith(href);

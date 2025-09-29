@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { IconSettings, IconUser } from "@tabler/icons-react";
+import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
 import ToggleSwitch from "@/components/navbar/DarkModeToggle";
 import NotificationDropdown from "@/components/navbar/Notifications";
 import ProfileDropdown from "@/components/navbar/ProfileDropdown";
@@ -55,14 +55,20 @@ export default function Navbar({
   // Profile dropdown options
   const profileOptions = [
     {
-      label: "Profile",
+      title: "Profile",
       href: "/profile",
       icon: <IconUser className="h-4 w-4" />,
     },
     {
-      label: "Settings",
+      title: "Settings",
       href: "/settings",
       icon: <IconSettings className="h-4 w-4" />,
+    },
+    {
+      title: "Sign Out",
+      destructive: true,
+      icon: <IconLogout className="h-4 w-4 text-destructive" />,
+      action: handleSignOut,
     },
   ];
 
