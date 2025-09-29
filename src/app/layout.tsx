@@ -4,7 +4,8 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Roboto, Raleway } from "next/font/google";
 import { CircleCheck } from "lucide-react";
-import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -23,6 +24,14 @@ export const metadata: Metadata = {
   description:
     "Advanced collaborative learning and project management platform",
 };
+const toastIcons = {
+  success: (
+    <CircleCheck
+      className="h-[22px] w-[22px] text-white text-center"
+      fill="#4CAF50"
+    />
+  ),
+};
 
 export default function RootLayout({
   children,
@@ -33,17 +42,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${roboto.variable} ${raleway.variable}`}>
         <ThemeProvider defaultTheme="light">
-          {children}
-          <Toaster
-            icons={{
-              success: (
-                <CircleCheck
-                  className="h-[22px] w-[22px] text-white text-center"
-                  fill="#4CAF50"
-                />
-              ),
-            }}
-          />
+          <ReactQueryProvider>
+            {children}
+            <Toaster icons={toastIcons} />
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

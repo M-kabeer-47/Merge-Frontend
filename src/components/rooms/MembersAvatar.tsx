@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
-import { User } from "@/lib/constants/mockData";
+import { User } from "@/lib/constants/mock-data";
 
 interface MemberAvatarsProps {
   members: User[];

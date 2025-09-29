@@ -3,7 +3,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { IconSun, IconMoon } from "@tabler/icons-react";
 import { Moon } from "lucide-react";
-import { useTheme } from "../layout/ThemeProvider";
+import { useTheme } from "../../providers/ThemeProvider";
 
 interface ToggleSwitchProps {
   isDarkMode: boolean;

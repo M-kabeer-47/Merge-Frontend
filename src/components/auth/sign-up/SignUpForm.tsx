@@ -9,6 +9,7 @@ import { partialUserSchema, userSchema, UserType } from "@/schemas/user/user";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import useSignUp from "@/hooks/auth/sign-up";
 import { toast } from "sonner";
 // Animation variants
 const containerVariants = {
@@ -35,7 +36,7 @@ const itemVariants = {
 };
 
 export default function SignUpForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signUpUser, isError, isPending } = useSignUp();
   const {
     control,
     handleSubmit,
@@ -52,11 +53,7 @@ export default function SignUpForm() {
     },
   });
   const submitForm = async (data: Partial<UserType>) => {
-    console.log("Form submitted successfully:", data);
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    toast.success("Account created successfully!");
+    signUpUser(data as UserType);
   };
 
   return (
@@ -211,10 +208,12 @@ export default function SignUpForm() {
               type="submit"
               className="w-full mt-8 bg-primary hover:bg-primary/90 transition-all duration-200 cursor-pointer"
               size="lg"
-              onClick={() => {console.log("Errors: ", errors);}}
-              disabled={isSubmitting}
+              onClick={() => {
+                console.log("Errors: ", errors);
+              }}
+              disabled={isPending}
             >
-              {isSubmitting ? <LoadingSpinner /> : "Create Account"}
+              {isPending ? <LoadingSpinner /> : "Create Account"}
             </Button>
           </motion.div>
         </motion.form>

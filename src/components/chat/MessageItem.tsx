@@ -1,6 +1,6 @@
 // File: src/components/chat/MessageItem.tsx
 import React, { useState, useRef, useEffect } from "react";
-import { ChatMessage, User, currentUserId } from "@/lib/constants/mockChatData";
+import { ChatMessage, User, currentUserId } from "@/lib/constants/mock-chat-data";
 import { Reply, MoreHorizontal, Smile, FileText, Download } from "lucide-react";
 import { format } from "date-fns";
 import {

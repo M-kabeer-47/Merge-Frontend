@@ -5,7 +5,7 @@ import { IconPlus, IconUsers, IconSearch } from "@tabler/icons-react";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import RoomCard from "@/components/rooms/RoomCard";
-import { sampleRooms } from "@/lib/constants/mockData";
+import { sampleRooms } from "@/lib/constants/mock-data";
 import { Button } from "@/components/ui/Button";
 import { Link } from "lucide-react";
 

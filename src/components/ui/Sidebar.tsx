@@ -9,7 +9,7 @@ import {
   IconChevronRight,
 } from "@tabler/icons-react";
 import NotificationDropdown from "../navbar/Notifications";
-import { useTheme } from "../layout/ThemeProvider";
+import { useTheme } from "../../providers/ThemeProvider";
 
 interface Links {
   label: string;

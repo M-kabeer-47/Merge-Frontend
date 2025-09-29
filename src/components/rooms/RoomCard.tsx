@@ -3,7 +3,7 @@ import React from "react";
 import { motion } from "motion/react";
 import Avatar from "@/components/ui/Avatar";
 import MemberAvatars from "./MembersAvatar";
-import { Room } from "@/lib/constants/mockData";
+import { Room } from "@/lib/constants/mock-data";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { Button } from "@/components/ui/Button";
 interface RoomCardProps {

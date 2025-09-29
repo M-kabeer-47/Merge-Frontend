@@ -21,7 +21,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import MobileNavbarOptions from "../navbar/MobileNavbarOptions";
-import { useTheme } from "./ThemeProvider";
+import { useTheme } from "../../providers/ThemeProvider";
 interface Links {
   label: string;
   href: string;

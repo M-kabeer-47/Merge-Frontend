@@ -4,7 +4,7 @@ import { easeOut, motion } from "framer-motion";
 import { Input } from "@/components/ui/Input";
 import { FormField } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
-import { signInSchema, SignInType } from "@/schemas/auth/signIn";
+import { signInSchema, SignInType } from "@/schemas/auth/sign-in";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
