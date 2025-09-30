@@ -53,6 +53,10 @@ export default function SignUpForm() {
     },
   });
   const submitForm = async (data: Partial<UserType>) => {
+    let formData = {
+      ...data,
+    }
+    formData.delete/('confirmPassword');
     signUpUser(data as UserType);
   };
 

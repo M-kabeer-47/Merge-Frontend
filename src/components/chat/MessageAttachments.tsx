@@ -9,6 +9,28 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
+const downloadFile = async (url: string, fileName: string) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the blob URL
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error("Download failed:", error);
+    // Fallback: open in new tab
+    window.open(url, "_blank");
+  }
+};
+
 interface MessageAttachmentsProps {
   message: ChatMessage;
   isOwnMessage: boolean;
@@ -82,6 +104,10 @@ const ImageAttachmentGrid: React.FC<{
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
           <button
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadFile(attachment.url, attachment.name);
+            }}
             className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 rounded-full transition-all opacity-0 group-hover:opacity-100"
             title="Download"
           >
@@ -135,7 +161,11 @@ const FileAttachmentList: React.FC<{
               </div>
             )}
           </div>
-          <button className="p-1 rounded transition-colors hover:bg-black/10">
+          <button
+            onClick={() => downloadFile(attachment.url, attachment.name)}
+            className="p-1 rounded transition-colors hover:bg-black/10"
+            title="Download"
+          >
             <Download
               className={`h-4 w-4 ${
                 isOwnMessage ? "text-white/80" : "text-para-muted"

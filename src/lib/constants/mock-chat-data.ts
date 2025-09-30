@@ -24,6 +24,7 @@ export interface ChatMessage {
   attachments?: {
     id: string;
     name: string;
+    file: File;
     type: 'image' | 'file' | 'link';
     url: string;
     size?: number;
@@ -132,6 +133,7 @@ export const mockMessages: ChatMessage[] = [
       {
         id: 'att1',
         name: 'useEffect-patterns-guide.pdf',
+        file: new File([], 'useEffect-patterns-guide.pdf', { type: 'application/pdf' }),
         type: 'file',
         url: '/files/useEffect-guide.pdf',
         size: 245760

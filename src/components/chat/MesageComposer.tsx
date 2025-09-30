@@ -296,7 +296,7 @@ const MessageComposer = forwardRef(function MessageComposer(
                 ref={imageInputRef}
                 type="file"
                 className="hidden"
-                accept="image/*"
+                accept=".mp3,.mp4,.mov,.avi,.mkv,.jpg,.jpeg,.png,.gif,.bmp,.webp"
                 multiple
                 onChange={handleImageChange}
               />
@@ -315,6 +315,7 @@ const MessageComposer = forwardRef(function MessageComposer(
                 className="hidden"
                 multiple
                 onChange={handleFileChange}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.7z"
               />
 
               {/* <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">

@@ -10,6 +10,7 @@ import {
 import MessageItem from "@/components/chat/MessageItem";
 import MessageComposer from "@/components/chat/MesageComposer";
 import { AttachmentFile } from "@/components/chat/AttachmentPreview";
+import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
 
 const GeneralChat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
@@ -22,7 +23,7 @@ const GeneralChat: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = (
+  const handleSendMessage = async (
     content: string,
     replyToId?: string,
     attachments?: AttachmentFile[]
@@ -40,8 +41,18 @@ const GeneralChat: React.FC = () => {
       };
       setMessages((prev) => [...prev, newMessage]);
     } else {
-      // Handle attachments
+      // Handle attachments - upload to Cloudinary
       const attachmentType = attachments[0].type;
+      const uploadedAttachments = await Promise.all(
+        attachments.map(async (att: AttachmentFile) => {
+          const uploadedUrl = await uploadToCloudinary(att.file);
+          alert("Uploaded " + uploadedUrl);
+          return {
+            ...att,
+            url: uploadedUrl,
+          };
+        })
+      );
 
       if (attachmentType === "image") {
         // For images, send one message with all images
@@ -53,18 +64,20 @@ const GeneralChat: React.FC = () => {
           replyTo: replyToId,
           reactions: [],
           seen: false,
-          attachments: attachments.map((att, index) => ({
+          attachments: uploadedAttachments.map((att, index) => ({
             id: `att-${Date.now()}-${index}`,
             name: att.file.name,
+            file: att.file,
             type: "image" as const,
-            url: att.preview,
+            url: att.url,
             size: att.file.size,
+            preview: att.preview,
           })),
         };
         setMessages((prev) => [...prev, newMessage]);
       } else {
         // For files, send separate messages for each file
-        const newMessages: ChatMessage[] = attachments.map((att, index) => ({
+        const newMessages: ChatMessage[] = uploadedAttachments.map((att, index) => ({
           id: `${Date.now()}-${index}`,
           userId: currentUserId,
           content: index === 0 ? content : "",
@@ -76,9 +89,11 @@ const GeneralChat: React.FC = () => {
             {
               id: `att-${Date.now()}-${index}`,
               name: att.file.name,
+              file: att.file,
               type: "file" as const,
-              url: att.preview,
+              url: att.url,
               size: att.file.size,
+              preview: att.preview,
             },
           ],
         }));
@@ -146,7 +161,6 @@ const GeneralChat: React.FC = () => {
                 replyToUser={replyToUser}
                 onReply={handleReply}
                 onScrollToMessage={scrollToMessage}
-                showSeenStatus={true}
               />
             );
           })}
