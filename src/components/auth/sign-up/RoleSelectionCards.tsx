@@ -33,7 +33,7 @@ export default function RoleSelectionCards({
                 alt="Student"
                 className="w-15 h-15 mt-1 flex-shrink-0 scale-160  "
               />
-              <h3 className="font-raleway text-center font-semibold text-heading text-lg mb-1">
+              <h3 className="font-raleway text-center font-semibold text-heading text-base sm:text-lg mb-1">
                 Student
               </h3>
             </div>
@@ -58,7 +58,7 @@ export default function RoleSelectionCards({
                 alt="Instructor"
                 className="w-15 h-15 mt-1 flex-shrink-0 scale-160"
               />
-              <h3 className="font-raleway font-semibold text-heading text-lg mb-1">
+              <h3 className="font-raleway font-semibold text-heading text-base  sm:text-lg mb-1">
                 Instructor
               </h3>
             </div>

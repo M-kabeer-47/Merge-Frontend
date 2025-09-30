@@ -1,36 +1,197 @@
-// File: src/components/rooms/chat/MessageComposer.tsx
-import React, { useState, useRef } from "react";
-import { Send, Paperclip, Smile, X, AtSign } from "lucide-react";
+"use client";
+import React, {
+  useState,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  ForwardedRef,
+  useEffect,
+} from "react";
+import {
+  Send,
+  Paperclip,
+  Smile,
+  X,
+  AtSign,
+  Image as ImageIcon,
+} from "lucide-react";
 import { ChatMessage, User } from "@/lib/constants/mock-chat-data";
+import {
+  EmojiPicker,
+  EmojiPickerSearch,
+  EmojiPickerContent,
+  EmojiPickerFooter,
+} from "@/components/ui/EmojiPicker";
+import AttachmentPreview, { AttachmentFile } from "./AttachmentPreview";
 
 interface MessageComposerProps {
-  onSendMessage: (content: string, replyToId?: string) => void;
+  onSendMessage: (
+    content: string,
+    replyToId?: string,
+    attachments?: AttachmentFile[]
+  ) => void;
   replyingTo?: ChatMessage;
   replyingToUser?: User;
   onCancelReply: () => void;
 }
 
-const MessageComposer: React.FC<MessageComposerProps> = ({
-  onSendMessage,
-  replyingTo,
-  replyingToUser,
-  onCancelReply,
-}) => {
+export type MessageComposerHandle = {
+  insertEmoji: (emoji: string) => void;
+};
+
+const MessageComposer = forwardRef(function MessageComposer(
+  {
+    onSendMessage,
+    replyingTo,
+    replyingToUser,
+    onCancelReply,
+  }: MessageComposerProps,
+  ref: ForwardedRef<MessageComposerHandle>
+) {
   const [message, setMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // emoji picker state & ref
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const emojiRef = useRef<HTMLDivElement | null>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileInputRef.current?.click();
+  };
+
+  const handleImageButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    imageInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newAttachments: AttachmentFile[] = [];
+
+    Array.from(files).forEach((file) => {
+      newAttachments.push({
+        file,
+        preview: URL.createObjectURL(file),
+        type: "file",
+      });
+    });
+
+    setAttachments(newAttachments);
+    e.currentTarget.value = "";
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newAttachments: AttachmentFile[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith("image/")) {
+        newAttachments.push({
+          file,
+          preview: URL.createObjectURL(file),
+          type: "image",
+        });
+      }
+    });
+
+    setAttachments(newAttachments);
+    e.currentTarget.value = "";
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments((prev) => {
+      const newAttachments = [...prev];
+      URL.revokeObjectURL(newAttachments[index].preview);
+      newAttachments.splice(index, 1);
+      return newAttachments;
+    });
+  };
+
+  const handleRemoveAllAttachments = () => {
+    setAttachments([]);
+  };
+
+  // Cleanup previews on unmount
+  // useEffect(() => {
+  //   return () => {
+  //     attachments.forEach((attachment) => {
+  //       URL.revokeObjectURL(attachment.preview);
+  //     });
+  //   };
+  // }, [attachments]);
+
+  // insert emoji helper (used internally and exposed)
+  const insertEmojiLocal = (emoji: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setMessage((prev) => prev + emoji);
+      return;
+    }
+
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? start;
+    const before = message.slice(0, start);
+    const after = message.slice(end);
+    const newValue = before + emoji + after;
+
+    setMessage(newValue);
+
+    requestAnimationFrame(() => {
+      if (!textarea) return;
+
+      const caret = start + emoji.length;
+      textarea.selectionStart = textarea.selectionEnd = caret;
+      textarea.style.height = "auto";
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
+      textarea.focus();
+    });
+  };
+
+  // expose insertEmoji to parent via ref
+  useImperativeHandle(ref, () => ({
+    insertEmoji: insertEmojiLocal,
+  }));
+
+  // close emoji picker when clicking outside
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (
+        emojiRef.current &&
+        !emojiRef.current.contains(e.target as Node) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(e.target as Node)
+      ) {
+        setIsEmojiOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   const handleSend = () => {
-    if (message.trim()) {
-      onSendMessage(message.trim(), replyingTo?.id);
+    if (message.trim() || attachments.length > 0) {
+      onSendMessage(
+        message.trim(),
+        replyingTo?.id,
+        attachments.length > 0 ? attachments : undefined
+      );
       setMessage("");
+      handleRemoveAllAttachments();
       if (replyingTo) {
         onCancelReply();
       }
-      // Reset textarea height
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
-      }
+      if (textareaRef.current) textareaRef.current.style.height = "auto";
     }
   };
 
@@ -43,16 +204,29 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
-
-    // Auto-resize textarea
     const textarea = e.target;
     textarea.style.height = "auto";
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
   };
 
+  const handleEmojiSelect = (emojiData: any) => {
+    const emoji =
+      typeof emojiData === "string"
+        ? emojiData
+        : emojiData?.emoji ?? emojiData?.native ?? "";
+    if (!emoji) return;
+    insertEmojiLocal(emoji);
+  };
+
   return (
-    <div className="border-t border-light-border w-full md:w-[92%] lg:w-[93%] xl:w-[94%] 2xl:w-[95.1%]  bg-background">
-      {/* Reply Context */}
+    <div className="border-t border-light-border w-full md:w-[92%] lg:w-[93%] xl:w-[94%] 2xl:w-[95.1%]  relative">
+      {/* Attachment Preview */}
+      <AttachmentPreview
+        attachments={attachments}
+        onRemove={handleRemoveAttachment}
+        onRemoveAll={handleRemoveAllAttachments}
+      />
+
       {replyingTo && replyingToUser && (
         <div className="px-6 py-3 relative ">
           <div className="flex items-start justify-between">
@@ -77,10 +251,27 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
         </div>
       )}
 
-      {/* Composer */}
+      {/* Emoji picker - shown above composer when isEmojiOpen */}
+      {isEmojiOpen && (
+        <div
+          ref={emojiRef}
+          className="absolute bottom-full mb-2 right-4 z-50 pointer-events-auto"
+        >
+          <div className="w-[280px] h-[420px] shadow-lg rounded-md overflow-hidden">
+            <EmojiPicker
+              onEmojiSelect={handleEmojiSelect}
+              className="h-full w-full"
+            >
+              <EmojiPickerSearch />
+              <EmojiPickerContent />
+              <EmojiPickerFooter />
+            </EmojiPicker>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 py-3 w-full ">
         <div className="flex items-center gap-3 w-full">
-          {/* Message Input */}
           <div className="flex-1 relative">
             <textarea
               ref={textareaRef}
@@ -88,30 +279,67 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
               onChange={handleTextareaChange}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
-              className="text-para w-full px-4 py-3 pr-12 border border-light-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none overflow-hidden min-h-[44px] max-h-[120px] text-sm"
+              className="text-para w-full px-4 py-3 pr-12 border border-light-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none  min-h-[46px] max-h-[120px] text-sm overflow-y-auto"
               rows={1}
             />
 
-            {/* Inline Actions */}
-            <div className="absolute right-2 bottom-4 flex items-center gap-1">
-              <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">
+            <div className="absolute right-3 bottom-4 flex items-center gap-1 ">
+              {/* Image attachment button */}
+              <button
+                onClick={handleImageButtonClick}
+                className="p-1.5 hover:bg-secondary/10 rounded transition-colors"
+                title="Attach images"
+              >
+                <ImageIcon className="h-4 w-4 text-para-muted" />
+              </button>
+              <input
+                ref={imageInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+              />
+
+              {/* File attachment button */}
+              <button
+                onClick={handleFileButtonClick}
+                className="p-1.5 hover:bg-secondary/10 rounded transition-colors"
+                title="Attach files"
+              >
                 <Paperclip className="h-4 w-4 text-para-muted" />
               </button>
-              <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                multiple
+                onChange={handleFileChange}
+              />
+
+              {/* <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">
                 <AtSign className="h-4 w-4 text-para-muted" />
-              </button>
-              <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">
+              </button> */}
+
+              {/* Emoji toggle button - opens emoji picker */}
+              <button
+                ref={emojiButtonRef}
+                onClick={(e) => {
+                  setIsEmojiOpen((s) => !s);
+                }}
+                aria-expanded={isEmojiOpen}
+                className="p-1.5 hover:bg-secondary/10 rounded transition-colors"
+              >
                 <Smile className="h-4 w-4 text-para-muted" />
               </button>
             </div>
           </div>
 
-          {/* Send Button */}
           <button
             onClick={handleSend}
-            disabled={!message.trim()}
+            disabled={!message.trim() && attachments.length === 0}
             className={`px-3.5 py-3 flex-shrink-0 h-[42px] rounded-lg relative top-[-5px] transition-all duration-200 ${
-              message.trim()
+              message.trim() || attachments.length > 0
                 ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
                 : "bg-primary/50 text-white cursor-not-allowed"
             }`}
@@ -119,11 +347,9 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
             <Send className="h-4 w-4" />
           </button>
         </div>
-
-        {/* Helper Text */}
       </div>
     </div>
   );
-};
+});
 
 export default MessageComposer;

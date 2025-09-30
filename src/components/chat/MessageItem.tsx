@@ -10,6 +10,9 @@ import MessageAvatar from "./MessageAvatar";
 import RepliedMessage from "./RepliedMessage";
 import MessageAttachments from "./MessageAttachments";
 import MessageOptions from "./MessageOptions";
+import { Check, CheckCheck } from "lucide-react";
+
+// import check, checkcheck from tabler-icons-react
 
 interface MessageItemProps {
   message: ChatMessage;
@@ -18,6 +21,7 @@ interface MessageItemProps {
   replyToUser?: User;
   onReply: (messageId: string) => void;
   onScrollToMessage: (messageId: string) => void;
+  status?: ["seen", "delivered", "sent"];
   ref: React.Ref<HTMLDivElement> | null;
 }
 
@@ -28,9 +32,20 @@ const MessageItem: React.FC<MessageItemProps> = ({
   replyToUser,
   onReply,
   onScrollToMessage,
+  status = "",
   ref,
 }) => {
   const isOwnMessage = message.userId === currentUserId;
+
+  // Format time
+  const formatTime = (date: Date) => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const formattedHours = hours % 12 || 12;
+    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+    return `${formattedHours}:${formattedMinutes} ${ampm}`;
+  };
 
   // Close emoji picker when clicking outside
 
@@ -41,6 +56,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
       onScrollToMessage(replyToMessage.id);
     }
   };
+
+  function handleDelete(messageId: string): void {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <div
@@ -85,6 +104,33 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* Attachments */}
         <MessageAttachments message={message} isOwnMessage={isOwnMessage} />
 
+        {/* Time and Seen Status */}
+        <div
+          className={`flex items-center gap-1 mt-1 justify-end 
+        `}
+        >
+          <span
+            className={`text-xs ${
+              isOwnMessage ? "text-white/60" : "text-para-muted"
+            }`}
+          >
+            {formatTime(message.timestamp)}
+          </span>
+
+          {/* Seen Status - Only show for own messages if showSeenStatus is true */}
+          {isOwnMessage && status && (
+            <span className="ml-1">
+              {status === "seen" ? (
+                <CheckCheck className="h-3.5 w-3.5 text-blue-400" />
+              ) : status === "delivered" ? (
+                <CheckCheck className="h-3.5 w-3.5 text-white/60" />
+              ) : status === "sent" ? (
+                <Check className="h-3.5 w-3.5 text-white/60" />
+              ) : null}
+            </span>
+          )}
+        </div>
+
         {/* Reactions */}
 
         {/* Message Actions */}
@@ -92,6 +138,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
           isOwnMessage={isOwnMessage}
           onReply={onReply}
           message={message}
+          onDelete={handleDelete}
         />
       </div>
     </div>

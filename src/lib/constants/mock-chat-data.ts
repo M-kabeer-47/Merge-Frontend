@@ -27,7 +27,10 @@ export interface ChatMessage {
     type: 'image' | 'file' | 'link';
     url: string;
     size?: number;
+    preview?: string;
   }[];
+  seen?: boolean; // Whether the message has been seen
+  seenBy?: string[]; // Array of user IDs who have seen the message
 }
 
 export const mockUsers: User[] = [

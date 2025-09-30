@@ -9,6 +9,7 @@ import {
 } from "@/lib/constants/mock-chat-data";
 import MessageItem from "@/components/chat/MessageItem";
 import MessageComposer from "@/components/chat/MesageComposer";
+import { AttachmentFile } from "@/components/chat/AttachmentPreview";
 
 const GeneralChat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
@@ -21,17 +22,69 @@ const GeneralChat: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = (content: string, replyToId?: string) => {
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      userId: currentUserId,
-      content,
-      timestamp: new Date(),
-      replyTo: replyToId,
-      reactions: [],
-    };
+  const handleSendMessage = (
+    content: string,
+    replyToId?: string,
+    attachments?: AttachmentFile[]
+  ) => {
+    if (!attachments || attachments.length === 0) {
+      // Send message without attachments
+      const newMessage: ChatMessage = {
+        id: Date.now().toString(),
+        userId: currentUserId,
+        content,
+        timestamp: new Date(),
+        replyTo: replyToId,
+        reactions: [],
+        seen: false, // New messages start as unseen
+      };
+      setMessages((prev) => [...prev, newMessage]);
+    } else {
+      // Handle attachments
+      const attachmentType = attachments[0].type;
 
-    setMessages((prev) => [...prev, newMessage]);
+      if (attachmentType === "image") {
+        // For images, send one message with all images
+        const newMessage: ChatMessage = {
+          id: Date.now().toString(),
+          userId: currentUserId,
+          content: content || "",
+          timestamp: new Date(),
+          replyTo: replyToId,
+          reactions: [],
+          seen: false,
+          attachments: attachments.map((att, index) => ({
+            id: `att-${Date.now()}-${index}`,
+            name: att.file.name,
+            type: "image" as const,
+            url: att.preview,
+            size: att.file.size,
+          })),
+        };
+        setMessages((prev) => [...prev, newMessage]);
+      } else {
+        // For files, send separate messages for each file
+        const newMessages: ChatMessage[] = attachments.map((att, index) => ({
+          id: `${Date.now()}-${index}`,
+          userId: currentUserId,
+          content: index === 0 ? content : "",
+          timestamp: new Date(Date.now() + index),
+          replyTo: replyToId,
+          reactions: [],
+          seen: false,
+          attachments: [
+            {
+              id: `att-${Date.now()}-${index}`,
+              name: att.file.name,
+              type: "file" as const,
+              url: att.preview,
+              size: att.file.size,
+            },
+          ],
+        }));
+        setMessages((prev) => [...prev, ...newMessages]);
+      }
+    }
   };
 
   const handleReply = (messageId: string) => {
@@ -93,13 +146,14 @@ const GeneralChat: React.FC = () => {
                 replyToUser={replyToUser}
                 onReply={handleReply}
                 onScrollToMessage={scrollToMessage}
+                showSeenStatus={true}
               />
             );
           })}
           <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className="fixed bottom-0 bg-background border-t border-light-border w-full ">
+      <div className="fixed bottom-0 bg-main-background border-t border-light-border w-full ">
         <MessageComposer
           onSendMessage={handleSendMessage}
           replyingTo={replyingTo}

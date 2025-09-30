@@ -8,7 +8,7 @@ export default function signUp() {
   const router = useRouter();
   async function signUpUser(user: UserType) {
     return apiRequest(
-      axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/sign-up`, user)
+      axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`, user)
     );
   }
   const { mutateAsync, isError, isPending } = useMutation({
