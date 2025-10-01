@@ -10,7 +10,7 @@ import MessageAvatar from "./MessageAvatar";
 import RepliedMessage from "./RepliedMessage";
 import MessageAttachments from "./MessageAttachments";
 import MessageOptions from "./MessageOptions";
-import { Check, CheckCheck } from "lucide-react";
+import { Check, CheckCheck, Loader2 } from "lucide-react";
 
 // import check, checkcheck from tabler-icons-react
 
@@ -21,7 +21,6 @@ interface MessageItemProps {
   replyToUser?: User;
   onReply: (messageId: string) => void;
   onScrollToMessage: (messageId: string) => void;
-  status?: ["seen", "delivered", "sent"];
   ref: React.Ref<HTMLDivElement> | null;
 }
 
@@ -32,7 +31,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
   replyToUser,
   onReply,
   onScrollToMessage,
-  status = "",
   ref,
 }) => {
   const isOwnMessage = message.userId === currentUserId;
@@ -117,16 +115,20 @@ const MessageItem: React.FC<MessageItemProps> = ({
             {formatTime(message.timestamp)}
           </span>
 
-          {/* Seen Status - Only show for own messages if showSeenStatus is true */}
-          {isOwnMessage && status && (
+          {/* Status - Only show for own messages */}
+          {isOwnMessage && (
             <span className="ml-1">
-              {status === "seen" ? (
+              {message.status === "sending" || message.isUploading ? (
+                <Loader2 className="h-3.5 w-3.5 text-background animate-spin" />
+              ) : message.status === "seen" ? (
                 <CheckCheck className="h-3.5 w-3.5 text-blue-400" />
-              ) : status === "delivered" ? (
+              ) : message.status === "delivered" ? (
                 <CheckCheck className="h-3.5 w-3.5 text-white/60" />
-              ) : status === "sent" ? (
+              ) : message.status === "sent" ? (
                 <Check className="h-3.5 w-3.5 text-white/60" />
-              ) : null}
+              ) : (
+                <Loader2 className="h-3.5 w-3.5 text-white/60 animate-spin" />
+              )}
             </span>
           )}
         </div>

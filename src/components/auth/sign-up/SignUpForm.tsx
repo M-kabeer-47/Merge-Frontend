@@ -10,7 +10,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import useSignUp from "@/hooks/auth/sign-up";
-import { toast } from "sonner";
+
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -55,9 +55,9 @@ export default function SignUpForm() {
   const submitForm = async (data: Partial<UserType>) => {
     let formData = {
       ...data,
-    }
-    formData.delete/('confirmPassword');
-    signUpUser(data as UserType);
+    };
+    delete formData.confirmPassword;
+    signUpUser(formData as UserType);
   };
 
   return (

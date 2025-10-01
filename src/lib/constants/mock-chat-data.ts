@@ -29,9 +29,14 @@ export interface ChatMessage {
     url: string;
     size?: number;
     preview?: string;
+    uploadProgress?: number; // 0-100
+    isUploading?: boolean;
   }[];
   seen?: boolean; // Whether the message has been seen
   seenBy?: string[]; // Array of user IDs who have seen the message
+  status?: 'sending' | 'sent' | 'delivered' | 'seen'; // Message delivery status
+  uploadProgress?: number; // Overall upload progress for the message (0-100)
+  isUploading?: boolean; // Whether attachments are currently uploading
 }
 
 export const mockUsers: User[] = [

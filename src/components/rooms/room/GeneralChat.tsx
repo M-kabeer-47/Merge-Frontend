@@ -29,7 +29,7 @@ const GeneralChat: React.FC = () => {
     attachments?: AttachmentFile[]
   ) => {
     if (!attachments || attachments.length === 0) {
-      // Send message without attachments
+      // Send message without attachments - show instantly with sending status
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
         userId: currentUserId,
@@ -37,67 +37,201 @@ const GeneralChat: React.FC = () => {
         timestamp: new Date(),
         replyTo: replyToId,
         reactions: [],
-        seen: false, // New messages start as unseen
+        seen: false,
+        status: "sending",
       };
       setMessages((prev) => [...prev, newMessage]);
+
+      // Simulate sending (replace with actual API call)
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === newMessage.id ? { ...msg, status: "sent" } : msg
+          )
+        );
+      }, 1000);
     } else {
-      // Handle attachments - upload to Cloudinary
+      // Handle attachments - show message instantly with upload progress
       const attachmentType = attachments[0].type;
-      const uploadedAttachments = await Promise.all(
-        attachments.map(async (att: AttachmentFile) => {
-          const uploadedUrl = await uploadToCloudinary(att.file);
-          alert("Uploaded " + uploadedUrl);
-          return {
-            ...att,
-            url: uploadedUrl,
-          };
-        })
-      );
+      const messageId = Date.now().toString();
 
       if (attachmentType === "image") {
-        // For images, send one message with all images
+        // For images, create one message with all images
         const newMessage: ChatMessage = {
-          id: Date.now().toString(),
+          id: messageId,
           userId: currentUserId,
           content: content || "",
           timestamp: new Date(),
           replyTo: replyToId,
           reactions: [],
           seen: false,
-          attachments: uploadedAttachments.map((att, index) => ({
-            id: `att-${Date.now()}-${index}`,
+          status: "sending",
+          isUploading: true,
+          uploadProgress: 0,
+          attachments: attachments.map((att, index) => ({
+            id: `att-${messageId}-${index}`,
             name: att.file.name,
             file: att.file,
             type: "image" as const,
-            url: att.url,
+            url: att.preview || "",
             size: att.file.size,
             preview: att.preview,
+            isUploading: true,
+            uploadProgress: 0,
           })),
         };
         setMessages((prev) => [...prev, newMessage]);
+
+        // Upload images with progress tracking
+        const uploadedAttachments = await Promise.all(
+          attachments.map(async (att: AttachmentFile, index: number) => {
+            const uploadedUrl = await uploadToCloudinary({
+              file: att.file,
+              attachmentType,
+              onProgress: (progress) => {
+                setMessages((prev) =>
+                  prev.map((msg) => {
+                    if (msg.id === messageId && msg.attachments) {
+                      const updatedAttachments = [...msg.attachments];
+                      if (updatedAttachments[index]) {
+                        updatedAttachments[index] = {
+                          ...updatedAttachments[index],
+                          uploadProgress: progress,
+                        };
+                      }
+                      const overallProgress = Math.round(
+                        updatedAttachments.reduce(
+                          (sum, a) => sum + (a.uploadProgress || 0),
+                          0
+                        ) / updatedAttachments.length
+                      );
+                      return {
+                        ...msg,
+                        attachments: updatedAttachments,
+                        uploadProgress: overallProgress,
+                      };
+                    }
+                    return msg;
+                  })
+                );
+              },
+            });
+
+            return {
+              ...att,
+              url: uploadedUrl,
+            };
+          })
+        );
+
+        // Update message with uploaded URLs
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.id === messageId) {
+              return {
+                ...msg,
+                isUploading: false,
+                uploadProgress: 100,
+                status: "sent",
+                attachments: uploadedAttachments.map((att, index) => ({
+                  id: `att-${messageId}-${index}`,
+                  name: att.file.name,
+                  file: att.file,
+                  type: "image" as const,
+                  url: att.url,
+                  size: att.file.size,
+                  preview: att.preview,
+                  isUploading: false,
+                  uploadProgress: 100,
+                })),
+              };
+            }
+            return msg;
+          })
+        );
       } else {
         // For files, send separate messages for each file
-        const newMessages: ChatMessage[] = uploadedAttachments.map((att, index) => ({
-          id: `${Date.now()}-${index}`,
+        const newMessages: ChatMessage[] = attachments.map((att, index) => ({
+          id: `${messageId}-${index}`,
           userId: currentUserId,
           content: index === 0 ? content : "",
           timestamp: new Date(Date.now() + index),
           replyTo: replyToId,
           reactions: [],
           seen: false,
+          status: "sending",
+          isUploading: true,
           attachments: [
             {
-              id: `att-${Date.now()}-${index}`,
+              id: `att-${messageId}-${index}`,
               name: att.file.name,
               file: att.file,
               type: "file" as const,
-              url: att.url,
+              url: "",
               size: att.file.size,
               preview: att.preview,
+              isUploading: true,
+              uploadProgress: 0,
             },
           ],
         }));
         setMessages((prev) => [...prev, ...newMessages]);
+
+        // Upload files individually with progress
+        await Promise.all(
+          attachments.map(async (att: AttachmentFile, index: number) => {
+            const msgId = `${messageId}-${index}`;
+            const uploadedUrl = await uploadToCloudinary({
+              file: att.file,
+              attachmentType,
+              onProgress: (progress) => {
+                setMessages((prev) =>
+                  prev.map((msg) => {
+                    if (msg.id === msgId && msg.attachments?.[0]) {
+                      return {
+                        ...msg,
+                        attachments: [
+                          {
+                            ...msg.attachments[0],
+                            uploadProgress: progress,
+                          },
+                        ],
+                      };
+                    }
+                    return msg;
+                  })
+                );
+              },
+            });
+
+            // Update message with uploaded URL
+            setMessages((prev) =>
+              prev.map((msg) => {
+                if (msg.id === msgId) {
+                  return {
+                    ...msg,
+                    isUploading: false,
+                    status: "sent",
+                    attachments: [
+                      {
+                        id: `att-${msgId}`,
+                        name: att.file.name,
+                        file: att.file,
+                        type: "file" as const,
+                        url: uploadedUrl,
+                        size: att.file.size,
+                        preview: att.preview,
+                        isUploading: false,
+                        uploadProgress: 100,
+                      },
+                    ],
+                  };
+                }
+                return msg;
+              })
+            );
+          })
+        );
       }
     }
   };

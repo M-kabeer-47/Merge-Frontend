@@ -18,7 +18,7 @@
   /* para-gray-800 */
 }
 .dark {
-  --primary: #6e29bd; /* Lighter purple for better contrast on dark */
+  --primary: #54208f; /* Lighter purple for better contrast on dark */
   --accent: #fbbf24; /* Brighter amber for visibility */
   --secondary: #a78bfa; /* Light purple variant */
   --heading: #ffffff; /* Pure white for headings */
@@ -36,6 +36,7 @@
   --destructive: #ff6b6b;
   --light-border: #363e4e; /* Dark gray for light borders */ /* White text */
 }
+
 body {
   font-family: var(--font-roboto);
 }
