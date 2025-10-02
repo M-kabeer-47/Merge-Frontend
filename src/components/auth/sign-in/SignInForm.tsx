@@ -11,6 +11,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
 import Link from "next/link";
 import useSignIn from "@/hooks/auth/sign-in";
+import { useRouter } from "next/navigation";
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -48,8 +49,8 @@ export default function SignInForm() {
       password: "",
     },
   });
-
-  const { signIn,isPending } = useSignIn({
+  const router = useRouter();
+  const { signIn, isPending } = useSignIn({
     setError,
   });
 
@@ -57,8 +58,7 @@ export default function SignInForm() {
     signIn({ email: data.email, password: data.password });
   };
   const signInWithGoogle = () => {
-    console.log("Sign in with Google clicked");
-    toast.info("Google Sign-In integration coming soon!");
+    router.push(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google/login`);
   };
 
   return (
@@ -199,7 +199,7 @@ export default function SignInForm() {
               type="submit"
               onClick={handleSubmit(submitForm)}
               className="w-full mt-4 bg-primary hover:bg-primary/90 transition-all duration-200"
-              size="lg"
+              size="sm"
               disabled={isPending}
             >
               {isPending ? <LoadingSpinner /> : "Sign In"}

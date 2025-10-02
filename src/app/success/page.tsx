@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import confetti from "canvas-confetti";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
@@ -44,7 +44,7 @@ const successConfig = {
   email_verified: {
     title: "Email Verified Successfully!",
     description:
-      "Welcome to JourneyWise! Your email has been verified and your account is now active. You can now access all features and start planning your amazing journeys.",
+      "Welcome to Merge! Your email has been verified and your account is now active. You can now access all features and start planning your amazing journeys.",
     buttonText: "Go to Profile",
     buttonHref: "/profile",
   },
@@ -57,9 +57,9 @@ const successConfig = {
 };
 
 export default function SuccessPage() {
-  const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const type = typeof params.type === "string" ? params.type : "default"; //@ts-ignore
+  const type = searchParams.get("type") || "default"; //@ts-ignore
   const config = successConfig[type] || successConfig.default;
 
   // Trigger confetti on mount
@@ -67,7 +67,7 @@ export default function SuccessPage() {
     const end = Date.now() + 3 * 1000;
     // Use different colors for email verification
     const colors =
-      type === "email-verified"
+      type === "email_verified"
         ? ["#0ea5e9", "#06b6d4", "#22c55e", "#10b981"] // Ocean blue + green theme
         : ["#22c55e", "#bbf7d0", "#a7f3d0", "#4ade80"]; // Default green theme
 
@@ -120,7 +120,7 @@ export default function SuccessPage() {
               cx="12"
               cy="12"
               r="10"
-              stroke={type === "email-verified" ? "#0ea5e9" : "#22c55e"} // Ocean blue for email verification
+              stroke={ "#22c55e"} // Ocean blue for email verification
               strokeWidth="2"
               initial={{ pathLength: 0 }}
               animate={{ pathLength: 1 }}
@@ -129,7 +129,7 @@ export default function SuccessPage() {
             />
             <motion.path
               d="M9 12L11 14L15 10"
-              stroke={type === "email-verified" ? "#0ea5e9" : "#22c55e"} // Ocean blue for email verification
+              stroke={"#22c55e"} // Ocean blue for email verification
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -146,30 +146,21 @@ export default function SuccessPage() {
         <p className="text-charcoal mb-8 text-sm">{config.description}</p>
 
         <Button
-          className={`w-full h-12 rounded-xl text-white font-semibold text-base transition ${
-            type === "email-verified"
-              ? "bg-ocean-blue hover:bg-ocean-blue/90" // Ocean blue for email verification
-              : "bg-green-600 hover:bg-green-700" // Green for other actions
-          }`}
+          className="w-full"
           onClick={() => router.push(config.buttonHref)}
         >
           {config.buttonText}
         </Button>
 
         {/* Additional secondary button for email verification */}
-        {type === "email-verified" && (
+        {type === "email_verified" && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="mt-4"
           >
-            <button
-              onClick={() => router.push("/")}
-              className="w-full py-3 px-6 border border-ocean-blue text-ocean-blue font-medium rounded-lg hover:bg-ocean-blue/5 transition-colors font-geist"
-            >
-              Explore JourneyWise
-            </button>
+            <Button onClick={() => router.push("/")} className="w-full">Dashboard</Button>
           </motion.div>
         )}
       </motion.div>

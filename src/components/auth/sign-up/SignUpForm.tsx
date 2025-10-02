@@ -211,7 +211,7 @@ export default function SignUpForm() {
             <Button
               type="submit"
               className="w-full mt-8 bg-primary hover:bg-primary/90 transition-all duration-200 cursor-pointer"
-              size="lg"
+              size="sm"
               onClick={() => {
                 console.log("Errors: ", errors);
               }}

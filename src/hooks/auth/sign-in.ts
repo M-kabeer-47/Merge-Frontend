@@ -4,14 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";
+import { ApiError } from "@/types/api-error";
 
-interface ApiError {
-  response: {
-    data: {
-      message: string;
-    };
-  };
-}
 export default function signIn({
   setError,
 }: {
@@ -46,9 +40,7 @@ export default function signIn({
         error?.response.data.message ===
         "Please verify your email to login, A link has been sent to your email"
       ) {
-        toast.error(
-          "Please verify your email."
-        );
+        toast.error("Please verify your email.");
         setError("email", { type: "manual", message: "Email not verified" });
       } else if (error?.response.data.message === "Invalid password") {
         toast.error("Invalid password. Please try again.");
