@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Roboto, Raleway } from "next/font/google";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, InfoIcon } from "lucide-react";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
@@ -31,6 +31,7 @@ const toastIcons = {
       fill="#4CAF50"
     />
   ),
+  error: <InfoIcon className="h-[22px] w-[22px] text-white" fill="#2f1a58" />,
 };
 
 export default function RootLayout({

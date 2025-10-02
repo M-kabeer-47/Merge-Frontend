@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
 import Link from "next/link";
-
+import useSignIn from "@/hooks/auth/sign-in";
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -39,24 +39,26 @@ export default function SignInForm() {
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    setError,
+    formState: { errors },
   } = useForm<SignInType>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
     },
   });
 
+  const { signIn,isPending } = useSignIn({
+    setError,
+  });
+
+  const submitForm = async (data: SignInType) => {
+    signIn({ email: data.email, password: data.password });
+  };
   const signInWithGoogle = () => {
     console.log("Sign in with Google clicked");
     toast.info("Google Sign-In integration coming soon!");
-  };
-
-  const submitForm = (data: SignInType) => {
-    console.log("Form submitted successfully:", data);
-    toast.success("Welcome back!");
   };
 
   return (
@@ -195,11 +197,12 @@ export default function SignInForm() {
           <motion.div variants={itemVariants}>
             <Button
               type="submit"
+              onClick={handleSubmit(submitForm)}
               className="w-full mt-4 bg-primary hover:bg-primary/90 transition-all duration-200"
               size="lg"
-              disabled={isSubmitting}
+              disabled={isPending}
             >
-              {isSubmitting ? <LoadingSpinner /> : "Sign In"}
+              {isPending ? <LoadingSpinner /> : "Sign In"}
             </Button>
           </motion.div>
         </motion.form>
