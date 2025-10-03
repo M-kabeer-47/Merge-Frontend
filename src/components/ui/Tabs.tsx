@@ -43,7 +43,7 @@ export default function Tabs({
 
   return (
     <div
-      className={`relative flex bg-background shadow-sm rounded-lg border border-light-border sm:h-[42px] h-[38px] overflow-x-auto ${className}`}
+      className={`relative flex bg-main-background shadow-sm rounded-lg border border-light-border sm:h-[42px] h-[38px] overflow-x-auto ${className}`}
     >
       {/* Sliding Box Indicator */}
       <motion.div

@@ -18,19 +18,27 @@ export default function signIn({
     email: string;
     password: string;
   }) => {
-    return apiRequest(
+    const response = await apiRequest(
       axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signin`, {
         email,
         password,
       })
     );
+    return response.data;
   };
 
   const { mutateAsync, isError, isPending } = useMutation({
     mutationFn: signIn,
     onSuccess: (data) => {
       // Handle successful sign-in, e.g., store tokens, redirect, etc.
-      console.log("Sign-in successful:", data);
+      if (data.token && data.refreshToken) {
+        localStorage.setItem("accessToken", data.token);
+        localStorage.setItem("refreshToken", data.refreshToken);
+        toast.success("Signed in successfully!");
+        setTimeout(() => {
+          window.location.href = "/dashboard"; // Redirect to dashboard or desired page
+        }, 500);
+      }
     },
     onError: (error: ApiError) => {
       if (error?.response.data.message === "User not found") {

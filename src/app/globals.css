@@ -18,7 +18,7 @@
   /* para-gray-800 */
 }
 .dark {
-  --primary: #54208f; /* Lighter purple for better contrast on dark */
+  --primary: #7a31ce; /* Lighter purple for better contrast on dark */
   --accent: #fbbf24; /* Brighter amber for visibility */
   --secondary: #a78bfa; /* Light purple variant */
   --heading: #ffffff; /* Pure white for headings */
@@ -26,8 +26,8 @@
   --para-muted: #9ca3af; /* Medium gray for secondary text */
   --button: #f3f4f6; /* Very light gray for button text */
   --radius: 0.625rem;
-  --background: #130c20; /* Dark blue-gray background */
-  --main-background: #120b1f; /* Darker main background */
+  --background: #1d1331; /* Dark blue-gray background */
+  --main-background: #0c0714; /* Darker main background */
   --border: #374151; /* Dark gray borders */
   --card: #1f2937; /* Same as background for cards */
   --input: #374151; /* Dark gray for inputs */

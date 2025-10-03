@@ -73,7 +73,7 @@ export default function Navbar({
   ];
 
   return (
-    <nav className="bg-background border-b border-light-border px-6 py-3 shadow-sm">
+    <nav className="bg-main-background border-b border-light-border px-6 py-3 shadow-sm">
       <div className="flex items-center justify-end">
         {/* Navigation items */}
         <div className="flex items-center space-x-6">

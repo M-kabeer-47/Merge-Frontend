@@ -38,19 +38,19 @@ export default function DropdownMenu({
         size === "small"
           ? "mt-2 w-24 h-[35px] text-xs px-2 "
           : size === "large"
-          ? "mt-4 w-56 justify-center"
+          ? "mt-4 w-full justify-center"
           : "mt-2 w-44"
       } rounded-lg shadow-lg bg-main-background border border-light-border z-50 overflow-hidden ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="py-1">
+      <div className=" w-full">
         {options.map((opt, idx) => {
           const content = (
             <div
-              className={`flex items-center  py-2  transition-colors ${
+              className={`flex items-center w-full  py-2  transition-colors ${
                 opt.destructive
-                  ? "text-red-600 hover:bg-red-50"
-                  : "text-para hover:bg-gray-100"
+                  ? "text-destructive hover:bg-destructive/5"
+                  : "text-para hover:bg-primary/5"
               } ${size === "small" ? "text-xs px-2" : "text-sm px-4"} `}
             >
               {opt.icon && (

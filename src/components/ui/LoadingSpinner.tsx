@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 export default function LoadingSpinner({
@@ -11,12 +12,20 @@ export default function LoadingSpinner({
 }) {
   return (
     <div className="flex items-center justify-center">
-      <Loader2
-        className={`animate-spin  ${
-          loaderColor ? `text-${loaderColor}` : "text-white"
+      <motion.div
+        className={`border-2 border-white/30 border-t-white rounded-full mr-2 ${
+          size === "sm" ? "w-4 h-4" : size === "lg" ? "w-6 h-6" : "w-5 h-5"
         } ${
-          size === "sm" ? "h-6 w-6" : size === "md" ? "h-8 w-8" : "h-10 w-10"
-        } mr-2`}
+          loaderColor
+            ? `border-${loaderColor}/30 border-t-${loaderColor}`
+            : "border-white/30 border-t-white"
+        }`}
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 1,
+          repeat: Infinity,
+          ease: "linear",
+        }}
       />
       {children ? children : <span className="text-white">Please wait...</span>}
     </div>

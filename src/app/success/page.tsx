@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import confetti from "canvas-confetti";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
+import { CircleCheck } from "lucide-react";
 
 // Success page config based on type
 const successConfig = {
@@ -44,9 +45,9 @@ const successConfig = {
   email_verified: {
     title: "Email Verified Successfully!",
     description:
-      "Welcome to Merge! Your email has been verified and your account is now active. You can now access all features and start planning your amazing journeys.",
-    buttonText: "Go to Profile",
-    buttonHref: "/profile",
+      "Welcome to Merge! Your email has been verified and your account is now active.",
+    buttonText: "Dashboard",
+    buttonHref: "/dashboard",
   },
   default: {
     title: "Success!",
@@ -64,12 +65,9 @@ export default function SuccessPage() {
 
   // Trigger confetti on mount
   useEffect(() => {
-    const end = Date.now() + 3 * 1000;
+    const end = Date.now() + 1000;
     // Use different colors for email verification
-    const colors =
-      type === "email_verified"
-        ? ["#0ea5e9", "#06b6d4", "#22c55e", "#10b981"] // Ocean blue + green theme
-        : ["#22c55e", "#bbf7d0", "#a7f3d0", "#4ade80"]; // Default green theme
+    const colors = ["#8668c0"]; // Ocean blue + green theme
 
     const frame = () => {
       if (Date.now() > end) return;
@@ -95,55 +93,30 @@ export default function SuccessPage() {
   }, [type]);
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-main-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
+        className="shadow-xl p-8 max-w-md  rounded-2xl bg-background w-full text-center"
       >
         {/* Animated Tick Icon */}
         <motion.div
-          className="mx-auto mb-6"
+          className="mx-auto mb-6 flex items-center justify-center"
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <motion.svg
-            width="80"
-            height="80"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="mx-auto"
-          >
-            <motion.circle
-              cx="12"
-              cy="12"
-              r="10"
-              stroke={ "#22c55e"} // Ocean blue for email verification
-              strokeWidth="2"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-              style={{ strokeDasharray: 2 * Math.PI * 10, strokeDashoffset: 0 }}
-            />
-            <motion.path
-              d="M9 12L11 14L15 10"
-              stroke={"#22c55e"} // Ocean blue for email verification
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-            />
-          </motion.svg>
+          <CircleCheck
+            className="h-[100px] w-[100px] text-white text-center border-primary"
+            fill="#4CAF50"
+          />
         </motion.div>
 
-        <h1 className="text-2xl font-bold font-raleway text-charcoal mb-2">
+        <h1 className="text-2xl font-bold font-raleway text-heading mb-2">
           {config.title}
         </h1>
-        <p className="text-charcoal mb-8 text-sm">{config.description}</p>
+        <p className="text-para mb-8 text-sm">{config.description}</p>
 
         <Button
           className="w-full"
@@ -153,16 +126,6 @@ export default function SuccessPage() {
         </Button>
 
         {/* Additional secondary button for email verification */}
-        {type === "email_verified" && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-4"
-          >
-            <Button onClick={() => router.push("/")} className="w-full">Dashboard</Button>
-          </motion.div>
-        )}
       </motion.div>
     </div>
   );

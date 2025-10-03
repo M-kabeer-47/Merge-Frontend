@@ -86,7 +86,9 @@ export default function OTPInput({
         {otp.map((digit, index) => (
           <motion.input
             key={index}
-            ref={(el) => (inputRefs.current[index] = el)}
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
             type="text"
             inputMode="numeric"
             maxLength={1}
@@ -96,11 +98,11 @@ export default function OTPInput({
             onPaste={handlePaste}
             disabled={loading}
             className={`w-12 h-12 text-center text-lg font-semibold border-2 rounded-lg 
-              transition-all duration-200 focus:outline-none
+              transition-all duration-200 focus:outline-none text-heading
               ${
                 error
-                  ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-200"
-                  : "border-gray-300 bg-white focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                  ? "border-destructive/50 bg-destructive/5 focus:border-destructive focus:ring-2 focus:ring-destructive/20"
+                  : "border-light-border hover:border-secondary/30 focus:border-1 focus:border-white focus:ring-2 focus:ring-secondary/70"
               }
               ${loading ? "opacity-50 cursor-not-allowed" : ""}
               ${digit ? "border-secondary bg-secondary/5" : ""}
@@ -113,7 +115,7 @@ export default function OTPInput({
         <motion.p
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-red-600 text-center"
+          className="text-sm text-destructive text-center font-medium"
         >
           {error}
         </motion.p>

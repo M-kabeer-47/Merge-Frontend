@@ -339,7 +339,7 @@ const MessageComposer = forwardRef(function MessageComposer(
           <button
             onClick={handleSend}
             disabled={!message.trim() && attachments.length === 0}
-            className={`px-3.5 py-3 flex-shrink-0 h-[42px] rounded-lg relative top-[-5px] transition-all duration-200 ${
+            className={`px-3.5 py-3 flex-shrink-0 h-[42px] rounded-lg relative top-[-5px] transition-all duration-200 disabled:bg-primary/20 ${
               message.trim() || attachments.length > 0
                 ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
                 : "bg-primary/50 text-white cursor-not-allowed"
