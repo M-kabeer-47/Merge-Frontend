@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      await resetPassword({ token, password: data.password });
+      await resetPassword({ token, newPassword: data.password });
     } catch (error) {
       console.error("Failed to reset password:", error);
     }

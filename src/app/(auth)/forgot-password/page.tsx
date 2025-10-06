@@ -108,7 +108,7 @@ export default function ForgotPasswordPage() {
 
               {/* Submit Button */}
               <Button type="submit" disabled={isPending || !email.trim()} className="w-full">
-                {isPending || !email.trim() ? (
+                {isPending ? (
                   <>
                     <motion.div
                       className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
                 viewBox="0 0 24 24"
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
-                transition={{ duration: 0.5, duration: 0.2 }}
+                transition={{ duration: 0.5 }}
               >
                 <motion.path
                   strokeLinecap="round"

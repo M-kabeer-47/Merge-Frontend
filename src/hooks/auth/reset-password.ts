@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 interface ResetPasswordPayload {
   token: string;
-  password: string;
+  newPassword: string;
 }
 
 export default function useResetPassword() {

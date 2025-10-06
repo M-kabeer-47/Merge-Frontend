@@ -1,54 +1,62 @@
-import apiRequest from "@/utils/api-request";
-import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
-import { toast } from "sonner";
+import useVerifyOTP from "./two-factor/verify-otp";
+import useResendOTP from "./two-factor/resend-otp";
+import useToggleTwoFactor from "./two-factor/toggle-two-factor";
 
-export default function useTwoFactorVerification() {
-  const resendOTPFunction = async ({ email }: { email: string }) => {
-    return await apiRequest(axios.post("/auth/resend-otp", { email }));
-  };
-  const verifyOTPFunction = async ({
-    otp,
-    email,
-  }: {
-    otp: string;
-    email: string;
-  }) => {
-    return await apiRequest(axios.post("/auth/signin/otp", { otp, email }));
-  };
+interface UseTwoFactorVerificationProps {
+  email?: string;
+  setCanResend?: (value: boolean) => void;
+  setResendTimer?: (value: number) => void;
+  twoFactorEnabled?: boolean;
+  password?: string;
+}
 
-  const {
-    isPending,
-    isError,
-    mutateAsync: resendOTP,
-  } = useMutation({
-    mutationFn: resendOTPFunction,
-    onError: (error: any) => {
-      toast.error("Failed to resend OTP. Please try again.");
-    },
-    onSuccess: (data) => {
-      toast.success("OTP resent successfully");
-    },
-  });
+export default function useTwoFactorVerification({
+  email = "",
+  setCanResend,
+  setResendTimer,
+  twoFactorEnabled = false,
+  password = "",
+}: UseTwoFactorVerificationProps) {
+  // Verify OTP hook
+  const verifyOTPHook = email
+    ? useVerifyOTP({ email })
+    : { verifyOTP: async () => {}, isVerifyError: false, isVerifying: false };
 
-  const {
-    isPending: isVerifying,
-    isError: isVerifyError,
-    mutateAsync: verifyOTP,
-  } = useMutation({
-    mutationFn: verifyOTPFunction,
-    onError: (error: any) => {
-      toast.error("Failed to verify OTP. Please try again.");
-    },
-    onSuccess: (data) => {
-      toast.success("OTP verified successfully");
-    },
-  });
+  // Resend OTP hook
+  const resendOTPHook =
+    email && setCanResend && setResendTimer
+      ? useResendOTP({ email, setCanResend, setResendTimer })
+      : {
+          resendOTP: async () => {},
+          isResendError: false,
+          isResending: false,
+        };
+
+  // Toggle Two Factor hook
+  const toggleTwoFactorHook =
+    password !== ""
+      ? useToggleTwoFactor({ twoFactorEnabled, password })
+      : {
+          toggleTwoFactor: async () => {},
+          isToggling: false,
+          isToggleError: false,
+        };
 
   return {
-    resendOTP,
-    verifyOTP,
-    isPending,
-    isError,
+    // Verify OTP
+    verifyOTP: verifyOTPHook.verifyOTP,
+    isVerifyError: verifyOTPHook.isVerifyError,
+    isVerifying: verifyOTPHook.isVerifying,
+
+    // Resend OTP
+    resendOTP: resendOTPHook.resendOTP,
+    isResendError: resendOTPHook.isResendError,
+    isResending: resendOTPHook.isResending,
+
+    // Toggle Two Factor
+    toggleTwoFactor: toggleTwoFactorHook.toggleTwoFactor,
+    isToggling: toggleTwoFactorHook.isToggling,
+    isToggleError: toggleTwoFactorHook.isToggleError,
   };
 }
+

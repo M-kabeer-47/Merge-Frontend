@@ -4,7 +4,7 @@ import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
 import ToggleSwitch from "@/components/navbar/DarkModeToggle";
 import NotificationDropdown from "@/components/navbar/Notifications";
 import ProfileDropdown from "@/components/navbar/ProfileDropdown";
-
+import useLogout from "@/hooks/auth/logout";
 interface UserProfile {
   name: string;
   role: string;
@@ -27,6 +27,7 @@ export default function Navbar({
   notificationCount = 3,
   setIsDarkMode,
 }: NavbarProps) {
+  const { isPending, logout, isError } = useLogout();
   const handleThemeToggle = () => {
     setIsDarkMode(!isDarkMode);
     console.log("Theme toggled:", isDarkMode ? "light" : "dark");
@@ -47,10 +48,7 @@ export default function Navbar({
     // Mark all notifications as read logic
   };
 
-  const handleSignOut = () => {
-    console.log("User signing out");
-    // Handle sign out logic here
-  };
+  
 
   // Profile dropdown options
   const profileOptions = [
@@ -68,7 +66,7 @@ export default function Navbar({
       title: "Sign Out",
       destructive: true,
       icon: <IconLogout className="h-4 w-4 text-destructive" />,
-      action: handleSignOut,
+      action: logout,
     },
   ];
 
@@ -97,7 +95,7 @@ export default function Navbar({
             userName={user.name}
             userRole={user.role}
             profileImage={user.image}
-            onSignOut={handleSignOut}
+            onSignOut={logout}
             options={profileOptions}
             variant="navbar"
             showRole={true}

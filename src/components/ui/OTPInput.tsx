@@ -8,16 +8,19 @@ interface OTPInputProps {
   loading?: boolean;
   error?: string;
   className?: string;
+  otp: string[];
+  setOTP: (otp: string[]) => void;
 }
 
 export default function OTPInput({
+  otp,
+  setOTP,
   length = 6,
   onComplete,
   loading = false,
   error,
   className = "",
 }: OTPInputProps) {
-  const [otp, setOtp] = useState<string[]>(new Array(length).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (element: HTMLInputElement, index: number) => {
@@ -25,7 +28,7 @@ export default function OTPInput({
 
     const newOtp = [...otp];
     newOtp[index] = element.value;
-    setOtp(newOtp);
+    setOTP(newOtp);
 
     // Move to next input
     if (element.value && index < length - 1) {
@@ -46,10 +49,10 @@ export default function OTPInput({
       const newOtp = [...otp];
       if (otp[index]) {
         newOtp[index] = "";
-        setOtp(newOtp);
+        setOTP(newOtp);
       } else if (index > 0) {
         newOtp[index - 1] = "";
-        setOtp(newOtp);
+        setOTP(newOtp);
         inputRefs.current[index - 1]?.focus();
       }
     }
@@ -66,7 +69,7 @@ export default function OTPInput({
       }
     }
 
-    setOtp(newOtp);
+    setOTP(newOtp);
 
     if (newOtp.every((digit) => digit !== "")) {
       onComplete(newOtp.join(""));
@@ -76,7 +79,7 @@ export default function OTPInput({
   // Clear OTP when loading changes to false (for retry scenarios)
   useEffect(() => {
     if (!loading) {
-      setOtp(new Array(length).fill(""));
+      setOTP(new Array(length).fill(""));
     }
   }, [loading, length]);
 

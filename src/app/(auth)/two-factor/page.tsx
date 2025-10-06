@@ -5,18 +5,40 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Shield, ArrowLeft, Mail } from "lucide-react";
 import OTPInput from "@/components/ui/OTPInput";
-import useTwoFactorVerification from "@/hooks/auth/two-factor-verification";
+import useVerifyOTP from "@/hooks/auth/two-factor/verify-otp";
+import useResendOTP from "@/hooks/auth/two-factor/resend-otp";
 
 export default function TwoFactorPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "your email";
-
-  const { resendOTP, isPending, isError } = useTwoFactorVerification();
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const { verifyOTP, isVerifyError, isVerifying } = useVerifyOTP({
+    email: email || "",
+    otp: otp.join(""),
+  });
+  const { resendOTP, isResending } = useResendOTP({
+    email: email || "",
+    setCanResend,
+    setResendTimer,
+  });
 
   // Countdown timer for resend
+
+  const handleOTPComplete = (otp: string) => {
+    verifyOTP();
+
+    // Redirect to dashboard or home
+   
+  };
+
+  const handleResendCode = async () => {
+    if (!canResend) return;
+    resendOTP();
+  };
+
   useEffect(() => {
     if (resendTimer > 0) {
       const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
@@ -25,36 +47,6 @@ export default function TwoFactorPage() {
       setCanResend(true);
     }
   }, [resendTimer]);
-
-  const handleOTPComplete = async (otp: string) => {
-    const result = await verifyTwoFactor(otp);
-    
-    if (result.success) {
-      // Store tokens if provided
-      if (result.accessToken) {
-        localStorage.setItem("accessToken", result.accessToken);
-      }
-      if (result.refreshToken) {
-        localStorage.setItem("refreshToken", result.refreshToken);
-      }
-      
-      // Redirect to dashboard or home
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 500);
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (!canResend) return;
-    
-    const success = await resendCode();
-    if (success) {
-      setResendTimer(60);
-      setCanResend(false);
-      setError(null);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-main-background flex items-center justify-center p-4">
@@ -78,11 +70,11 @@ export default function TwoFactorPage() {
           className="mx-auto mb-6 w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center"
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 200, 
+          transition={{
+            type: "spring",
+            stiffness: 200,
             damping: 15,
-            delay: 0.2 
+            delay: 0.2,
           }}
         >
           <Shield className="w-8 h-8 text-primary" />
@@ -108,7 +100,6 @@ export default function TwoFactorPage() {
           <Mail className="w-4 h-4 text-secondary" />
           <p className="text-sm whitespace-nowrap">
             We've sent a verification code to your email
-            
           </p>
         </motion.div>
 
@@ -122,8 +113,12 @@ export default function TwoFactorPage() {
           <OTPInput
             length={6}
             onComplete={handleOTPComplete}
-            loading={loading}
-            error={error || undefined}
+            loading={isVerifying || isResending}
+            error={
+              isVerifyError ? "Invalid code. Please try again." : undefined
+            }
+            setOTP={setOtp}
+            otp={otp}
           />
         </motion.div>
 
@@ -139,23 +134,18 @@ export default function TwoFactorPage() {
           </p>
           <button
             onClick={handleResendCode}
-            disabled={!canResend || loading}
+            disabled={!canResend || isResending || isVerifying}
             className={`text-sm font-semibold transition-colors ${
-              canResend && !loading
+              canResend && !isResending && !isVerifying
                 ? "text-primary hover:text-primary cursor-pointer"
                 : "text-para-muted cursor-not-allowed"
             }`}
           >
-            {canResend ? (
-              "Resend Code"
-            ) : (
-              `Resend in ${resendTimer}s`
-            )}
+            {canResend ? "Resend Code" : `Resend in ${resendTimer}s`}
           </button>
         </motion.div>
 
         {/* Help Text */}
-       
 
         {/* Security Note */}
         <motion.p
