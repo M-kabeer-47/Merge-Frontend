@@ -15,14 +15,10 @@ export default function useResendOTP({
   setCanResend,
   setResendTimer,
 }: UseResendOTPProps) {
-  const { isRotationSuccess, rotateToken } = usesRotateToken({
-    oldToken: localStorage.getItem("refreshToken") || "",
-  });
-
   const resendOTPFunction = async () => {
     return await apiRequest(
       axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/resend-otp`, {
-        email,
+        email: email.toLowerCase(),
       })
     );
   };
@@ -34,12 +30,6 @@ export default function useResendOTP({
   } = useMutation({
     mutationFn: resendOTPFunction,
     onError: async (error: any) => {
-      if (error?.response?.data?.statusCode === 401) {
-        await rotateToken();
-        if (isRotationSuccess) {
-          await resendOTPFunction();
-        }
-      }
       toast.error("Failed to resend OTP. Please try again.");
     },
     onSuccess: (data) => {

@@ -210,8 +210,8 @@ export const SidebarLink = ({
       <a
         href={hasChildren ? "#" : link.href}
         className={cn(
-          "text-para flex items-center justify-between gap-3 group/sidebar py-2.5 hover:bg-secondary/5 rounded-lg px-3 transition-all duration-200  hover:text-primary border-transparent hover:border-primary/20",
-          isActive && "bg-secondary/5 text-primary",
+          "text-para flex items-center justify-between gap-3 group/sidebar py-2.5 hover:bg-secondary/10 rounded-lg px-3 transition-all duration-200  hover:text-primary border-transparent hover:border-primary/20",
+          isActive && "bg-secondary/10 text-primary",
           className
         )}
         onClick={handleClick}

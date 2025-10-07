@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import apiRequest from "@/utils/api-request";
 
 import axios from "axios";
@@ -8,7 +7,7 @@ export default function VerifyPage({ token }: { token: string }) {
   const router = useRouter();
   const { mutateAsync, isPending, isError, error } = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest<VerifyResponse>(
+      const response = await apiRequest(
         axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verify?token=${token}`
         )

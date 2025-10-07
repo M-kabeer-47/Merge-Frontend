@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { easeOut, motion } from "framer-motion";
 import { Input } from "@/components/ui/Input";
 import { FormField } from "@/components/ui/FormField";
@@ -41,6 +41,7 @@ export default function SignInForm() {
     control,
     handleSubmit,
     setError,
+    watch,
     formState: { errors },
   } = useForm<SignInType>({
     resolver: zodResolver(signInSchema),
@@ -49,9 +50,15 @@ export default function SignInForm() {
       password: "",
     },
   });
+  const email = watch("email");
+  const password = watch("password");
+  const EmailInputRef = useRef<HTMLInputElement>(null);
+
   const router = useRouter();
   const { signIn, isPending } = useSignIn({
     setError,
+    email,
+    password,
   });
 
   const submitForm = async (data: SignInType) => {
@@ -60,6 +67,10 @@ export default function SignInForm() {
   const signInWithGoogle = () => {
     router.push(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google/login`);
   };
+
+  useEffect(() => {
+    EmailInputRef.current?.focus();
+  }, []);
 
   return (
     <motion.div
@@ -154,6 +165,7 @@ export default function SignInForm() {
                   type="email"
                   placeholder="john@example.com"
                   error={errors.email?.message}
+                  ref={EmailInputRef}
                 />
               </FormField>
             )}

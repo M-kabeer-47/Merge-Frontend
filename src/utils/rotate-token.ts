@@ -5,7 +5,7 @@ export default function rotateToken({ oldToken }: { oldToken: string }) {
   const rotateTokenFunction = async () => {
     let response = await apiRequest(
       axios.post(
-        "/auth/refresh",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,
         {},
         {
           headers: {

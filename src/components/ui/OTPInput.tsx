@@ -83,6 +83,11 @@ export default function OTPInput({
     }
   }, [loading, length]);
 
+  useEffect(() => {
+    // Focus the first input on mount
+    inputRefs.current[0]?.focus();
+  }, []);
+
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="flex justify-center gap-3">

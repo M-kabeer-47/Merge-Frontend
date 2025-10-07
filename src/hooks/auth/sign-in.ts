@@ -8,8 +8,12 @@ import { ApiError } from "@/types/api-error";
 
 export default function signIn({
   setError,
+  email,
+  password
 }: {
   setError: UseFormSetError<UserType>;
+  email: string;
+  password: string;
 }) {
   const signIn = async ({
     email,
@@ -30,10 +34,16 @@ export default function signIn({
   const { mutateAsync, isError, isPending } = useMutation({
     mutationFn: signIn,
     onSuccess: (data) => {
+      if (data.message === "A new OTP has been sent to your email.") {
+        window.location.href = `/two-factor?email=${email}`; // Redirect to 2FA page
+        return;
+      }
       // Handle successful sign-in, e.g., store tokens, redirect, etc.
-      if (data.token && data.refreshToken) {
+      else if (data.token && data.refreshToken && data.userId) {
         localStorage.setItem("accessToken", data.token);
         localStorage.setItem("refreshToken", data.refreshToken);
+        localStorage.setItem("userID", data.userId);
+
         toast.success("Signed in successfully!");
         setTimeout(() => {
           window.location.href = "/dashboard"; // Redirect to dashboard or desired page

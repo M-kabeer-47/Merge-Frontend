@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { easeOut, motion } from "framer-motion";
 import { Input } from "@/components/ui/Input";
 import { FormField } from "@/components/ui/FormField";
@@ -52,6 +52,12 @@ export default function SignUpForm() {
       role: undefined,
     },
   });
+
+  const firstNameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    firstNameRef.current?.focus();
+  }, []);
   const submitForm = async (data: Partial<UserType>) => {
     let formData = {
       ...data,
@@ -118,6 +124,7 @@ export default function SignUpForm() {
                     id="firstName"
                     placeholder="John"
                     error={errors.firstName?.message}
+                    ref={firstNameRef}
                   />
                 </FormField>
               )}

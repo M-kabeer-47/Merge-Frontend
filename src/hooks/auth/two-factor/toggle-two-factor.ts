@@ -13,9 +13,11 @@ export default function useToggleTwoFactor({
   twoFactorEnabled,
   password,
 }: UseToggleTwoFactorProps) {
-  const { isRotationSuccess, rotateToken } = usesRotateToken({
-    oldToken: localStorage.getItem("refreshToken") || "",
-  });
+  const { isRotationSuccess, rotateToken, isRotationPending } = usesRotateToken(
+    {
+      oldToken: localStorage.getItem("refreshToken") || "",
+    }
+  );
 
   const toggleTwoFactorFunction = async () => {
     return await apiRequest(
@@ -34,10 +36,13 @@ export default function useToggleTwoFactor({
     mutationFn: toggleTwoFactorFunction,
     onError: async (error: any) => {
       if (error?.response?.data?.statusCode === 401) {
-        await rotateToken();
-        if (isRotationSuccess) {
+        try {
+          await rotateToken();
           await toggleTwoFactorFunction();
+        } catch (rotationError) {
+          toast.error("Session expired. Please sign in again.");
         }
+        return; // Prevents the error toast below
       }
       toast.error(
         "Failed to toggle two-factor authentication. Please try again."
@@ -52,5 +57,6 @@ export default function useToggleTwoFactor({
     toggleTwoFactor,
     isToggling,
     isToggleError,
+    isRotationPending,
   };
 }

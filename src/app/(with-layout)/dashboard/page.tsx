@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "motion/react";
 import {
   IconUsers,
@@ -8,6 +8,7 @@ import {
   IconVideo,
   IconClock,
 } from "@tabler/icons-react";
+import { useSearchParams } from "next/navigation";
 
 const statsData = [
   {
@@ -122,6 +123,16 @@ const getColorClasses = (color: string) => {
 };
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const accessToken = searchParams.get("token");
+    const refreshToken = searchParams.get("refreshToken");
+    if (accessToken && refreshToken) {
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+    }
+  }, []);
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -212,9 +223,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-heading">{activity.title}</p>
-                    <p className="text-sm text-para-muted">
-                      {activity.time}
-                    </p>
+                    <p className="text-sm text-para-muted">{activity.time}</p>
                   </div>
                 </motion.div>
               );
@@ -249,9 +258,7 @@ export default function DashboardPage() {
                     {session.type}
                   </span>
                 </div>
-                <p className="text-sm text-para-muted mb-2">
-                  {session.time}
-                </p>
+                <p className="text-sm text-para-muted mb-2">{session.time}</p>
                 <div className="flex items-center gap-2">
                   <IconUsers className="h-4 w-4 text-para-muted" />
                   <span className="text-sm text-para-muted">

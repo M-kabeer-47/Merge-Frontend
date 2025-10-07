@@ -2,16 +2,20 @@
 import React, { useState, useMemo } from "react";
 import { motion } from "motion/react";
 import { IconPlus, IconUsers, IconSearch } from "@tabler/icons-react";
+import { Link } from "lucide-react";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import RoomCard from "@/components/rooms/RoomCard";
+import CreateRoomModal from "@/components/rooms/CreateRoomModal";
+import JoinRoomModal from "@/components/rooms/JoinRoomModal";
 import { sampleRooms } from "@/lib/constants/mock-data";
 import { Button } from "@/components/ui/Button";
-import { Link } from "lucide-react";
 
 export default function RoomsPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   // Filter rooms based on active tab
   const filteredRoomsByTab = useMemo(() => {
@@ -86,6 +90,17 @@ export default function RoomsPage() {
     // Navigate to room edit
   };
 
+  const handleRoomCreated = (room: any) => {
+    console.log("Room created:", room);
+    // Optionally refresh the room list or add the new room to the state
+    // For now, you might want to refetch or navigate to the new room
+  };
+
+  const handleJoinRequestSent = (room: any) => {
+    console.log("Join request sent:", room);
+    // Optionally show a notification or update UI
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Page Header */}
@@ -110,11 +125,15 @@ export default function RoomsPage() {
           <Button
             className="px-4 py-2 rounded-lg font-medium  transition-colors flex items-center gap-2"
             variant="outline"
+            onClick={() => setIsJoinModalOpen(true)}
           >
             <Link className="h-4 w-4" />
             Join Room
           </Button>
-          <Button className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
+          <Button 
+            className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
             <IconPlus className="h-4 w-4" />
             Create Room
           </Button>
@@ -222,12 +241,29 @@ export default function RoomsPage() {
               : "There are no rooms in this category yet"}
           </p>
           {activeTab === "my-rooms" && (
-            <motion.button className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+            <Button
+              className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               Create Your First Room
-            </motion.button>
+            </Button>
           )}
         </motion.div>
       )}
+      
+      {/* Create Room Modal */}
+      <CreateRoomModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleRoomCreated}
+      />
+
+      {/* Join Room Modal */}
+      <JoinRoomModal
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        onSuccess={handleJoinRequestSent}
+      />
     </div>
   );
 }

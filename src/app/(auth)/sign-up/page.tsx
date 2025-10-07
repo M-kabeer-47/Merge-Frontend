@@ -1,17 +1,20 @@
+"use client";
 import React from "react";
 import AuthIllustration from "@/components/auth/AuthIllustration";
 import SignUpForm from "@/components/auth/sign-up/SignUpForm";
+import { useTheme } from "@/providers/ThemeProvider";
 
 const SignUpPage = () => {
+  const { isDarkMode } = useTheme();  
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-main-background flex items-center justify-center p-4">
       {/* Main Container */}
       <div className="w-full max-w-7xl bg-background rounded-2xl shadow-lg overflow-hidden">
         <div className="flex min-h-[600px]">
           {/* Left Column - Illustration */}
           <div className="hidden lg:flex lg:w-1/2">
             <AuthIllustration
-              imageUrl="/illustrations/sign-up-illustration.png"
+              imageUrl={`${isDarkMode ? "/illustrations/dark-sign-up-illustration.png" : "/illustrations/sign-up-illustration.png"}`}
               title="Join Our Community"
               subtitle="Connect, learn, and grow with students and instructors worldwide"
             />

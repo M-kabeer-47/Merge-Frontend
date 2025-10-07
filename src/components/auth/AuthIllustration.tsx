@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { easeOut, motion } from "framer-motion";
+import { useTheme } from "@/providers/ThemeProvider";
 
 interface AuthIllustrationProps {
   imageUrl: string;
@@ -63,6 +64,7 @@ export default function AuthIllustration({
   subtitle,
   page = "sign-up",
 }: AuthIllustrationProps) {
+  const { isDarkMode } = useTheme();
   return (
     <motion.div
       className="flex flex-col h-full p-8 w-full"
@@ -73,7 +75,7 @@ export default function AuthIllustration({
       {/* Logo */}
       <motion.div className="mb-8" variants={logoVariants}>
         <div className="flex items-center space-x-2">
-          <img src={"/logo.svg"} alt="Logo" className="h-10 w-10" />
+          <img src={`${isDarkMode ? "/dark-mode-logo.svg" : "/logo.svg"}`} alt="Logo" className="h-10 w-10" />
           <span className="text-2xl font-raleway font-bold text-heading">
             Merge
           </span>

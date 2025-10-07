@@ -10,15 +10,11 @@ interface UseVerifyOTPProps {
 }
 
 export default function useVerifyOTP({ email, otp }: UseVerifyOTPProps) {
-  const { isRotationSuccess, rotateToken } = usesRotateToken({
-    oldToken: localStorage.getItem("refreshToken") || "",
-  });
-
   const verifyOTPFunction = async () => {
     let response = await apiRequest(
       axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signin/otp`, {
         otpCode: otp,
-        email,
+        email: email.toLowerCase(),
       })
     );
     return response.data;
@@ -31,12 +27,6 @@ export default function useVerifyOTP({ email, otp }: UseVerifyOTPProps) {
   } = useMutation({
     mutationFn: verifyOTPFunction,
     onError: async (error: any) => {
-      if (error?.response?.data?.statusCode === 401) {
-        await rotateToken();
-        if (isRotationSuccess) {
-          await verifyOTPFunction();
-        }
-      }
       toast.error("Failed to verify OTP. Please try again.");
     },
     onSuccess: (data) => {

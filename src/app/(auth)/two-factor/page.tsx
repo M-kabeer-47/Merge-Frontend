@@ -31,7 +31,6 @@ export default function TwoFactorPage() {
     verifyOTP();
 
     // Redirect to dashboard or home
-   
   };
 
   const handleResendCode = async () => {
@@ -68,13 +67,11 @@ export default function TwoFactorPage() {
         {/* Shield Icon */}
         <motion.div
           className="mx-auto mb-6 w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center"
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
           transition={{
             type: "spring",
             stiffness: 200,
             damping: 15,
-            delay: 0.2,
+            delay: 0.3,
           }}
         >
           <Shield className="w-8 h-8 text-primary" />
@@ -94,7 +91,7 @@ export default function TwoFactorPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3 }}
           className="flex items-center justify-center gap-2 text-para text-center mb-8"
         >
           <Mail className="w-4 h-4 text-secondary" />
@@ -107,7 +104,7 @@ export default function TwoFactorPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.3 }}
           className="mb-6"
         >
           <OTPInput
@@ -126,7 +123,7 @@ export default function TwoFactorPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.3 }}
           className="text-center"
         >
           <p className="text-sm text-para-muted mb-2">
@@ -151,7 +148,7 @@ export default function TwoFactorPage() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.3 }}
           className="text-xs text-para-muted text-center mt-6"
         >
           🔒 This extra layer of security helps protect your account
