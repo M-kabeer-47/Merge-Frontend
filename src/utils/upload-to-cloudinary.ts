@@ -1,5 +1,3 @@
-
-import dotenv from "dotenv";
 import axios from "axios";
 
 export const uploadToCloudinary = async ({
@@ -26,8 +24,8 @@ export const uploadToCloudinary = async ({
       const progress = Math.round(
         (progressEvent.loaded * 100) / progressEvent.total
       );
-      if(onProgress){
-        onProgress(progress)
+      if (onProgress) {
+        onProgress(progress);
       }
     },
   };

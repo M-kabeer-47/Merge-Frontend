@@ -137,7 +137,7 @@ export default function RoomCard({
           </Button>
 
           <Button className="px-4 rounded-lg text-white font-medium transition-colors text-sm w-[60%] ">
-            {room.isMember || room.isOwner ? "Enter" : "View"}
+            Enter
           </Button>
         </div>
       </div>
