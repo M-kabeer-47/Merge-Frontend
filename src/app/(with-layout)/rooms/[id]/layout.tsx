@@ -49,9 +49,9 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
       count: roomData.unreadCounts.announcements,
     },
     {
-      id: "files",
+      id: "content",
 
-      label: "Files",
+      label: "Content",
       icon: FileText,
       count: roomData.unreadCounts.files,
     },

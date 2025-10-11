@@ -15,12 +15,14 @@
   --main-background: #ffffff;
   --light-border: #e5e7eb;
   --destructive: #ef4444;
+  --success: #10b981; /* Green for success states */
+  --info: #3b82f6; /* Blue for info states */
   /* para-gray-800 */
 }
 .dark {
-  --primary: #7a31ce; /* Lighter purple for better contrast on dark */
+  --primary: #8a4ecf; /* Lighter purple for better contrast on dark */
   --accent: #fbbf24; /* Brighter amber for visibility */
-  --secondary: #a78bfa; /* Light purple variant */
+  --secondary: #9d7cff; /* Light purple variant */
   --heading: #ffffff; /* Pure white for headings */
   --para: #cecece; /* Light gray for regular text */
   --para-muted: #9ca3af; /* Medium gray for secondary text */
@@ -34,6 +36,8 @@
   --muted: #111827; /* Very dark for muted sections */
   --popover: #1f2937; /* Dark for popovers */
   --destructive: #ff6b6b;
+  --success: #34d399; /* Brighter green for dark mode */
+  --info: #60a5fa; /* Lighter blue for dark mode */
   --light-border: #363e4e; /* Dark gray for light borders */ /* White text */
 }
 
@@ -52,8 +56,9 @@ body {
   --color-secondary: var(--secondary);
   --color-accent: var(--accent);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-info: var(--info);
   --color-heading: var(--heading);
-  --color-destructive: var(--destructive);
   --color-para: var(--para);
   --color-para-muted: var(--para-muted);
   --color-button: var(--button);

@@ -91,7 +91,7 @@ export default function ContentListHeader({
         </th>
 
         {/* Empty space for three dots */}
-        <th className="w-[50px] px-3 py-3"></th>
+      
       </tr>
     </thead>
   );

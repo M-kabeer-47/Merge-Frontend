@@ -155,20 +155,7 @@ export default function ContentListRow({
       </td>
 
       {/* Three Dots Menu - Column 5 */}
-      <td className="w-[50px] px-3 py-4">
-        <div className="flex items-center justify-center">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onMenuClick?.(item.id);
-            }}
-            className="w-8 h-8 rounded hover:bg-gray-100 flex items-center justify-center transition-colors"
-            aria-label="More options"
-          >
-            <MoreVertical className="h-5 w-5 text-para-muted" />
-          </button>
-        </div>
-      </td>
+      
     </tr>
   );
 }

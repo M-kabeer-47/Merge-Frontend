@@ -1,0 +1,121 @@
+import type { Announcement } from "@/types/announcement";
+
+// Sample placeholder announcements
+export const sampleAnnouncements: Announcement[] = [
+  {
+    id: "ann-1",
+    title: "Welcome to Week 1!",
+    content: "Welcome everyone to the first week of the course! Please review the syllabus attached below and familiarize yourself with the course structure. All required readings and resources are now available in the Content tab.\n\nImportant dates:\n• Week 1: Introduction & Setup\n• Week 2: First assignment due\n• Week 3: Quiz 1\n\nLet's have a great semester together!",
+    author: {
+      id: "user-1",
+      name: "Dr. Sarah Johnson",
+      role: "instructor",
+      initials: "SJ",
+    },
+    createdAt: new Date("2024-10-07T09:00:00"),
+    publishedAt: new Date("2024-10-07T09:00:00"),
+    status: "published",
+    isPinned: true,
+    attachments: [
+      {
+        id: "att-1",
+        name: "Course_Syllabus_Fall2024.pdf",
+        type: "file",
+        url: "/files/syllabus.pdf",
+        size: 245000,
+      },
+      {
+        id: "att-2",
+        name: "Reading_List.pdf",
+        type: "file",
+        url: "/files/readings.pdf",
+        size: 180000,
+      },
+    ],
+  },
+  {
+    id: "ann-2",
+    title: "Assignment 1 Released",
+    content: "Assignment 1 is now available! This assignment covers the fundamentals we discussed in lectures 1-3.\n\nDue date: October 20, 2024 at 11:59 PM\nSubmission: Upload your work to the Assignments tab\nFormat: PDF or Word document\nPoints: 100 points\n\nPlease start early and reach out if you have any questions!",
+    author: {
+      id: "user-1",
+      name: "Dr. Sarah Johnson",
+      role: "instructor",
+      initials: "SJ",
+    },
+    createdAt: new Date("2024-10-05T14:30:00"),
+    scheduledFor: new Date("2024-10-15T08:00:00"),
+    status: "scheduled",
+    isPinned: false,
+    attachments: [
+      {
+        id: "att-3",
+        name: "Assignment_1_Instructions.pdf",
+        type: "file",
+        url: "/files/assignment1.pdf",
+        size: 125000,
+      },
+    ],
+  },
+  {
+    id: "ann-3",
+    title: "Study Group Tonight - Library Room 204",
+    content: "Hey everyone! We're organizing a study group session tonight at 7 PM in the library (Room 204). We'll be going over this week's lecture materials and practice problems.\n\nFeel free to bring your questions! 📚",
+    author: {
+      id: "user-2",
+      name: "Alex Chen",
+      role: "moderator",
+      initials: "AC",
+    },
+    createdAt: new Date("2024-10-09T15:45:00"),
+    publishedAt: new Date("2024-10-09T15:45:00"),
+    status: "published",
+    isPinned: false,
+  },
+  {
+    id: "ann-4",
+    title: "Midterm Exam - Important Information",
+    content: "Midterm Exam - Important Information\n\nDate: October 25, 2024\nTime: 2:00 PM - 4:00 PM\nLocation: Main Hall, Room A\n\nExam Format:\n• Multiple choice (40%)\n• Short answer (30%)\n• Problem solving (30%)\n\nWhat to bring:\n• Student ID\n• Calculator (non-programmable)\n• #2 pencils\n\nStudy Resources: Review sessions scheduled for Oct 22-24. Practice exams will be posted by Oct 20.\n\nGood luck with your preparation!",
+    author: {
+      id: "user-1",
+      name: "Dr. Sarah Johnson",
+      role: "instructor",
+      initials: "SJ",
+    },
+    createdAt: new Date("2024-10-06T10:00:00"),
+    publishedAt: new Date("2024-10-06T10:00:00"),
+    status: "published",
+    isPinned: true,
+  },
+  {
+    id: "ann-5",
+    title: "Lab Sessions Start This Week",
+    content: "Reminder: Lab sessions start this week!\n\nLab Schedule:\n• Section A: Tuesday 1-3 PM, Lab 101\n• Section B: Thursday 1-3 PM, Lab 102\n• Section C: Friday 2-4 PM, Lab 101\n\nPlease arrive on time with your lab manual and safety equipment.",
+    author: {
+      id: "user-3",
+      name: "Michael Park",
+      role: "ta",
+      initials: "MP",
+    },
+    createdAt: new Date("2024-10-04T09:30:00"),
+    publishedAt: new Date("2024-10-04T09:30:00"),
+    status: "published",
+    isPinned: false,
+  },
+  {
+    id: "ann-6",
+    title: "Office Hours Update",
+    content: "Quick update on office hours for this week:\n\nThursday, Oct 12: Office hours moved from 3-5 PM to 4-6 PM\nFriday, Oct 13: Additional office hours 10 AM - 12 PM\n\nLocation remains the same: Office 310, Science Building",
+    author: {
+      id: "user-1",
+      name: "Dr. Sarah Johnson",
+      role: "instructor",
+      initials: "SJ",
+    },
+    createdAt: new Date("2024-10-10T11:20:00"),
+    publishedAt: new Date("2024-10-10T11:20:00"),
+    status: "published",
+    isPinned: false,
+  },
+];
+
