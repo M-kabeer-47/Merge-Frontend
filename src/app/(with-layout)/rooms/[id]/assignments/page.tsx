@@ -212,40 +212,40 @@ export default function AssignmentsTab() {
               className=""
             />
           </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSortMenu(!showSortMenu)}
+                className="flex items-center gap-2  min-w-[140px] justify-center"
+              >
+                <span className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4" />
+                  {getSortLabel()}
+                </span>
+              </Button>
 
-          <div className="relative">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSortMenu(!showSortMenu)}
-              className="flex items-center gap-2  min-w-[140px] justify-center"
-            >
-              <span className="flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4" />
-                {getSortLabel()}
-              </span>
-            </Button>
-
-            {showSortMenu && (
-              <div className="absolute right-0 top-full z-10">
-                <DropdownMenu
-                  options={sortOptions}
-                  onClose={() => setShowSortMenu(false)}
-                  align="right"
-                />
-              </div>
+              {showSortMenu && (
+                <div className="absolute right-0 top-full z-10">
+                  <DropdownMenu
+                    options={sortOptions}
+                    onClose={() => setShowSortMenu(false)}
+                    align="right"
+                  />
+                </div>
+              )}
+            </div>
+            {isInstructor && (
+              <Button
+                onClick={handleCreateAssignment}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">New Assignment</span>
+              </Button>
             )}
           </div>
-
-          {isInstructor && (
-            <Button
-              onClick={handleCreateAssignment}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="hidden sm:inline">New Assignment</span>
-            </Button>
-          )}
         </div>
 
         {/* Filter Tabs (For Students) */}

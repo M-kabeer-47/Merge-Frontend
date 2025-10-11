@@ -12,6 +12,7 @@ import {
   XCircle,
   AlertCircle,
   File as FileIcon,
+  Clock1,
 } from "lucide-react";
 import type {
   Assignment,
@@ -24,6 +25,7 @@ import {
 } from "@/types/assignment";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
+import { useSearchParams } from "next/navigation";
 
 interface AssignmentCardProps {
   assignment: Assignment;
@@ -44,7 +46,7 @@ export default function AssignmentCard({
 }: AssignmentCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
-  const isInstructor = userRole === "instructor" || userRole === "ta";
+  const isInstructor = useSearchParams().get("isInstructor") === "true";
 
   // Calculate if assignment is overdue
   const isOverdue = new Date() > new Date(assignment.dueDate);
@@ -57,7 +59,8 @@ export default function AssignmentCard({
     if (submission.status === "graded") {
       return {
         icon: CheckCircle2,
-        color: "text-success",
+        iconFill: "#10b981", // success color
+        textColor: "text-success",
         bgColor: "bg-success/10",
         text: "Graded",
       };
@@ -65,7 +68,8 @@ export default function AssignmentCard({
     if (submission.status === "submitted") {
       return {
         icon: CheckCircle2,
-        color: "text-info",
+        iconFill: "#3b82f6", // info color
+        textColor: "text-info",
         bgColor: "bg-info/10",
         text: "Submitted",
       };
@@ -73,15 +77,17 @@ export default function AssignmentCard({
     if (submission.status === "overdue") {
       return {
         icon: XCircle,
-        color: "text-destructive",
+        iconFill: "#ef4444", // destructive color
+        textColor: "text-destructive",
         bgColor: "bg-destructive/10",
         text: "Overdue",
       };
     }
-    // pending
+    // pending (default case)
     return {
-      icon: Clock,
-      color: "text-accent",
+      icon: AlertCircle,
+      iconFill: "#e69a29", // accent color
+      textColor: "text-accent",
       bgColor: "bg-accent/10",
       text: "Pending",
     };
@@ -141,6 +147,14 @@ export default function AssignmentCard({
           action: () => onEdit?.(assignment.id),
         },
         {
+          title: "Change Due Date",
+          icon: <Calendar className="w-4 h-4" />,
+          action: () => {
+            // TODO: Open date picker modal
+            console.log("Change due date for:", assignment.id);
+          },
+        },
+        {
           title: "Delete",
           icon: <Trash2 className="w-4 h-4" />,
           action: () => onDelete?.(assignment.id),
@@ -158,7 +172,7 @@ export default function AssignmentCard({
   };
 
   return (
-    <div className="border border-light-border rounded-lg p-5 bg-main-background hover:shadow-sm transition-shadow">
+    <div className="border border-light-border shadow-md rounded-lg p-5 bg-main-background hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
@@ -177,11 +191,14 @@ export default function AssignmentCard({
                   const StatusIcon = statusConfig.icon;
                   return (
                     <div
-                      className={`flex items-center gap-1 px-2 py-1 rounded-full ${statusConfig.bgColor} flex-shrink-0`}
+                      className={`flex items-center gap-1 w-[110px] rounded-full py-1.5 ${statusConfig.bgColor} justify-center`}
                     >
-                      <StatusIcon className={`w-3 h-3 ${statusConfig.color}`} />
+                      <StatusIcon
+                        className="w-5 h-5 text-white"
+                        fill={statusConfig.iconFill}
+                      />
                       <span
-                        className={`${statusConfig.color} font-medium text-xs whitespace-nowrap`}
+                        className={`${statusConfig.textColor} font-medium text-sm whitespace-nowrap`}
                       >
                         {statusConfig.text}
                       </span>
@@ -215,22 +232,34 @@ export default function AssignmentCard({
           </div>
 
           <div className="flex items-center gap-3 flex-wrap text-sm text-para-muted">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {formatDueDate(assignment.dueDate)}
-            </span>
+           
             <span className="flex items-center gap-1">
               <Trophy className="w-4 h-4" />
               {assignment.points} points
             </span>
-            
+
+            {/* Show submission date for instructor */}
+            {isInstructor && (
+              <span className="flex items-center gap-1 text-para-muted">
+                <Clock className="w-4 h-4" />
+                Due:{" "}
+                {new Date(assignment.dueDate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </span>
+            )}
+
             {/* Show grade in same row for student if graded */}
             {!isInstructor &&
               isStudentAssignment(assignment) &&
               assignment.submission.status === "graded" &&
               assignment.submission.grade !== undefined && (
                 <span className="flex items-center gap-1 text-secondary font-semibold">
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-4 h-4 text-white" fill="#8668c0" />
                   {assignment.submission.grade}/{assignment.points}
                 </span>
               )}
@@ -258,9 +287,9 @@ export default function AssignmentCard({
                 </span>
               </div>
               {assignment.submissionStats.graded > 0 && (
-                <div className="flex items-center gap-1.5 text-success font-medium text-sm">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{assignment.submissionStats.graded} graded</span>
+                <div className="flex items-center gap-1 font-medium text-sm">
+                  <CheckCircle2 className="w-5 h-5 text-white" fill="#10b981" />
+                  <span className="text-success">{assignment.submissionStats.graded} graded</span>
                 </div>
               )}
               {isClosed && (
@@ -290,13 +319,13 @@ export default function AssignmentCard({
         <div>
           {isInstructor ? (
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => onViewResponses?.(assignment.id)}
               className="text-xs px-3 py-1.5"
             >
-              <Eye className="w-4 h-4" />
-              View Responses
+              <FileText className="w-4 h-4" />
+              View Details
             </Button>
           ) : (
             <Button
@@ -312,16 +341,44 @@ export default function AssignmentCard({
         </div>
       </div>
 
-      {/* Attachments indicator */}
+      {/* Attachments */}
       {assignment.attachments && assignment.attachments.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-light-border">
-          <div className="flex items-center gap-2 text-xs text-para-muted">
-            <FileIcon className="w-4 h-4" />
-            <span>
-              {assignment.attachments.length} attachment
-              {assignment.attachments.length !== 1 ? "s" : ""}
-            </span>
-          </div>
+        <div className="mt-3 pt-3 border-t border-light-border ">
+          {isInstructor ? (
+            // Show actual attachments for instructor
+            <div className="space-y-2 ">
+              <div className="flex flex-wrap gap-2">
+                {assignment.attachments.map((attachment, index) => (
+                  <a
+                    key={index}
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-2 bg-secondary/10 hover:bg-gray-100 border border-light-border rounded-lg text-xs transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="text-para font-medium max-w-[200px] truncate">
+                      {attachment.name}
+                    </span>
+                    {attachment.size && (
+                      <span className="text-para-muted">
+                        ({Math.round(attachment.size / 1024)} KB)
+                      </span>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : (
+            // Simple count for students
+            <div className="flex items-center gap-2 text-xs text-para-muted">
+              <FileIcon className="w-4 h-4" />
+              <span>
+                {assignment.attachments.length} attachment
+                {assignment.attachments.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>
