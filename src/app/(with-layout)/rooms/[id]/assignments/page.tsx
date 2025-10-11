@@ -264,6 +264,21 @@ export default function AssignmentsTab() {
             />
           </div>
         )}
+
+        {/* Filter Tabs (For Instructors) */}
+        {isInstructor && (
+          <div className="max-w-[800px]">
+            <Tabs
+              options={[
+                { key: "all", label: "All" },
+                { key: "needs-grading", label: "Needs grading" },
+                { key: "graded", label: "Graded" },
+              ]}
+              activeKey={activeFilter}
+              onChange={(key) => setActiveFilter(key as AssignmentFilterType)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Main Content Area - Scrollable */}

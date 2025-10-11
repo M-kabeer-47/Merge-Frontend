@@ -25,21 +25,6 @@ export default function NoteListRow({
   const noteItem = item as NoteItem;
   const folderItem = item as FolderItem;
 
-  // Get color for notes
-  const getColorClass = () => {
-    if (isFolder) return "text-secondary";
-    switch (noteItem.color) {
-      case "primary":
-        return "text-primary";
-      case "secondary":
-        return "text-secondary";
-      case "accent":
-        return "text-accent";
-      default:
-        return "text-para";
-    }
-  };
-
   // Format date
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -70,11 +55,7 @@ export default function NoteListRow({
               fill="currentColor"
             />
           ) : (
-            <div className={`w-10 h-10 rounded-lg ${
-              noteItem.color ? `bg-${noteItem.color}/10` : "bg-gray-100"
-            } flex items-center justify-center flex-shrink-0`}>
-              <FileText className={`w-5 h-5 ${getColorClass()}`} />
-            </div>
+            <FileText className="w-10 h-10 text-secondary flex-shrink-0" />
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -119,4 +100,3 @@ export default function NoteListRow({
     </tr>
   );
 }
-

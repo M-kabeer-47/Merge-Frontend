@@ -34,36 +34,13 @@ export default function NoteGridItem({
         hover: "hover:border-secondary/40",
       };
     }
-    switch (noteItem.color) {
-      case "primary":
-        return {
-          bg: "bg-primary/5",
-          border: "border-primary/20",
-          text: "text-primary",
-          hover: "hover:border-primary/40",
-        };
-      case "secondary":
-        return {
-          bg: "bg-secondary/5",
-          border: "border-secondary/20",
-          text: "text-secondary",
-          hover: "hover:border-secondary/40",
-        };
-      case "accent":
-        return {
-          bg: "bg-accent/5",
-          border: "border-accent/20",
-          text: "text-accent",
-          hover: "hover:border-accent/40",
-        };
-      default:
-        return {
-          bg: "bg-main-background",
-          border: "border-light-border",
-          text: "text-para",
-          hover: "hover:border-gray-300",
-        };
-    }
+    // Use consistent secondary color for all notes
+    return {
+      bg: "bg-secondary/5",
+      border: "border-secondary/20",
+      text: "text-secondary",
+      hover: "hover:border-secondary/40",
+    };
   };
 
   const colors = getColorClasses();
@@ -109,9 +86,7 @@ export default function NoteGridItem({
         {isFolder ? (
           <Folder className="w-12 h-12 text-secondary" fill="currentColor" />
         ) : (
-          <div className={`w-12 h-12 rounded-lg ${colors.bg} border ${colors.border} flex items-center justify-center`}>
-            <FileText className={`w-6 h-6 ${colors.text}`} />
-          </div>
+          <FileText className="w-12 h-12 text-secondary" />
         )}
       </div>
 

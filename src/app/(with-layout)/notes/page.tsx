@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   SlidersHorizontal,
@@ -26,6 +27,7 @@ import SearchBar from "@/components/ui/SearchBar";
 import DropdownMenu from "@/components/ui/Dropdown";
 
 export default function NotesPage() {
+  const router = useRouter();
   const [items, setItems] = useState<NoteOrFolder[]>(sampleNotesAndFolders);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
@@ -106,8 +108,7 @@ export default function NotesPage() {
 
   // Handlers
   const handleCreateNote = () => {
-    console.log("Create new note in folder:", currentFolderId);
-    // TODO: Navigate to note editor
+    router.push("/notes/create");
   };
 
   const handleCreateFolder = () => {
@@ -222,7 +223,7 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 sm:px-6 px-4 sm:py-6 py-4">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
