@@ -16,6 +16,7 @@ import { formatFileSize } from "@/utils/file-helpers";
 interface AnnouncementCardProps {
   announcement: Announcement;
   isRecent?: boolean;
+  bgColor?: string;
   onPin?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
@@ -23,6 +24,7 @@ interface AnnouncementCardProps {
 export default function AnnouncementCard({
   announcement,
   isRecent = false,
+  bgColor,
   onPin,
   onDelete,
 }: AnnouncementCardProps) {
@@ -91,11 +93,12 @@ export default function AnnouncementCard({
     document.body.removeChild(link);
   };
 
+  // Determine background color - use prop if provided, otherwise use existing logic
+  const cardBgColor = bgColor || (isRecent ? "bg-primary/90" : "bg-main-background");
+
   return (
     <div
-      className={`border-[0.5px] border-light-border rounded-lg p-4 ${
-        isRecent ? "bg-primary/90" : "bg-main-background"
-      }`}
+      className={`border-[0.5px] border-light-border rounded-lg p-4 ${cardBgColor}`}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start gap-3">

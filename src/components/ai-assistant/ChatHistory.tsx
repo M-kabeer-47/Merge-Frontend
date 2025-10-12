@@ -182,7 +182,7 @@ export default function ChatHistory({
       className={`flex flex-col h-full ${
         isMobile
           ? "bg-main-background"
-          : "border-r border-light-border bg-gray-50/50"
+          : "border-r border-light-border"
       }`}
     >
       {/* Header */}

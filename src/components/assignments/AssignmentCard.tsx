@@ -30,6 +30,7 @@ import { useSearchParams } from "next/navigation";
 interface AssignmentCardProps {
   assignment: Assignment;
   userRole: "instructor" | "student" | "ta";
+  bgColor?: string;
   onViewDetails?: (id: string) => void;
   onViewResponses?: (id: string) => void;
   onEdit?: (id: string) => void;
@@ -39,6 +40,7 @@ interface AssignmentCardProps {
 export default function AssignmentCard({
   assignment,
   userRole,
+  bgColor,
   onViewDetails,
   onViewResponses,
   onEdit,
@@ -51,6 +53,9 @@ export default function AssignmentCard({
   // Calculate if assignment is overdue
   const isOverdue = new Date() > new Date(assignment.dueDate);
   const isClosed = assignment.status === "closed";
+
+  // Determine background color - use prop if provided, otherwise use default
+  const cardBgColor = bgColor || "bg-main-background";
 
   // Status configuration for student view (similar to BookingCard)
   const getStudentStatusConfig = (
@@ -172,7 +177,7 @@ export default function AssignmentCard({
   };
 
   return (
-    <div className="border border-light-border shadow-md rounded-lg p-5 bg-main-background hover:shadow-md transition-shadow">
+    <div className={`border border-light-border shadow-md rounded-lg p-5 ${cardBgColor} hover:shadow-md transition-shadow`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">

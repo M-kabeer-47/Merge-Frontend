@@ -40,14 +40,14 @@ export default function RoomCard({
 
   return (
     <div
-      className="sm:p-6 p-4 bg-sidebar-text rounded-xl border border-light-border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
+      className="sm:p-6 p-4 bg-background rounded-xl border border-light-border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
       onClick={handleViewRoom}
     >
       {/* Card Header */}
       <div className="">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold text-heading group-hover:text-primary transition-colors font-raleway line-clamp-1">
+            <h3 className="text-xl font-bold text-heading group-hover:text-primary transition-colors font-raleway line-clamp-1">
               {room.title}
             </h3>
           </div>

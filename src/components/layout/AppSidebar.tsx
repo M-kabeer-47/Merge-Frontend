@@ -17,6 +17,7 @@ import {
   IconFolderOpen,
   IconRobot,
   IconChevronDown,
+  IconDashboard,
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
@@ -33,7 +34,7 @@ const sidebarLinks: Links[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
-    icon: <IconHome className="h-5 w-5" />,
+    icon: <IconDashboard className="h-5 w-5" />,
   },
   {
     label: "Discover",

@@ -248,7 +248,10 @@ export default function NotesPage() {
             <FolderPlus className="w-5 h-5" />
             <span className="hidden sm:inline">New Folder</span>
           </Button>
-          <Button onClick={handleCreateNote} className="flex items-center gap-2">
+          <Button
+            onClick={handleCreateNote}
+            className="flex items-center gap-2"
+          >
             <Plus className="w-5 h-5" />
             <span className="hidden sm:inline">New Note</span>
           </Button>
@@ -413,8 +416,8 @@ export default function NotesPage() {
           transition={{ delay: 0.3 }}
           className="border border-light-border rounded-lg overflow-hidden bg-main-background"
         >
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-light-border">
+          <table className="w-full ">
+            <thead className=" border-b border-light-border">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-para-muted uppercase">
                   Name
@@ -428,7 +431,7 @@ export default function NotesPage() {
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="">
               {currentItems.map((item) => (
                 <NoteListRow
                   key={item.id}
@@ -460,8 +463,18 @@ export default function NotesPage() {
 
       {/* Item Menu Dropdown */}
       {showItemMenu && (
-        <div className="fixed inset-0 z-10" onClick={() => setShowItemMenu(null)}>
-          <div className="absolute" style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+        <div
+          className="fixed inset-0 z-10"
+          onClick={() => setShowItemMenu(null)}
+        >
+          <div
+            className="absolute"
+            style={{
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+            }}
+          >
             <DropdownMenu
               options={getItemMenuOptions(showItemMenu)}
               onClose={() => setShowItemMenu(null)}

@@ -77,7 +77,7 @@ export default function ChatComposer({
 
       <div className="px-4 py-3 w-full">
         <div className="max-w-3xl mx-auto">
-          <div className="border border-light-border rounded-lg bg-gray-50 p-3">
+          <div className="border border-light-border rounded-lg p-3">
             {/* Row 1: Textarea */}
             <textarea
               ref={textareaRef}
@@ -86,7 +86,7 @@ export default function ChatComposer({
               onKeyPress={handleKeyPress}
               placeholder="Ask anything or attach files from a room..."
               disabled={disabled}
-              className="text-para w-full bg-transparent focus:outline-none resize-none min-h-[46px] max-h-[120px] text-sm overflow-y-auto placeholder:text-para-muted"
+              className="text-para w-full focus:outline-none resize-none min-h-[46px] max-h-[120px] text-sm overflow-y-auto placeholder:text-para-muted"
               rows={1}
             />
 
