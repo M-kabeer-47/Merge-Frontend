@@ -101,3 +101,23 @@ body {
     @apply bg-background text-foreground;
   }
 }
+.bn-suggestion-menu{
+  border: 0px ;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: var(--main-background);
+  
+}
+.bn-button:hover{
+  background-color: #8668c01a;
+  color: var(--heading);
+  
+}
+.bn-suggestion-menu-item span {
+  color: #fff;
+
+}
+
+.bn-suggestion-menu-item:hover{
+  background-color: var(--primary);
+  color: white;
+}

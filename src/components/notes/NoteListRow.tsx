@@ -62,9 +62,7 @@ export default function NoteListRow({
               <p className="text-[15px] font-semibold text-heading truncate">
                 {item.name}
               </p>
-              {item.isPinned && (
-                <Pin className="w-3.5 h-3.5 text-accent flex-shrink-0" fill="currentColor" />
-              )}
+              
             </div>
             <p className="text-[13px] text-para-muted truncate">
               {getPreview()}
