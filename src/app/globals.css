@@ -14,7 +14,7 @@
   --background: #f7f6f6;
   --main-background: #f3f3f3;
   --light-border: #e5e7eb;
-  --destructive: #ef4444;
+  --destructive: #eb5252;
   --success: #10b981; /* Green for success states */
   --info: #3b82f6; /* Blue for info states */
   /* para-gray-800 */
@@ -28,7 +28,7 @@
   --para-muted: #9ca3af; /* Medium gray for secondary text */
   --button: #f3f4f6; /* Very light gray for button text */
   --radius: 0.625rem;
-  --background: #160f25; /* Dark blue-gray background */
+  --background: #140e22; /* Dark blue-gray background */
   --main-background: #0c0714; /* Darker main background */
   --border: #374151; /* Dark gray borders */
   --card: #1f2937; /* Same as background for cards */
@@ -106,6 +106,10 @@ body {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   background-color: var(--main-background);
   
+}
+.bn-editor{
+  background-color: var(--main-background) !important;
+  color: var(--heading) !important;
 }
 .bn-button:hover{
   background-color: #8668c01a;

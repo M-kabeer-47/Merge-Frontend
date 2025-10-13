@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, Clock, Users, Video, ClipboardList, User } from "lucide-react";
+import { Check, Clock, Users, Video, ClipboardList, User, Smile } from "lucide-react";
 import { format } from "date-fns";
+import { IconMoodEmpty } from "@tabler/icons-react";
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPE DEFINITIONS
@@ -93,8 +94,8 @@ export default function TasksToday({ selectedDate, tasks }: TasksTodayProps) {
       {/* Tasks List */}
       {totalCount === 0 ? (
         <div className="text-center py-8">
-          <User className="w-12 h-12 text-white/30 mx-auto mb-2" />
-          <p className="text-sm text-white/60">No tasks for this day</p>
+          <IconMoodEmpty className="w-12 h-12 text-para mx-auto mb-2" />
+          <p className="text-sm text-para">No tasks for this day</p>
         </div>
       ) : (
         <div className="space-y-4">

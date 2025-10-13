@@ -23,11 +23,9 @@ export default function TagChip({
     return (
       <button
         onClick={onClick}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-          active
-            ? "bg-primary text-white shadow-sm"
-            : "bg-secondary/10 text-para hover:bg-secondary/20 hover:text-primary"
-        } ${isClickable ? "cursor-pointer" : "cursor-default"}`}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200  hover:bg-secondary/20 hover:text-primary ${active ? "bg-primary text-white shadow-sm" : "bg-secondary/10 text-para hover:bg-secondary/20 hover:text-primary"} ${
+          isClickable ? "cursor-pointer" : "cursor-default"
+        }`}
         aria-pressed={active}
         aria-label={`Filter by ${label}`}
       >
@@ -38,7 +36,7 @@ export default function TagChip({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary/10 text-primary border border-secondary/20 ${
+      className={`px-2 py-1 bg-secondary/15 text-primary  text-xs rounded-full font-medium ${
         onRemove ? "pr-1" : ""
       }`}
       role="status"

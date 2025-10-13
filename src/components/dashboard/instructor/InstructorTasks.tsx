@@ -38,7 +38,7 @@ export default function InstructorTasks({
   const totalCount = tasks.length;
 
   return (
-    <div className="bg-background border border-light-border rounded-xl p-5 shadow-sm max-h-[600px] flex flex-col">
+    <div className="bg-background border border-light-border rounded-xl p-5 shadow-sm max-h-[670px] flex flex-col">
       {/* Header */}
       <div className="mb-4 pb-3 border-b border-light-border flex-shrink-0">
         <h3 className="font-raleway font-semibold text-heading text-base mb-1">

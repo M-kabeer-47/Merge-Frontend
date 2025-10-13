@@ -34,7 +34,7 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
     // Map route to tab id
     if (lastSegment === params.id) {
       setActiveTab("general-chat");
-    } else if (["general-chat", "announcements", "content", "assignments", "sessions"].includes(lastSegment)) {
+    } else if (["general-chat", "announcements", "content", "assignments", "sessions", "settings"].includes(lastSegment)) {
       setActiveTab(lastSegment);
     }
   }, [pathname, params.id]);
@@ -81,6 +81,12 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
       id: "sessions",
       label: "Sessions",
       icon: Video,
+      count: 0,
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: Settings,
       count: 0,
     },
   ];

@@ -153,6 +153,7 @@ export default function DiscoverPage() {
       <div className="sm:px-6 px-4 sm:py-6 py-4 transition-all duration-300 ease-in-out">
         <div className="">
           {/* Header */}
+
           <header className="mb-8">
             <h1 className="text-3xl font-bold text-heading mb-2 font-raleway">
               Discover Rooms
@@ -161,18 +162,18 @@ export default function DiscoverPage() {
               Explore public rooms and join communities that match your
               interests
             </p>
+            <div className="mb-6 mt-6">
+              <SearchBar onSearch={handleSearch} />
+            </div>
           </header>
 
-          {/* Recommended Section */}
+          {/* Recommended Section
           <RecommendedRooms
             rooms={recommendedRooms}
             onRoomClick={handlePreviewRoom}
-          />
+          /> */}
 
           {/* Search Bar */}
-          <div className="mb-6">
-            <SearchBar onSearch={handleSearch} />
-          </div>
 
           {/* Filter Bar */}
           <div className="mb-8">

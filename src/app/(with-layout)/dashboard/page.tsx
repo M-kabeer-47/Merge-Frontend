@@ -84,7 +84,7 @@ export default function StudentDashboardPage() {
           </div>
 
           {/* Right Sidebar Widgets */}
-          <div className="w-80 hidden lg:block sticky top-6">
+          <div className="w-80 hidden lg:block top-6">
             <div className="space-y-4">
               {/* Calendar */}
               <TaskCalendar onDateSelect={handleDateSelect} />

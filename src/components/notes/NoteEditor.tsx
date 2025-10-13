@@ -151,7 +151,7 @@ export default function NoteEditor({
           />
 
           {/* BlockNote Editor */}
-          <div className="max-w-none relative left-[-50px]">
+          <div className="max-w-none relative left-[-50px] bg-main-background">
             <BlockNoteView
               editor={editor}
               theme="light"

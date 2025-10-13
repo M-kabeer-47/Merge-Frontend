@@ -102,7 +102,7 @@ export default function RoomsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="sm:px-6 px-4 sm:py-6 py-4 min-h-screen bg-main-background space-y-6">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -130,7 +130,7 @@ export default function RoomsPage() {
             <Link className="h-4 w-4" />
             Join Room
           </Button>
-          <Button 
+          <Button
             className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
             onClick={() => setIsCreateModalOpen(true)}
           >
@@ -250,7 +250,7 @@ export default function RoomsPage() {
           )}
         </motion.div>
       )}
-      
+
       {/* Create Room Modal */}
       <CreateRoomModal
         isOpen={isCreateModalOpen}

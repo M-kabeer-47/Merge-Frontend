@@ -39,7 +39,7 @@ export default function Avatar({
           
         />
       ) : (
-        <User size={iconSizes[size]} className="text-gray-500" />
+        <User size={iconSizes[size]} className="text-primary" />
       )}
     </div>
   );

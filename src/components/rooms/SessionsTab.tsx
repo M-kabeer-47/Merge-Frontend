@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Video,
-  Calendar,
-  Users,
-  FileText,
-  Clock,
-} from "lucide-react";
+import { Video, Calendar, Users, FileText, Clock } from "lucide-react";
 import { format, isSameDay, isPast, isFuture, isToday } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import Avatar from "@/components/ui/Avatar";
@@ -286,12 +280,12 @@ function PastSessionCard({ session }: { session: Session }) {
 
       {/* Action Buttons */}
       <div className="flex gap-2 flex-wrap mt-4">
-        <Button size="sm"  className="w-[170px]">
+        <Button size="sm" className="w-[170px]">
           <Users className="w-4 h-4 mr-2" />
           View Attendees
         </Button>
         {session.lectureSummary && (
-          <Button size="sm" className="w-[195px]">
+          <Button size="sm" className="w-[195px]" variant={"outline"}>
             <FileText className="w-4 h-4 mr-2" />
             View Lecture Summary
           </Button>
@@ -352,23 +346,25 @@ export default function SessionsTab() {
   return (
     <div className="p-4 sm:p-6 h-full overflow-y-auto bg-main-background">
       {/* Action Buttons */}
-      <div className="flex justify-end gap-4 mb-8">
-        <Button size="sm" className="w-[150px]">
-          <Video className="w-4 h-4 mr-2" />
-          Start Session
-        </Button>
-        <Button size="sm" variant="outline" className="w-[150px]">
-          <Calendar className="w-4 h-4 mr-2" />
-          Schedule
-        </Button>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <h2 className="text-xl font-semibold text-heading">
+          Upcoming Sessions
+        </h2>
+        <div className="flex items-center gap-4">
+          <Button size="sm" className="w-[150px]">
+            <Video className="w-4 h-4 mr-2" />
+            Start Session
+          </Button>
+          <Button size="sm" variant="outline" className="w-[150px]">
+            <Calendar className="w-4 h-4 mr-2" />
+            Schedule
+          </Button>
+        </div>
       </div>
 
       {/* Upcoming Sessions */}
       {upcomingSessions.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-xl font-semibold text-heading mb-4">
-            Upcoming Sessions
-          </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {upcomingSessions.map((session) => (
               <UpcomingSessionCard key={session.id} session={session} />

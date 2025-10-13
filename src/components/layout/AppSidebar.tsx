@@ -18,6 +18,7 @@ import {
   IconRobot,
   IconChevronDown,
   IconDashboard,
+  IconCalendar,
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
@@ -46,38 +47,23 @@ const sidebarLinks: Links[] = [
     href: "/rooms",
     icon: <IconUsers className="h-5 w-5" />,
   },
-  {
-    label: "Live Session",
-    href: "/live-session",
-    icon: <IconVideo className="h-5 w-5" />,
-  },
+
   {
     label: "Notes",
     href: "/notes",
     icon: <IconNotes className="h-5 w-5" />,
   },
-  {
-    label: "Canvas",
-    href: "/canvas",
-    icon: <IconPalette className="h-5 w-5" />,
-    children: [
-      {
-        label: "Create Canvas",
-        href: "/canvas/create",
-        icon: <IconBrush className="h-4 w-4" />,
-      },
-      {
-        label: "My Canvases",
-        href: "/canvas/my-canvases",
-        icon: <IconFolderOpen className="h-4 w-4" />,
-      },
-    ],
-  },
+
   {
     label: "AI Assistant",
     href: "/ai-assistant",
     icon: <IconRobot className="h-5 w-5" />,
   },
+  {
+    label: "Calendar",
+    href: "/calendar",
+    icon: <IconCalendar className="h-5 w-5" />,
+  }
 ];
 
 // Custom SidebarLink component for path-based navigation

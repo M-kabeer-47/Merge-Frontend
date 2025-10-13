@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, UserPlus, Users } from "lucide-react";
+import { Eye, UserPlus, Users, Star } from "lucide-react";
 import Image from "next/image";
 import type { PublicRoom } from "@/types/discover";
 import TagChip from "./TagChip";
@@ -61,13 +61,29 @@ export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
 
       {/* Creator */}
 
-      {/* Title */}
-      <h3
-        className="text-lg font-bold text-heading mb-2 line-clamp-1 group-hover:text-primary transition-colors"
-        title={room.title}
-      >
-        {room.title}
-      </h3>
+      {/* Title & Rating */}
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <h3
+          className="text-lg font-bold text-heading line-clamp-1 group-hover:text-primary transition-colors flex-1"
+          title={room.title}
+        >
+          {room.title}
+        </h3>
+        {room.rating && (
+          <div
+            className="flex items-center gap-1 px-2 py-1 bg-accent/10 rounded-lg flex-shrink-0"
+            title={`${room.rating.average} stars from ${room.rating.count} ratings`}
+          >
+            <Star className="w-4 h-4 fill-accent text-accent" />
+            <span className="text-sm font-semibold text-heading">
+              {room.rating.average.toFixed(1)}
+            </span>
+            <span className="text-xs text-para-muted">
+              ({room.rating.count})
+            </span>
+          </div>
+        )}
+      </div>
 
       <div className="flex items-center gap-3 mb-3">
         <Avatar profileImage={room.creator.avatar} size="md" />
@@ -119,25 +135,25 @@ export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
             {room.membersCount} member{room.membersCount !== 1 ? "s" : ""}
           </span>
         </div>
+        <div className="flex gap-2 mt-3 justify-end">
+          <Button
+            variant="outline"
+            onClick={handlePreviewClick}
+            aria-label={`Preview ${room.title}`}
+          >
+            <Eye className="w-4 h-4" />
+            <span className="inline">Preview</span>
+          </Button>
+          <Button
+            onClick={handleJoinClick}
+            aria-label={`Request to join ${room.title}`}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Request to join</span>
+          </Button>
+        </div>
 
         {/* Actions */}
-      </div>
-      <div className="flex gap-2 mt-3 justify-end">
-        <Button
-          variant="outline"
-          onClick={handlePreviewClick}
-          aria-label={`Preview ${room.title}`}
-        >
-          <Eye className="w-4 h-4" />
-          <span className="inline">Preview</span>
-        </Button>
-        <Button
-          onClick={handleJoinClick}
-          aria-label={`Request to join ${room.title}`}
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Request to join</span>
-        </Button>
       </div>
     </article>
   );

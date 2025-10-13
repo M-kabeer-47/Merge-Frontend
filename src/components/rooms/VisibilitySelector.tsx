@@ -27,9 +27,7 @@ export default function VisibilitySelector({
         whileTap={{ scale: disabled ? 1 : 0.98 }}
         className={`relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
           isPublic
-            ? `border-secondary bg-secondary/5 ${
-                isDarkMode ? "text-secondary/90" : "text-primary/90"
-              }`
+            ? `border-secondary bg-secondary/5`
             : "border-light-border hover:border-secondary/30 text-para"
         } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
       >
@@ -57,9 +55,7 @@ export default function VisibilitySelector({
         whileTap={{ scale: disabled ? 1 : 0.98 }}
         className={`relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
           !isPublic
-            ? `border-secondary bg-secondary/5 ${
-                isDarkMode ? "text-secondary/90" : "text-primary/90"
-              }`
+            ? `border-secondary bg-secondary/5 `
             : "border-light-border hover:border-secondary/30 text-para"
         } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
       >

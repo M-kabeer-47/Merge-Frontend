@@ -15,6 +15,10 @@ export const mockRooms: PublicRoom[] = [
     membersCount: 124,
     activeNow: true,
     thumbnail: "/rooms/ds-thumb.png",
+    rating: {
+      average: 4.7,
+      count: 89,
+    },
     files: [
       { id: "f1", name: "Week1_Slides.pdf", type: "pdf", size: "2.4MB" },
       { id: "f2", name: "CheatSheet.png", type: "image", size: "450KB" },
@@ -46,6 +50,10 @@ export const mockRooms: PublicRoom[] = [
     membersCount: 89,
     activeNow: true,
     thumbnail: "/rooms/react-thumb.png",
+    rating: {
+      average: 4.9,
+      count: 67,
+    },
     files: [
       { id: "f4", name: "CustomHooks.pdf", type: "pdf", size: "1.2MB" },
       { id: "f5", name: "ContextAPI.mp4", type: "video", size: "45MB" },
@@ -83,6 +91,10 @@ export const mockRooms: PublicRoom[] = [
     membersCount: 215,
     activeNow: false,
     thumbnail: "/rooms/ml-thumb.png",
+    rating: {
+      average: 4.5,
+      count: 142,
+    },
     files: [
       { id: "f6", name: "Week1_Regression.pdf", type: "pdf", size: "3.1MB" },
       { id: "f7", name: "NeuralNets.pdf", type: "pdf", size: "2.8MB" },
@@ -114,6 +126,10 @@ export const mockRooms: PublicRoom[] = [
     membersCount: 156,
     activeNow: true,
     thumbnail: "/rooms/ux-thumb.png",
+    rating: {
+      average: 4.8,
+      count: 103,
+    },
     files: [
       { id: "f9", name: "DesignPrinciples.pdf", type: "pdf", size: "5.2MB" },
       { id: "f10", name: "ColorTheory.png", type: "image", size: "890KB" },
@@ -142,6 +158,10 @@ export const mockRooms: PublicRoom[] = [
     membersCount: 98,
     activeNow: false,
     thumbnail: "/rooms/db-thumb.png",
+    rating: {
+      average: 4.3,
+      count: 56,
+    },
     files: [
       { id: "f11", name: "SQLBasics.pdf", type: "pdf", size: "1.5MB" },
       {
@@ -177,6 +197,10 @@ export const mockRooms: PublicRoom[] = [
     membersCount: 342,
     activeNow: true,
     thumbnail: "/rooms/python-thumb.png",
+    rating: {
+      average: 4.6,
+      count: 248,
+    },
     files: [
       { id: "f14", name: "PythonBasics.pdf", type: "pdf", size: "2.1MB" },
     ],

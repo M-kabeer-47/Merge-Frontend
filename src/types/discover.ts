@@ -38,6 +38,10 @@ export interface PublicRoom {
   assignments: RoomAssignment[];
   membersPreview: RoomMember[];
   lastActiveAt: string;
+  rating?: {
+    average: number; // 0-5 stars
+    count: number; // number of ratings
+  };
 }
 
 export type SortOption = "newest" | "most-active" | "most-members";

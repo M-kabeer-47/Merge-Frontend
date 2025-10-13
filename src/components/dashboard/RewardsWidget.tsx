@@ -140,7 +140,7 @@ export default function RewardsWidget() {
   });
 
   return (
-    <div className="bg-background border border-light-border rounded-xl shadow-sm flex flex-col max-h-[600px]">
+    <div className="bg-background border border-light-border rounded-xl shadow-sm flex flex-col max-h-[735px]">
       {/* Header - Fixed */}
       <div className="p-5 pb-4 flex-shrink-0">
         <h3 className="font-raleway font-semibold text-heading text-base mb-3">
