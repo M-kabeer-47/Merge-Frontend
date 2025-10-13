@@ -15,10 +15,10 @@ export default function InstructorDashboard() {
 
   return (
     <div className="min-h-screen bg-main-background">
-      <div className="sm:px-6 px-4 sm:py-6 py-4">
+      <div className="sm:px-6 px-4 sm:py-6 py-4 transition-all duration-300 ease-in-out">
         <div className="flex gap-6 items-start">
           {/* Main Content Area */}
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 space-y-6 transition-all duration-300 ease-in-out">
             {/* Hero Section */}
             <div>
               <InstructorSummaryCards />

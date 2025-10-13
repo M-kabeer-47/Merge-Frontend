@@ -146,7 +146,7 @@ export default function RecentActivity() {
                   </p>
 
                   {/* Details */}
-                  <p className="text-sm text-para line-clamp-2">
+                  <p className="text-sm text-para font-semibold line-clamp-2">
                     {activity.details}
                   </p>
                 </div>

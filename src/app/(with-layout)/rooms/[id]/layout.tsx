@@ -1,6 +1,7 @@
 // File: layout.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   MessageSquare,
   Bell,
@@ -10,8 +11,10 @@ import {
   Settings,
   UserPlus,
   MoreVertical,
+  Video,
 } from "lucide-react";
 import ProfessionalTabs from "@/components/rooms/room/Tabs";
+import { Button } from "@/components/ui/Button";
 
 interface RoomLayoutProps {
   children: React.ReactNode;
@@ -19,7 +22,22 @@ interface RoomLayoutProps {
 }
 
 const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
+  const pathname = usePathname();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("general-chat");
+
+  // Update active tab based on current route
+  useEffect(() => {
+    const pathSegments = pathname.split("/");
+    const lastSegment = pathSegments[pathSegments.length - 1];
+    
+    // Map route to tab id
+    if (lastSegment === params.id) {
+      setActiveTab("general-chat");
+    } else if (["general-chat", "announcements", "content", "assignments", "sessions"].includes(lastSegment)) {
+      setActiveTab(lastSegment);
+    }
+  }, [pathname, params.id]);
 
   // Mock room data - replace with actual data fetching
   const roomData = {
@@ -43,26 +61,35 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
     },
     {
       id: "announcements",
-
       label: "Announcements",
       icon: Bell,
       count: roomData.unreadCounts.announcements,
     },
     {
       id: "content",
-
       label: "Content",
       icon: FileText,
       count: roomData.unreadCounts.files,
     },
     {
       id: "assignments",
-
       label: "Assignments",
       icon: BookOpen,
       count: roomData.unreadCounts.assignments,
     },
+    {
+      id: "sessions",
+      label: "Sessions",
+      icon: Video,
+      count: 0,
+    },
   ];
+
+  // Handle tab change with navigation
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    router.push(`/rooms/${params.id}/${tabId}`);
+  };
 
   return (
     <div className="flex flex-col h-full bg-main-background">
@@ -89,20 +116,21 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
 
           {/* Header Actions */}
           <div className="flex items-center gap-2">
-            <button
-              className="flex items-center justify-center px-4 gap-2 w-[110px] py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 shadow-sm"
-              aria-label="Invite participants"
-            >
+            <Button>
+              <Video className="h-4 w-4" />
+              <span className="hidden md:block">Start a live session</span>
+            </Button>
+            <Button className="w-[100px]" aria-label="Invite participants">
               <UserPlus className="h-4 w-4" />
               <span className="hidden md:block">Invite</span>
-            </button>
+            </Button>
 
             <div className="flex items-center">
               <button
                 className="p-2.5 text-para-muted  hover:text-heading  hover:bg-white/50  rounded-lg transition-colors duration-200"
                 aria-label="Room settings"
               >
-                <Settings className="h-5 w-5" />
+                <Settings className="h-5 w-5 text-para" />
               </button>
             </div>
           </div>
@@ -114,7 +142,7 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
         <ProfessionalTabs
           tabs={tabs}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
         />
       </div>
 

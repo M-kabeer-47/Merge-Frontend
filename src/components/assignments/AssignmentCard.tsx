@@ -55,7 +55,7 @@ export default function AssignmentCard({
   const isClosed = assignment.status === "closed";
 
   // Determine background color - use prop if provided, otherwise use default
-  const cardBgColor = bgColor || "bg-main-background";
+  const cardBgColor = bgColor || "bg-background";
 
   // Status configuration for student view (similar to BookingCard)
   const getStudentStatusConfig = (
@@ -177,7 +177,7 @@ export default function AssignmentCard({
   };
 
   return (
-    <div className={`border border-light-border shadow-md rounded-lg p-5 ${cardBgColor} hover:shadow-md transition-shadow`}>
+    <div className={`border border-light-border shadow-sm rounded-lg p-5 ${cardBgColor} hover:shadow-md transition-shadow`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">

@@ -94,7 +94,7 @@ export default function AnnouncementCard({
   };
 
   // Determine background color - use prop if provided, otherwise use existing logic
-  const cardBgColor = bgColor || (isRecent ? "bg-primary/90" : "bg-main-background");
+  const cardBgColor = bgColor || (isRecent ? "bg-primary/90" : "bg-background");
 
   return (
     <div

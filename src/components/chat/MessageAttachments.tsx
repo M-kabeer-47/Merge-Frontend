@@ -203,7 +203,7 @@ const FileAttachmentList: React.FC<{
           <div
             key={attachment.id}
             className={`flex items-center gap-3 p-3 rounded-lg w-80 ${
-              isOwnMessage ? "bg-white/10 border-white/20" : "bg-secondary/15"
+              isOwnMessage ? "bg-white/10 border-white/20" : "bg-secondary/10"
             }`}
           >
             {/* File Icon or Loader */}

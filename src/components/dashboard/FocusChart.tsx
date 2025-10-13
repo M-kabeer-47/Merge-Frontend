@@ -95,6 +95,7 @@ export default function FocusAnalyticsChart({
   threshold,
 }: FocusAnalyticsChartProps) {
   const [primaryColor, setPrimaryColor] = useState("#2f1a58");
+  const [isResizing, setIsResizing] = useState(false);
 
   // Get CSS variables on mount
   useEffect(() => {
@@ -106,16 +107,39 @@ export default function FocusAnalyticsChart({
     );
   }, []);
 
+  // Handle smooth resize
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const handleResize = () => {
+      setIsResizing(true);
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setIsResizing(false);
+      }, 300);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   // For mobile: show last 10 sessions if data length > 10
   const displayData = data.length > 10 ? data.slice(-10) : data;
 
   return (
     <div
-      className="w-full"
+      className="w-full transition-all duration-300 ease-in-out"
       role="region"
       aria-label="Focus Analytics Chart showing percentage of focus per session"
     >
-      <ResponsiveContainer width="100%" height={400}>
+      <ResponsiveContainer 
+        width="100%" 
+        height={400}
+        debounce={50}
+      >
         <AreaChart
           data={displayData}
           margin={{

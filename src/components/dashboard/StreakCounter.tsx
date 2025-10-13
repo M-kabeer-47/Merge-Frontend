@@ -2,6 +2,7 @@
 
 import { Flame } from "lucide-react";
 import { useState } from "react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 export default function StreakCounter() {
   const [streakDays] = useState(4);
@@ -34,7 +35,13 @@ export default function StreakCounter() {
       <div className="flex justify-center mb-4">
         <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center relative">
           <div className="w-20 h-20 rounded-full bg-background border-4 border-accent/20 flex items-center justify-center">
-            <Flame className="w-12 h-12 text-accent fill-accent" />
+            <DotLottieReact
+              src="/Fire.lottie"
+              autoplay
+              loop
+              style={{ width: "58px", height: "58px" }}
+            />
+            {/* <Flame className="w-12 h-12 text-accent fill-accent" /> */}
           </div>
         </div>
       </div>

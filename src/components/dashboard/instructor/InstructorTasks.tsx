@@ -79,7 +79,7 @@ interface TaskItemProps {
 
 function TaskItem({ task, index }: TaskItemProps) {
   return (
-    <div className="flex items-start gap-3 bg-primary/5 hover:bg-primary/10 rounded-lg p-3 transition-all duration-200 border border-primary/10">
+    <div className="flex items-start gap-3 bg-main-background/70 hover:bg-primary/10 rounded-lg p-3 transition-all duration-200 border border-primary/10">
       {/* Status Circle */}
       <div className="flex-shrink-0 mt-0.5">
         {task.completed ? (

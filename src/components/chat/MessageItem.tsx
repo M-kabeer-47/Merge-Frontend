@@ -62,7 +62,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   return (
     <div
       className={`group flex gap-3 py-4 px-4 min-h-fit rounded-xl sm:max-w-5xl max-w-sm mb-6 transition-colors duration-200 relative ${
-        isOwnMessage ? "bg-primary ml-auto " : "bg-secondary/10"
+        isOwnMessage ? "bg-primary/90 ml-auto " : "bg-secondary/5"
       }`}
       ref={ref}
     >

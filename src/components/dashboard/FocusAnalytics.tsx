@@ -81,7 +81,7 @@ export default function FocusAnalytics() {
         </button>
       </div>
 
-      <div className="bg-background border border-light-border rounded-xl p-6 shadow-sm">
+      <div className="bg-background border border-light-border rounded-xl p-6 shadow-sm transition-all duration-300 ease-in-out">
         {/* Stats Row */}
 
         {/* Chart */}
