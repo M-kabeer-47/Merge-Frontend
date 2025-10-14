@@ -10,10 +10,13 @@ import {
   ChevronUp,
   Download,
   FileText,
+  Save,
 } from "lucide-react";
 import type { StudentSubmissionDetail } from "@/types/submission";
 import { formatFileSize } from "@/utils/file-helpers";
 import { Button } from "@/components/ui/Button";
+import { Input } from "../ui/Input";
+import { Textarea } from "../ui/Textarea";
 
 interface SubmissionsTableProps {
   submissions: StudentSubmissionDetail[];
@@ -25,6 +28,9 @@ export default function SubmissionsTable({
   onReview,
 }: SubmissionsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [gradingData, setGradingData] = useState<{
+    [key: string]: { points: string; feedback: string };
+  }>({});
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => {
@@ -44,7 +50,7 @@ export default function SubmissionsTable({
   ) => {
     if (status === "graded") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-success/10 text-success border border-success/20">
+        <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 min-w-[100px]">
           <CheckCircle2 className="w-3.5 h-3.5" />
           Graded
         </span>
@@ -53,14 +59,14 @@ export default function SubmissionsTable({
     if (status === "submitted") {
       if (isLate) {
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
+          <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20 min-w-[100px]">
             <Clock className="w-3.5 h-3.5" />
             Late
           </span>
         );
       }
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-info/10 text-info border border-info/20">
+        <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-secondary/10 text-secondary border border-secondary/20 min-w-[100px]">
           <Clock className="w-3.5 h-3.5" />
           Submitted
         </span>
@@ -68,16 +74,16 @@ export default function SubmissionsTable({
     }
     if (status === "missing") {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
+        <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20 min-w-[100px]">
           <XCircle className="w-3.5 h-3.5" />
           Missing
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-accent/10 text-accent border border-accent/20">
+      <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-para/10 text-para border border-para/20 min-w-[100px]">
         <AlertCircle className="w-3.5 h-3.5" />
-        Not submitted
+        Pending
       </span>
     );
   };
@@ -92,10 +98,28 @@ export default function SubmissionsTable({
     });
   };
 
+  const handleGradeChange = (id: string, field: 'points' | 'feedback', value: string) => {
+    setGradingData((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        points: prev[id]?.points || '',
+        feedback: prev[id]?.feedback || '',
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSaveGrade = (id: string) => {
+    const data = gradingData[id];
+    console.log('Saving grade for:', id, data);
+    // TODO: Implement actual save logic
+  };
+
   return (
-    <div className="border border-light-border rounded-lg overflow-hidden bg-main-background">
+    <div className="border border-light-border rounded-lg overflow-hidden bg-background">
       <table className="w-full">
-        <thead className="bg-gray-50 border-b border-light-border">
+        <thead className="bg-secondary/5 border-b border-light-border">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-semibold text-para-muted uppercase tracking-wider">
               Student
@@ -155,31 +179,21 @@ export default function SubmissionsTable({
                     {submission.files.length > 0 && (
                       <button
                         onClick={() => toggleRow(submission.id)}
-                        className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-secondary/10 rounded transition-colors text-primary"
                         title={
                           expandedRows.has(submission.id)
                             ? "Hide details"
                             : "Show details"
                         }
                       >
+                        <span className="text-xs font-medium">Review</span>
                         {expandedRows.has(submission.id) ? (
-                          <ChevronUp className="w-4 h-4 text-para-muted" />
+                          <ChevronUp className="w-4 h-4" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-para-muted" />
+                          <ChevronDown className="w-4 h-4" />
                         )}
                       </button>
                     )}
-                    {submission.status !== "pending" &&
-                      submission.status !== "missing" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onReview?.(submission.id)}
-                          className="text-xs"
-                        >
-                          Review
-                        </Button>
-                      )}
                   </div>
                 </td>
               </tr>
@@ -187,7 +201,7 @@ export default function SubmissionsTable({
               {/* Expanded details */}
               {expandedRows.has(submission.id) && (
                 <tr>
-                  <td colSpan={5} className="bg-gray-50">
+                  <td colSpan={5} className="bg-background">
                     <div className="px-4 py-4 space-y-4">
                       {/* Files */}
                       {submission.files.length > 0 && (
@@ -199,8 +213,7 @@ export default function SubmissionsTable({
                             {submission.files.map((file) => (
                               <div
                                 key={file.id}
-                                className="flex items-center justify-between gap-4 p-3 bg-white border border-light-border rounded"
-                              >
+                                className="flex items-center justify-between gap-4 p-3 bg-secondary/5 border border-light-border rounded-lg">
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                   <FileText className="w-5 h-5 text-para-muted flex-shrink-0" />
                                   <div className="min-w-0">
@@ -234,11 +247,57 @@ export default function SubmissionsTable({
                           <p className="text-xs font-semibold text-para-muted uppercase mb-2">
                             Feedback
                           </p>
-                          <div className="p-3 bg-white border border-light-border rounded">
+                          <div className="p-3 bg-secondary/5 border border-light-border rounded-lg">
                             <p className="text-sm text-para whitespace-pre-wrap">
                               {submission.feedback}
                             </p>
                           </div>
+                        </div>
+                      )}
+
+                      {/* Grading Section */}
+                      {(submission.status === "submitted" || submission.status === "graded") && (
+                        <div className="pt-4 border-t border-light-border">
+                          <p className="text-xs font-semibold text-para-muted uppercase mb-3">
+                            {submission.status === "graded" ? "Update Grade" : "Grade Assignment"}
+                          </p>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-heading mb-1">
+                                Points
+                              </label>
+                              <Input
+                                type="number"
+                                placeholder="Enter points"
+                                value={gradingData[submission.id]?.points || submission.grade || ''}
+                                onChange={(e) => handleGradeChange(submission.id, 'points', e.target.value)}
+                                
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-heading mb-1">
+                                Feedback <span className="text-para-muted">(Optional)</span>
+                              </label>
+                              <Textarea
+                                placeholder="Enter feedback for the student"
+                                value={gradingData[submission.id]?.feedback || submission.feedback || ''}
+                                onChange={(e) => handleGradeChange(submission.id, 'feedback', e.target.value)}
+                                rows={3}
+                                
+                              />
+                            </div>
+                            <div className="flex items-center justify-end">
+                            <Button
+                              onClick={() => handleSaveGrade(submission.id)}
+                              className="flex items-center gap-2 w-[140px]"
+                              size="sm"
+                              
+                            >
+                              <Save className="w-4 h-4" />
+                              Save Grade
+                            </Button>
+                            </div>
+                            </div>
                         </div>
                       )}
                     </div>

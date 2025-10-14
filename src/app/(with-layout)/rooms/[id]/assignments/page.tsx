@@ -23,6 +23,7 @@ import type {
   StudentAssignment,
 } from "@/types/assignment";
 import { useSearchParams } from "next/navigation";
+import CreateAssignmentModal from "@/components/assignments/CreateAssignmentModal";
 
 export default function AssignmentsTab() {
   // State
@@ -30,7 +31,8 @@ export default function AssignmentsTab() {
   const [activeFilter, setActiveFilter] = useState<AssignmentFilterType>("all");
   const [sortBy, setSortBy] = useState<AssignmentSortOption>("dueDate");
   const [showSortMenu, setShowSortMenu] = useState(false);
-
+  const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] =
+    useState(false);
   // TODO: Replace with actual role check from auth/context
   const userRole: "instructor" | "student" | "ta" = "student"; // Can be "instructor", "student", "ta"
   const isInstructor = useSearchParams().get("isInstructor") === "true";
@@ -139,8 +141,7 @@ export default function AssignmentsTab() {
   };
 
   const handleCreateAssignment = () => {
-    console.log("Create new assignment");
-    // TODO: Implement create assignment modal/page
+    setIsCreateAssignmentModalOpen(true);
   };
 
   // Sort options for dropdown
@@ -320,6 +321,15 @@ export default function AssignmentsTab() {
           </div>
         )}
       </div>
+      {/* Create Assignment Modal */}
+      {isCreateAssignmentModalOpen && (
+        <CreateAssignmentModal
+          isOpen={isCreateAssignmentModalOpen}
+          onClose={() => setIsCreateAssignmentModalOpen(false)}
+          onSubmit={handleCreateAssignment}
+          roomId={"roomId"}
+        />
+      )}
     </div>
   );
 }

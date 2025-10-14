@@ -1,10 +1,3 @@
-/**
- * CanvasStage Component
- * 
- * Interactive whiteboard with drawing tools, shapes, and sticky notes.
- * Features toolbar with tool selection and canvas element manipulation.
- */
-
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -55,25 +48,223 @@ export default function CanvasStage({
   onExport,
 }: CanvasStageProps) {
   const [activeTool, setActiveTool] = useState<CanvasTool>("select");
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(
+    null
+  );
   const [zoom, setZoom] = useState(100);
+  const [strokeColor, setStrokeColor] = useState("#1e1e1e");
+  const [backgroundColor, setBackgroundColor] = useState("transparent");
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Default demo shapes - Simple concept: Client-Server
+  const [demoElements] = useState<CanvasElement[]>([
+    // Title
+    {
+      id: "demo-title",
+      type: "text",
+      x: 300,
+      y: 50,
+      width: 300,
+      height: 30,
+      color: "#1e1e1e",
+      content: "Client-Server Concept",
+    },
+
+    // Client box + label
+    {
+      id: "demo-client",
+      type: "shape",
+      x: 140,
+      y: 260,
+      width: 120,
+      height: 70,
+      color: "#1971c2",
+      rotation: 0,
+    },
+    {
+      id: "demo-client-text",
+      type: "text",
+      x: 170,
+      y: 285,
+      width: 80,
+      height: 20,
+      color: "#1e1e1e",
+      content: "Client",
+    },
+
+    // Request arrow -> from Client to Server
+    {
+      id: "demo-arrow-request",
+      type: "arrow",
+      x: 260,
+      y: 285,
+      width: 80,
+      height: 30,
+      color: "#1e1e1e",
+      rotation: 0, // right
+    },
+    {
+      id: "demo-label-request",
+      type: "text",
+      x: 275,
+      y: 270,
+      width: 70,
+      height: 20,
+      color: "#1e1e1e",
+      content: "Request",
+    },
+
+    // Server box + label
+    {
+      id: "demo-server",
+      type: "shape",
+      x: 360,
+      y: 260,
+      width: 140,
+      height: 70,
+      color: "#2f9e44",
+      rotation: 0,
+    },
+    {
+      id: "demo-server-text",
+      type: "text",
+      x: 395,
+      y: 285,
+      width: 80,
+      height: 20,
+      color: "#1e1e1e",
+      content: "Server",
+    },
+
+    // Response arrow <- from Server to Client
+    
+    
+    // Query arrow -> from Server to Database
+    {
+      id: "demo-arrow-query",
+      type: "arrow",
+      x: 500,
+      y: 285,
+      width: 80,
+      height: 30,
+      color: "#1e1e1e",
+      rotation: 0, // right
+    },
+    {
+      id: "demo-label-query",
+      type: "text",
+      x: 515,
+      y: 270,
+      width: 60,
+      height: 20,
+      color: "#1e1e1e",
+      content: "Query",
+    },
+
+    // Database box + label
+    {
+      id: "demo-db",
+      type: "shape",
+      x: 580,
+      y: 260,
+      width: 140,
+      height: 70,
+      color: "#f08c00",
+      rotation: 0,
+    },
+    {
+      id: "demo-db-text",
+      type: "text",
+      x: 600,
+      y: 285,
+      width: 100,
+      height: 20,
+      color: "#1e1e1e",
+      content: "Database",
+    },
+
+    // Result arrow <- from Database to Server
+  
+
+    // Sticky note with context
+    {
+      id: "demo-note",
+      type: "sticky",
+      x: 120,
+      y: 120,
+      width: 220,
+      height: 110,
+      color: "#fef3c7",
+      content: "Stateless request-response pattern",
+    },
+  ]);
+
   const tools = [
-    { id: "select" as CanvasTool, icon: MousePointer2, label: "Select", shortcut: "V" },
+    {
+      id: "select" as CanvasTool,
+      icon: MousePointer2,
+      label: "Select",
+      shortcut: "V",
+    },
+    {
+      id: "rect" as CanvasTool,
+      icon: Square,
+      label: "Rectangle",
+      shortcut: "R",
+    },
+    {
+      id: "circle" as CanvasTool,
+      icon: Circle,
+      label: "Circle",
+      shortcut: "C",
+    },
+    {
+      id: "arrow" as CanvasTool,
+      icon: ArrowRight,
+      label: "Arrow",
+      shortcut: "A",
+    },
     { id: "pen" as CanvasTool, icon: Pencil, label: "Pen", shortcut: "P" },
-    { id: "eraser" as CanvasTool, icon: Eraser, label: "Eraser", shortcut: "E" },
-    { id: "rect" as CanvasTool, icon: Square, label: "Rectangle", shortcut: "R" },
-    { id: "circle" as CanvasTool, icon: Circle, label: "Circle", shortcut: "C" },
-    { id: "arrow" as CanvasTool, icon: ArrowRight, label: "Arrow", shortcut: "A" },
-    { id: "sticky" as CanvasTool, icon: StickyNote, label: "Sticky Note", shortcut: "S" },
     { id: "text" as CanvasTool, icon: Type, label: "Text", shortcut: "T" },
+    {
+      id: "sticky" as CanvasTool,
+      icon: StickyNote,
+      label: "Sticky Note",
+      shortcut: "S",
+    },
+    {
+      id: "eraser" as CanvasTool,
+      icon: Eraser,
+      label: "Eraser",
+      shortcut: "E",
+    },
   ];
+
+  const strokeColors = [
+    "#1e1e1e", // Black
+    "#e03131", // Red
+    "#2f9e44", // Green
+    "#1971c2", // Blue
+    "#f08c00", // Orange
+  ];
+
+  const backgroundColors = [
+    "transparent", // None
+    "#ffc9c9", // Light red
+    "#b2f2bb", // Light green
+    "#a5d8ff", // Light blue
+    "#ffe066", // Light yellow
+  ];
+
+  const allElements = elements.length > 0 ? elements : demoElements;
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
@@ -117,11 +308,16 @@ export default function CanvasStage({
   const handleElementClick = (elementId: string) => {
     if (isLocked || activeTool !== "select") return;
     setSelectedElementId(elementId === selectedElementId ? null : elementId);
-    console.log(`[Canvas] Element ${elementId === selectedElementId ? "deselected" : "selected"}: ${elementId}`);
+    console.log(
+      `[Canvas] Element ${
+        elementId === selectedElementId ? "deselected" : "selected"
+      }: ${elementId}`
+    );
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isLocked || activeTool === "select" || e.target !== canvasRef.current) return;
+    if (isLocked || activeTool === "select" || e.target !== canvasRef.current)
+      return;
 
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / zoom) * 100;
@@ -129,17 +325,35 @@ export default function CanvasStage({
 
     // Create new element based on active tool
     const newElement: Omit<CanvasElement, "id"> = {
-      type: activeTool === "pen" ? "drawing" : activeTool === "rect" || activeTool === "circle" ? "shape" : activeTool === "arrow" ? "arrow" : activeTool === "sticky" ? "sticky" : "text",
+      type:
+        activeTool === "pen"
+          ? "drawing"
+          : activeTool === "rect" || activeTool === "circle"
+          ? "shape"
+          : activeTool === "arrow"
+          ? "arrow"
+          : activeTool === "sticky"
+          ? "sticky"
+          : "text",
       x,
       y,
       width: activeTool === "sticky" ? 200 : 100,
       height: activeTool === "sticky" ? 150 : 100,
-      color: activeTool === "sticky" ? "#fef3c7" : "#8668c0",
-      content: activeTool === "sticky" ? "New Note" : activeTool === "text" ? "Text" : undefined,
+      color: strokeColor,
+      content:
+        activeTool === "sticky"
+          ? "New Note"
+          : activeTool === "text"
+          ? "Text"
+          : undefined,
     };
 
     onAddElement?.(newElement);
-    console.log(`[Canvas] Added ${activeTool} element at (${Math.round(x)}, ${Math.round(y)})`);
+    console.log(
+      `[Canvas] Added ${activeTool} element at (${Math.round(x)}, ${Math.round(
+        y
+      )})`
+    );
   };
 
   const handleDeleteElement = (id: string) => {
@@ -201,149 +415,94 @@ export default function CanvasStage({
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
-      {/* Toolbar */}
-      <div className="px-4 py-3 bg-main-background border-b border-light-border">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Drawing Tools */}
-          <div className="flex items-center gap-1 bg-secondary/5 p-1 rounded-lg">
-            {tools.map((tool) => (
-              <IconButton
-                key={tool.id}
-                icon={tool.icon}
-                label={tool.label}
-                onClick={() => handleToolSelect(tool.id)}
-                isActive={activeTool === tool.id}
-                disabled={isLocked}
-                variant={activeTool === tool.id ? "default" : "ghost"}
-                size="sm"
-                shortcut={tool.shortcut}
-              />
-            ))}
-          </div>
+    <div className="w-full h-full flex bg-[#fafafa] relative">
+      {/* Left Sidebar - Color and Style Controls */}
 
-          <div className="h-6 w-px bg-light-border" />
+      {/* Top Toolbar - Static Image */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+        <img
+          src="/toolbar.png"
+          alt="Canvas Toolbar"
+          className="h-[44px] shadow-lg rounded-xl scale-150"
+          style={{ userSelect: "none", pointerEvents: "none" }}
+        />
+      </div>
 
-          {/* Action Tools */}
-          <div className="flex items-center gap-1">
-            <IconButton
-              icon={Undo}
-              label="Undo"
-              onClick={handleUndo}
-              disabled={isLocked}
-              variant="ghost"
-              size="sm"
-              shortcut="Ctrl+Z"
-            />
-            <IconButton
-              icon={Redo}
-              label="Redo"
-              onClick={handleRedo}
-              disabled={isLocked}
-              variant="ghost"
-              size="sm"
-              shortcut="Ctrl+Y"
-            />
-          </div>
+      {/* Undo/Redo - Top Left of Toolbar Area */}
+      
 
-          <div className="h-6 w-px bg-light-border" />
-
-          {/* Zoom Controls */}
-          <div className="flex items-center gap-1">
-            <IconButton
-              icon={ZoomOut}
-              label="Zoom Out"
-              onClick={handleZoomOut}
-              disabled={zoom <= 50}
-              variant="ghost"
-              size="sm"
-            />
-            <span className="px-2 py-1 text-xs font-medium text-para min-w-[50px] text-center">
-              {zoom}%
-            </span>
-            <IconButton
-              icon={ZoomIn}
-              label="Zoom In"
-              onClick={handleZoomIn}
-              disabled={zoom >= 200}
-              variant="ghost"
-              size="sm"
-            />
-          </div>
-
-          <div className="h-6 w-px bg-light-border" />
-
-          {/* Utility Tools */}
-          <div className="flex items-center gap-1">
-            <IconButton
-              icon={isLocked ? Lock : Unlock}
-              label={isLocked ? "Unlock Canvas" : "Lock Canvas"}
-              onClick={handleToggleLock}
-              variant={isLocked ? "danger" : "ghost"}
-              size="sm"
-            />
-            <IconButton
-              icon={Trash2}
-              label="Clear Canvas"
-              onClick={handleClear}
-              disabled={isLocked}
-              variant="ghost"
-              size="sm"
-            />
-            <IconButton
-              icon={Download}
-              label="Export"
-              onClick={handleExport}
-              variant="ghost"
-              size="sm"
-            />
-          </div>
-
-          {/* Delete Selected */}
-          {selectedElementId && !isLocked && (
-            <>
-              <div className="h-6 w-px bg-light-border" />
-              <button
-                onClick={() => handleDeleteElement(selectedElementId)}
-                className="px-3 py-1.5 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-lg text-xs font-medium transition-colors flex items-center gap-1"
-              >
-                <Trash2 className="w-3 h-3" />
-                Delete Selected
-              </button>
-            </>
-          )}
+      {/* Zoom Controls - Bottom Right Corner */}
+      <div className="absolute bottom-4 right-4 z-20">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200/80 px-2 py-1.5 flex items-center gap-2">
+          <IconButton
+            icon={ZoomOut}
+            label="Zoom Out"
+            onClick={handleZoomOut}
+            disabled={zoom <= 50}
+            variant="ghost"
+            size="sm"
+          />
+          <span className="px-2 text-xs font-medium text-gray-600 min-w-[45px] text-center">
+            {zoom}%
+          </span>
+          <IconButton
+            icon={ZoomIn}
+            label="Zoom In"
+            onClick={handleZoomIn}
+            disabled={zoom >= 200}
+            variant="ghost"
+            size="sm"
+          />
         </div>
+      </div>
 
-        {/* Lock Banner */}
-        {isLocked && (
-          <div className="mt-2 px-3 py-2 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
-            <Lock className="w-4 h-4 text-destructive" />
-            <p className="text-xs text-destructive font-medium">
+      {/* Delete Selected - Top Right */}
+      {selectedElementId && !isLocked && (
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={() => handleDeleteElement(selectedElementId)}
+            className="px-3 py-2 bg-white hover:bg-red-50 text-red-600 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 shadow-lg border border-gray-200/80"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete Selected
+          </button>
+        </div>
+      )}
+
+      {/* Lock Banner */}
+      {isLocked && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20">
+          <div className="px-4 py-2 bg-white border border-red-200 rounded-lg flex items-center gap-2 shadow-lg">
+            <Lock className="w-4 h-4 text-red-600" />
+            <p className="text-xs text-red-600 font-medium">
               Canvas is locked. Click the lock icon to unlock and edit.
             </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Canvas Area */}
-      <div className="flex-1 overflow-auto p-4">
+      {/* Canvas Area - Full Width & Height */}
+      <div className="w-full h-full overflow-hidden relative">
         <div
           ref={canvasRef}
           onClick={handleCanvasClick}
           className={`
-            relative bg-white border-2 border-dashed border-light-border rounded-lg mx-auto
-            ${isLocked ? "cursor-not-allowed" : activeTool === "select" ? "cursor-default" : "cursor-crosshair"}
+            w-full h-full relative
+            ${
+              isLocked
+                ? "cursor-not-allowed"
+                : activeTool === "select"
+                ? "cursor-default"
+                : "cursor-crosshair"
+            }
           `}
           style={{
-            width: `${zoom}%`,
-            minWidth: "800px",
-            height: "600px",
             transform: `scale(${zoom / 100})`,
-            transformOrigin: "top left",
+            transformOrigin: "center center",
           }}
         >
           {/* Render Canvas Elements */}
-          {elements.map((element) => (
+          {allElements.map((element) => (
             <div
               key={element.id}
               onClick={(e) => {
@@ -351,53 +510,74 @@ export default function CanvasStage({
                 handleElementClick(element.id);
               }}
               className={`
-                absolute transition-all
-                ${activeTool === "select" && !isLocked ? "cursor-move hover:ring-2 hover:ring-primary/50" : ""}
-                ${selectedElementId === element.id ? "ring-2 ring-primary" : ""}
+                absolute transition-all rounded-sm
+                ${
+                  activeTool === "select" && !isLocked
+                    ? "cursor-move hover:ring-2 hover:ring-blue-400"
+                    : ""
+                }
+                ${
+                  selectedElementId === element.id ? "ring-2 ring-blue-500" : ""
+                }
               `}
               style={{
                 left: `${element.x}px`,
                 top: `${element.y}px`,
                 width: element.width ? `${element.width}px` : "auto",
                 height: element.height ? `${element.height}px` : "auto",
-                transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
+                transform: element.rotation
+                  ? `rotate(${element.rotation}deg)`
+                  : undefined,
               }}
             >
               {/* Render based on element type */}
               {element.type === "shape" && (
                 <div
-                  className="w-full h-full border-2 rounded"
+                  className="w-full h-full border-2 rounded-lg"
                   style={{
-                    borderColor: element.color || "#8668c0",
-                    backgroundColor: `${element.color || "#8668c0"}20`,
+                    borderColor: element.color || strokeColor,
+                    backgroundColor:
+                      backgroundColor !== "transparent"
+                        ? `${backgroundColor}40`
+                        : "transparent",
                   }}
                 />
               )}
 
               {element.type === "arrow" && (
-                <svg className="w-full h-full" viewBox="0 0 100 100">
+                <svg
+                  className="w-full h-full"
+                  viewBox="0 0 100 100"
+                  style={{
+                    transform: element.rotation
+                      ? `rotate(${element.rotation}deg)`
+                      : undefined,
+                  }}
+                >
                   <defs>
                     <marker
                       id={`arrowhead-${element.id}`}
-                      markerWidth="10"
-                      markerHeight="10"
-                      refX="9"
-                      refY="3"
-                      orient="auto"
+                      markerWidth="12"
+                      markerHeight="12"
+                      refX="10"
+                      refY="6"
+                      orient="auto-start-reverse"
                     >
                       <polygon
-                        points="0 0, 10 3, 0 6"
-                        fill={element.color || "#8668c0"}
+                        points="0 0, 12 6, 0 12"
+                        fill={element.color || strokeColor}
                       />
                     </marker>
                   </defs>
+                  {/* Draw a horizontal line; container rotation handles direction */}
                   <line
-                    x1="10"
+                    x1="8"
                     y1="50"
-                    x2="90"
+                    x2="92"
                     y2="50"
-                    stroke={element.color || "#8668c0"}
-                    strokeWidth="2"
+                    stroke={element.color || strokeColor}
+                    strokeWidth="4"
+                    strokeLinecap="round"
                     markerEnd={`url(#arrowhead-${element.id})`}
                   />
                 </svg>
@@ -405,7 +585,7 @@ export default function CanvasStage({
 
               {element.type === "sticky" && (
                 <div
-                  className="w-full h-full p-3 rounded-lg shadow-lg"
+                  className="w-full h-full p-3 rounded-md shadow-md border border-gray-200"
                   style={{
                     backgroundColor: element.color || "#fef3c7",
                   }}
@@ -418,30 +598,35 @@ export default function CanvasStage({
 
               {element.type === "text" && (
                 <p
-                  className="text-lg font-medium"
-                  style={{ color: element.color || "#2f1a58" }}
+                  className="text-[15px] leading-none font-medium"
+                  style={{ color: element.color || strokeColor }}
                 >
                   {element.content || "Text"}
                 </p>
               )}
 
               {element.type === "drawing" && (
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: element.color || "#8668c0" }}
-                />
+                <svg className="w-full h-full" viewBox="0 0 100 100">
+                  <path
+                    d="M 10 50 Q 30 30, 50 50 T 90 50"
+                    stroke={element.color || strokeColor}
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </svg>
               )}
             </div>
           ))}
 
-          {/* Empty State */}
-          {elements.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-para-muted">
-                <Pencil className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="text-lg font-medium">Canvas is empty</p>
+          {/* Empty State - Only show when no demo elements */}
+          {allElements.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center text-gray-400">
+                <Pencil className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                <p className="text-base font-medium">Start drawing</p>
                 <p className="text-sm mt-1">
-                  Select a tool and click to start drawing
+                  Select a tool from the toolbar and click to begin
                 </p>
               </div>
             </div>
