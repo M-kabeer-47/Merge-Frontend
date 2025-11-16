@@ -12,7 +12,6 @@ import {
   XCircle,
   AlertCircle,
   File as FileIcon,
-  Clock1,
 } from "lucide-react";
 import type {
   Assignment,
@@ -25,11 +24,10 @@ import {
 } from "@/types/assignment";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
-import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface AssignmentCardProps {
   assignment: Assignment;
-  userRole: "instructor" | "student" | "ta";
   bgColor?: string;
   onViewDetails?: (id: string) => void;
   onViewResponses?: (id: string) => void;
@@ -39,7 +37,6 @@ interface AssignmentCardProps {
 
 export default function AssignmentCard({
   assignment,
-  userRole,
   bgColor,
   onViewDetails,
   onViewResponses,
@@ -47,8 +44,10 @@ export default function AssignmentCard({
   onDelete,
 }: AssignmentCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const { user } = useAuth();
 
-  const isInstructor = useSearchParams().get("isInstructor") === "true";
+  // Get role from authenticated user
+  const isInstructor = user?.role === "instructor";
 
   // Calculate if assignment is overdue
   const isOverdue = new Date() > new Date(assignment.dueDate);
@@ -177,7 +176,9 @@ export default function AssignmentCard({
   };
 
   return (
-    <div className={`border border-light-border shadow-sm rounded-lg p-5 ${cardBgColor} hover:shadow-md transition-shadow`}>
+    <div
+      className={`border border-light-border shadow-sm rounded-lg p-5 ${cardBgColor} hover:shadow-md transition-shadow`}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
@@ -237,7 +238,6 @@ export default function AssignmentCard({
           </div>
 
           <div className="flex items-center gap-3 flex-wrap text-sm text-para-muted">
-           
             <span className="flex items-center gap-1">
               <Trophy className="w-4 h-4" />
               {assignment.points} points
@@ -294,7 +294,9 @@ export default function AssignmentCard({
               {assignment.submissionStats.graded > 0 && (
                 <div className="flex items-center gap-1 font-medium text-sm">
                   <CheckCircle2 className="w-5 h-5 text-white" fill="#10b981" />
-                  <span className="text-success">{assignment.submissionStats.graded} graded</span>
+                  <span className="text-success">
+                    {assignment.submissionStats.graded} graded
+                  </span>
                 </div>
               )}
               {isClosed && (

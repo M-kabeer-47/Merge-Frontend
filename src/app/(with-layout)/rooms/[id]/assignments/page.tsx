@@ -22,9 +22,8 @@ import type {
   AssignmentFilterType,
   StudentAssignment,
 } from "@/types/assignment";
-import { useSearchParams } from "next/navigation";
 import CreateAssignmentModal from "@/components/assignments/CreateAssignmentModal";
-
+import { useAuth } from "@/providers/AuthProvider";
 export default function AssignmentsTab() {
   // State
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,9 +32,9 @@ export default function AssignmentsTab() {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] =
     useState(false);
-  // TODO: Replace with actual role check from auth/context
-  const userRole: "instructor" | "student" | "ta" = "student"; // Can be "instructor", "student", "ta"
-  const isInstructor = useSearchParams().get("isInstructor") === "true";
+  const { user } = useAuth();
+  const userRole = user?.role;
+  const isInstructor = userRole === "instructor";
   // Load appropriate data based on role
   const assignments: Assignment[] = isInstructor
     ? sampleInstructorAssignments
@@ -298,7 +297,7 @@ export default function AssignmentsTab() {
               />
             ) : (
               <EmptyAssignments
-                userRole={userRole}
+                isInstructor={isInstructor}
                 onCreateFirst={
                   isInstructor ? handleCreateAssignment : undefined
                 }
@@ -311,7 +310,6 @@ export default function AssignmentsTab() {
               <AssignmentCard
                 key={assignment.id}
                 assignment={assignment}
-                userRole={userRole}
                 onViewDetails={handleViewDetails}
                 onViewResponses={handleViewResponses}
                 onEdit={handleEdit}

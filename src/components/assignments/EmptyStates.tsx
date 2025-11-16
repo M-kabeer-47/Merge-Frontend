@@ -3,15 +3,15 @@ import { BookOpen, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface EmptyAssignmentsProps {
-  userRole: "instructor" | "student" | "ta";
+  isInstructor: boolean;
   onCreateFirst?: () => void;
 }
 
 export function EmptyAssignments({
-  userRole,
+  isInstructor,
   onCreateFirst,
 }: EmptyAssignmentsProps) {
-  const isInstructor = userRole === "instructor" || userRole === "ta";
+  
 
   return (
     <div className="flex flex-col items-center justify-center h-full py-12 px-4">
@@ -60,8 +60,8 @@ export function NoSearchResults({
 
       <p className="text-para-muted text-center max-w-md mb-6">
         No assignments match your search for &quot;
-        <span className="font-semibold text-para">{searchTerm}</span>&quot;.
-        Try adjusting your search terms or filters.
+        <span className="font-semibold text-para">{searchTerm}</span>&quot;. Try
+        adjusting your search terms or filters.
       </p>
 
       <Button variant="outline" onClick={onClearSearch}>
@@ -116,4 +116,3 @@ export function EmptyFilterResults({
     </div>
   );
 }
-

@@ -18,7 +18,6 @@ import TaskCalendar, {
 import { isSameDay } from "date-fns";
 
 export default function StudentDashboardPage() {
-  const [studentName] = useState("John Doe");
   const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);

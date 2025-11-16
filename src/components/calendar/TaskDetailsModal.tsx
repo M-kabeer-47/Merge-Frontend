@@ -3,7 +3,8 @@
 import { X, Calendar, Clock, MapPin, FileText } from "lucide-react";
 import { CalendarTask } from "@/app/(with-layout)/calendar/page";
 import { getCategoryIcon, getCategoryLabel, getCategoryColor } from "@/lib/utils/calendar-utils";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
+import { parseISO } from "date-fns/parseISO";
 
 interface TaskDetailsModalProps {
   task: CalendarTask;

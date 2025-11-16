@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { isSameDay, format, parseISO, isToday, isBefore, startOfDay } from "date-fns";
+import { isSameDay, format, isToday, isBefore, startOfDay } from "date-fns";
+import {parseISO} from "date-fns/parseISO";
 import TodayTasksBar from "@/components/calendar/TodayTasksBar";
 import CalendarWrapper from "@/components/calendar/CalendarWrapper";
 import SidebarTasks from "@/components/calendar/SidebarTasks";

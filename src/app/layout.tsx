@@ -43,6 +43,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.variable} ${raleway.variable}`}>
+        
         <ThemeProvider defaultTheme="light">
           <ReactQueryProvider>
             <AuthProvider>{children}</AuthProvider>

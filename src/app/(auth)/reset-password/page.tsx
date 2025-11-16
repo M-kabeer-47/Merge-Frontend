@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
     mode: "onChange",
   });
 
-  const password = watch("password", "");
+
 
   const onSubmit = async (data: ResetPasswordType) => {
     if (!token) {

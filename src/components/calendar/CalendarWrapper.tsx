@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarTask } from "@/app/(with-layout)/calendar/page";
-import { parseISO } from "date-fns";
+import { parseISO } from "date-fns/parseISO";
 import TaskCalendar from "@/components/dashboard/TaskCalendar";
 
 interface CalendarWrapperProps {

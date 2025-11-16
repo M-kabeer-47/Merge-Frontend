@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import {
   sampleInstructorAssignments,
@@ -12,15 +12,36 @@ import { isStudentAssignment } from "@/types/assignment";
 import { Button } from "@/components/ui/Button";
 import StudentAssignmentView from "@/components/assignments/StudentAssignmentView";
 import InstructorAssignmentView from "@/components/assignments/InstructorAssignmentView";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function AssignmentDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const { user, isLoading } = useAuth();
+  
   const assignmentId = params.assignmentId as string;
   const roomId = params.id as string;
 
-  // TODO: Replace with actual role check from auth/context
-  const isInstructor = useSearchParams().get("isInstructor") === "true";
+  // Get role from authenticated user
+  const isInstructor = user?.role === "instructor";
+
+  // Show loading state while fetching user
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-main-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-para-muted">Loading assignment...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    router.push("/sign-in");
+    return null;
+  }
 
   // Load appropriate data based on role
   const assignments = isInstructor

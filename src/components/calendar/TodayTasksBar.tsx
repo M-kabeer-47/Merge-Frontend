@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import { CalendarTask } from "@/app/(with-layout)/calendar/page";
 import { getCategoryIcon, getCategoryColor } from "@/lib/utils/calendar-utils";
-import { format, parseISO } from "date-fns";
+
 
 interface TodayTasksBarProps {
   tasks: CalendarTask[];

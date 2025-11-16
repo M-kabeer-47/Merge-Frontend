@@ -18,22 +18,22 @@ import InviteModal from "@/components/rooms/InviteModal";
 
 interface RoomLayoutProps {
   children: React.ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
+const RoomLayout: React.FC<RoomLayoutProps> = async({ children, params }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("general-chat");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-
+  const { id } = await params;
   // Update active tab based on current route
   useEffect(() => {
     const pathSegments = pathname.split("/");
     const lastSegment = pathSegments[pathSegments.length - 1];
 
     // Map route to tab id
-    if (lastSegment === params.id) {
+    if (lastSegment === id) {
       setActiveTab("general-chat");
     } else if (
       [
@@ -47,7 +47,7 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
     ) {
       setActiveTab(lastSegment);
     }
-  }, [pathname, params.id]);
+  }, [pathname, id]);
 
   // Mock room data - replace with actual data fetching
   const roomData = {
@@ -104,7 +104,7 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
   // Handle tab change with navigation
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
-    router.push(`/rooms/${params.id}/${tabId}`);
+    router.push(`/rooms/${id}/${tabId}`);
   };
 
   return (
@@ -198,7 +198,7 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children, params }) => {
       <InviteModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        roomId={params.id}
+        roomId={id}
         roomName={roomData.name}
       />
     </div>
