@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import TagSelector from "./TagSelector";
 import VisibilitySelector from "./VisibilitySelector";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import useCreateRoom from "@/hooks/rooms/create-room";
+import useCreateRoom from "@/hooks/rooms/use-create-room";
 import { createRoomSchema, type CreateRoomType } from "@/schemas/room/create-room";
 
 interface CreateRoomModalProps {

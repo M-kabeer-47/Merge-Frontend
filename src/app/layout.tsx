@@ -6,6 +6,7 @@ import { Roboto, Raleway } from "next/font/google";
 import { CircleCheck, InfoIcon } from "lucide-react";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -44,7 +45,8 @@ export default function RootLayout({
       <body className={`${roboto.variable} ${raleway.variable}`}>
         <ThemeProvider defaultTheme="light">
           <ReactQueryProvider>
-            {children}
+            <AuthProvider>{children}</AuthProvider>
+
             <Toaster icons={toastIcons} />
           </ReactQueryProvider>
         </ThemeProvider>

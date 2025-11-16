@@ -2,23 +2,17 @@
 import React from "react";
 import {
   IconSettings,
-  IconUser,
-  IconBell,
   IconSun,
   IconMoon,
+  IconLogin,
+  IconUser,
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import Avatar from "../ui/Avatar";
-
-interface UserProfile {
-  name: string;
-  role: string;
-  initials: string;
-  image?: string;
-}
+import Link from "next/link";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface MobileNavbarOptionsProps {
-  user: UserProfile;
   isDarkMode?: boolean;
   onThemeToggle: () => void;
   notificationCount?: number;
@@ -26,12 +20,11 @@ interface MobileNavbarOptionsProps {
 }
 
 export default function MobileNavbarOptions({
-  user,
   isDarkMode = false,
   onThemeToggle,
-  
   onSignOut,
 }: MobileNavbarOptionsProps) {
+  const { user, isLoading, isAuthenticated } = useAuth();
   const menuItems = [
     {
       label: isDarkMode ? "Light Mode" : "Dark Mode",
@@ -42,13 +35,92 @@ export default function MobileNavbarOptions({
       ),
       action: onThemeToggle,
     },
-
-    {
-      label: "Settings",
-      icon: <IconSettings className="h-5 w-5" />,
-      action: () => console.log("Open settings"),
-    },
+    ...(user
+      ? [
+          {
+            label: "Settings",
+            icon: <IconSettings className="h-5 w-5" />,
+            action: () => console.log("Open settings"),
+          },
+        ]
+      : []),
   ];
+
+  // Show loading skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-6 md:hidden">
+        <div className="border-t border-light-border"></div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 p-3 rounded-lg animate-pulse">
+            <div className="w-5 h-5 bg-gray-300 rounded"></div>
+            <div className="h-4 w-24 bg-gray-300 rounded"></div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 px-1 animate-pulse">
+          <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-32 bg-gray-300 rounded"></div>
+            <div className="h-3 w-20 bg-gray-300 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not logged in, show sign-in/sign-up
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="space-y-6 md:hidden">
+        {/* Theme Toggle */}
+        <div className="space-y-2">
+          <motion.button
+            onClick={onThemeToggle}
+            className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-para-muted">
+                {isDarkMode ? (
+                  <IconSun className="h-5 w-5" />
+                ) : (
+                  <IconMoon className="h-5 w-5" />
+                )}
+              </span>
+              <span className="font-medium text-heading">
+                {isDarkMode ? "Light Mode" : "Dark Mode"}
+              </span>
+            </div>
+          </motion.button>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-light-border"></div>
+
+        {/* Sign In Button */}
+        <Link href="/sign-in">
+          <motion.button
+            className="flex items-center gap-3 w-full p-3 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <IconLogin className="h-5 w-5" />
+            <span className="font-medium">Sign In</span>
+          </motion.button>
+        </Link>
+
+        {/* Sign Up Link */}
+        <div className="text-center text-sm text-para-muted">
+          Don't have an account?{" "}
+          <Link
+            href="/sign-up"
+            className="text-primary hover:underline font-medium"
+          >
+            Sign Up
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 md:hidden">
@@ -76,17 +148,15 @@ export default function MobileNavbarOptions({
         {user.image ? (
           <Avatar profileImage={user.image} size="lg" />
         ) : (
-          <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center">
-            <span className="text-white font-medium text-lg">
-              {user.initials}
-            </span>
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+            <IconUser className="w-6 h-6 text-heading" strokeWidth={2} />
           </div>
         )}
         <div className="flex-1">
           <h3 className="font-raleway font-semibold text-heading">
-            {user.name}
+            {user.firstName} {user.lastName}
           </h3>
-          <p className="text-sm text-para-muted">{user.role}</p>
+          <p className="text-sm text-para-muted">{user.role || "User"}</p>
         </div>
       </div>
 

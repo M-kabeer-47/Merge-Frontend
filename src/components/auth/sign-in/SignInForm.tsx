@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
 import Link from "next/link";
-import useSignIn from "@/hooks/auth/sign-in";
+import useSignIn from "@/hooks/auth/use-sign-in";
 import { useRouter } from "next/navigation";
 // Animation variants
 const containerVariants = {

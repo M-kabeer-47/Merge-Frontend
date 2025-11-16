@@ -9,7 +9,7 @@ import apiRequest from "@/utils/api-request";
 import { motion } from "framer-motion";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
-import useVerifyEmail from "@/hooks/auth/verify-email";
+import useVerifyEmail from "@/hooks/auth/use-verify-email";
 interface VerifyResponse {
   data: {
     message: string;

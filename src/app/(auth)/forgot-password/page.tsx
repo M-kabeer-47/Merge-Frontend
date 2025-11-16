@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { KeyRound, ArrowLeft, Mail, Send } from "lucide-react";
-import useForgotPassword from "@/hooks/auth/forgot-password";
+import useForgotPassword from "@/hooks/auth/use-forgot-password";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";

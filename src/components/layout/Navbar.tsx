@@ -4,16 +4,10 @@ import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
 import ToggleSwitch from "@/components/navbar/DarkModeToggle";
 import NotificationDropdown from "@/components/navbar/Notifications";
 import ProfileDropdown from "@/components/navbar/ProfileDropdown";
-import useLogout from "@/hooks/auth/logout";
-interface UserProfile {
-  name: string;
-  role: string;
-  initials: string;
-  image?: string;
-}
+import useLogout from "@/hooks/auth/use-logout";
+import { User } from "@/types/user";
 
 interface NavbarProps {
-  user: UserProfile;
   isDarkMode?: boolean;
   setIsDarkMode: (isDark: boolean) => void;
   onThemeToggle?: () => void;
@@ -21,9 +15,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({
-  user,
   isDarkMode = false,
-  onThemeToggle,
   notificationCount = 3,
   setIsDarkMode,
 }: NavbarProps) {
@@ -47,8 +39,6 @@ export default function Navbar({
     console.log("Mark all notifications as read");
     // Mark all notifications as read logic
   };
-
-  
 
   // Profile dropdown options
   const profileOptions = [
@@ -92,12 +82,8 @@ export default function Navbar({
 
           {/* User Profile Dropdown */}
           <ProfileDropdown
-            userName={user.name}
-            userRole={user.role}
-            profileImage={user.image}
             onSignOut={logout}
             options={profileOptions}
-            variant="navbar"
             showRole={true}
           />
         </div>

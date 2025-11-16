@@ -9,7 +9,7 @@ import { partialUserSchema, userSchema, UserType } from "@/schemas/user/user";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import useSignUp from "@/hooks/auth/sign-up";
+import useSignUp from "@/hooks/auth/use-sign-up";
 
 // Animation variants
 const containerVariants = {

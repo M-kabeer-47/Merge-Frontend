@@ -10,7 +10,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { joinRoomSchema, JoinRoomType } from "@/schemas/room/join-room";
-import useJoinRoom from "@/hooks/rooms/join-room";
+import useJoinRoom from "@/hooks/rooms/use-join-room";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface JoinRoomModalProps {

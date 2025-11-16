@@ -1,9 +1,11 @@
 import apiRequest from "@/utils/api-request";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 import useRotateToken from "@/utils/rotate-token";
 export default function logout() {
+  const queryClient = useQueryClient();
+
   const { isRotationSuccess, rotateToken } = useRotateToken({
     oldToken:
       (typeof window !== "undefined" && localStorage.getItem("refreshToken")) ||
@@ -24,7 +26,6 @@ export default function logout() {
       )
     );
   };
-
   const {
     isPending,
     isError,
@@ -46,6 +47,7 @@ export default function logout() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("userId");
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       toast.success("Logged out successfully");
       setTimeout(() => {
         window.location.href = "/sign-in"; // Redirect to sign-in page after logout

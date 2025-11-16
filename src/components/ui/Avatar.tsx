@@ -3,11 +3,10 @@ import { User } from "lucide-react";
 
 export default function Avatar({
   profileImage,
-  variant,
   size = "lg",
 }: {
   profileImage: string | undefined;
-  variant?: string;
+
   size?: "sm" | "md" | "lg";
 }) {
   const sizeClasses = {
@@ -24,11 +23,11 @@ export default function Avatar({
 
   return (
     <div
-      className={`${sizeClasses[size]} rounded-full overflow-hidden relative ${
-        variant === "navbar"
-          ? "border-2 border-white/20"
-          : "border border-light-border"
-      } ${!profileImage && "bg-gray-200 flex items-center justify-center"}`}
+      className={`${
+        sizeClasses[size]
+      } rounded-full overflow-hidden relative border-2 border-white/20 ${
+        !profileImage && "bg-gray-200 flex items-center justify-center"
+      }`}
     >
       {profileImage ? (
         <Image
@@ -36,7 +35,6 @@ export default function Avatar({
           alt="User Profile"
           fill
           className="object-cover"
-          
         />
       ) : (
         <User size={iconSizes[size]} className="text-primary" />

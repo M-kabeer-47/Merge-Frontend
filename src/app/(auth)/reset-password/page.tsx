@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import useResetPassword from "@/hooks/auth/reset-password";
+import useResetPassword from "@/hooks/auth/use-reset-password";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";

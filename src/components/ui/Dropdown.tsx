@@ -40,7 +40,7 @@ export default function DropdownMenu({
           : size === "large"
           ? "mt-4 w-full justify-center"
           : "mt-2 w-44"
-      } rounded-lg shadow-lg bg-main-background border border-light-border z-50 overflow-hidden ${className}`}
+      } rounded-lg shadow-lg bg-background border border-light-border z-50 overflow-hidden ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
       <div className=" w-full">

@@ -1,0 +1,15 @@
+export type User = {
+  id: string;
+  email: string;
+  image: string | null;
+  firstName: string;
+  lastName: string;
+  new_user: boolean;
+  role: "student";
+  isVerified: boolean;
+  googleAccount: boolean;
+  hashedRefreshToken: string;
+  twoFactorEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};

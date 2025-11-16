@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Shield, ArrowLeft, Mail } from "lucide-react";
 import OTPInput from "@/components/ui/OTPInput";
-import useVerifyOTP from "@/hooks/auth/two-factor/verify-otp";
-import useResendOTP from "@/hooks/auth/two-factor/resend-otp";
+import useVerifyOTP from "@/hooks/auth/two-factor/use-verify-otp";
+import useResendOTP from "@/hooks/auth/two-factor/use-resend-otp";
 
 export default function TwoFactorPage() {
   const router = useRouter();

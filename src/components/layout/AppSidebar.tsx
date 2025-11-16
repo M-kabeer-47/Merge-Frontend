@@ -4,26 +4,17 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/Sidebar";
 import {
-  IconHome,
   IconCompass,
   IconUsers,
-  IconPlus,
-  IconLogin,
-  IconFolder,
-  IconVideo,
   IconNotes,
-  IconPalette,
-  IconBrush,
-  IconFolderOpen,
   IconRobot,
-  IconChevronDown,
   IconDashboard,
   IconCalendar,
 } from "@tabler/icons-react";
-import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import MobileNavbarOptions from "../navbar/MobileNavbarOptions";
 import { useTheme } from "../../providers/ThemeProvider";
+
 interface Links {
   label: string;
   href: string;
@@ -63,15 +54,11 @@ const sidebarLinks: Links[] = [
     label: "Calendar",
     href: "/calendar",
     icon: <IconCalendar className="h-5 w-5" />,
-  }
+  },
 ];
 
 // Custom SidebarLink component for path-based navigation
-export default function AppSidebar({
-  user,
-}: {
-  user: { name: string; role: string; initials: string; avatar?: string };
-}) {
+export default function AppSidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { isDarkMode } = useTheme();
@@ -103,7 +90,6 @@ export default function AppSidebar({
             ))}
           </div>
           <MobileNavbarOptions
-            user={user}
             onSignOut={() => console.log("Sign out")}
             onThemeToggle={() => console.log("Toggle theme")}
           />

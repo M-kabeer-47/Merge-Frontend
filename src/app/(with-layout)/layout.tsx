@@ -3,24 +3,6 @@ import React, { useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import Navbar from "@/components/layout/Navbar";
 
-interface UserProfile {
-  name: string;
-  role: string;
-  initials: string;
-  image?: string;
-}
-
-// This would typically come from auth context or API
-const getCurrentUser = (): UserProfile => {
-  return {
-    name: "John Doe",
-    role: "Student",
-    initials: "JD",
-    image:
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlciUyMHByb2ZpbGV8ZW58MHx8MHx8fDA%3D",
-  };
-};
-
 export default function WithLayoutLayout({
   children,
 }: {
@@ -28,22 +10,16 @@ export default function WithLayoutLayout({
 }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const user = getCurrentUser();
-
   return (
     <div className=" flex md:flex-row flex-col h-screen w-full bg-gray-50">
       {/* Sidebar */}
-      <AppSidebar user={user} />
+      <AppSidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Navbar */}
         <div className="hidden md:block">
-          <Navbar
-            user={user}
-            isDarkMode={isDarkMode}
-            setIsDarkMode={setIsDarkMode}
-          />
+          <Navbar isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         </div>
 
         {/* Page Content */}
