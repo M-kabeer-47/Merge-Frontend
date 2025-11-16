@@ -2,10 +2,11 @@
 import React from "react";
 import AuthIllustration from "@/components/auth/AuthIllustration";
 import SignUpForm from "@/components/auth/sign-up/SignUpForm";
-import { useTheme } from "@/providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 const SignUpPage = () => {
-  const { isDarkMode } = useTheme();  
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
   return (
     <div className="min-h-screen bg-main-background flex items-center justify-center p-4">
       {/* Main Container */}

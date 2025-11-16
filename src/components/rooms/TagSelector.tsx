@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
-import { useTheme } from "@/providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 interface TagSelectorProps {
   selectedTags: string[];
@@ -20,7 +20,8 @@ export default function TagSelector({
   error,
   maxTags = 5,
 }: TagSelectorProps) {
-  const { isDarkMode } = useTheme();
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
   const [showAll, setShowAll] = useState(false);
   const initialDisplayCount = 12;
 

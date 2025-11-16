@@ -2,8 +2,14 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import NoteEditor from "@/components/notes/NoteEditor";
 import { toast } from "sonner";
+
+const DynamicNoteEditor = dynamic(
+  () => import("@/components/notes/NoteEditor"),
+  { ssr: false }
+);
 
 export default function CreateNotePage() {
   const router = useRouter();
@@ -20,7 +26,7 @@ export default function CreateNotePage() {
       console.log("Creating note:", data);
 
       toast.success("Note created successfully!");
-      
+
       // Redirect to notes page after successful creation
       setTimeout(() => {
         router.push("/notes");
@@ -34,11 +40,6 @@ export default function CreateNotePage() {
   };
 
   return (
-    <NoteEditor
-      type="create"
-      onSave={handleSave}
-      isSaving={isSaving}
-    />
+    <DynamicNoteEditor type="create" onSave={handleSave} isSaving={isSaving} />
   );
 }
-

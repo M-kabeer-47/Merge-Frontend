@@ -9,7 +9,7 @@ import {
   IconChevronRight,
 } from "@tabler/icons-react";
 import NotificationDropdown from "../navbar/Notifications";
-import { useTheme } from "../../providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 interface Links {
   label: string;
@@ -122,7 +122,8 @@ export const MobileSidebar = ({
   ...props
 }: React.ComponentProps<"div">) => {
   const { open, setOpen } = useSidebar();
-  const { isDarkMode } = useTheme();
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
 
   return (
     <>

@@ -13,7 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import MobileNavbarOptions from "../navbar/MobileNavbarOptions";
-import { useTheme } from "../../providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 interface Links {
   label: string;
@@ -61,7 +61,8 @@ const sidebarLinks: Links[] = [
 export default function AppSidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { isDarkMode } = useTheme();
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
   const isActive = (href: string) => pathname.endsWith(href);
   const links = sidebarLinks;
   return (

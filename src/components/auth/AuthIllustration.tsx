@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { easeOut, motion } from "framer-motion";
-import { useTheme } from "@/providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 interface AuthIllustrationProps {
   imageUrl: string;
@@ -64,7 +64,8 @@ export default function AuthIllustration({
   subtitle,
   page = "sign-up",
 }: AuthIllustrationProps) {
-  const { isDarkMode } = useTheme();
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
   return (
     <motion.div
       className="flex flex-col h-full p-8 w-full"

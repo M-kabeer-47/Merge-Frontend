@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   IconSettings,
   IconSun,
@@ -11,20 +11,27 @@ import { motion } from "motion/react";
 import Avatar from "../ui/Avatar";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
+import { useTheme } from "next-themes";
 
 interface MobileNavbarOptionsProps {
-  isDarkMode?: boolean;
-  onThemeToggle: () => void;
   notificationCount?: number;
   onSignOut: () => void;
 }
 
 export default function MobileNavbarOptions({
-  isDarkMode = false,
-  onThemeToggle,
   onSignOut,
 }: MobileNavbarOptionsProps) {
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
   const { user, isLoading, isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isDarkMode = mounted ? theme === "dark" : false;
+  const onThemeToggle = () => setTheme(theme === "dark" ? "light" : "dark");
+  
   const menuItems = [
     {
       label: isDarkMode ? "Light Mode" : "Dark Mode",

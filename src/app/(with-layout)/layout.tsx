@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import Navbar from "@/components/layout/Navbar";
 
@@ -8,8 +8,6 @@ export default function WithLayoutLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
   return (
     <div className=" flex md:flex-row flex-col h-screen w-full bg-gray-50">
       {/* Sidebar */}
@@ -19,7 +17,7 @@ export default function WithLayoutLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Navbar */}
         <div className="hidden md:block">
-          <Navbar isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+          <Navbar />
         </div>
 
         {/* Page Content */}

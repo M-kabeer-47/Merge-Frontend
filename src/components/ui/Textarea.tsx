@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { cn } from "@/lib/shadcn/utils";
-import { useTheme } from "@/providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 interface TextareaProps extends React.ComponentProps<"textarea"> {
   error?: string;
@@ -9,7 +9,8 @@ interface TextareaProps extends React.ComponentProps<"textarea"> {
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, error, ...props }, ref) => {
-    const { isDarkMode } = useTheme();
+    const { theme } = useTheme();
+    const isDarkMode = theme === "dark";
     return (
       <textarea
         className={cn(

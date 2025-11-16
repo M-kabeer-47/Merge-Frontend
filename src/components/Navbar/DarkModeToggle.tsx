@@ -1,19 +1,20 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { IconSun, IconMoon } from "@tabler/icons-react";
 import { Moon } from "lucide-react";
-import { useTheme } from "../../providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 interface ToggleSwitchProps {
-  isDarkMode: boolean;
-  onToggle: () => void;
   size?: "sm" | "md" | "lg";
 }
 
 export default function ToggleSwitch({
   size = "md",
 }: ToggleSwitchProps) {
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+  
   const sizeClasses = {
     sm: {
       switch: "w-10 h-5",
@@ -30,10 +31,20 @@ export default function ToggleSwitch({
       thumb: "w-6 h-6",
       icon: "h-4 w-4",
     },
-  };  
-  const {isDarkMode,toggleTheme,theme} = useTheme()
+  };
+  
   const currentSize = sizeClasses[size];
-
+  
+  // Wait for hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isDarkMode = mounted ? theme === "dark" : false;
+  
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
   return (
     <motion.button
       onClick={toggleTheme}

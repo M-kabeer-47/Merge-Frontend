@@ -4,7 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Roboto, Raleway } from "next/font/google";
 import { CircleCheck, InfoIcon } from "lucide-react";
-import { ThemeProvider } from "@/providers/ThemeProvider";
+import { ThemeProvider } from "next-themes";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 
@@ -41,10 +41,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${roboto.variable} ${raleway.variable}`}>
-        
-        <ThemeProvider defaultTheme="light">
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${roboto.variable} ${raleway.variable}`} suppressHydrationWarning>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
           <ReactQueryProvider>
             <AuthProvider>{children}</AuthProvider>
 

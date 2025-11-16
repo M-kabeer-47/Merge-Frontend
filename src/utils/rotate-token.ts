@@ -1,7 +1,10 @@
 import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
-export default function rotateToken({ oldToken }: { oldToken: string }) {
+import { toast } from "sonner";
+import { ApiError } from "@/types/api-error";
+
+export default function useRotateToken({ oldToken }: { oldToken: string }) {
   const rotateTokenFunction = async () => {
     let response = await apiRequest(
       axios.post(
@@ -24,12 +27,27 @@ export default function rotateToken({ oldToken }: { oldToken: string }) {
     mutateAsync: rotateToken,
   } = useMutation({
     mutationFn: rotateTokenFunction,
+
     onSuccess: (data) => {
       if (data?.token && data?.refreshToken && data?.userId) {
         localStorage.setItem("accessToken", data.token);
         localStorage.setItem("refreshToken", data.refreshToken);
         localStorage.setItem("userID", data.userId);
       }
+    },
+    onError: (error: ApiError) => {
+      if (error?.response?.data.statusCode === 401) {
+        toast.error("Session expired. Please login again.");
+        // Clear tokens
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userID");
+        // Redirect to login
+        setTimeout(() => {
+          window.location.href = "/sign-in";
+        }, 1000);
+      }
+      toast.error("Please try again later...");
     },
   });
 

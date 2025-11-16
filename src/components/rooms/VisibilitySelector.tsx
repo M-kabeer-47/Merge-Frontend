@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "@/providers/ThemeProvider";
+import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 import { Globe, Lock } from "lucide-react";
 
@@ -15,7 +15,8 @@ export default function VisibilitySelector({
   onChange,
   disabled = false,
 }: VisibilitySelectorProps) {
-  const { isDarkMode } = useTheme();
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
   return (
     <div className="grid grid-cols-2 gap-3">
       {/* Public Option */}

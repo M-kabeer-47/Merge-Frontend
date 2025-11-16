@@ -6,14 +6,12 @@ import usesRotateToken from "@/utils/rotate-token";
 import { CreateRoomType } from "@/schemas/room/create-room";
 
 export default function useCreateRoom() {
-  const { isRotationSuccess, rotateToken, isRotationPending } = usesRotateToken(
-    {
-      oldToken:
-        typeof window !== "undefined"
-          ? localStorage.getItem("refreshToken") || ""
-          : "",
-    }
-  );
+  const { rotateToken, isRotationPending } = usesRotateToken({
+    oldToken:
+      typeof window !== "undefined"
+        ? localStorage.getItem("refreshToken") || ""
+        : "",
+  });
 
   const createRoomFunction = async (data: CreateRoomType) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -36,7 +34,7 @@ export default function useCreateRoom() {
     mutationFn: createRoomFunction,
     onError: async (error: any, variables) => {
       if (error?.response?.data?.statusCode === 401) {
-        try { 
+        try {
           await rotateToken();
 
           // Afte rotation completes, the new token is in localStorage

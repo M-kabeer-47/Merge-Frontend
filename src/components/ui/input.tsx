@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { cn } from "@/lib/shadcn/utils";
-import { useTheme } from "@/providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 interface InputProps extends React.ComponentProps<"input"> {
   error?: string;
@@ -9,7 +9,8 @@ interface InputProps extends React.ComponentProps<"input"> {
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, error, ...props }, ref) => {
-    const {isDarkMode} = useTheme();
+    const { theme } = useTheme();
+    const isDarkMode = theme === "dark";
     return (
       <input
         type={type}
