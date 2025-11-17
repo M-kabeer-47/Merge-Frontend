@@ -20,6 +20,7 @@ interface MobileNavbarOptionsProps {
 
 export default function MobileNavbarOptions({
   onSignOut,
+  
 }: MobileNavbarOptionsProps) {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();

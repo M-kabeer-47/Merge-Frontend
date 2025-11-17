@@ -13,7 +13,10 @@ import TagSelector from "./TagSelector";
 import VisibilitySelector from "./VisibilitySelector";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import useCreateRoom from "@/hooks/rooms/use-create-room";
-import { createRoomSchema, type CreateRoomType } from "@/schemas/room/create-room";
+import {
+  createRoomSchema,
+  type CreateRoomType,
+} from "@/schemas/room/create-room";
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -50,7 +53,13 @@ export default function CreateRoomModal({
   onClose,
   onSuccess,
 }: CreateRoomModalProps) {
-  const { createRoom, isCreating, isCreateSuccess, createdRoom,isRotationPending } = useCreateRoom();
+  const {
+    createRoom,
+    isCreating,
+    isCreateSuccess,
+    createdRoom,
+    isRotationPending,
+  } = useCreateRoom();
 
   const {
     control,
@@ -64,7 +73,7 @@ export default function CreateRoomModal({
     defaultValues: {
       title: "",
       description: "",
-      isPublic: true,
+      isPublic: false,
       tagNames: [],
     },
   });
@@ -165,25 +174,27 @@ export default function CreateRoomModal({
         />
 
         {/* Tags */}
-        <Controller
-          name="tagNames"
-          control={control}
-          render={({ field }) => (
-            <FormField
-              label="Tags"
-              htmlFor="tagNames"
-              error={errors.tagNames?.message}
-            >
-              <TagSelector
-                selectedTags={field.value || []}
-                onChange={field.onChange}
-                availableTags={AVAILABLE_TAGS}
+        {isPublic && (
+          <Controller
+            name="tagNames"
+            control={control}
+            render={({ field }) => (
+              <FormField
+                label="Tags"
+                htmlFor="tagNames"
                 error={errors.tagNames?.message}
-                maxTags={5}
-              />
-            </FormField>
-          )}
-        />
+              >
+                <TagSelector
+                  selectedTags={field.value || []}
+                  onChange={field.onChange}
+                  availableTags={AVAILABLE_TAGS}
+                  error={errors.tagNames?.message}
+                  maxTags={5}
+                />
+              </FormField>
+            )}
+          />
+        )}
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3 pt-4 border-t border-light-border">

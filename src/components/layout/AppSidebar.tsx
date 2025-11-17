@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/Sidebar";
 import {
   IconCompass,
@@ -90,10 +89,7 @@ export default function AppSidebar() {
               />
             ))}
           </div>
-          <MobileNavbarOptions
-            onSignOut={() => console.log("Sign out")}
-            onThemeToggle={() => console.log("Toggle theme")}
-          />
+          <MobileNavbarOptions onSignOut={() => console.log("Sign out")} />
         </div>
         <div></div>
       </SidebarBody>

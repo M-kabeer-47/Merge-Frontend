@@ -12,7 +12,7 @@ export const createRoomSchema = z.object({
     .min(10, "Description must be at least 10 characters")
     .max(500, "Description must not exceed 500 characters"),
   isPublic: z.boolean(),
-  tagNames: z.array(z.string()),
+  tagNames: z.array(z.string()).optional(),
 });
 
 export type CreateRoomType = z.infer<typeof createRoomSchema>;
