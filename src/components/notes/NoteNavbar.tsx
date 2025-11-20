@@ -51,7 +51,7 @@ export default function NoteNavbar({
                 Unsaved changes
               </span>
             )}
-            
+
             <Button
               variant="default"
               onClick={onSave}
@@ -61,13 +61,14 @@ export default function NoteNavbar({
             >
               {isSaving ? (
                 <>
-                  <LoadingSpinner size="sm" />
-                  <span className="text-xs sm:text-sm">Saving...</span>
+                  <LoadingSpinner size="sm" text="Saving..." />
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  <span className="text-xs sm:text-sm">{type === "create" ? "Save" : "Update"}</span>
+                  <span className="text-xs sm:text-sm">
+                    {type === "create" ? "Save" : "Update"}
+                  </span>
                 </>
               )}
             </Button>
@@ -77,4 +78,3 @@ export default function NoteNavbar({
     </nav>
   );
 }
-

@@ -32,3 +32,44 @@ export interface BreadcrumbItem {
   id: string;
   name: string;
 }
+
+// API Response Types for Backend Integration
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  folderId?: string | null;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    image: string | null;
+  };
+}
+
+export interface CreateNoteData {
+  title: string;
+  content: string;
+  folderId?: string;
+}
+
+export interface UpdateNoteData {
+  title?: string;
+  content?: string;
+  folderId?: string | null;
+}
+
+export interface NotesResponse {
+  notes: Note[];
+  total: number;
+}
+
+export interface NoteFilters {
+  folderId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}

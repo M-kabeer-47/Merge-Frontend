@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import NoteListRow from "@/components/notes/NoteListRow";
 import NoteGridItem from "@/components/notes/NoteGridItem";
-import { sampleNotesAndFolders } from "@/lib/constants/notes-mock-data";
 import type {
   NoteOrFolder,
   NoteSortOption,
@@ -25,10 +24,12 @@ import type {
 import { Button } from "@/components/ui/Button";
 import SearchBar from "@/components/ui/SearchBar";
 import DropdownMenu from "@/components/ui/Dropdown";
+import useFetchNotes from "@/hooks/notes/use-fetch-notes";
+import useDeleteNote from "@/hooks/notes/use-delete-note";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function NotesPage() {
   const router = useRouter();
-  const [items, setItems] = useState<NoteOrFolder[]>(sampleNotesAndFolders);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,34 +38,29 @@ export default function NotesPage() {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showItemMenu, setShowItemMenu] = useState<string | null>(null);
 
-  // Get items in current folder
+  // Fetch notes from backend
+  const { notes, isLoading, isError, refetch } = useFetchNotes({
+    folderId: currentFolderId || undefined,
+    search: searchTerm || undefined,
+  });
+  const { deleteNote, isDeleting } = useDeleteNote();
+
+  // Convert backend notes to NoteOrFolder format and apply sorting
   const currentItems = useMemo(() => {
-    let filtered = items.filter((item) => item.parentId === currentFolderId);
-
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      filtered = filtered.filter((item) => {
-        if (item.type === "folder") {
-          return item.name.toLowerCase().includes(search);
-        }
-        return (
-          item.name.toLowerCase().includes(search) ||
-          item.content.toLowerCase().includes(search)
-        );
-      });
-    }
-
-    // Separate pinned and unpinned
-    const pinnedItems = filtered.filter((item) => item.isPinned);
-    const unpinnedItems = filtered.filter((item) => !item.isPinned);
+    const converted: NoteOrFolder[] = notes.map((note) => ({
+      id: note.id,
+      name: note.title,
+      type: "note" as const,
+      parentId: note.folderId || null,
+      createdAt: new Date(note.createdAt),
+      updatedAt: new Date(note.updatedAt),
+      content: note.content,
+      isPinned: false,
+    }));
 
     // Sort function
     const sortItems = (a: NoteOrFolder, b: NoteOrFolder) => {
       switch (sortBy) {
-        case "type":
-          if (a.type === b.type) return a.name.localeCompare(b.name);
-          return a.type === "folder" ? -1 : 1;
         case "dateCreated":
           return b.createdAt.getTime() - a.createdAt.getTime();
         case "lastEdited":
@@ -76,21 +72,17 @@ export default function NotesPage() {
       }
     };
 
-    pinnedItems.sort(sortItems);
-    unpinnedItems.sort(sortItems);
-
-    return [...pinnedItems, ...unpinnedItems];
-  }, [items, currentFolderId, searchTerm, sortBy]);
+    return converted.sort(sortItems);
+  }, [notes, sortBy]);
 
   // Handle folder navigation
   const handleItemClick = (id: string) => {
-    const item = items.find((i) => i.id === id);
+    const item = currentItems.find((i) => i.id === id);
     if (item?.type === "folder") {
       setCurrentFolderId(id);
       setBreadcrumbs((prev) => [...prev, { id, name: item.name }]);
     } else {
-      console.log("Open note:", id);
-      // TODO: Navigate to note editor/viewer
+      router.push(`/notes/${id}`);
     }
   };
 
@@ -121,19 +113,24 @@ export default function NotesPage() {
   };
 
   const handleEdit = (id: string) => {
-    console.log("Edit item:", id);
+    router.push(`/notes/${id}/edit`);
     setShowItemMenu(null);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this item?")) {
-      setItems((prev) => prev.filter((item) => item.id !== id));
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this note?")) {
+      try {
+        await deleteNote(id);
+        refetch();
+      } catch (error) {
+        console.error("Failed to delete note:", error);
+      }
     }
     setShowItemMenu(null);
   };
 
   const handleDownload = (id: string) => {
-    const item = items.find((i) => i.id === id);
+    const item = currentItems.find((i) => i.id === id);
     if (item && item.type === "note") {
       const blob = new Blob([`${item.name}\n\n${item.content}`], {
         type: "text/plain",
@@ -199,7 +196,7 @@ export default function NotesPage() {
 
   // Item menu options
   const getItemMenuOptions = (id: string) => {
-    const item = items.find((i) => i.id === id);
+    const item = currentItems.find((i) => i.id === id);
     const options = [
       {
         title: item?.type === "folder" ? "Open" : "Edit",
@@ -371,7 +368,34 @@ export default function NotesPage() {
       </motion.div>
 
       {/* Content */}
-      {currentItems.length === 0 ? (
+      {isLoading ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center py-20"
+        >
+          <LoadingSpinner size="lg" />
+        </motion.div>
+      ) : isError ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-20"
+        >
+          <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
+            <SearchIcon className="w-10 h-10 text-destructive" />
+          </div>
+          <h3 className="text-xl font-bold text-heading mb-2">
+            Failed to load notes
+          </h3>
+          <p className="text-para-muted text-center max-w-md mb-6">
+            There was an error loading your notes. Please try again.
+          </p>
+          <Button onClick={() => refetch()} variant="outline">
+            Retry
+          </Button>
+        </motion.div>
+      ) : currentItems.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

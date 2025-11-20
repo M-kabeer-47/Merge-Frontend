@@ -4,7 +4,7 @@ import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
 import "@blocknote/shadcn/style.css";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/shadcn";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import TextareaAutosize from "react-textarea-autosize";
 import NoteNavbar from "./NoteNavbar";
@@ -26,11 +26,22 @@ export default function NoteEditor({
   isSaving,
   onSuccess,
 }: NoteEditorProps) {
-  const [title, setTitle] = useState<string>(
-    type === "update" ? initialTitle : ""
-  );
+  const initializeTitle = () => {
+    if (type === "update") {
+      return initialTitle;
+    } else if (typeof window !== "undefined") {
+      const savedDraft = localStorage.getItem("note-draft");
+      if (savedDraft) {
+        const draftData = JSON.parse(savedDraft);
+        return draftData.title || "";
+      }
+    }
+  };
+
+  const [title, setTitle] = useState<string>(initializeTitle() || "");
   const [hasChanges, setHasChanges] = useState(false);
   const [changesCount, setChangesCount] = useState(0);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // File upload handler for images and attachments in the editor
   const uploadFile = async (file: File) => {
@@ -41,7 +52,7 @@ export default function NoteEditor({
     } catch (error) {
       console.error("File upload failed:", error);
       toast.error("File upload failed");
-      throw new Error("File upload failed");
+      throw error;
     }
   };
 
@@ -54,6 +65,32 @@ export default function NoteEditor({
     if (type === "update" && e.target.value !== initialTitle) {
       setHasChanges(true);
     }
+    // Trigger auto-save for create mode
+    if (type === "create") {
+      triggerAutoSave(e.target.value);
+    }
+  };
+
+  // Auto-save function
+  const triggerAutoSave = async (newTitle: string = title) => {
+    if (type !== "create") return;
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const html = editor.blocksToFullHTML(editor.document);
+        const noteData = {
+          title: newTitle,
+          content: html,
+          timestamp: new Date().toISOString(),
+        };
+        localStorage.setItem("note-draft", JSON.stringify(noteData));
+      } catch (error) {
+        console.error("Auto-save failed:", error);
+      }
+    }, 1000); // 30 seconds
   };
 
   // Handle editor content changes
@@ -66,6 +103,9 @@ export default function NoteEditor({
         setHasChanges(true);
         setChangesCount((prev) => prev + 1);
       }
+    } else {
+      // Trigger auto-save for create mode
+      triggerAutoSave();
     }
   };
 
@@ -81,8 +121,8 @@ export default function NoteEditor({
 
     try {
       // Convert editor content to HTML
-      const html = await editor.blocksToFullHTML(editor.document);
-      
+      const html = editor.blocksToFullHTML(editor.document);
+
       // Check if content is empty
       if (!html || html.trim() === "") {
         toast.error("Please add some content to your note");
@@ -90,15 +130,20 @@ export default function NoteEditor({
       }
 
       await onSave({
-        title: title.trim(),
+        title: title,
         content: html,
       });
+
+      // Clear draft from localStorage on successful save
+      if (type === "create") {
+        alert("Removing Note Draft from Local Storage");
+        localStorage.removeItem("note-draft");
+      }
 
       setHasChanges(false);
       onSuccess?.();
     } catch (error) {
       console.error("Failed to save note:", error);
-      toast.error("Failed to save note. Please try again.");
     }
   };
 
@@ -107,19 +152,16 @@ export default function NoteEditor({
     e.stopPropagation();
   }, []);
 
-  const handlePaste = useCallback(
-    (e: React.ClipboardEvent<HTMLDivElement>) => {
-      e.stopPropagation();
-    },
-    []
-  );
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+  }, []);
 
-  // Load initial content for update mode
+  // Load initial content for update mode or draft for create mode
   useEffect(() => {
     if (type === "update" && initialContent) {
-      const loadContent = async () => {
+      const loadContent = () => {
         try {
-          const blocks = await editor.tryParseHTMLToBlocks(initialContent);
+          const blocks = editor.tryParseHTMLToBlocks(initialContent);
           editor.replaceBlocks(editor.document, blocks);
         } catch (error) {
           console.error("Failed to load note content:", error);
@@ -127,7 +169,36 @@ export default function NoteEditor({
         }
       };
       loadContent();
+    } else if (type === "create") {
+      // Load draft from localStorage
+      const savedDraft = localStorage.getItem("note-draft");
+
+      if (savedDraft) {
+        try {
+          const draftData = JSON.parse(savedDraft);
+
+          if (draftData.content) {
+            const loadDraft = () => {
+              const blocks = editor.tryParseHTMLToBlocks(draftData.content);
+              editor.replaceBlocks(editor.document, blocks);
+            };
+            loadDraft();
+          }
+          if (draftData.title) {
+            setTitle(draftData.title);
+          }
+        } catch (error) {
+          console.error("Failed to load draft:", error);
+        }
+      }
     }
+
+    // Cleanup auto-save timeout on unmount
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
   }, [type, initialContent]);
 
   return (
@@ -165,4 +236,3 @@ export default function NoteEditor({
     </div>
   );
 }
-

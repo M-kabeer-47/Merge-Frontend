@@ -5,10 +5,12 @@ export default function LoadingSpinner({
   loaderColor,
   children,
   size = "sm",
+  text = "Please wait...",
 }: {
   loaderColor?: string;
   children?: React.ReactNode;
   size?: "sm" | "md" | "lg";
+  text?: string;
 }) {
   return (
     <div className="flex items-center justify-center">
@@ -27,7 +29,7 @@ export default function LoadingSpinner({
           ease: "linear",
         }}
       />
-      {children ? children : <span className="text-white">Please wait...</span>}
+      {children ? children : <span className="text-white">{text}</span>}
     </div>
   );
 }
