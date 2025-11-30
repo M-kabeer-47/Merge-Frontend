@@ -4,6 +4,12 @@ import axios from "axios";
 import { toast } from "sonner";
 import usesRotateToken from "@/utils/rotate-token";
 
+interface DeleteNoteParams {
+  noteId: string;
+  folderId: string | null;
+  searchQuery: string;
+}
+
 export default function useDeleteNote() {
   const queryClient = useQueryClient();
   const { rotateToken, isRotationPending } = usesRotateToken({
@@ -30,8 +36,38 @@ export default function useDeleteNote() {
     isSuccess: isDeleteSuccess,
     mutateAsync: deleteNote,
   } = useMutation({
-    mutationFn: deleteNoteFunction,
-    onError: async (error: any, variables) => {
+    mutationFn: ({ noteId }: DeleteNoteParams) => deleteNoteFunction(noteId),
+    onMutate: async ({ noteId, folderId, searchQuery }: DeleteNoteParams) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: ["notes", folderId, searchQuery]
+      });
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData(["notes", folderId, searchQuery]);
+
+      // Optimistically remove the note
+      queryClient.setQueryData(["notes", folderId, searchQuery], (old: any) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          notes: old.notes.filter((note: any) => note.id !== noteId),
+        };
+      });
+
+      // Return context for rollback
+      return { previousData, folderId, searchQuery };
+    },
+    onError: async (error: any, variables, context: any) => {
+      // Rollback to the previous value
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ["notes", context.folderId, context.searchQuery],
+          context.previousData
+        );
+      }
+
       if (error?.response?.data?.statusCode === 401) {
         try {
           await rotateToken();
@@ -42,13 +78,12 @@ export default function useDeleteNote() {
         return;
       }
       toast.error(
-        error?.response?.data?.message || 
+        error?.response?.data?.message ||
         "Failed to delete note. Please try again."
       );
     },
     onSuccess: () => {
       toast.success("Note deleted successfully!");
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 

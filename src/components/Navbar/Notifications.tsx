@@ -151,7 +151,7 @@ export default function NotificationDropdown({
                 notifications.map((notification, index) => (
                   <motion.div
                     key={notification.id}
-                    className={`p-4 border-b border-primary/5 hover:bg-gray-50 cursor-pointer transition-colors  ${
+                    className={`p-4 border-b border-primary/5 hover:bg-background cursor-pointer transition-colors  ${
                       notification.unread ? "bg-primary/5" : ""
                     }`}
                     onClick={() => handleNotificationClick(notification)}

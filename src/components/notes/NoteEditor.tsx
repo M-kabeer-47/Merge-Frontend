@@ -212,7 +212,7 @@ export default function NoteEditor({
 
       {/* Unified Editor Container */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full  px-6 sm:px-14 py-8 overflow-y-auto">
+        <div className="h-full px-6 sm:px-14 py-8 overflow-y-auto">
           {/* Title Input */}
           <TextareaAutosize
             value={title}
@@ -222,7 +222,7 @@ export default function NoteEditor({
           />
 
           {/* BlockNote Editor */}
-          <div className="max-w-none relative left-[-50px] bg-main-background">
+
             <BlockNoteView
               editor={editor}
               theme="light"
@@ -230,7 +230,7 @@ export default function NoteEditor({
               onScroll={handleScroll}
               onPaste={handlePaste}
             />
-          </div>
+          
         </div>
       </div>
     </div>

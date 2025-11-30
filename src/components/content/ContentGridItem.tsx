@@ -80,7 +80,7 @@ export default function ContentGridItem({
 
   return (
     <div
-      className={`grid grid-cols-[50px_1fr_180px_200px_50px] gap-4 px-3 py-4 border-b border-light-border cursor-pointer hover:bg-gray-50 transition-colors ${
+      className={`grid grid-cols-[50px_1fr_180px_200px_50px] gap-4 px-3 py-4 border-b border-light-border cursor-pointer hover:bg-background transition-colors ${
         isSelected ? "bg-gray-50" : ""
       }`}
       onClick={() => onClick?.(item.id)}

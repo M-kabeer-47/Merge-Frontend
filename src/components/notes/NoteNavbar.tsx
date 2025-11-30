@@ -28,11 +28,11 @@ export default function NoteNavbar({
       );
       if (!confirmed) return;
     }
-    router.push("/notes");
+    router.back();
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-main-background/80 backdrop-blur-sm border-b border-light-border/50">
+    <nav className="sticky top-0  bg-main-background/80 backdrop-blur-sm border-b border-light-border/50">
       <div className="px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Left Side - Back Button */}

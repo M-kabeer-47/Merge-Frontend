@@ -54,7 +54,7 @@ export function NoSearchResults({
       </p>
       <button
         onClick={onClearFilters}
-        className="px-6 py-2.5 bg-background text-para border border-light-border text-[14px] font-semibold rounded-lg hover:bg-gray-50 transition-all"
+        className="px-6 py-2.5 bg-background text-para border border-light-border text-[14px] font-semibold rounded-lg hover:bg-background transition-all"
       >
         Clear Filters
       </button>

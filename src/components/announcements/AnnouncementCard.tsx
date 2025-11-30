@@ -183,13 +183,13 @@ export default function AnnouncementCard({
             <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
               <button
                 onClick={handlePin}
-                className="w-full px-4 py-2 text-left text-para hover:bg-gray-50"
+                className="w-full px-4 py-2 text-left text-para hover:bg-background"
               >
                 {announcement.isPinned ? "Unpin" : "Pin"}
               </button>
               <button
                 onClick={handleDelete}
-                className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-50"
+                className="w-full px-4 py-2 text-left text-red-600 hover:bg-background"
               >
                 Delete
               </button>

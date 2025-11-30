@@ -400,7 +400,7 @@ export default function LiveSessionDemoPage() {
                       <div className={`absolute top-2 right-2 transition-opacity ${hoveredAttendee === attendee.id ? "opacity-100" : "opacity-0"}`}>
                         <button
                           onClick={() => setActiveMenu(activeMenu === attendee.id ? null : attendee.id)}
-                          className="p-1.5 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors"
+                          className="p-1.5 bg-white rounded-lg shadow-lg hover:bg-background transition-colors"
                         >
                           <MoreVertical className="w-4 h-4 text-para" />
                         </button>
@@ -415,14 +415,14 @@ export default function LiveSessionDemoPage() {
                             <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-light-border rounded-lg shadow-xl py-1 min-w-[160px]">
                               <button
                                 onClick={() => handleMuteAttendee(attendee.id, attendee.name)}
-                                className="w-full px-3 py-2 text-left text-sm text-para hover:bg-gray-50 flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm text-para hover:bg-background flex items-center gap-2"
                               >
                                 <MicOffIcon className="w-4 h-4" />
                                 Mute
                               </button>
                               <button
                                 onClick={() => handlePromoteAttendee(attendee.id, attendee.name)}
-                                className="w-full px-3 py-2 text-left text-sm text-para hover:bg-gray-50 flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm text-para hover:bg-background flex items-center gap-2"
                               >
                                 <Shield className="w-4 h-4" />
                                 Make Co-host
@@ -553,7 +553,7 @@ export default function LiveSessionDemoPage() {
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                   sidebarTab === "chat"
                     ? "text-primary border-b-2 border-primary bg-primary/5"
-                    : "text-para hover:bg-gray-50"
+                    : "text-para hover:bg-background"
                 }`}
               >
                 Chat
@@ -563,7 +563,7 @@ export default function LiveSessionDemoPage() {
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                   sidebarTab === "attendees"
                     ? "text-primary border-b-2 border-primary bg-primary/5"
-                    : "text-para hover:bg-gray-50"
+                    : "text-para hover:bg-background"
                 }`}
               >
                 Attendees ({attendees.length})
@@ -587,7 +587,7 @@ export default function LiveSessionDemoPage() {
                     {attendees.map((attendee) => (
                       <div
                         key={attendee.id}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-background transition-colors group"
                       >
                         {/* Avatar */}
                         <div className="relative">
@@ -646,14 +646,14 @@ export default function LiveSessionDemoPage() {
                                 <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-light-border rounded-lg shadow-xl py-1 min-w-[160px]">
                                   <button
                                     onClick={() => handleMuteAttendee(attendee.id, attendee.name)}
-                                    className="w-full px-3 py-2 text-left text-sm text-para hover:bg-gray-50 flex items-center gap-2"
+                                    className="w-full px-3 py-2 text-left text-sm text-para hover:bg-background flex items-center gap-2"
                                   >
                                     <MicOffIcon className="w-4 h-4" />
                                     Mute
                                   </button>
                                   <button
                                     onClick={() => handlePromoteAttendee(attendee.id, attendee.name)}
-                                    className="w-full px-3 py-2 text-left text-sm text-para hover:bg-gray-50 flex items-center gap-2"
+                                    className="w-full px-3 py-2 text-left text-sm text-para hover:bg-background flex items-center gap-2"
                                   >
                                     <Shield className="w-4 h-4" />
                                     Make Co-host

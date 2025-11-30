@@ -77,7 +77,7 @@ export default function DashboardContent() {
           <div className="border-t border-light-border" />
 
           {/* Focus Analytics */}
-          <FocusAnalytics />
+          {/* <FocusAnalytics /> */}
         </div>
 
         {/* Right Sidebar Widgets */}

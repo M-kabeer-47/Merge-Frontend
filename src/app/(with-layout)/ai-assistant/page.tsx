@@ -139,7 +139,7 @@ export default function AIAssistantPage() {
         <div className="absolute top-4 left-4 z-20">
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className="p-2 rounded-lg bg-main-background border border-light-border hover:bg-gray-50 transition-colors shadow-sm"
+            className="p-2 rounded-lg bg-main-background border border-light-border hover:bg-background transition-colors shadow-sm"
             title="Toggle Chat History"
           >
             <PanelRightOpen className={`w-5 h-5 text-para transition-transform ${showHistory ? 'rotate-180' : ''}`} />

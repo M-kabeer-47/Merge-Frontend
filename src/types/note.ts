@@ -62,8 +62,20 @@ export interface UpdateNoteData {
   folderId?: string | null;
 }
 
+export interface Folder {
+  id: string;
+  name: string;
+  type: "notes" | "content";
+  parentFolderId: string | null;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  itemCount?: number;
+}
+
 export interface NotesResponse {
   notes: Note[];
+  folders: Folder[];
   total: number;
 }
 

@@ -87,7 +87,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     <div ref={dropdownRef} className={`relative ${className}`}>
       <motion.button
         onClick={() => setProfileOpen(!profileOpen)}
-        className="flex items-center max-w-xs rounded-full focus:outline-none"
+        className="flex items-center max-w-xs rounded-full focus:outline-none z-50"
       >
         <div
           className={`flex items-center gap-2 px-2 py-1.5 rounded-full transition-colors bg-secondary/10 backdrop-blur-sm border border-white/20`}

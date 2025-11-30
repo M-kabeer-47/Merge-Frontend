@@ -1,29 +1,48 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Folder,
   FileText,
   MoreVertical,
-  Pin,
+  
 } from "lucide-react";
 import type { NoteOrFolder, NoteItem, FolderItem } from "@/types/note";
+import DropdownMenu from "@/components/ui/Dropdown";
 
 interface NoteListRowProps {
   item: NoteOrFolder;
   onSelect?: (id: string) => void;
   onClick?: (id: string) => void;
-  onMenuClick?: (id: string) => void;
+  menuOptions?: Array<{ title: string; action: () => void }>;
 }
 
 export default function NoteListRow({
   item,
   onClick,
-  onMenuClick,
+  menuOptions,
 }: NoteListRowProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const isFolder = item.type === "folder";
   const noteItem = item as NoteItem;
   const folderItem = item as FolderItem;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
 
   // Format date
   const formatDate = (date: Date) => {
@@ -35,15 +54,11 @@ export default function NoteListRow({
   };
 
   // Get preview for notes
-  const getPreview = () => {
-    if (isFolder) return `${folderItem.itemCount} items`;
-    const lines = noteItem.content.split("\n").filter((line) => line.trim());
-    return lines[0]?.substring(0, 100) || "Empty note";
-  };
+  
 
   return (
     <tr
-      className="border-b border-light-border cursor-pointer hover:bg-gray-50 transition-colors"
+      className="border-b border-light-border hover:bg-background cursor-pointer transition-colors"
       onClick={() => onClick?.(item.id)}
     >
       {/* Icon and Name */}
@@ -64,9 +79,7 @@ export default function NoteListRow({
               </p>
               
             </div>
-            <p className="text-[13px] text-para-muted truncate">
-              {getPreview()}
-            </p>
+            
           </div>
         </div>
       </td>
@@ -85,15 +98,26 @@ export default function NoteListRow({
 
       {/* Menu */}
       <td className="w-[50px] px-4 py-3.5">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onMenuClick?.(item.id);
-          }}
-          className="w-8 h-8 rounded hover:bg-gray-100 flex items-center justify-center transition-colors"
-        >
-          <MoreVertical className="w-5 h-5 text-para-muted" />
-        </button>
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(!showMenu);
+            }}
+            className="w-8 h-8 rounded hover:bg-gray-100 flex items-center justify-center transition-colors"
+          >
+            <MoreVertical className="w-5 h-5 text-para-muted" />
+          </button>
+          {showMenu && menuOptions && (
+            <div className="absolute right-0 top-full mt-1 z-20">
+              <DropdownMenu
+                options={menuOptions}
+                onClose={() => setShowMenu(false)}
+                align="right"
+              />
+            </div>
+          )}
+        </div>
       </td>
     </tr>
   );

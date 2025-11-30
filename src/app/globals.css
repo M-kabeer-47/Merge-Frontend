@@ -101,6 +101,9 @@ body {
     @apply bg-background text-foreground;
   }
 }
+.bn-container [data-color-scheme="light"]{
+  background-color: var(--main-background) !important;
+}
 .bn-suggestion-menu{
   border: 0px ;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -109,7 +112,9 @@ body {
 }
 .bn-editor{
   background-color: var(--main-background) !important;
-  color: var(--heading) !important;
+  color: var(--heading) !important;  
+  padding-inline: 0 !important;
+
 }
 .bn-button:hover{
   background-color: #8668c01a;
@@ -134,4 +139,28 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
+}
+
+.bn-panel{
+  background-color: var(--background);
+  border: 1px solid var(--light-border);
+}
+
+.bg-card{
+  border: 0px;
+  box-shadow: none;
+}
+.bn-tab-panel > input {
+  border: 1px solid var(--light-border); 
+   @apply bg-secondary/5;
+}
+.bn-toolbar{
+  background-color: var(--main-background);
+  border: 1px solid var(--light-border);
+}
+[data-radix-popper-content-wrapper]{
+  background-color: var(--main-background);
+}
+[data-radix-popper-content-wrapper]>div{
+  border: 1px solid var(--light-border);
 }

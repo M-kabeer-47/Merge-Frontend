@@ -84,7 +84,7 @@ export default function MobileNavbarOptions({
         <div className="space-y-2">
           <motion.button
             onClick={onThemeToggle}
-            className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+            className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-background transition-colors text-left"
           >
             <div className="flex items-center gap-3">
               <span className="text-para-muted">
@@ -143,7 +143,7 @@ export default function MobileNavbarOptions({
           <motion.button
             key={index}
             onClick={item.action}
-            className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+            className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-background transition-colors text-left"
           >
             <div className="flex items-center gap-3">
               <span className="text-para-muted">{item.icon}</span>

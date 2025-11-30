@@ -95,8 +95,8 @@ export default function SignInForm() {
           <Button
             type="button"
             variant="outline"
-            size="lg"
-            className="w-full border-2 border-light-border hover:border-gray-300 hover:bg-gray-50"
+            size="sm"
+            className="w-full border-2 border-light-border hover:border-gray-300 hover:bg-background"
             onClick={signInWithGoogle}
           >
             <motion.div

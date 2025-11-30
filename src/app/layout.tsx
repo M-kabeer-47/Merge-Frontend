@@ -42,7 +42,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${roboto.variable} ${raleway.variable}`} suppressHydrationWarning>
+      <body
+        className={`${roboto.variable} ${raleway.variable}`}
+        suppressHydrationWarning
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -50,6 +53,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ReactQueryProvider>
+            
             <AuthProvider>{children}</AuthProvider>
 
             <Toaster icons={toastIcons} />

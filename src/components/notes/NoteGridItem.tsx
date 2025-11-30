@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Folder,
   FileText,
@@ -8,37 +8,47 @@ import {
   Pin,
 } from "lucide-react";
 import type { NoteOrFolder, NoteItem, FolderItem } from "@/types/note";
+import DropdownMenu from "@/components/ui/Dropdown";
 
 interface NoteGridItemProps {
   item: NoteOrFolder;
   onClick?: (id: string) => void;
-  onMenuClick?: (id: string) => void;
+  menuOptions?: Array<{ title: string; action: () => void }>;
 }
 
 export default function NoteGridItem({
   item,
   onClick,
-  onMenuClick,
+  menuOptions,
 }: NoteGridItemProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const isFolder = item.type === "folder";
-  const noteItem = item as NoteItem;
-  const folderItem = item as FolderItem;
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
 
   // Get color classes
   const getColorClasses = () => {
-    if (isFolder) {
-      return {
-        bg: "bg-secondary/5",
-        border: "border-secondary/20",
-        text: "text-secondary",
-        hover: "hover:border-secondary/40",
-      };
-    }
-    // Use consistent secondary color for all notes
+
     return {
-      bg: "bg-secondary/5",
+      bg: "",
       border: "border-secondary/20",
-      text: "text-secondary",
+      text: "text-heading",
       hover: "hover:border-secondary/40",
     };
   };
@@ -62,12 +72,7 @@ export default function NoteGridItem({
     });
   };
 
-  // Get preview
-  const getPreview = () => {
-    if (isFolder) return `${folderItem.itemCount} items`;
-    const lines = noteItem.content.split("\n").filter((line) => line.trim());
-    return lines.slice(0, 2).join(" ").substring(0, 100) + "...";
-  };
+
 
   return (
     <div
@@ -92,26 +97,35 @@ export default function NoteGridItem({
 
       {/* Content */}
       <div className="mb-3">
-        <h3 className={`text-base font-semibold ${colors.text} font-raleway line-clamp-1 mb-1 pr-6`}>
+        <h3 className={`text-base font-bold ${colors.text} font-raleway line-clamp-1 mb-1 pr-6`}>
           {item.name}
         </h3>
-        <p className="text-sm text-para-muted line-clamp-2">
-          {getPreview()}
-        </p>
+
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between text-xs text-para-muted">
         <span>{formatDate(item.updatedAt)}</span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onMenuClick?.(item.id);
-          }}
-          className="p-1 rounded hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
-        >
-          <MoreVertical className="w-4 h-4" />
-        </button>
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(!showMenu);
+            }}
+            className="p-1 rounded hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+          {showMenu && menuOptions && (
+            <div className="absolute right-0 bottom-0 mb-1 z-20">
+              <DropdownMenu
+                options={menuOptions}
+                onClose={() => setShowMenu(false)}
+                align="right"
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

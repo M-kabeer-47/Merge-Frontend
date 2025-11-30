@@ -1,35 +1,33 @@
-import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader } from "lucide-react";
+import { cn } from "@/lib/shadcn/utils";
+
+interface LoadingSpinnerProps {
+  size?: "sm" | "md" | "lg";
+  className?: string;
+  text?: string;
+}
 
 export default function LoadingSpinner({
-  loaderColor,
-  children,
-  size = "sm",
+  size = "md",
+  className,
   text = "Please wait...",
-}: {
-  loaderColor?: string;
-  children?: React.ReactNode;
-  size?: "sm" | "md" | "lg";
-  text?: string;
-}) {
+}: LoadingSpinnerProps) {
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-5 h-5",
+    lg: "w-6 h-6",
+  };
+
   return (
-    <div className="flex items-center justify-center">
-      <motion.div
-        className={`border-2 border-white/30 border-t-white rounded-full mr-2 ${
-          size === "sm" ? "w-4 h-4" : size === "lg" ? "w-6 h-6" : "w-5 h-5"
-        } ${
-          loaderColor
-            ? `border-${loaderColor}/30 border-t-${loaderColor}`
-            : "border-white/30 border-t-white"
-        }`}
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 1,
-          repeat: Infinity,
-          ease: "linear",
-        }}
+    <div className="flex items-center justify-center gap-2">
+      <Loader
+        className={cn(
+          "animate-spin",
+          sizeClasses[size],
+          className
+        )}
       />
-      {children ? children : <span className="text-white">{text}</span>}
+      <span className="text-sm">{text}</span>
     </div>
   );
 }

@@ -148,7 +148,7 @@ export default function RoomsPage() {
         className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between"
       >
         {/* Tabs */}
-        <div className="w-full flex-1 lg:max-w-md">
+        <div className="w-full flex-1 lg:max-w-lg">
           <Tabs
             options={tabOptions}
             activeKey={activeTab}

@@ -141,7 +141,7 @@ export default function SubmissionsTable({
         <tbody className="divide-y divide-light-border">
           {submissions.map((submission) => (
             <React.Fragment key={submission.id}>
-              <tr className="hover:bg-gray-50 transition-colors">
+              <tr className="hover:bg-background transition-colors">
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm flex-shrink-0">

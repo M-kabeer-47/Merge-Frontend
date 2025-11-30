@@ -13,8 +13,6 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { user, isLoading } = useGetUser();
-  // Fetch user data if access token exists
-
   const value: AuthContextType = {
     user: user ?? null,
     isLoading,

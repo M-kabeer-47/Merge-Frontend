@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
 import { User } from "@/types/user";
 import axios from "axios";
@@ -38,10 +38,12 @@ export default function useGetUser() {
         const result = await refreshTokenFn();
         // If token rotation was successful, retry fetching user
         if (result?.token) {
-          fetchUser()
+          return fetchUser()
         }
       }
+      throw error;
     }
+
   };
 
   const {
@@ -54,8 +56,11 @@ export default function useGetUser() {
     queryFn: fetchUser,
     enabled: isClient && !!localStorage.getItem("accessToken"),
     retry: false, // Don't retry on error, we handle it manually
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
+    staleTime: 60 * 60 * 1000, // 1 hour
+    refetchOnMount: false,        // 👈 ADD: Don't refetch on mount
+    refetchOnWindowFocus: false,  // 👈 ADD: Don't refetch on focus
+    refetchOnReconnect: false,    // 👈 ADD: Don't refetch on reconnect
+
   });
 
   return {

@@ -142,7 +142,7 @@ export default function ChatHistory({
                 onTogglePin?.(session.id);
                 setMenuOpen(null);
               }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-background transition-colors flex items-center gap-2"
             >
               <Pin className="w-3.5 h-3.5" />
               {session.isPinned ? "Unpin" : "Pin"}
@@ -153,7 +153,7 @@ export default function ChatHistory({
                 onRenameSession?.(session.id);
                 setMenuOpen(null);
               }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-background transition-colors flex items-center gap-2"
             >
               <Edit2 className="w-3.5 h-3.5" />
               Rename

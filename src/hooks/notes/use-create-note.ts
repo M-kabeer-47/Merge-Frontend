@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 import usesRotateToken from "@/utils/rotate-token";
-import { CreateNoteType } from "@/schemas/note/create-note";
+import { CreateNoteType } from "@/types/note-operations";
 
 export default function useCreateNote() {
   const queryClient = useQueryClient();
@@ -32,7 +32,42 @@ export default function useCreateNote() {
     data: createdNote,
   } = useMutation({
     mutationFn: createNoteFunction,
-    onError: async (error: any, variables) => {
+    onMutate: async (newNote) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["notes", newNote.folderId || null] });
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData(["notes", newNote.folderId || null]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["notes", newNote.folderId || null], (old: any) => {
+        if (!old) return old;
+
+        const optimisticNote = {
+          id: `temp-${Date.now()}`,
+          title: newNote.title,
+          content: newNote.content,
+          folderId: newNote.folderId || null,
+          userId: "current-user",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        return {
+          ...old,
+          notes: [...(old.notes || []), optimisticNote],
+        };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousData, folderId: newNote.folderId || null };
+    },
+    onError: async (error: any, variables, context: any) => {
+      // Rollback to the previous value
+      if (context?.previousData) {
+        queryClient.setQueryData(["notes", context.folderId], context.previousData);
+      }
+
       if (error?.response?.data?.statusCode === 401) {
         try {
           await rotateToken();
@@ -44,7 +79,7 @@ export default function useCreateNote() {
       }
       toast.error(
         error?.response?.data?.message ||
-          "Failed to create note. Please try again."
+        "Failed to create note. Please try again."
       );
     },
     onSuccess: (data) => {

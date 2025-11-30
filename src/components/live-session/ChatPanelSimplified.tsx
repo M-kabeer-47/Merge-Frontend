@@ -146,7 +146,7 @@ export default function ChatPanel({
                               navigator.clipboard.writeText(message.message);
                               setShowMenu(null);
                             }}
-                            className="w-full px-3 py-2 text-left text-xs text-para hover:bg-gray-50 flex items-center gap-2"
+                            className="w-full px-3 py-2 text-left text-xs text-para hover:bg-background flex items-center gap-2"
                           >
                             <Copy className="w-3.5 h-3.5" />
                             Copy
@@ -156,7 +156,7 @@ export default function ChatPanel({
                               onPinMessage?.(message.id);
                               setShowMenu(null);
                             }}
-                            className="w-full px-3 py-2 text-left text-xs text-para hover:bg-gray-50 flex items-center gap-2"
+                            className="w-full px-3 py-2 text-left text-xs text-para hover:bg-background flex items-center gap-2"
                           >
                             <Pin className="w-3.5 h-3.5" />
                             Pin

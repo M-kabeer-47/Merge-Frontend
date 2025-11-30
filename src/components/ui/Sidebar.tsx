@@ -10,6 +10,7 @@ import {
 } from "@tabler/icons-react";
 import NotificationDropdown from "../navbar/Notifications";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 
 interface Links {
   label: string;
@@ -96,11 +97,12 @@ export const DesktopSidebar = ({
     <>
       <motion.div
         className={cn(
-          "h-full px-4 py-4 hidden md:flex md:flex-col bg-main-background border-r border-light-border w-[300px] shrink-0 shadow-sm",
+          "h-full px-4 py-4 hidden md:flex md:flex-col bg-main-background border-r border-light-border shrink-0 shadow-sm",
           className
         )}
+        initial={false}
         animate={{
-          width: animate ? (open ? "240px" : "80px") : "240px",
+          width:  (open ? "240px" : "80px") ,
         }}
         transition={{
           duration: 0.3,
@@ -212,7 +214,7 @@ export const SidebarLink = ({
   return (
     <div className="w-full font-raleway ">
       {/* Main Link */}
-      <a
+      <Link
         href={hasChildren ? "#" : link.href}
         className={cn(
           "text-para flex items-center justify-between gap-3 group/sidebar py-2.5 hover:bg-secondary/10 rounded-lg px-3 transition-all duration-200  hover:text-primary border-transparent hover:border-primary/20",
@@ -241,7 +243,7 @@ export const SidebarLink = ({
             }}
             className="font-bold text-sm transition-transform duration-200 whitespace-pre inline-block !p-0 !m-0"
           >
-            {link.label}
+            {open && link.label}
           </motion.span>
         </div>
 
@@ -256,7 +258,7 @@ export const SidebarLink = ({
             </motion.div>
           </motion.div>
         )}
-      </a>
+      </Link>
 
       {/* Children Links */}
       {hasChildren && (

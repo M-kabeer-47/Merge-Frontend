@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 import usesRotateToken from "@/utils/rotate-token";
-import { UpdateNoteType } from "@/schemas/note/update-note";
+import { UpdateNoteType } from "@/types/note-operations";
 
 export default function useUpdateNote(noteId: string) {
   const queryClient = useQueryClient();
@@ -17,7 +17,7 @@ export default function useUpdateNote(noteId: string) {
   const updateNoteFunction = async (data: UpdateNoteType) => {
     const accessToken = localStorage.getItem("accessToken");
     return await apiRequest(
-      axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/notes/${noteId}`, data, {
+      axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/notes/${noteId}`, data, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -44,7 +44,7 @@ export default function useUpdateNote(noteId: string) {
         return;
       }
       toast.error(
-        error?.response?.data?.message || 
+        error?.response?.data?.message ||
         "Failed to update note. Please try again."
       );
     },

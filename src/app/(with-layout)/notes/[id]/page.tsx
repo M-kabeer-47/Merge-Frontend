@@ -3,42 +3,28 @@
 import { useParams, useRouter } from "next/navigation";
 import useFetchNoteById from "@/hooks/notes/use-fetch-note-by-id";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import useDeleteNote from "@/hooks/notes/use-delete-note";
+import { ArrowLeft, Edit } from "lucide-react";
+import NoteEditorSkeleton from "@/components/ui/skeletons/NotesEditorSkeleton";
+import DynamicNotesViewer from "@/components/notes/DynamicNotesViewer";
 
 export default function ViewNotePage() {
   const params = useParams();
   const router = useRouter();
   const noteId = params.id as string;
-  
+
   const { note, isLoading, isError } = useFetchNoteById(noteId);
-  const { deleteNote, isDeleting } = useDeleteNote();
+  
+  const handleBack = () => {
+    router.push("/notes");
+  };
 
   const handleEdit = () => {
     router.push(`/notes/${noteId}/edit`);
   };
 
-  const handleDelete = async () => {
-    if (confirm("Are you sure you want to delete this note?")) {
-      try {
-        await deleteNote(noteId);
-        router.push("/notes");
-      } catch (error) {
-        console.error("Failed to delete note:", error);
-      }
-    }
-  };
-
-  const handleBack = () => {
-    router.push("/notes");
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-main-background flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
+      <NoteEditorSkeleton />
     );
   }
 
@@ -46,7 +32,9 @@ export default function ViewNotePage() {
     return (
       <div className="min-h-screen bg-main-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-heading mb-2">Note Not Found</h1>
+          <h1 className="text-2xl font-bold text-heading mb-2">
+            Note Not Found
+          </h1>
           <p className="text-para-muted mb-4">
             The note you're looking for doesn't exist or has been deleted.
           </p>
@@ -72,50 +60,36 @@ export default function ViewNotePage() {
               <span className="font-medium hidden sm:inline text-sm">Back</span>
             </button>
 
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={handleEdit}
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Edit className="w-4 h-4" />
-                <span className="hidden sm:inline">Edit</span>
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                {isDeleting ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
-                )}
-                <span className="hidden sm:inline">Delete</span>
-              </Button>
-            </div>
+            <button
+              onClick={handleEdit}
+              className="flex items-center gap-3 hover:bg-primary/5 px-3 py-2 rounded-md transition-colors"
+            >
+              <Edit className="w-4 h-4" />
+              <span className="hidden sm:inline">Edit</span>
+            </button>
           </div>
         </div>
       </nav>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-4xl sm:text-5xl font-bold font-raleway text-heading mb-6">
-          {note.title}
-        </h1>
-        
-        <div className="text-sm text-para-muted mb-8">
-          <span>Last updated: {new Date(note.updatedAt).toLocaleDateString()}</span>
+      <article className="w-full lg:max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-[30px]">
+        <div className="mt-8 sm:mt-12">
+          <h1 className="text-4xl md:text-5xl font-bold font-raleway text-heading mb-6">
+            {note.title}
+          </h1>
+
+          <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-light-border">
+            <div className="text-sm text-para-muted">
+              <span>
+                Last updated: {new Date(note.updatedAt).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div 
-          className="prose prose-lg max-w-none text-para"
-          dangerouslySetInnerHTML={{ __html: note.content }}
-        />
-      </div>
+        {/* BlockNote Viewer */}
+        {note.content && <DynamicNotesViewer content={note.content} />}
+      </article>
     </div>
   );
 }
