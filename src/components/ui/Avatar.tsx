@@ -12,22 +12,19 @@ export default function Avatar({
   const sizeClasses = {
     sm: "h-6 w-6",
     md: "h-8 w-8",
-    lg: "h-10 w-10",
+    lg: "h-full w-full",
   };
 
   const iconSizes = {
     sm: 16,
     md: 20,
-    lg: 24,
+    lg: 48,
   };
 
   return (
     <div
-      className={`${
-        sizeClasses[size]
-      } rounded-full overflow-hidden relative border-2 border-white/20 ${
-        !profileImage && "bg-gray-200 flex items-center justify-center"
-      }`}
+      className={`${sizeClasses[size]
+        } rounded-full overflow-hidden relative border-2 border-light-border bg-main-background flex items-center justify-center`}
     >
       {profileImage ? (
         <Image
