@@ -1,39 +1,17 @@
-"use client";
+import { Metadata } from "next";
+import CreateNotePage from "@/pages/notes/CreateNotePage";
 
-import React from "react";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import useCreateNote from "@/hooks/notes/use-create-note";
-import NoteEditorSkeleton from "@/components/ui/skeletons/NotesEditorSkeleton";
+export const metadata: Metadata = {
+  title: "Create Note | Merge",
+  description: "Create a new note to organize your study materials",
+  keywords: ["create note", "new note", "study materials", "notes"],
+  openGraph: {
+    title: "Create Note | Merge",
+    description: "Create a new note to organize your study materials",
+    type: "website",
+  },
+};
 
-const DynamicNoteEditor = dynamic(
-  () => import("@/components/notes/NoteEditor"),
-
-  { ssr: false, loading: () => <NoteEditorSkeleton /> }
-);
-
-export default function CreateNotePage() {
-  const router = useRouter();
-  const { createNote, isCreating, isCreateSuccess } = useCreateNote();
-
-  const handleSave = async (data: { title: string; content: string }) => {
-    alert("Title: " + data.title);
-    await createNote({
-      title: data.title,
-      content: data.content,
-    });
-    if (isCreateSuccess) {
-      router.push("/notes");
-    } else {
-      throw new Error("Note creation failed");
-    }
-  };
-
-  return (
-    <DynamicNoteEditor
-      type="create"
-      onSave={handleSave}
-      isSaving={isCreating}
-    />
-  );
+export default function Page() {
+  return <CreateNotePage />;
 }

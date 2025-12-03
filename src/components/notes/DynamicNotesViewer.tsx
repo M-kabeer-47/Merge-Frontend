@@ -17,4 +17,16 @@ const NotesViewer = dynamic(() => import("@/components/notes/NotesViewer"), {
   ),
 });
 
-export default NotesViewer;
+interface DynamicNotesViewerProps {
+  content: string;
+  noteTitle?: string;
+  onReady?: () => void;
+}
+
+const DynamicNotesViewer = (props: DynamicNotesViewerProps) => {
+  return <NotesViewer {...props} />;
+};
+
+DynamicNotesViewer.displayName = "DynamicNotesViewer";
+
+export default DynamicNotesViewer;

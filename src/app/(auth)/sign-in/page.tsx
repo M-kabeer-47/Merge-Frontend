@@ -1,31 +1,22 @@
-import React from "react";
-import AuthIllustration from "@/components/auth/AuthIllustration";
-import SignInForm from "@/components/auth/sign-in/SignInForm";
+import { Metadata } from "next";
+import SignInPage from "@/pages/auth/SignInPage";
 
-const SignInPage = () => {
-  return (
-    <div className="h-screen bg-main-background flex items-center justify-center p-4">
-      {/* Main Container */}
-      <div className="w-full  max-w-7xl bg-background rounded-2xl shadow-lg overflow-hidden">
-        <div className="flex " >
-          {/* Left Column - Illustration */}
-          <div className="hidden lg:flex lg:w-[60%]">
-            <AuthIllustration
-              page="sign-in"
-              imageUrl="/illustrations/sign-in-illustration.png"
-              title="Glad to see you again!"
-              subtitle="Continue your learning journey with thousands of courses and expert instructors"
-            />
-          </div>
-
-          {/* Right Column - Form */}
-          <div className="w-full lg:w-[40%] h-full">
-            <SignInForm />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+export const metadata: Metadata = {
+  title: "Sign In | Merge",
+  description: "Sign in to your Merge account to access courses, live sessions, and learning materials",
+  keywords: ["sign in", "login", "merge", "education platform"],
+  openGraph: {
+    title: "Sign In | Merge",
+    description: "Sign in to your Merge account to access courses, live sessions, and learning materials",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sign In | Merge",
+    description: "Sign in to your Merge account",
+  },
 };
 
-export default SignInPage;
+export default function Page() {
+  return <SignInPage />;
+}

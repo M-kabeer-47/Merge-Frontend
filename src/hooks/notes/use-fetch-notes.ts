@@ -3,7 +3,12 @@ import apiRequest from "@/utils/api-request";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import rotateToken from "@/utils/rotate-token";
-import { Note, NoteFilters, Folder } from "@/types/note";
+import { Note, Folder } from "@/types/note";
+
+interface NoteFilters {
+  folderId?: string;
+  search?: string;
+}
 
 export default function useFetchNotes(filters?: NoteFilters) {
   const [isClient, setIsClient] = useState(false);
@@ -62,6 +67,7 @@ export default function useFetchNotes(filters?: NoteFilters) {
     isPending,
     isError,
     refetch,
+
   } = useQuery({
     queryKey: ["notes", filters?.folderId || null, filters?.search || ""],
     queryFn: fetchNotes,

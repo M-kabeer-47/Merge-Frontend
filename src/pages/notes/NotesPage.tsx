@@ -15,24 +15,20 @@ import DeleteConfirmation from "@/components/notes/DeleteConfirmation";
 import ErrorState from "@/components/notes/ErrorState";
 import NotesGridView from "@/components/notes/NotesGridView";
 import NotesListView from "@/components/notes/NotesListView";
-import DynamicNotesViewer from "@/components/notes/DynamicNotesViewer";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import type { NoteOrFolder, NoteViewMode, NoteItem } from "@/types/note";
 import useFetchNotes from "@/hooks/notes/use-fetch-notes";
 import { useBreadcrumbNavigation } from "@/hooks/use-breadcrumb-navigation";
-import { toast } from "sonner";
+import { useDownloadPdf } from "@/hooks/use-download-pdf";
 
 export default function NotesPageClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const folderId = searchParams.get('folderId');
+    const folderId = searchParams?.get('folderId');
 
     const [searchTerm, setSearchTerm] = useState("");
     const [viewMode, setViewMode] = useState<NoteViewMode>("grid");
     const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<NoteOrFolder | null>(null);
-    const [downloadingNote, setDownloadingNote] = useState<NoteItem | null>(null);
 
     // Data fetching
     const { notes, folders, isLoading, isError, refetch } = useFetchNotes({
@@ -96,43 +92,7 @@ export default function NotesPageClient() {
         }
     };
 
-    const handleDownload = (id: string) => {
-        const item = items.find((i) => i.id === id);
-        if (item && item.type === "note") {
-            setDownloadingNote(item as NoteItem);
-            toast.info("Preparing PDF download...");
-        }
-    };
-
-    const generatePDF = async () => {
-        const element = document.getElementById("pdf-download-container");
-        if (!element || !downloadingNote) return;
-
-        try {
-            const canvas = await html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                windowWidth: 1200, // Fixed width for consistent rendering
-            });
-
-            const imgData = canvas.toDataURL("image/png");
-            const pdf = new jsPDF({
-                orientation: "portrait",
-                unit: "px",
-                format: [canvas.width, canvas.height],
-            });
-
-            pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-            pdf.save(`${downloadingNote.name}.pdf`);
-            toast.success("Download started!");
-        } catch (error) {
-            console.error("PDF generation failed:", error);
-            toast.error("Failed to generate PDF");
-        } finally {
-            setDownloadingNote(null);
-        }
-    };
+    const { downloadPdf } = useDownloadPdf();
 
     // Item menu options
     const getItemMenuOptions = (id: string) => {
@@ -147,7 +107,13 @@ export default function NotesPageClient() {
         if (item?.type === "note") {
             options.push({
                 title: "Download",
-                action: () => handleDownload(id),
+                action: () => {
+                    const noteItem = item as NoteItem;
+                    downloadPdf({
+                        title: noteItem.name,
+                        content: noteItem.content
+                    });
+                },
             });
         }
 
@@ -252,35 +218,6 @@ export default function NotesPageClient() {
                 folderId={folderId}
                 searchQuery={searchTerm}
             />
-
-            {/* Hidden Container for PDF Generation */}
-            {downloadingNote && (
-                <div
-                    id="pdf-download-container"
-                    style={{
-                        position: "absolute",
-                        top: "-9999px",
-                        left: "-9999px",
-                        width: "800px", // A4 width approx in pixels at 96 DPI is 794px
-                        padding: "40px",
-                        backgroundColor: "white",
-                        color: "black",
-                        zIndex: -1,
-                    }}
-                >
-                    <h1 style={{ fontSize: "32px", fontWeight: "bold", marginBottom: "20px", fontFamily: "sans-serif" }}>
-                        {downloadingNote.name}
-                    </h1>
-                    <div style={{ fontSize: "12px", color: "#666", marginBottom: "30px", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>
-                        Last updated: {new Date(downloadingNote.updatedAt).toLocaleDateString()}
-                    </div>
-                    <DynamicNotesViewer
-                        content={downloadingNote.content}
-                        // @ts-ignore - Dynamic component props issue
-                        onReady={generatePDF}
-                    />
-                </div>
-            )}
         </div>
     );
 }

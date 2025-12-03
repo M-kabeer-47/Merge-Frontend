@@ -1,10 +1,21 @@
 import { Suspense } from "react";
+import { Metadata } from "next";
 import VerifyEmailContent from "@/components/auth/VerifyEmailContent";
 import VerifyPageSkeleton from "@/components/ui/skeletons/VerifyPageSkeleton";
 
 export const dynamic = 'force-dynamic';
 
-export default function VerifyPage() {
+export const metadata: Metadata = {
+  title: "Verify Email | Merge",
+  description: "Verify your email address to activate your Merge account",
+  openGraph: {
+    title: "Verify Email | Merge",
+    description: "Verify your email address to activate your Merge account",
+    type: "website",
+  },
+};
+
+function VerifyPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
       <Suspense fallback={<VerifyPageSkeleton />}>
@@ -13,3 +24,5 @@ export default function VerifyPage() {
     </div>
   );
 }
+
+export default VerifyPage;

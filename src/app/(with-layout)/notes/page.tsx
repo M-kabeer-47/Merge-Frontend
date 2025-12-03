@@ -1,15 +1,27 @@
 import { Suspense } from "react";
-import NotesPageClient from "./NotesPageClient";
+import { Metadata } from "next";
+import NotesPage from "@/pages/notes/NotesPage";
 import NotesListSkeleton from "@/components/notes/NotesListSkeleton";
+
+export const metadata: Metadata = {
+  title: "Notes | Merge",
+  description: "Manage your notes, folders, and study materials",
+  keywords: ["notes", "study materials", "folders", "organization"],
+  openGraph: {
+    title: "Notes | Merge",
+    description: "Manage your notes, folders, and study materials",
+    type: "website",
+  },
+};
 
 /**
  * Notes Page - Server Component wrapper
  * Wraps the client component in Suspense boundary as required for useSearchParams
  */
-export default function NotesPage() {
+export default function Page() {
   return (
     <Suspense fallback={<NotesPageLoadingSkeleton />}>
-      <NotesPageClient />
+      <NotesPage />
     </Suspense>
   );
 }
