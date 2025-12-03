@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Lock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import useResetPassword from "@/hooks/auth/use-reset-password";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import {
   resetPasswordSchema,
@@ -20,9 +21,6 @@ export default function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { resetPassword, isPending, isSuccess } = useResetPassword();
 
@@ -137,26 +135,12 @@ export default function ResetPasswordForm() {
               htmlFor="password"
               error={errors.password?.message}
             >
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter new password"
-                  {...register("password")}
-                  error={errors.password?.message}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-para-muted hover:text-primary transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
+              <PasswordInput
+                id="password"
+                placeholder="Enter new password"
+                {...register("password")}
+                error={errors.password?.message}
+              />
             </FormField>
 
             {/* Confirm Password Input */}
@@ -165,26 +149,12 @@ export default function ResetPasswordForm() {
               htmlFor="confirmPassword"
               error={errors.confirmPassword?.message}
             >
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm new password"
-                  {...register("confirmPassword")}
-                  error={errors.confirmPassword?.message}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-para-muted hover:text-primary transition-colors"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
+              <PasswordInput
+                id="confirmPassword"
+                placeholder="Confirm new password"
+                {...register("confirmPassword")}
+                error={errors.confirmPassword?.message}
+              />
             </FormField>
 
             {/* Submit Button */}

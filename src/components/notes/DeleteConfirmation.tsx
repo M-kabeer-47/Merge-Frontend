@@ -1,13 +1,15 @@
 import React from "react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { NoteOrFolder } from "@/types/note";
+import useDeleteNote from "@/hooks/notes/use-delete-note";
+import useDeleteFolder from "@/hooks/notes/use-delete-folder";
 
 interface DeleteConfirmationProps {
     item: NoteOrFolder | null;
     isOpen: boolean;
     onClose: () => void;
-    onConfirmDelete: (item: NoteOrFolder) => Promise<void>;
-    isDeleting: boolean;
+    folderId: string | null;
+    searchQuery: string;
 }
 
 /**
@@ -18,13 +20,31 @@ export default function DeleteConfirmation({
     item,
     isOpen,
     onClose,
-    onConfirmDelete,
-    isDeleting,
+    folderId,
+    searchQuery,
 }: DeleteConfirmationProps) {
+    const { deleteNote, isDeleting: isDeletingNote } = useDeleteNote();
+    const { deleteFolder, isDeleting: isDeletingFolder } = useDeleteFolder();
+
+    const isDeleting = isDeletingNote || isDeletingFolder;
+
     if (!item) return null;
 
     const handleConfirm = async () => {
-        await onConfirmDelete(item);
+        if (item.type === "folder") {
+            await deleteFolder({
+                folderId: item.id,
+                parentFolderId: folderId,
+                searchQuery: searchQuery,
+            });
+        } else {
+            await deleteNote({
+                noteId: item.id,
+                folderId: folderId,
+                searchQuery: searchQuery,
+            });
+        }
+        onClose();
     };
 
     return (

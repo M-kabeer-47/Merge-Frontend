@@ -42,7 +42,7 @@ export default function ImageUploadSection({
                 <p className="text-sm text-para-muted max-w-xs">
                     Upload a new photo to customize your profile. Recommended size: 400x400px.
                     <br />
-                    Supported formats: JPG, PNG, GIF.
+                    Supported formats: JPG, PNG.
                 </p>
                 <Button
                     type="button"

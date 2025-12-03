@@ -8,7 +8,10 @@ export default function useChangePassword() {
     const changePasswordFunction = async (data: ChangePasswordType) => {
         const accessToken = localStorage.getItem("accessToken");
         return await apiRequest(
-            axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/change-password`, data, {
+            axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/change-password`, {
+                oldPassword: data.currentPassword,
+                newPassword: data.newPassword,
+            }, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },

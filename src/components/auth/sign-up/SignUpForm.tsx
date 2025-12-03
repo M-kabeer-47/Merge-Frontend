@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { easeOut, motion } from "framer-motion";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { FormField } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
 import RoleSelectionCards from "./RoleSelectionCards";
@@ -181,10 +182,9 @@ export default function SignUpForm() {
                 htmlFor="password"
                 error={errors.password?.message}
               >
-                <Input
+                <PasswordInput
                   {...field}
                   id="password"
-                  type="password"
                   placeholder="Create a strong password"
                   error={errors.password?.message}
                 />
@@ -202,10 +202,9 @@ export default function SignUpForm() {
                 htmlFor="confirmPassword"
                 error={errors.confirmPassword?.message}
               >
-                <Input
+                <PasswordInput
                   {...field}
                   id="confirmPassword"
-                  type="password"
                   placeholder="Confirm your password"
                   error={errors.confirmPassword?.message}
                 />

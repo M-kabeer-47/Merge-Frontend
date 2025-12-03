@@ -7,9 +7,10 @@ import "@blocknote/shadcn/style.css";
 
 interface NotesViewerProps {
   content: string;
+  onReady?: () => void;
 }
 
-export default function NotesViewer({ content }: NotesViewerProps) {
+export default function NotesViewer({ content, onReady }: NotesViewerProps) {
   const [isEditorReady, setIsEditorReady] = useState(false);
   const { theme } = useTheme();
   const editor = useCreateBlockNote();
@@ -21,6 +22,10 @@ export default function NotesViewer({ content }: NotesViewerProps) {
           const blocks = await editor.tryParseHTMLToBlocks(content);
           editor.replaceBlocks(editor.document, blocks);
           setIsEditorReady(true);
+          if (onReady) {
+            // Small delay to ensure rendering is complete
+            setTimeout(onReady, 500);
+          }
         } catch (error) {
           console.error("Failed to parse note content:", error);
           setIsEditorReady(true);
@@ -28,7 +33,7 @@ export default function NotesViewer({ content }: NotesViewerProps) {
       };
       loadContent();
     }
-  }, [content, editor]);
+  }, [content, editor, onReady]);
 
   return (
     <div className="relative">
@@ -36,7 +41,7 @@ export default function NotesViewer({ content }: NotesViewerProps) {
         <BlockNoteView
           editor={editor}
           editable={false}
-          theme={theme}
+          theme={theme as any}
         />
       ) : (
         <div className="animate-pulse">

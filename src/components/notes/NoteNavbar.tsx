@@ -32,7 +32,7 @@ export default function NoteNavbar({
   };
 
   return (
-    <nav className="sticky top-0  bg-main-background/80 backdrop-blur-sm border-b border-light-border/50">
+    <nav className="z-20 sticky top-0  bg-main-background/80 backdrop-blur-sm border-b border-light-border/50">
       <div className="px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Left Side - Back Button */}

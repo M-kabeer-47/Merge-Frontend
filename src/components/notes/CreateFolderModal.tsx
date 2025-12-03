@@ -5,29 +5,36 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import useCreateFolder from "@/hooks/notes/use-create-folder";
 
 interface CreateFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string) => void;
-  isLoading?: boolean;
+  folderId?: string | null;
+  searchQuery: string;
 }
 
 export default function CreateFolderModal({
   isOpen,
   onClose,
-  onSubmit,
-  isLoading,
+  folderId,
+  searchQuery,
 }: CreateFolderModalProps) {
   const [folderName, setFolderName] = useState("");
+  const { createFolder, isCreating } = useCreateFolder({ searchQuery: searchQuery });
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (folderName.trim()) {
-      onSubmit(folderName.trim());
+      await createFolder({
+        name: folderName.trim(),
+        type: "notes",
+        parentFolderId: folderId,
+      });
       setFolderName("");
+      onClose();
     }
   };
 
@@ -47,7 +54,7 @@ export default function CreateFolderModal({
           <button
             onClick={handleClose}
             className="p-1 rounded-lg hover:bg-background transition-colors"
-            disabled={isLoading}
+            disabled={isCreating}
           >
             <X className="w-5 h-5 text-para-muted" />
           </button>
@@ -69,7 +76,7 @@ export default function CreateFolderModal({
               onChange={(e) => setFolderName(e.target.value)}
               placeholder="Enter folder name..."
               autoFocus
-              disabled={isLoading}
+              disabled={isCreating}
               maxLength={100}
             />
           </div>
@@ -80,15 +87,15 @@ export default function CreateFolderModal({
               type="button"
               variant="outline"
               onClick={handleClose}
-              disabled={isLoading}
+              disabled={isCreating}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={!folderName.trim() || isLoading}
+              disabled={!folderName.trim() || isCreating}
             >
-              {isLoading ? <LoadingSpinner size="sm" text="Creating..." /> : "Create Folder"}
+              {isCreating ? <LoadingSpinner size="sm" text="Creating..." /> : "Create Folder"}
             </Button>
           </div>
         </form>

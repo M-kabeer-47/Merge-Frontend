@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { FormField } from "@/components/ui/FormField";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { changePasswordSchema, ChangePasswordSchemaType } from "@/schemas/user/change-password";
@@ -54,10 +55,9 @@ export default function PasswordChangeForm() {
                                 htmlFor="currentPassword"
                                 error={errors.currentPassword?.message}
                             >
-                                <Input
+                                <PasswordInput
                                     {...field}
                                     id="currentPassword"
-                                    type="password"
                                     placeholder="Enter current password"
                                     error={errors.currentPassword?.message}
                                 />
@@ -74,10 +74,9 @@ export default function PasswordChangeForm() {
                                 htmlFor="newPassword"
                                 error={errors.newPassword?.message}
                             >
-                                <Input
+                                <PasswordInput
                                     {...field}
                                     id="newPassword"
-                                    type="password"
                                     placeholder="Enter new password"
                                     error={errors.newPassword?.message}
                                 />

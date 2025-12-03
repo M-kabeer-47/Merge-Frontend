@@ -93,7 +93,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           className={`flex items-center gap-2 px-2 py-1.5 rounded-full transition-colors bg-secondary/10 backdrop-blur-sm border border-white/20`}
         >
           {profileImage ? (
-            <Avatar profileImage={profileImage} />
+            <Avatar profileImage={profileImage} size="md" />
           ) : (
             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
               <IconUser className="w-5 h-5 text-heading" strokeWidth={2} />

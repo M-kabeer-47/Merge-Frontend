@@ -12,11 +12,14 @@ import { updateProfileSchema, UpdateProfileSchemaType } from "@/schemas/user/upd
 import useUpdateProfile from "@/hooks/user/use-update-profile";
 import { useAuth } from "@/providers/AuthProvider";
 import ImageUploadSection from "./ImageUploadSection";
+import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
+import { toast } from "sonner";
 
 export default function ProfileDetailsForm() {
     const { user } = useAuth();
     const { updateProfile, isUpdating } = useUpdateProfile();
-    const [previewImage, setPreviewImage] = useState<string | undefined>(user?.image);
+    const [previewImage, setPreviewImage] = useState<string | undefined>(user?.image || undefined);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const {
         control,
@@ -37,28 +40,57 @@ export default function ProfileDetailsForm() {
             setValue("firstName", user.firstName || "");
             setValue("lastName", user.lastName || "");
             setValue("image", user.image || "");
-            setPreviewImage(user.image);
+            setPreviewImage(user.image || undefined);
         }
     }, [user, setValue]);
 
+    // Cleanup object URL on unmount or when previewImage changes
+    useEffect(() => {
+        return () => {
+            if (previewImage && previewImage.startsWith("blob:")) {
+                URL.revokeObjectURL(previewImage);
+            }
+        };
+    }, [previewImage]);
+
     const onSubmit = async (data: UpdateProfileSchemaType) => {
         try {
-            await updateProfile(data);
+            let imageUrl = data.image;
+
+            if (selectedFile) {
+                toast.info("Uploading image...");
+                imageUrl = await uploadToCloudinary({
+                    file: selectedFile,
+                    attachmentType: "image",
+                });
+            }
+
+            await updateProfile({
+                ...data,
+                image: imageUrl,
+            });
+
+            // Reset selected file after successful update
+            setSelectedFile(null);
         } catch (error) {
-            // Error handled by hook
+            console.error("Profile update failed:", error);
+            toast.error("Failed to update profile");
         }
     };
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
-                setPreviewImage(base64String);
-                setValue("image", base64String, { shouldDirty: true });
-            };
-            reader.readAsDataURL(file);
+            // Clean up previous blob URL if it exists
+            if (previewImage && previewImage.startsWith("blob:")) {
+                URL.revokeObjectURL(previewImage);
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            setPreviewImage(objectUrl);
+            setSelectedFile(file);
+            // Mark form as dirty so save button enables
+            setValue("image", objectUrl, { shouldDirty: true });
         }
     };
 

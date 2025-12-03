@@ -10,7 +10,7 @@ export default function useUpdateProfile() {
     const updateProfileFunction = async (data: UpdateProfileType) => {
         const accessToken = localStorage.getItem("accessToken");
         return await apiRequest(
-            axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/profile`, data, {
+            axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/update`, data, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },

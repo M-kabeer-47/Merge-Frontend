@@ -32,7 +32,7 @@ export default function useVerifyOTP({ email, otp }: UseVerifyOTPProps) {
     onSuccess: (data) => {
       toast.success("OTP verified successfully");
       if (data?.token && data?.refreshToken && data?.userId) {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("accessToken", data.token);
         localStorage.setItem("refreshToken", data.refreshToken);
         localStorage.setItem("userId", data.userId);
         window.location.href = "/dashboard";

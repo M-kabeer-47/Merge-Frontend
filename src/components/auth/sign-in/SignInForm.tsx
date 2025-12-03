@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import { easeOut, motion } from "framer-motion";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { FormField } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
 import { signInSchema, SignInType } from "@/schemas/auth/sign-in";
@@ -181,10 +182,9 @@ export default function SignInForm() {
                 htmlFor="password"
                 error={errors.password?.message}
               >
-                <Input
+                <PasswordInput
                   {...field}
                   id="password"
-                  type="password"
                   placeholder="Enter your password"
                   error={errors.password?.message}
                 />
