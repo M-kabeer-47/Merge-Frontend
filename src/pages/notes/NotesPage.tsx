@@ -15,7 +15,7 @@ import DeleteConfirmation from "@/components/notes/DeleteConfirmation";
 import ErrorState from "@/components/notes/ErrorState";
 import NotesGridView from "@/components/notes/NotesGridView";
 import NotesListView from "@/components/notes/NotesListView";
-import type { NoteOrFolder, NoteViewMode, NoteItem } from "@/types/note";
+import type { NoteOrFolder, NoteViewMode, Note } from "@/types/note";
 import useFetchNotes from "@/hooks/notes/use-fetch-notes";
 import { useBreadcrumbNavigation } from "@/hooks/use-breadcrumb-navigation";
 import { useDownloadPdf } from "@/hooks/use-download-pdf";
@@ -44,7 +44,7 @@ export default function NotesPageClient() {
         handleBackNavigation,
     } = useBreadcrumbNavigation({
         router,
-        currentId: folderId,
+        currentId: folderId || null,
         storageKey: 'notesBreadcrumbPath',
         basePath: '/notes',
     });
@@ -54,11 +54,13 @@ export default function NotesPageClient() {
         ...folders.map(folder => ({
             ...folder,
             type: "folder" as const,
+
         })),
         ...notes.map(note => ({
             ...note,
             type: "note" as const,
             name: note.title, // Map title to name for consistency
+
         }))
     ];
 
@@ -108,9 +110,9 @@ export default function NotesPageClient() {
             options.push({
                 title: "Download",
                 action: () => {
-                    const noteItem = item as NoteItem;
+                    const noteItem = item as Note;
                     downloadPdf({
-                        title: noteItem.name,
+                        title: noteItem.title,
                         content: noteItem.content
                     });
                 },
@@ -215,7 +217,7 @@ export default function NotesPageClient() {
                 item={itemToDelete}
                 isOpen={!!itemToDelete}
                 onClose={() => setItemToDelete(null)}
-                folderId={folderId}
+                folderId={folderId || "root"}
                 searchQuery={searchTerm}
             />
         </div>

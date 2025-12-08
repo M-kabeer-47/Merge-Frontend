@@ -13,15 +13,15 @@ interface NotesViewerProps {
 }
 
 export interface NotesViewerRef {
-  downloadAsPDF: () => Promise<void>;
+  
 }
 
 const NotesViewer = forwardRef<NotesViewerRef, NotesViewerProps>(
-  ({ content, onReady, noteTitle }, ref) => {
+  ({ content, onReady }) => {
     const [isEditorReady, setIsEditorReady] = useState(false);
     const { theme } = useTheme();
     const editor = useCreateBlockNote();
-    const { downloadPdf } = useDownloadPdf();
+    
 
     useEffect(() => {
       if (content && editor) {
@@ -44,27 +44,7 @@ const NotesViewer = forwardRef<NotesViewerRef, NotesViewerProps>(
     }, [content, editor, onReady]);
 
     // Expose downloadAsPDF method to parent component
-    useImperativeHandle(ref, () => ({
-      downloadAsPDF: async () => {
-        if (!editor || !isEditorReady) {
-          toast.error("Editor not ready");
-          return;
-        }
-
-        try {
-          // Get the editor content as HTML
-          const html = await editor.blocksToFullHTML(editor.document);
-
-          await downloadPdf({
-            title: noteTitle || "Note",
-            content: html
-          });
-        } catch (error) {
-          console.error("Failed to get editor content:", error);
-          toast.error("Failed to prepare PDF content.");
-        }
-      },
-    }));
+    
 
     return (
       <div className="relative">
