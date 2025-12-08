@@ -2,8 +2,8 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import ProfileDetailsForm from "./ProfileDetailsForm";
-import PasswordChangeForm from "./PasswordChangeForm";
+import ProfileDetailsForm from "@/components/update-profile/ProfileDetailsForm";
+import PasswordChangeForm from "@/components/update-profile/PasswordChangeForm";
 
 export default function ProfilePageClient() {
     return (
