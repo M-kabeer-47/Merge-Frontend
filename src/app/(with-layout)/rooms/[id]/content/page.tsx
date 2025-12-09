@@ -18,7 +18,6 @@ import {
   sampleBreadcrumbs,
 } from "@/lib/constants/content-mock-data";
 import type {
-  ContentItem,
   ViewMode,
   SortOption,
   FilterType,
@@ -26,19 +25,15 @@ import type {
 } from "@/types/content";
 
 export default function ContentTab() {
-  // State management
+  // State management - only what's needed at page level
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [isDragging, setIsDragging] = useState(false);
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
-  const [contextMenu, setContextMenu] = useState<{
-    show: boolean;
-    position: { x: number; y: number };
-    itemId: string | null;
-  }>({ show: false, position: { x: 0, y: 0 }, itemId: null });
+  
+  
 
   // Filter and sort content
   const filteredAndSortedContent = useMemo(() => {
@@ -141,26 +136,8 @@ export default function ContentTab() {
     // In real app, this could navigate into folder or open file preview
   };
 
-  const handleToggleInclude = (id: string) => {
-    console.log("Toggle include for item:", id);
-    // In real app, this would update the item's "include in Gilroy" status
-  };
-
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    // Only hide if leaving the entire window
-    if (e.currentTarget === e.target) {
-      setIsDragging(false);
-    }
-  };
-
-  const handleDrop = (files: FileList) => {
-    setIsDragging(false);
+  // Handle files dropped - UploadDropzone manages isDragging internally
+  const handleFilesDropped = (files: FileList) => {
 
     // Simulate upload progress for demo
     Array.from(files).forEach((file, index) => {
@@ -196,20 +173,10 @@ export default function ContentTab() {
     });
   };
 
-  const handleShowContextMenu = (e: React.MouseEvent, itemId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Show context menu for:", itemId);
-    // In real app, would show context menu
-  };
+ 
 
   return (
-    <div
-      className="h-full flex flex-col bg-main-background"
-      onDragEnter={handleDragEnter}
-      onDragOver={(e) => e.preventDefault()}
-      onDragLeave={handleDragLeave}
-    >
+    <UploadDropzone onFilesDropped={handleFilesDropped}>
       {/* Toolbar */}
       <ContentToolbar
         breadcrumbs={sampleBreadcrumbs}
@@ -222,12 +189,6 @@ export default function ContentTab() {
         sortBy={sortBy}
         onSortChange={setSortBy}
         selectedCount={selectedItems.size}
-        onUpload={() => console.log("Upload clicked")}
-        onNewFolder={() => console.log("New folder clicked")}
-        onBulkDownload={() => console.log("Bulk download")}
-        onBulkMove={() => console.log("Bulk move")}
-        onBulkDelete={() => console.log("Bulk delete")}
-        onBulkTag={() => console.log("Bulk tag")}
         onClearSelection={() => setSelectedItems(new Set())}
       />
 
@@ -241,8 +202,7 @@ export default function ContentTab() {
             />
           ) : (
             <EmptyFolderState
-              onUpload={() => console.log("Upload")}
-              onCreateFolder={() => console.log("Create folder")}
+              
             />
           )
         ) : viewMode === "list" ? (
@@ -296,9 +256,6 @@ export default function ContentTab() {
         )}
       </div>
 
-      {/* Upload Dropzone Overlay */}
-      <UploadDropzone isActive={isDragging} onDrop={handleDrop} />
-
       {/* Upload Progress Tray */}
       <AnimatePresence>
         {uploads.length > 0 && (
@@ -314,6 +271,9 @@ export default function ContentTab() {
           />
         )}
       </AnimatePresence>
-    </div>
+
+      {/* Create Folder Modal */}
+      
+    </UploadDropzone>
   );
 }

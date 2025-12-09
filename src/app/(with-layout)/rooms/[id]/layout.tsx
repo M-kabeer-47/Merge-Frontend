@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import {
   MessageSquare,
   Bell,
@@ -21,14 +21,18 @@ interface RoomLayoutProps {
   params: Promise<{ id: string }>;
 }
 
-const RoomLayout: React.FC<RoomLayoutProps> = async({ children, params }) => {
+const RoomLayout: React.FC<RoomLayoutProps> = ({ children,  }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("general-chat");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const { id } = await params;
+  const params = useParams();
+  const id = params?.id as string ?? "" ;
   // Update active tab based on current route
   useEffect(() => {
+    if(!pathname){
+      return
+    }
     const pathSegments = pathname.split("/");
     const lastSegment = pathSegments[pathSegments.length - 1];
 

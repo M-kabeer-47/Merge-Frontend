@@ -6,12 +6,22 @@ import usesRotateToken from "@/utils/rotate-token";
 
 interface CreateFolderPayload {
   name: string;
-  type: "notes";
+  type: "notes" | "room";
   parentFolderId?: string | null;
   roomId?: string;
 }
 
-export default function useCreateFolder({ searchQuery }: { searchQuery: string }) {
+interface UseCreateFolderOptions {
+  searchQuery: string;
+  folderType?: "notes" | "room";
+  roomId?: string;
+}
+
+export default function useCreateFolder({ 
+  searchQuery, 
+  folderType = "notes",
+  roomId 
+}: UseCreateFolderOptions) {
   const queryClient = useQueryClient();
   const { rotateToken, isRotationPending } = usesRotateToken({
     oldToken:
@@ -23,7 +33,7 @@ export default function useCreateFolder({ searchQuery }: { searchQuery: string }
   const createFolderFunction = async (payload: CreateFolderPayload) => {
     const accessToken = localStorage.getItem("accessToken");
 
-    // Prepare body - exclude roomId for notes folders
+    // Prepare body
     const body: any = {
       name: payload.name,
       type: payload.type,
@@ -32,6 +42,11 @@ export default function useCreateFolder({ searchQuery }: { searchQuery: string }
     // Only add parentFolderId if it's explicitly provided (can be null for root)
     if (payload.parentFolderId !== undefined) {
       body.parentFolderId = payload.parentFolderId;
+    }
+
+    // Add roomId for room folders
+    if (payload.type === "room" && payload.roomId) {
+      body.roomId = payload.roomId;
     }
 
     let response = await apiRequest(
@@ -56,8 +71,13 @@ export default function useCreateFolder({ searchQuery }: { searchQuery: string }
   } = useMutation({
     mutationFn: createFolderFunction,
     onSuccess: (createdFolder, variables) => {
+      // Determine the query key based on folder type
+      const queryKey = variables.type === "room" 
+        ? ["room-content", variables.roomId, variables.parentFolderId || null, searchQuery]
+        : ["notes", variables.parentFolderId || null, searchQuery];
+
       // Update cache with the actual folder data from API response
-      queryClient.setQueryData(["notes", variables.parentFolderId || null, searchQuery], (old: any) => {
+      queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
 
         return {
@@ -70,6 +90,9 @@ export default function useCreateFolder({ searchQuery }: { searchQuery: string }
           },
         };
       });
+
+      // Also invalidate to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: queryKey.slice(0, 2) });
 
       toast.success("Folder created successfully!");
     },
@@ -98,3 +121,4 @@ export default function useCreateFolder({ searchQuery }: { searchQuery: string }
     isRotationPending,
   };
 }
+

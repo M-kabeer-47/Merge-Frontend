@@ -1,12 +1,61 @@
 import { useQuery } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
-import { Room } from "@/lib/constants/mock-data";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import rotateToken from "@/utils/rotate-token";
 import { toast } from "sonner";
 
-export default function useGetUserRooms() {
+interface RoomAdmin {
+    id: string;
+    email: string;
+    image: string;
+    firstName: string;
+    lastName: string;
+}
+
+interface RoomMember {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image: string;
+}
+
+interface RoomTag {
+    id: string;
+    name: string;
+}
+
+export interface Room {
+    id: string;
+    title: string;
+    description: string;
+    isPublic: boolean;
+    roomCode: string;
+    tags: RoomTag[];
+    admin: RoomAdmin;
+    members: RoomMember[];
+    createdAt: string;
+    updatedAt: string;
+    type: "created" | "joined";
+    userRole: string;
+    memberCount: number;
+}
+
+interface RoomsResponse {
+    rooms: Room[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    filter: string;
+    counts: {
+        created: number;
+        joined: number;
+        total: number;
+    };
+}
+
+export default function useGetUserRooms({filter, search = ""}:{filter:"all" | "created" | "joined", search?: string}) {
     const [isClient, setIsClient] = useState(false);
 
     const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
@@ -21,13 +70,14 @@ export default function useGetUserRooms() {
 
     }, []);
 
-    const fetchUserRooms = async () => {
+    const fetchUserRooms = async (): Promise<RoomsResponse | null> => {
         const token = localStorage.getItem("accessToken");
         if (!token) return null;
 
         try {
+            const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
             const response = await apiRequest(
-                axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/room/user-rooms`, {
+                axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/rooms?filter=${filter}${searchParam}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -49,12 +99,12 @@ export default function useGetUserRooms() {
     };
 
     const {
-        data: rooms,
+        data,
         isLoading,
         isError,
         refetch,
     } = useQuery({
-        queryKey: ["user-rooms"],
+        queryKey: ["user-rooms", filter, search],
         queryFn: fetchUserRooms,
         enabled: isClient && !!localStorage.getItem("accessToken"),
         retry: false,
@@ -63,9 +113,12 @@ export default function useGetUserRooms() {
     });
 
     return {
-        rooms: rooms as unknown as [{ createdRooms: Room[], joinedRooms: Room[] }],
+        rooms: data?.rooms || [],
+        counts: data?.counts || { created: 0, joined: 0, total: 0 },
+        total: data?.total || 0,
         isLoading: isLoading || !isClient || isRotationPending,
         isError,
         refetch,
     };
 }
+

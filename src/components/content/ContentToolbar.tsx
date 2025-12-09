@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ChevronRight,
@@ -19,6 +19,9 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import type { BreadcrumbItem, ViewMode, SortOption, FilterType } from "@/types/content";
+import CreateFolderModal from "../notes/CreateFolderModal";
+import React from "react";
+import { useParams } from "next/navigation";
 
 interface ContentToolbarProps {
   breadcrumbs: BreadcrumbItem[];
@@ -78,7 +81,10 @@ export default function ContentToolbar({
   onBulkTag,
   onClearSelection,
 }: ContentToolbarProps) {
-  const [showSortDropdown, setShowSortDropdown] = React.useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+  const params = useParams();
+  const roomId = params?.id as string;
 
   return (
     <div className="bg-main-background border-b border-light-border sticky top-0 z-10">
@@ -123,7 +129,7 @@ export default function ContentToolbar({
               <span className="hidden sm:inline">New Folder</span>
             </Button>
             <Button
-              className="px-4 w-[130px] flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
+              className="px-4 w-[130px] flex items-center gap-2 bg-primary/90 text-white hover:bg-primary/90"
               onClick={onUpload}
               aria-label="Upload files"
             >
@@ -326,6 +332,14 @@ export default function ContentToolbar({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <CreateFolderModal
+        isOpen={isCreateFolderModalOpen}
+        onClose={() => setIsCreateFolderModalOpen(false)}
+        searchQuery={searchTerm}
+        folderType="room"
+        roomId={roomId}
+      />
     </div>
   );
 }

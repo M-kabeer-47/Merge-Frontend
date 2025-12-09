@@ -1,10 +1,6 @@
-import RoomLayout from "./layout";
+import { redirect } from "next/navigation";
 
-export default function RoomPage() {
-  return (
-    <div className="p-4 text-white">
-      <h1 className="text-2xl font-bold mb-4 ">Room Content</h1>
-      <p>This is the main content area for the room.</p>
-    </div>
-  );
+export default function RoomPage({params}:{params:{id:string}}) {
+// redirect to general chat, keep this component server
+redirect(`/rooms/${params.id}/general-chat`);
 }

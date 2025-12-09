@@ -8,60 +8,47 @@ import SearchBar from "@/components/ui/SearchBar";
 import RoomCard from "@/components/rooms/RoomCard";
 import CreateRoomModal from "@/components/rooms/CreateRoomModal";
 import JoinRoomModal from "@/components/rooms/JoinRoomModal";
-import { sampleRooms } from "@/lib/constants/mock-data";
+import useGetUserRooms from "@/hooks/rooms/use-get-user-rooms";
 import { Button } from "@/components/ui/Button";
 
 export default function RoomsPage() {
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState<"all" | "joined" | "my-rooms">("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
-  // Filter rooms based on active tab
-  const filteredRoomsByTab = useMemo(() => {
-    switch (activeTab) {
-      case "my-rooms":
-        return sampleRooms.filter((room) => room.isOwner);
-      case "joined":
-        return sampleRooms.filter((room) => room.isMember && !room.isOwner);
-      case "all":
-      default:
-        return sampleRooms;
-    }
-  }, [activeTab]);
+  // Map tab to API filter
+  const filterMap: Record<typeof activeTab, "all" | "created" | "joined"> = {
+    "all": "all",
+    "my-rooms": "created",
+    "joined": "joined"
+  };
 
-  // Further filter by search term
-  const filteredRooms = useMemo(() => {
-    if (!searchTerm.trim()) return filteredRoomsByTab;
+  const { rooms, counts, isLoading } = useGetUserRooms({ 
+    filter: filterMap[activeTab],
+    search: searchTerm
+  });
 
-    const searchLower = searchTerm.toLowerCase();
-    return filteredRoomsByTab.filter(
-      (room) =>
-        room.title.toLowerCase().includes(searchLower) ||
-        room.description.toLowerCase().includes(searchLower) ||
-        room.tags?.some((tag) => tag.toLowerCase().includes(searchLower)) ||
-        room.createdBy.name.toLowerCase().includes(searchLower)
-    );
-  }, [filteredRoomsByTab, searchTerm]);
-
-  const tabOptions = [
-    {
-      key: "all",
-      label: "All Rooms",
-      count: sampleRooms.length,
-    },
-    {
-      key: "joined",
-      label: "Joined",
-      count: sampleRooms.filter((room) => room.isMember && !room.isOwner)
-        .length,
-    },
-    {
-      key: "my-rooms",
-      label: "My Rooms",
-      count: sampleRooms.filter((room) => room.isOwner).length,
-    },
-  ];
+  // Tab counts from API data
+  const tabOptions = useMemo(() => {
+    return [
+      {
+        key: "all",
+        label: "All Rooms",
+        count: counts.total,
+      },
+      {
+        key: "joined",
+        label: "Joined",
+        count: counts.joined,
+      },
+      {
+        key: "my-rooms",
+        label: "My Rooms",
+        count: counts.created,
+      },
+    ];
+  }, [counts]);
 
   const getPageTitle = () => {
     switch (activeTab) {
@@ -173,15 +160,25 @@ export default function RoomsPage() {
         transition={{ delay: 0.2 }}
         className="flex items-center justify-between text-sm text-para-muted"
       >
-        <span>
-          {filteredRooms.length} room{filteredRooms.length !== 1 ? "s" : ""}{" "}
-          found
-          {searchTerm && ` for "${searchTerm}"`}
-        </span>
+        
       </motion.div>
 
-      {/* Rooms Grid */}
-      {filteredRooms.length > 0 ? (
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-background rounded-xl p-6 animate-pulse border border-light-border">
+              <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div>
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
+              <div className="flex gap-2">
+                <div className="h-6 bg-gray-200 rounded w-16"></div>
+                <div className="h-6 bg-gray-200 rounded w-16"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : rooms.length > 0 ? (
         <motion.div
           initial="hidden"
           animate="visible"
@@ -197,7 +194,7 @@ export default function RoomsPage() {
           }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {filteredRooms.map((room) => (
+          {rooms.map((room) => (
             <motion.div
               key={room.id}
               variants={{

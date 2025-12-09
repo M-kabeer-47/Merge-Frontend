@@ -114,8 +114,9 @@ body {
   background-color: var(--main-background) !important;
   color: var(--heading) !important;  
   padding-inline: 0 !important;
-
+  
 }
+
 .bn-button:hover{
   background-color: #8668c01a;
   color: var(--heading);

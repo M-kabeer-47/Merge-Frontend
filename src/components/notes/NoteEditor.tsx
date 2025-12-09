@@ -202,7 +202,7 @@ export default function NoteEditor({
   }, [type, initialContent]);
 
   return (
-    <div className="h-screen flex flex-col bg-main-background">
+    <div className="min-h-screen flex flex-col bg-main-background">
       <NoteNavbar
         type={type}
         onSave={handleSave}
@@ -212,7 +212,7 @@ export default function NoteEditor({
 
       {/* Unified Editor Container */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full px-6 sm:px-14 py-8 overflow-y-auto">
+        <div className="h-full px-6 sm:px-14 py-8">
           {/* Title Input */}
           <TextareaAutosize
             value={title}

@@ -12,6 +12,8 @@ interface CreateFolderModalProps {
   onClose: () => void;
   folderId?: string | null;
   searchQuery: string;
+  folderType?: "notes" | "room";
+  roomId?: string;
 }
 
 export default function CreateFolderModal({
@@ -19,9 +21,13 @@ export default function CreateFolderModal({
   onClose,
   folderId,
   searchQuery,
+  folderType = "notes",
+  roomId,
 }: CreateFolderModalProps) {
   const [folderName, setFolderName] = useState("");
-  const { createFolder, isCreating } = useCreateFolder({ searchQuery: searchQuery });
+  const { createFolder, isCreating } = useCreateFolder({ 
+    searchQuery
+  });
 
   if (!isOpen) return null;
 
@@ -30,8 +36,9 @@ export default function CreateFolderModal({
     if (folderName.trim()) {
       await createFolder({
         name: folderName.trim(),
-        type: "notes",
+        type: folderType,
         parentFolderId: folderId,
+        roomId: folderType === "room" ? roomId : undefined,
       });
       setFolderName("");
       onClose();

@@ -11,10 +11,10 @@ import DynamicNotesViewer from "@/components/notes/DynamicNotesViewer";
 export default function ViewNotePage() {
     const params = useParams();
     const router = useRouter();
-    const noteId = params.id as string;
+    const noteId = params && params.id as string;
     const { downloadPdf } = useDownloadPdf();
 
-    const { note, isLoading, isError } = useFetchNoteById(noteId);
+    const { note, isLoading, isError } = useFetchNoteById(noteId || "");
 
     const handleBack = () => {
         router.push("/notes");
@@ -58,7 +58,7 @@ export default function ViewNotePage() {
     }
 
     return (
-        <div className="min-h-screen bg-main-background">
+        <div className= "min-h-screen bg-main-background">
             {/* Navbar */}
             <nav className="sticky top-0 z-50 bg-main-background/80 backdrop-blur-sm border-b border-light-border/50">
                 <div className="px-4 sm:px-6 py-3">
