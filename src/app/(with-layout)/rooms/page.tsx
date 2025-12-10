@@ -8,25 +8,32 @@ import SearchBar from "@/components/ui/SearchBar";
 import RoomCard from "@/components/rooms/RoomCard";
 import CreateRoomModal from "@/components/rooms/CreateRoomModal";
 import JoinRoomModal from "@/components/rooms/JoinRoomModal";
+import DeleteRoomModal from "@/components/rooms/DeleteRoomModal";
 import useGetUserRooms from "@/hooks/rooms/use-get-user-rooms";
 import { Button } from "@/components/ui/Button";
 
 export default function RoomsPage() {
-  const [activeTab, setActiveTab] = useState<"all" | "joined" | "my-rooms">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "joined" | "my-rooms">(
+    "all"
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   // Map tab to API filter
   const filterMap: Record<typeof activeTab, "all" | "created" | "joined"> = {
-    "all": "all",
+    all: "all",
     "my-rooms": "created",
-    "joined": "joined"
+    joined: "joined",
   };
 
-  const { rooms, counts, isLoading } = useGetUserRooms({ 
+  const { rooms, counts, isLoading } = useGetUserRooms({
     filter: filterMap[activeTab],
-    search: searchTerm
+    search: searchTerm,
   });
 
   // Tab counts from API data
@@ -139,17 +146,15 @@ export default function RoomsPage() {
           <Tabs
             options={tabOptions}
             activeKey={activeTab}
-            onChange={setActiveTab}
+            onChange={(string) =>
+              setActiveTab(string as "all" | "joined" | "my-rooms")
+            }
           />
         </div>
 
         {/* Search */}
         <div className="lg:w-80">
-          <SearchBar
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            placeholder="Search rooms..."
-          />
+          <SearchBar onSearch={setSearchTerm} placeholder="Search rooms..." />
         </div>
       </motion.div>
 
@@ -159,15 +164,16 @@ export default function RoomsPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
         className="flex items-center justify-between text-sm text-para-muted"
-      >
-        
-      </motion.div>
+      ></motion.div>
 
       {/* Loading State */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-background rounded-xl p-6 animate-pulse border border-light-border">
+            <div
+              key={i}
+              className="bg-background rounded-xl p-6 animate-pulse border border-light-border"
+            >
               <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div>
               <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
               <div className="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
@@ -214,6 +220,7 @@ export default function RoomsPage() {
                 onJoin={handleJoinRoom}
                 onView={handleViewRoom}
                 onEdit={handleEditRoom}
+                onDelete={setRoomToDelete}
               />
             </motion.div>
           ))}
@@ -260,6 +267,16 @@ export default function RoomsPage() {
         isOpen={isJoinModalOpen}
         onClose={() => setIsJoinModalOpen(false)}
         onSuccess={handleJoinRequestSent}
+      />
+
+      {/* Delete Room Modal */}
+      <DeleteRoomModal
+        isOpen={!!roomToDelete}
+        onClose={() => setRoomToDelete(null)}
+        roomId={roomToDelete?.id || null}
+        roomTitle={roomToDelete?.title || ""}
+        filter={filterMap[activeTab]}
+        search={searchTerm}
       />
     </div>
   );

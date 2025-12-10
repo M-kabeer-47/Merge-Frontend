@@ -12,9 +12,17 @@ interface RoomCardProps {
   onJoin?: (roomId: string) => void;
   onView?: (roomId: string) => void;
   onEdit?: (roomId: string) => void;
+  onDelete?: React.Dispatch<
+    React.SetStateAction<{ id: string; title: string } | null>
+  >;
 }
 
-export default function RoomCard({ room, onJoin, onView }: RoomCardProps) {
+export default function RoomCard({
+  room,
+  onJoin,
+  onView,
+  onDelete,
+}: RoomCardProps) {
   const { width } = useWindowSize();
   const router = useRouter();
 
@@ -24,7 +32,7 @@ export default function RoomCard({ room, onJoin, onView }: RoomCardProps) {
   };
 
   const handleViewRoom = () => {
-    router.push(`/rooms/${room.id}`);
+    router.push(`/rooms/${room.id}/general-chat`);
   };
 
   const getStatusBadge = () => {
@@ -41,10 +49,7 @@ export default function RoomCard({ room, onJoin, onView }: RoomCardProps) {
   const adminName = `${room.admin.firstName} ${room.admin.lastName}`;
 
   return (
-    <div
-      className="sm:p-6 p-4 bg-background rounded-xl border border-light-border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col h-full"
-      onClick={handleViewRoom}
-    >
+    <div className="sm:p-6 p-4 bg-background rounded-xl border border-light-border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col h-full">
       {/* Top content */}
       <div className="flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-3">
@@ -129,10 +134,19 @@ export default function RoomCard({ room, onJoin, onView }: RoomCardProps) {
           <Button
             className="px-4 rounded-lg font-medium transition-colors text-sm w-[40%]"
             variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (room.userRole === "admin" && onDelete) {
+                onDelete({ id: room.id, title: room.title });
+              }
+            }}
           >
             {room.userRole === "admin" ? "Delete" : "Leave"}
           </Button>
-          <Button className="px-4 rounded-lg text-white font-medium transition-colors text-sm w-[60%] ">
+          <Button
+            className="px-4 rounded-lg text-white font-medium transition-colors text-sm w-[60%] "
+            onClick={handleViewRoom}
+          >
             Enter
           </Button>
         </div>

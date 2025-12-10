@@ -206,10 +206,8 @@ export default function AssignmentsTab() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 max-w-md">
             <SearchBar
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
+              onSearch={setSearchTerm}
               placeholder="Search assignments..."
-              className=""
             />
           </div>
           <div className="flex items-center gap-3">

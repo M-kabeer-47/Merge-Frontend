@@ -32,42 +32,7 @@ export default function useCreateNote() {
     data: createdNote,
   } = useMutation({
     mutationFn: createNoteFunction,
-    onMutate: async (newNote) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["notes", newNote.folderId || null] });
-
-      // Snapshot the previous value
-      const previousData = queryClient.getQueryData(["notes", newNote.folderId || null]);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(["notes", newNote.folderId || null], (old: any) => {
-        if (!old) return old;
-
-        const optimisticNote = {
-          id: `temp-${Date.now()}`,
-          title: newNote.title,
-          content: newNote.content,
-          folderId: newNote.folderId || null,
-          userId: "current-user",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        return {
-          ...old,
-          notes: [...(old.notes || []), optimisticNote],
-        };
-      });
-
-      // Return a context object with the snapshotted value
-      return { previousData, folderId: newNote.folderId || null };
-    },
-    onError: async (error: any, variables, context: any) => {
-      // Rollback to the previous value
-      if (context?.previousData) {
-        queryClient.setQueryData(["notes", context.folderId], context.previousData);
-      }
-
+    onError: async (error: any, variables) => {
       if (error?.response?.data?.statusCode === 401) {
         try {
           await rotateToken();
@@ -79,12 +44,20 @@ export default function useCreateNote() {
       }
       toast.error(
         error?.response?.data?.message ||
-        "Failed to create note. Please try again."
+          "Failed to create note. Please try again."
       );
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
+      // Add the newly created note to the cache
+      const folderId = variables.folderId || null;
+      queryClient.setQueryData(["notes", folderId, ""], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          notes: [...(old.notes || []), data],
+        };
+      });
       toast.success("Note created successfully!");
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 

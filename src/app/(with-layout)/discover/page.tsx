@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import SearchBar from "@/components/discover/SearchBar";
+import SearchBar from "@/components/ui/SearchBar";
 import FilterBar from "@/components/discover/FilterBar";
 import RoomGrid from "@/components/discover/RoomGrid";
 import RoomPreviewModal from "@/components/discover/RoomPreviewModal";
@@ -163,7 +163,10 @@ export default function DiscoverPage() {
               interests
             </p>
             <div className="mb-6 mt-6">
-              <SearchBar onSearch={handleSearch} />
+              <SearchBar
+                onSearch={handleSearch}
+                placeholder="Search rooms by title, creator, or tags..."
+              />
             </div>
           </header>
 

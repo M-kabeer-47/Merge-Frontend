@@ -180,9 +180,7 @@ export default function ChatHistory({
   return (
     <div
       className={`flex flex-col h-full ${
-        isMobile
-          ? "bg-main-background"
-          : "border-r border-light-border"
+        isMobile ? "bg-main-background" : "border-r border-light-border"
       }`}
     >
       {/* Header */}
@@ -215,11 +213,7 @@ export default function ChatHistory({
 
         {/* Search */}
         <div className="mt-3">
-          <SearchBar
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            placeholder="Search chats..."
-          />
+          <SearchBar onSearch={setSearchTerm} placeholder="Search chats..." />
         </div>
       </div>
 
