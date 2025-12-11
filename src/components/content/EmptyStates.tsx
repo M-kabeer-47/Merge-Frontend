@@ -22,19 +22,19 @@ export function EmptyFolderState({
     >
       {/* Illustration */}
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="w-32 h-32 bg-gradient-to-br from-secondary/20 to-primary/20 rounded-full flex items-center justify-center mb-6"
+        className="w-15 h-15 bg-secondary/10 rounded-full flex items-center justify-center mb-6"
       >
-        <FolderOpen className="h-16 w-16 text-secondary" />
+        <FolderOpen className="h-6 w-6 text-primary" />
       </motion.div>
 
       {/* Heading */}
-      <h3 className="text-xl font-bold text-heading mb-2">This folder is empty</h3>
+      <h3 className="text-lg font-bold text-heading mb-2">
+        This folder is empty
+      </h3>
 
       {/* Description */}
-      <p className="text-para-muted text-center max-w-md mb-6">
+      <p className="text-para-muted text-base text-center max-w-md mb-6">
         Get started by uploading your files or creating a new folder to organize
         your content.
       </p>

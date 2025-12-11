@@ -31,13 +31,18 @@ interface ContentGridItemProps {
 
 function ItemIcon({ item }: { item: ContentItem }) {
   if (item.type === "folder") {
-    return <Folder className="h-10 w-10 text-secondary" fill="currentColor" />;
+    return (
+      <Folder
+        className="h-8 w-8 sm:h-10 sm:w-10 text-secondary"
+        fill="currentColor"
+      />
+    );
   }
 
   const fileItem = item as FileItem;
   const iconType = getFileIconType(fileItem.fileType);
   const iconColor = getFileIconColor(fileItem.fileType);
-  const iconClass = `h-10 w-10 ${iconColor}`;
+  const iconClass = `h-8 w-8 sm:h-10 sm:w-10 ${iconColor}`;
 
   switch (iconType) {
     case "pdf":
@@ -73,19 +78,21 @@ export default function ContentGridItem({
   const fileItem = item as FileItem;
   const folderItem = item as FolderItem;
 
-  // Build metadata text
   const metadataText = isFolder
     ? `${folderItem.itemCount} items`
     : formatFileSize(fileItem.size);
 
   return (
     <div
-      className={`grid grid-cols-[50px_1fr_180px_200px_50px] gap-4 px-3 py-4 border-b border-light-border cursor-pointer hover:bg-background transition-colors ${
-        isSelected ? "bg-gray-50" : ""
-      }`}
+      className={`
+        grid gap-2 sm:gap-4 px-3 py-3 sm:py-4 border-b border-light-border 
+        cursor-pointer hover:bg-background transition-colors
+        grid-cols-[40px_1fr_40px] sm:grid-cols-[50px_1fr_180px_200px_50px]
+        ${isSelected ? "bg-gray-50" : ""}
+      `}
       onClick={() => onClick?.(item.id)}
     >
-      {/* Checkbox - Column 1 */}
+      {/* Checkbox */}
       <div
         onClick={(e) => {
           e.stopPropagation();
@@ -118,36 +125,45 @@ export default function ContentGridItem({
         </div>
       </div>
 
-      {/* Name with Icon and Metadata - Column 2 */}
-      <div className="flex items-center gap-3 min-w-0">
+      {/* Name with Icon and Metadata */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <ItemIcon item={item} />
         <div className="min-w-0 flex-1">
           <p
-            className="text-[15px] font-semibold text-heading truncate leading-tight"
+            className="text-sm sm:text-[15px] font-semibold text-heading truncate leading-tight"
             title={item.name}
           >
             {item.name}
           </p>
-          <p className="text-[13px] text-para-muted leading-tight">
+          <p className="text-xs sm:text-[13px] text-para-muted leading-tight">
             {metadataText}
+            {/* Show date on mobile since columns are hidden */}
+            <span className="sm:hidden">
+              {" • "}
+              {item.modifiedAt.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
           </p>
         </div>
       </div>
 
-      {/* Created By - Column 3 */}
-      <div className="flex items-center">
-        <div className="text-[14px] text-para truncate">{item.owner.name}</div>
+      {/* Created By - hidden on mobile */}
+      <div className="hidden sm:flex items-center">
+        <div className="text-sm text-para truncate">{item.owner.name}</div>
       </div>
 
-      {/* Last Modified - Column 4 */}
-      <div className="flex items-center">
-        <div className="text-[14px] text-para whitespace-nowrap">
+      {/* Last Modified - hidden on mobile */}
+      <div className="hidden sm:flex items-center">
+        <div className="text-sm text-para whitespace-nowrap">
           {item.modifiedAt.toLocaleDateString("en-US", {
             month: "2-digit",
             day: "2-digit",
             year: "numeric",
           })}{" "}
-          | {item.modifiedAt.toLocaleTimeString("en-US", {
+          |{" "}
+          {item.modifiedAt.toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,
@@ -155,7 +171,7 @@ export default function ContentGridItem({
         </div>
       </div>
 
-      {/* Three Dots Menu - Column 5 */}
+      {/* Three Dots Menu */}
       <div className="flex items-center justify-center">
         <button
           onClick={(e) => {

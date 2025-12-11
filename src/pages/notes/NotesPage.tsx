@@ -17,7 +17,6 @@ import NotesGridView from "@/components/notes/NotesGridView";
 import NotesListView from "@/components/notes/NotesListView";
 import type { NoteOrFolder, NoteViewMode, Note } from "@/types/note";
 import useFetchNotes from "@/hooks/notes/use-fetch-notes";
-import { useBreadcrumbNavigation } from "@/hooks/use-breadcrumb-navigation";
 import { useDownloadPdf } from "@/hooks/use-download-pdf";
 
 export default function NotesPageClient() {
@@ -31,23 +30,48 @@ export default function NotesPageClient() {
   const [itemToDelete, setItemToDelete] = useState<NoteOrFolder | null>(null);
 
   // Data fetching
-  const { notes, folders, isLoading, isError, refetch } = useFetchNotes({
-    folderId: folderId || undefined,
-    search: searchTerm || undefined,
-  });
+  const { notes, folders, breadcrumb, isLoading, isError, refetch } =
+    useFetchNotes({
+      folderId: folderId || undefined,
+      search: searchTerm || undefined,
+    });
 
-  // Breadcrumb navigation (with built-in localStorage)
-  const {
-    breadcrumbs,
-    handleBreadcrumbClick,
-    handleFolderNavigation,
-    handleBackNavigation,
-  } = useBreadcrumbNavigation({
-    router,
-    currentId: folderId || null,
-    storageKey: "notesBreadcrumbPath",
-    basePath: "/notes",
-  });
+  // Build breadcrumbs from API data
+  const breadcrumbs = [
+    {
+      id: "root",
+      name: "Notes",
+      path: "/notes",
+    },
+    ...breadcrumb.map((item: { id: string; name: string }) => ({
+      id: item.id,
+      name: item.name,
+      path: `/notes?folderId=${item.id}`,
+    })),
+  ];
+
+  // Navigate to folder
+  const handleFolderNavigation = (folderId: string) => {
+    router.push(`/notes?folderId=${folderId}`);
+  };
+
+  // Navigate to breadcrumb by index
+  const handleBreadcrumbClick = (index: number) => {
+    if (index === -1) {
+      // Home button clicked
+      router.push("/notes");
+    } else if (index >= 0 && index < breadcrumbs.length) {
+      router.push(breadcrumbs[index].path);
+    }
+  };
+
+  // Navigate back
+  const handleBackNavigation = () => {
+    if (breadcrumbs.length > 1) {
+      const previousBreadcrumb = breadcrumbs[breadcrumbs.length - 2];
+      router.push(previousBreadcrumb.path);
+    }
+  };
 
   // Combine items for display (folders first, then notes) - just add type property
   const items: NoteOrFolder[] = [
@@ -75,7 +99,7 @@ export default function NotesPageClient() {
     const item = items.find((i) => i.id === id);
 
     if (item?.type === "folder") {
-      handleFolderNavigation(id, item.name);
+      handleFolderNavigation(id);
     } else {
       router.push(`/notes/${id}`);
     }

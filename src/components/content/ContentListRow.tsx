@@ -31,13 +31,18 @@ interface ContentListRowProps {
 
 function ItemIcon({ item }: { item: ContentItem }) {
   if (item.type === "folder") {
-    return <Folder className="h-10 w-10 text-secondary" fill="currentColor" />;
+    return (
+      <Folder
+        className="h-8 w-8 sm:h-10 sm:w-10 text-secondary"
+        fill="currentColor"
+      />
+    );
   }
 
   const fileItem = item as FileItem;
   const iconType = getFileIconType(fileItem.fileType);
   const iconColor = getFileIconColor(fileItem.fileType);
-  const iconClass = `h-10 w-10 ${iconColor}`;
+  const iconClass = `h-8 w-8 sm:h-10 sm:w-10 ${iconColor}`;
 
   switch (iconType) {
     case "pdf":
@@ -73,7 +78,6 @@ export default function ContentListRow({
   const fileItem = item as FileItem;
   const folderItem = item as FolderItem;
 
-  // Build metadata text
   const metadataText = isFolder
     ? `${folderItem.itemCount} items`
     : formatFileSize(fileItem.size);
@@ -85,8 +89,8 @@ export default function ContentListRow({
       }`}
       onClick={() => onClick?.(item.id)}
     >
-      {/* Checkbox - Column 1 */}
-      <td className="w-[50px] px-3 py-4">
+      {/* Checkbox */}
+      <td className="w-[50px] px-3 py-3 sm:py-4">
         <div
           onClick={(e) => {
             e.stopPropagation();
@@ -120,33 +124,47 @@ export default function ContentListRow({
         </div>
       </td>
 
-      {/* Name with Icon and Metadata - Column 2 */}
-      <td className="px-3 py-4">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* Name with Icon and Metadata */}
+      <td className="px-3 py-3 sm:py-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <ItemIcon item={item} />
           <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-semibold text-heading truncate leading-tight" title={item.name}>
+            <p
+              className="text-sm sm:text-[15px] font-semibold text-heading truncate leading-tight"
+              title={item.name}
+            >
               {item.name}
             </p>
-            <p className="text-[13px] text-para-muted leading-tight">{metadataText}</p>
+            <p className="text-xs sm:text-[13px] text-para-muted leading-tight">
+              {metadataText}
+              {/* Show date on mobile since column is hidden */}
+              <span className="sm:hidden">
+                {" • "}
+                {item.modifiedAt.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+            </p>
           </div>
         </div>
       </td>
 
-      {/* Created By - Column 3 */}
-      <td className="w-[180px] px-3 py-4">
-        <div className="text-[14px] text-para truncate">{item.owner.name}</div>
+      {/* Created By - hidden on mobile */}
+      <td className="hidden md:table-cell w-[180px] px-3 py-4">
+        <div className="text-sm text-para truncate">{item.owner.name}</div>
       </td>
 
-      {/* Last Modified - Column 4 */}
-      <td className="w-[200px] px-3 py-4">
-        <div className="text-[14px] text-para whitespace-nowrap">
+      {/* Last Modified - hidden on small screens */}
+      <td className="hidden sm:table-cell w-[200px] px-3 py-4">
+        <div className="text-sm text-para whitespace-nowrap">
           {item.modifiedAt.toLocaleDateString("en-US", {
             month: "2-digit",
             day: "2-digit",
             year: "numeric",
           })}{" "}
-          | {item.modifiedAt.toLocaleTimeString("en-US", {
+          |{" "}
+          {item.modifiedAt.toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,
@@ -154,8 +172,19 @@ export default function ContentListRow({
         </div>
       </td>
 
-      {/* Three Dots Menu - Column 5 */}
-      
+      {/* Actions */}
+      <td className="w-[50px] px-3 py-3 sm:py-4">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onMenuClick?.(item.id);
+          }}
+          className="w-8 h-8 rounded hover:bg-gray-100 flex items-center justify-center transition-colors"
+          aria-label="More options"
+        >
+          <MoreVertical className="h-5 w-5 text-para-muted" />
+        </button>
+      </td>
     </tr>
   );
 }

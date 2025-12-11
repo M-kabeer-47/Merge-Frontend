@@ -13,14 +13,10 @@ interface CreateFolderPayload {
 
 interface UseCreateFolderOptions {
   searchQuery: string;
-  folderType?: "notes" | "room";
-  roomId?: string;
 }
 
-export default function useCreateFolder({ 
-  searchQuery, 
-  folderType = "notes",
-  roomId 
+export default function useCreateFolder({
+  searchQuery,
 }: UseCreateFolderOptions) {
   const queryClient = useQueryClient();
   const { rotateToken, isRotationPending } = usesRotateToken({
@@ -72,9 +68,15 @@ export default function useCreateFolder({
     mutationFn: createFolderFunction,
     onSuccess: (createdFolder, variables) => {
       // Determine the query key based on folder type
-      const queryKey = variables.type === "room" 
-        ? ["room-content", variables.roomId, variables.parentFolderId || null, searchQuery]
-        : ["notes", variables.parentFolderId || null, searchQuery];
+      const queryKey =
+        variables.type === "room"
+          ? [
+              "room-content",
+              variables.roomId,
+              variables.parentFolderId || null,
+              searchQuery,
+            ]
+          : ["notes", variables.parentFolderId || null, searchQuery];
 
       // Update cache with the actual folder data from API response
       queryClient.setQueryData(queryKey, (old: any) => {
@@ -90,10 +92,6 @@ export default function useCreateFolder({
           },
         };
       });
-
-      // Also invalidate to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: queryKey.slice(0, 2) });
-
       toast.success("Folder created successfully!");
     },
     onError: async (error: any, variables) => {
@@ -108,7 +106,7 @@ export default function useCreateFolder({
       }
       toast.error(
         error?.response?.data?.message ||
-        "Failed to create folder. Please try again."
+          "Failed to create folder. Please try again."
       );
     },
   });
@@ -121,4 +119,3 @@ export default function useCreateFolder({
     isRotationPending,
   };
 }
-

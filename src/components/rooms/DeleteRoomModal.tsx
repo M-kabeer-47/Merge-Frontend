@@ -55,11 +55,9 @@ export default function DeleteRoomModal({
     }
   };
 
-  if (!roomId) return null;
-
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && roomId && (
         <>
           {/* Backdrop */}
           <motion.div

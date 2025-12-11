@@ -1,42 +1,83 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import {
   MessageSquare,
   Bell,
   FileText,
   BookOpen,
-  Users,
-  Settings,
-  UserPlus,
   Video,
+  Settings,
 } from "lucide-react";
 import ProfessionalTabs from "@/components/rooms/room/Tabs";
-import { Button } from "@/components/ui/Button";
 import InviteModal from "@/components/rooms/InviteModal";
+import RoomHeader from "@/components/rooms/RoomHeader";
+import RoomHeaderSkeleton from "@/components/rooms/RoomHeaderSkeleton";
+import useFetchRoomDetails from "@/hooks/rooms/use-fetch-room-details";
 
 interface RoomLayoutProps {
   children: React.ReactNode;
   params: Promise<{ id: string }>;
 }
 
-const RoomLayout: React.FC<RoomLayoutProps> = ({ children,  }) => {
+const TABS = [
+  {
+    id: "general-chat",
+    label: "General Chat",
+    icon: MessageSquare,
+    count: 0,
+  },
+  {
+    id: "announcements",
+    label: "Announcements",
+    icon: Bell,
+    count: 0,
+  },
+  {
+    id: "content",
+    label: "Content",
+    icon: FileText,
+    count: 0,
+  },
+  {
+    id: "assignments",
+    label: "Assignments",
+    icon: BookOpen,
+    count: 0,
+  },
+  {
+    id: "sessions",
+    label: "Sessions",
+    icon: Video,
+    count: 0,
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    count: 0,
+  },
+];
+
+const RoomLayout: React.FC<RoomLayoutProps> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("general-chat");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const params = useParams();
-  const id = params?.id as string ?? "" ;
+  const id = (params?.id as string) ?? "";
+
+  // Fetch real room data
+  const { room, isLoading, isError } = useFetchRoomDetails(id);
+
   // Update active tab based on current route
   useEffect(() => {
-    if(!pathname){
-      return
-    }
+    if (!pathname) return;
+
     const pathSegments = pathname.split("/");
     const lastSegment = pathSegments[pathSegments.length - 1];
 
-    // Map route to tab id
     if (lastSegment === id) {
       setActiveTab("general-chat");
     } else if (
@@ -53,107 +94,44 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children,  }) => {
     }
   }, [pathname, id]);
 
-  // Mock room data - replace with actual data fetching
-  const roomData = {
-    id: 1,
-    name: "Advanced React Development",
-    participantCount: 24,
-    unreadCounts: {
-      general: 3,
-      announcements: 1,
-      files: 0,
-      assignments: 5,
-    },
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    router.push(`/rooms/${id}/${tab}`);
   };
 
-  const tabs = [
-    {
-      id: "general-chat",
-      label: "General Chat",
-      icon: MessageSquare,
-      count: roomData.unreadCounts.general,
-    },
-    {
-      id: "announcements",
-      label: "Announcements",
-      icon: Bell,
-      count: roomData.unreadCounts.announcements,
-    },
-    {
-      id: "content",
-      label: "Content",
-      icon: FileText,
-      count: roomData.unreadCounts.files,
-    },
-    {
-      id: "assignments",
-      label: "Assignments",
-      icon: BookOpen,
-      count: roomData.unreadCounts.assignments,
-    },
-    {
-      id: "sessions",
-      label: "Sessions",
-      icon: Video,
-      count: 0,
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: Settings,
-      count: 0,
-    },
-  ];
-
-  // Handle tab change with navigation
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    router.push(`/rooms/${id}/${tabId}`);
-  };
+  // Error state
+  if (isError || (!isLoading && !room)) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-heading mb-2">
+            Room Not Found
+          </h2>
+          <p className="text-para-muted">
+            The room you're looking for doesn't exist or you don't have access
+            to it.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-main-background">
-      {/* Enhanced Room Header with Gradient Background */}
-      <header className="bg-main-background border-b-[0.5px] border-light-border px-4 md:px-6 py-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl md:text-3xl font-raleway font-bold text-heading truncate">
-                {roomData.name}
-              </h1>
-              <div className="flex items-center gap-4 mt-1">
-                <div className="flex items-center gap-2 text-sm text-para">
-                  <Users className="h-4 w-4" />
-                  <span className="font-medium">
-                    {roomData.participantCount} participants
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Room Header */}
+      {isLoading ? (
+        <RoomHeaderSkeleton />
+      ) : room ? (
+        <RoomHeader
+          room={room}
+          onInviteClick={() => setIsInviteModalOpen(true)}
+        />
+      ) : null}
 
-          {/* Header Actions */}
-          <div className="flex items-center gap-2">
-            <Button>
-              <Video className="h-4 w-4" />
-              <span className="hidden md:block">Start a live session</span>
-            </Button>
-            <Button
-              className="w-[100px]"
-              aria-label="Invite participants"
-              onClick={() => setIsInviteModalOpen(true)}
-            >
-              <UserPlus className="h-4 w-4" />
-              <span className="hidden md:block">Invite</span>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Professional Tab Bar */}
+      {/* Tab Bar */}
       <div className="bg-background">
         <ProfessionalTabs
-          tabs={tabs}
+          tabs={TABS}
           activeTab={activeTab}
           onTabChange={handleTabChange}
         />
@@ -167,44 +145,19 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children,  }) => {
           id={`tabpanel-${activeTab}`}
           aria-labelledby={`tab-${activeTab}`}
         >
-          {children || (
-            <div className="flex items-center justify-center h-full text-para-muted">
-              <div className="text-center max-w-md mx-auto p-8">
-                {tabs.find((tab) => tab.id === activeTab)?.icon && (
-                  <div className="mb-6">
-                    {React.createElement(
-                      tabs.find((tab) => tab.id === activeTab)!.icon,
-                      {
-                        className: "h-20 w-20 mx-auto text-para-muted/30",
-                      }
-                    )}
-                  </div>
-                )}
-                <h2 className="text-xl font-raleway font-semibold text-heading mb-3">
-                  {tabs.find((tab) => tab.id === activeTab)?.label}
-                </h2>
-                <p className="text-para-muted leading-relaxed">
-                  This section is ready for content. Select a tab component to
-                  get started with collaborative learning.
-                </p>
-                <div className="mt-6 px-4 py-2 bg-gray-50 rounded-lg inline-block">
-                  <code className="text-sm text-para">
-                    Room ID: {roomData.id}
-                  </code>
-                </div>
-              </div>
-            </div>
-          )}
+          {children}
         </div>
       </main>
 
       {/* Invite Modal */}
-      <InviteModal
-        isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
-        roomId={id}
-        roomName={roomData.name}
-      />
+      {room && (
+        <InviteModal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          roomId={id}
+          roomName={room.title}
+        />
+      )}
     </div>
   );
 };

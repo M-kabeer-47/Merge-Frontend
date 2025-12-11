@@ -34,17 +34,20 @@ export default function ContentListHeader({
       >
         {label}
         {isActive && (
-          <ChevronDown className="h-3.5 w-3.5 text-secondary" strokeWidth={2.5} />
+          <ChevronDown
+            className="h-3.5 w-3.5 text-secondary"
+            strokeWidth={2.5}
+          />
         )}
       </button>
     );
   };
 
   return (
-    <thead className="sticky top-0 z-10 bg-secondary/5">
+    <thead className="sticky top-0 bg-secondary/5">
       <tr className="border-b border-light-border">
         {/* Checkbox column */}
-        <th className="w-[100px] sm:w-[50px] px-3 py-3 text-left">
+        <th className="w-[50px] px-3 py-3 text-left">
           <div
             onClick={onSelectAll}
             className="cursor-pointer flex items-center justify-center"
@@ -75,23 +78,23 @@ export default function ContentListHeader({
           </div>
         </th>
 
-        {/* Name */}
-        <th className="w-[200px] px-3 py-3 text-left">
+        {/* Name - always visible */}
+        <th className="px-3 py-3 text-left">
           <SortButton label="Name" sortKey="name" />
         </th>
 
-        {/* Created By */}
-        <th className="w-[180px] px-3 py-3 text-left">
+        {/* Created By - hidden on mobile */}
+        <th className="hidden md:table-cell w-[180px] px-3 py-3 text-left">
           <SortButton label="Created by" sortKey="owner" />
         </th>
 
-        {/* Last Modified */}
-        <th className="w-[200px] px-3 py-3 text-left">
+        {/* Last Modified - hidden on small screens */}
+        <th className="hidden sm:table-cell w-[200px] px-3 py-3 text-left">
           <SortButton label="Last modified" sortKey="date" />
         </th>
 
-        {/* Empty space for three dots */}
-      
+        {/* Actions column */}
+        <th className="w-[50px] px-3 py-3"></th>
       </tr>
     </thead>
   );

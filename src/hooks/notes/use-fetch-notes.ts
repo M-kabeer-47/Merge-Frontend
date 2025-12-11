@@ -31,7 +31,9 @@ export default function useFetchNotes(filters?: NoteFilters) {
     if (!token) return null;
 
     try {
-      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/notes${queryParams ? `?${queryParams}` : ""}`;
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/notes${
+        queryParams ? `?${queryParams}` : ""
+      }`;
 
       const response = await apiRequest(
         axios.get(url, {
@@ -57,18 +59,10 @@ export default function useFetchNotes(filters?: NoteFilters) {
     if (filters?.folderId) params.append("folderId", filters.folderId);
     if (filters?.search) params.append("search", filters.search);
 
-
     return fetchNotesData(params.toString());
   };
 
-  const {
-    data,
-    isLoading,
-    isPending,
-    isError,
-    refetch,
-
-  } = useQuery({
+  const { data, isLoading, isPending, isError, refetch } = useQuery({
     queryKey: ["notes", filters?.folderId || null, filters?.search || ""],
     queryFn: fetchNotes,
     enabled: isClient && !!localStorage.getItem("accessToken"),
@@ -96,9 +90,10 @@ export default function useFetchNotes(filters?: NoteFilters) {
   }, [data?.folders, isClient, queryClient]);
 
   return {
-    notes: data?.notes as Note[] || [],
-    folders: data?.folders as Folder[] || [],
-    currentFolder: data?.currentFolder as Folder | null || null,
+    notes: (data?.notes as Note[]) || [],
+    folders: (data?.folders as Folder[]) || [],
+    breadcrumb: data?.breadcrumb || [],
+    currentFolder: (data?.currentFolder as Folder | null) || null,
     total: data?.total || 0,
     isLoading: isLoading || !isClient || isRotationPending || isPending,
     isError,

@@ -34,14 +34,17 @@ export default function ContentGridHeader({
       >
         {label}
         {isActive && (
-          <ChevronDown className="h-3.5 w-3.5 text-secondary" strokeWidth={2.5} />
+          <ChevronDown
+            className="h-3.5 w-3.5 text-secondary"
+            strokeWidth={2.5}
+          />
         )}
       </button>
     );
   };
 
   return (
-    <div className="grid grid-cols-[50px_1fr_180px_200px_50px] gap-4 px-3 py-3 border-b border-light-border bg-secondary/5 sticky top-0 z-10">
+    <div className="grid grid-cols-[40px_1fr_40px] sm:grid-cols-[50px_1fr_180px_200px_50px] gap-2 sm:gap-4 px-3 py-3 border-b border-light-border bg-secondary/5 sticky top-0 z-10">
       {/* Checkbox column */}
       <div
         onClick={onSelectAll}
@@ -77,13 +80,13 @@ export default function ContentGridHeader({
         <SortButton label="Name" sortKey="name" />
       </div>
 
-      {/* Created By */}
-      <div className="flex items-center">
+      {/* Created By - hidden on mobile */}
+      <div className="hidden sm:flex items-center">
         <SortButton label="Created by" sortKey="owner" />
       </div>
 
-      {/* Last Modified */}
-      <div className="flex items-center">
+      {/* Last Modified - hidden on mobile */}
+      <div className="hidden sm:flex items-center">
         <SortButton label="Last modified" sortKey="date" />
       </div>
 

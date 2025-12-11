@@ -25,8 +25,8 @@ export default function CreateFolderModal({
   roomId,
 }: CreateFolderModalProps) {
   const [folderName, setFolderName] = useState("");
-  const { createFolder, isCreating } = useCreateFolder({ 
-    searchQuery
+  const { createFolder, isCreating } = useCreateFolder({
+    searchQuery,
   });
 
   if (!isOpen) return null;
@@ -98,11 +98,12 @@ export default function CreateFolderModal({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!folderName.trim() || isCreating}
-            >
-              {isCreating ? <LoadingSpinner size="sm" text="Creating..." /> : "Create Folder"}
+            <Button type="submit" disabled={!folderName.trim() || isCreating}>
+              {isCreating ? (
+                <LoadingSpinner size="sm" text="Creating..." />
+              ) : (
+                "Create Folder"
+              )}
             </Button>
           </div>
         </form>

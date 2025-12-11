@@ -1,12 +1,26 @@
-export type FileType = "pdf" | "docx" | "pptx" | "xlsx" | "png" | "jpg" | "jpeg" | "gif" | "mp4" | "mp3" | "zip" | "md" | "txt" | "other";
+export type FileType =
+  | "pdf"
+  | "docx"
+  | "pptx"
+  | "xlsx"
+  | "png"
+  | "jpg"
+  | "jpeg"
+  | "gif"
+  | "mp4"
+  | "mp3"
+  | "zip"
+  | "md"
+  | "txt"
+  | "other";
 
 export type ContentItemType = "file" | "folder";
 
 export type ViewMode = "grid" | "list";
 
-export type SortOption = "name" | "date" | "size" | "type" | "owner";
+export type SortOption = "name" | "date" | "size" | "type" | "owner" | null;
 
-export type FilterType = "all" | "docs" | "slides" | "pdfs" | "images" | "videos" | "audio" | "archives" | "folders";
+export type FilterType = "all" | "files" | "folders" | "images";
 
 export interface ContentOwner {
   id: string;

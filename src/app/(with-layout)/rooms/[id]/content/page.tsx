@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { AnimatePresence } from "motion/react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ContentToolbar from "@/components/content/ContentToolbar";
 import ContentListRow from "@/components/content/ContentListRow";
 import ContentListHeader from "@/components/content/ContentListHeader";
@@ -13,100 +14,125 @@ import {
   EmptyFolderState,
   NoSearchResults,
 } from "@/components/content/EmptyStates";
-import {
-  sampleContentItems,
-  sampleBreadcrumbs,
-} from "@/lib/constants/content-mock-data";
+import ContentSkeleton from "@/components/content/ContentSkeleton";
+import ErrorState from "@/components/ui/ErrorState";
+import useFetchRoomContent from "@/hooks/rooms/use-fetch-room-content";
 import type {
   ViewMode,
   SortOption,
   FilterType,
   UploadProgress,
+  FileType,
 } from "@/types/content";
+import type { ContentSortBy, ContentSortOrder } from "@/types/room-content";
 
 export default function ContentTab() {
-  // State management - only what's needed at page level
+  const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const roomId = params?.id as string;
+  const folderId = searchParams?.get("folderId") || null;
+
+  // State management
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("name");
+  const [sortBy, setSortBy] = useState<SortOption>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
-  
-  
 
-  // Filter and sort content
-  const filteredAndSortedContent = useMemo(() => {
-    let items = [...sampleContentItems];
+  // Map UI sort options to API sort params
+  const apiSortBy: ContentSortBy =
+    sortBy === "name" ? "name" : sortBy === "date" ? "updatedAt" : null;
+  const apiSortOrder: ContentSortOrder = "DESC";
 
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      items = items.filter(
-        (item) =>
-          item.name.toLowerCase().includes(search) ||
-          item.description?.toLowerCase().includes(search) ||
-          item.tags?.some((tag) => tag.toLowerCase().includes(search))
-      );
-    }
-
-    // Apply type filter
-    if (activeFilter !== "all") {
-      items = items.filter((item) => {
-       
-        const fileItem = item as any;
-
-        switch (activeFilter) {
-          case "docs":
-            return ["docx", "txt", "md"].includes(fileItem.fileType);
-          case "slides":
-            return fileItem.fileType === "pptx";
-          case "pdfs":
-            return fileItem.fileType === "pdf";
-          case "images":
-            return ["png", "jpg", "jpeg", "gif"].includes(fileItem.fileType);
-          case "videos":
-            return fileItem.fileType === "mp4";
-          case "audio":
-            return fileItem.fileType === "mp3";
-          case "archives":
-            return fileItem.fileType === "zip";
-          case "folders":
-              return fileItem.type === "folder";
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Apply sorting
-    items.sort((a, b) => {
-      switch (sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "date":
-          return b.modifiedAt.getTime() - a.modifiedAt.getTime();
-        case "size":
-          if (a.type === "folder" && b.type === "folder") {
-            return (b as any).itemCount - (a as any).itemCount;
-          }
-          if (a.type === "folder") return -1;
-          if (b.type === "folder") return 1;
-          return (b as any).size - (a as any).size;
-        case "type":
-          if (a.type === b.type) {
-            return a.name.localeCompare(b.name);
-          }
-          return a.type === "folder" ? -1 : 1;
-        case "owner":
-          return a.owner.name.localeCompare(b.owner.name);
-        default:
-          return 0;
-      }
+  // Fetch room content from API
+  const { folders, files, breadcrumb, roomInfo, isLoading, isError, refetch } =
+    useFetchRoomContent({
+      roomId,
+      folderId,
+      search: searchTerm,
+      sortBy: apiSortBy,
+      sortOrder: apiSortBy ? apiSortOrder : null,
     });
 
-    return items;
-  }, [searchTerm, activeFilter, sortBy]);
+  // Build breadcrumbs - prepend root, use API breadcrumb as-is
+  const toolbarBreadcrumbs = [
+    {
+      id: "root",
+      name: roomInfo?.title || "Content",
+      path: `/rooms/${roomId}/content`,
+    },
+    ...breadcrumb.map((item) => ({
+      id: item.id,
+      name: item.name,
+      path: `/rooms/${roomId}/content?folderId=${item.id}`,
+    })),
+  ];
+
+  // Navigate to folder
+  const handleFolderClick = (folderId: string) => {
+    router.push(`/rooms/${roomId}/content?folderId=${folderId}`);
+  };
+
+  // Combined items for display (folders first, then files)
+  const contentItems = useMemo(() => {
+    const folderItems = folders.map((f) => ({
+      id: f.id,
+      name: f.name,
+      type: "folder" as const,
+      itemCount: f.totalItems,
+      createdAt: new Date(f.createdAt),
+      modifiedAt: new Date(f.updatedAt),
+      owner: { id: "owner", name: "Owner", avatar: "" },
+    }));
+
+    const fileItems = files.map((f) => ({
+      id: f.id,
+      name: f.name,
+      type: "file" as const,
+      fileType: (f.mimeType.split("/").pop() || "other") as FileType,
+      size: f.size,
+      createdAt: new Date(f.createdAt),
+      modifiedAt: new Date(f.updatedAt),
+      owner: { id: "owner", name: "Owner", avatar: "" },
+    }));
+
+    return [...folderItems, ...fileItems];
+  }, [folders, files]);
+
+  // Filter content client-side by type
+  const filteredContent = useMemo(() => {
+    if (activeFilter === "all") return contentItems;
+    if (activeFilter === "folders")
+      return contentItems.filter((i) => i.type === "folder");
+
+    return contentItems.filter((item) => {
+      if (item.type === "folder") return false;
+      const fileItem = item as any;
+      switch (activeFilter) {
+        case "docs":
+          return ["docx", "txt", "md", "doc"].includes(fileItem.fileType);
+        case "slides":
+          return ["pptx", "ppt"].includes(fileItem.fileType);
+        case "pdfs":
+          return fileItem.fileType === "pdf";
+        case "images":
+          return ["png", "jpg", "jpeg", "gif", "webp"].includes(
+            fileItem.fileType
+          );
+        case "videos":
+          return ["mp4", "mov", "avi"].includes(fileItem.fileType);
+        case "audio":
+          return ["mp3", "wav"].includes(fileItem.fileType);
+        case "archives":
+          return ["zip", "rar"].includes(fileItem.fileType);
+        default:
+          return true;
+      }
+    });
+  }, [contentItems, activeFilter]);
 
   // Handlers
   const handleSelectItem = (id: string) => {
@@ -122,23 +148,24 @@ export default function ContentTab() {
   };
 
   const handleSelectAll = () => {
-    if (selectedItems.size === filteredAndSortedContent.length) {
+    if (selectedItems.size === filteredContent.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(
-        new Set(filteredAndSortedContent.map((item) => item.id))
-      );
+      setSelectedItems(new Set(filteredContent.map((item) => item.id)));
     }
   };
 
-  const handleItemClick = (id: string) => {
-    console.log("Item clicked:", id);
-    // In real app, this could navigate into folder or open file preview
+  const handleItemClick = (id: string, type: "folder" | "file") => {
+    if (type === "folder") {
+      handleFolderClick(id);
+    } else {
+      console.log("Open file:", id);
+      // TODO: Open file preview
+    }
   };
 
   // Handle files dropped - UploadDropzone manages isDragging internally
   const handleFilesDropped = (files: FileList) => {
-
     // Simulate upload progress for demo
     Array.from(files).forEach((file, index) => {
       const uploadId = `upload-${Date.now()}-${index}`;
@@ -161,7 +188,9 @@ export default function ContentTab() {
           clearInterval(interval);
           setUploads((prev) =>
             prev.map((u) =>
-              u.id === uploadId ? { ...u, progress: 100, status: "completed" } : u
+              u.id === uploadId
+                ? { ...u, progress: 100, status: "completed" }
+                : u
             )
           );
         } else {
@@ -173,13 +202,12 @@ export default function ContentTab() {
     });
   };
 
- 
-
   return (
     <UploadDropzone onFilesDropped={handleFilesDropped}>
-      {/* Toolbar */}
+      {/* Toolbar - always visible */}
       <ContentToolbar
-        breadcrumbs={sampleBreadcrumbs}
+        breadcrumbs={toolbarBreadcrumbs}
+        currentFolderId={folderId}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         activeFilter={activeFilter}
@@ -194,16 +222,22 @@ export default function ContentTab() {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
-        {filteredAndSortedContent.length === 0 ? (
+        {isLoading ? (
+          <ContentSkeleton viewMode={viewMode} />
+        ) : isError ? (
+          <ErrorState
+            title="Failed to load content"
+            message="We couldn't load the folder content. Please try again."
+            onRetry={refetch}
+          />
+        ) : filteredContent.length === 0 ? (
           searchTerm ? (
             <NoSearchResults
               searchTerm={searchTerm}
               onClearSearch={() => setSearchTerm("")}
             />
           ) : (
-            <EmptyFolderState
-              
-            />
+            <EmptyFolderState />
           )
         ) : viewMode === "list" ? (
           // List View - Table
@@ -212,19 +246,19 @@ export default function ContentTab() {
               sortBy={sortBy}
               onSortChange={setSortBy}
               allSelected={
-                selectedItems.size === filteredAndSortedContent.length &&
-                filteredAndSortedContent.length > 0
+                selectedItems.size === filteredContent.length &&
+                filteredContent.length > 0
               }
               onSelectAll={handleSelectAll}
             />
             <tbody>
-              {filteredAndSortedContent.map((item) => (
+              {filteredContent.map((item) => (
                 <ContentListRow
                   key={item.id}
                   item={item}
                   isSelected={selectedItems.has(item.id)}
                   onSelect={handleSelectItem}
-                  onClick={handleItemClick}
+                  onClick={() => handleItemClick(item.id, item.type)}
                   onMenuClick={(id: string) => console.log("Menu:", id)}
                 />
               ))}
@@ -237,18 +271,18 @@ export default function ContentTab() {
               sortBy={sortBy}
               onSortChange={setSortBy}
               allSelected={
-                selectedItems.size === filteredAndSortedContent.length &&
-                filteredAndSortedContent.length > 0
+                selectedItems.size === filteredContent.length &&
+                filteredContent.length > 0
               }
               onSelectAll={handleSelectAll}
             />
-            {filteredAndSortedContent.map((item) => (
+            {filteredContent.map((item) => (
               <ContentGridItem
                 key={item.id}
                 item={item}
                 isSelected={selectedItems.has(item.id)}
                 onSelect={handleSelectItem}
-                onClick={handleItemClick}
+                onClick={() => handleItemClick(item.id, item.type)}
                 onMenuClick={(id: string) => console.log("Menu:", id)}
               />
             ))}
@@ -273,7 +307,6 @@ export default function ContentTab() {
       </AnimatePresence>
 
       {/* Create Folder Modal */}
-      
     </UploadDropzone>
   );
 }
