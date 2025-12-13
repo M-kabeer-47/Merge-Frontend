@@ -91,6 +91,103 @@ export function getFileTypeLabel(fileType: FileType): string {
   return labels[fileType] || "File";
 }
 
+export function getIconTypeFromMimeType(mimeType: string): FileIconType {
+  if (!mimeType) return "file";
+
+  // PDF
+  if (mimeType === "application/pdf") return "pdf";
+
+  // Documents
+  if (
+    mimeType === "application/msword" ||
+    mimeType ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    mimeType === "text/plain"
+  ) {
+    return "document";
+  }
+
+  // Presentations
+  if (
+    mimeType === "application/vnd.ms-powerpoint" ||
+    mimeType ===
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+  ) {
+    return "presentation";
+  }
+
+  // Spreadsheets
+  if (
+    mimeType === "application/vnd.ms-excel" ||
+    mimeType ===
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  ) {
+    return "spreadsheet";
+  }
+
+  // Images
+  if (mimeType.startsWith("image/")) return "image";
+
+  // Videos
+  if (mimeType.startsWith("video/")) return "video";
+
+  // Audio
+  if (mimeType.startsWith("audio/")) return "audio";
+
+  // Archives
+  if (
+    mimeType === "application/zip" ||
+    mimeType === "application/x-zip-compressed" ||
+    mimeType === "application/x-rar-compressed" ||
+    mimeType === "application/x-7z-compressed" ||
+    mimeType === "application/gzip"
+  ) {
+    return "archive";
+  }
+
+  // Code files
+  if (
+    mimeType === "text/markdown" ||
+    mimeType === "text/x-markdown" ||
+    mimeType === "application/json" ||
+    mimeType === "text/javascript" ||
+    mimeType === "application/javascript" ||
+    mimeType === "text/css" ||
+    mimeType === "text/html"
+  ) {
+    return "code";
+  }
+
+  return "file";
+}
+
+export function getIconColorFromMimeType(mimeType: string): string {
+  const iconType = getIconTypeFromMimeType(mimeType);
+
+  switch (iconType) {
+    case "pdf":
+      return "text-destructive";
+    case "document":
+      return "text-[#2B579A]";
+    case "presentation":
+      return "text-[#D04423]";
+    case "spreadsheet":
+      return "text-[#217346]";
+    case "image":
+      return "text-accent";
+    case "video":
+      return "text-secondary";
+    case "audio":
+      return "text-primary";
+    case "archive":
+      return "text-para";
+    case "code":
+      return "text-heading";
+    default:
+      return "text-para-muted";
+  }
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
 

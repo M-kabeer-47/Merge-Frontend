@@ -1,5 +1,8 @@
 import { Metadata } from "next";
-import ViewNotePage from "@/pages/notes/ViewNotePage";
+import ViewNotePage from "@/page-components/notes/ViewNotePage";
+
+// This page uses dynamic params and React Query hooks
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "View Note | Merge",

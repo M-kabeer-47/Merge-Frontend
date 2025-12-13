@@ -1,23 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
 import axios from "axios";
-import { useState, useEffect } from "react";
 import rotateToken from "@/utils/rotate-token";
 import { Note } from "@/types/note";
 
-export default function useFetchNoteById(noteId: string) {
-  const [isClient, setIsClient] = useState(false);
+const isClient = typeof window !== "undefined";
 
+export default function useFetchNoteById(noteId: string) {
   const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
     oldToken:
       isClient && localStorage.getItem("refreshToken")
         ? localStorage.getItem("refreshToken")!
         : "",
   });
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const fetchNote = async () => {
     const token = localStorage.getItem("accessToken");

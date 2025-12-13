@@ -1,9 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import rotateToken from "@/utils/rotate-token";
 import { Note, Folder } from "@/types/note";
+
+const isClient = typeof window !== "undefined";
 
 interface NoteFilters {
   folderId?: string;
@@ -11,7 +13,6 @@ interface NoteFilters {
 }
 
 export default function useFetchNotes(filters?: NoteFilters) {
-  const [isClient, setIsClient] = useState(false);
   const queryClient = useQueryClient();
 
   const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
@@ -20,10 +21,6 @@ export default function useFetchNotes(filters?: NoteFilters) {
         ? localStorage.getItem("refreshToken")!
         : "",
   });
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Reusable fetch function that takes query params
   const fetchNotesData = async (queryParams: string) => {
@@ -68,7 +65,6 @@ export default function useFetchNotes(filters?: NoteFilters) {
     enabled: isClient && !!localStorage.getItem("accessToken"),
     retry: false,
     staleTime: 2 * 60 * 1000,
-    // refetchOnWindowFocus: true,
   });
 
   // Prefetch all subfolders when folders are loaded
@@ -79,15 +75,13 @@ export default function useFetchNotes(filters?: NoteFilters) {
       const params = new URLSearchParams();
       params.append("folderId", folder.id);
 
-      // Prefetch with the same query key format as the main query
-      // Use empty string for search to match the default state
       queryClient.prefetchQuery({
         queryKey: ["notes", folder.id, ""],
         queryFn: () => fetchNotesData(params.toString()),
         staleTime: 2 * 60 * 1000,
       });
     });
-  }, [data?.folders, isClient, queryClient]);
+  }, [data?.folders, queryClient]);
 
   return {
     notes: (data?.notes as Note[]) || [],

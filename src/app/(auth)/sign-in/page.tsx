@@ -1,13 +1,15 @@
 import { Metadata } from "next";
-import SignInPage from "@/pages/auth/SignInPage";
+import SignInPage from "@/page-components/auth/SignInPage";
 
 export const metadata: Metadata = {
   title: "Sign In | Merge",
-  description: "Sign in to your Merge account to access courses, live sessions, and learning materials",
+  description:
+    "Sign in to your Merge account to access courses, live sessions, and learning materials",
   keywords: ["sign in", "login", "merge", "education platform"],
   openGraph: {
     title: "Sign In | Merge",
-    description: "Sign in to your Merge account to access courses, live sessions, and learning materials",
+    description:
+      "Sign in to your Merge account to access courses, live sessions, and learning materials",
     type: "website",
   },
   twitter: {

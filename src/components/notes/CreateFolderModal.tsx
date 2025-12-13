@@ -14,6 +14,8 @@ interface CreateFolderModalProps {
   searchQuery: string;
   folderType?: "notes" | "room";
   roomId?: string;
+  sortBy?: string | null;
+  sortOrder?: string | null;
 }
 
 export default function CreateFolderModal({
@@ -23,10 +25,14 @@ export default function CreateFolderModal({
   searchQuery,
   folderType = "notes",
   roomId,
+  sortBy,
+  sortOrder,
 }: CreateFolderModalProps) {
   const [folderName, setFolderName] = useState("");
   const { createFolder, isCreating } = useCreateFolder({
     searchQuery,
+    sortBy,
+    sortOrder,
   });
 
   if (!isOpen) return null;

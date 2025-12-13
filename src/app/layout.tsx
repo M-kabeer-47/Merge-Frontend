@@ -53,7 +53,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ReactQueryProvider>
-            
             <AuthProvider>{children}</AuthProvider>
 
             <Toaster icons={toastIcons} />

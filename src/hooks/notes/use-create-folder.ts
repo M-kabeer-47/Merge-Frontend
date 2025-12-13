@@ -13,10 +13,14 @@ interface CreateFolderPayload {
 
 interface UseCreateFolderOptions {
   searchQuery: string;
+  sortBy?: string | null;
+  sortOrder?: string | null;
 }
 
 export default function useCreateFolder({
   searchQuery,
+  sortBy,
+  sortOrder,
 }: UseCreateFolderOptions) {
   const queryClient = useQueryClient();
   const { rotateToken, isRotationPending } = usesRotateToken({
@@ -75,6 +79,8 @@ export default function useCreateFolder({
               variables.roomId,
               variables.parentFolderId || null,
               searchQuery,
+              sortBy,
+              sortOrder,
             ]
           : ["notes", variables.parentFolderId || null, searchQuery];
 

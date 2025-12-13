@@ -28,6 +28,7 @@ interface ContentToolbarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   sortBy: SortOption;
+  sortOrder: "ASC" | "DESC";
   onSortChange: (sort: SortOption) => void;
   selectedCount: number;
   onUpload?: () => void;
@@ -63,6 +64,7 @@ export default function ContentToolbar({
   viewMode,
   onViewModeChange,
   sortBy,
+  sortOrder,
   onSortChange,
   selectedCount,
   onUpload,
@@ -76,6 +78,10 @@ export default function ContentToolbar({
   const params = useParams();
   const router = useRouter();
   const roomId = params?.id as string;
+
+  // Map UI sort options to API sort params for the modal
+  const apiSortBy =
+    sortBy === "name" ? "name" : sortBy === "date" ? "updatedAt" : null;
 
   // Get the previous breadcrumb for back navigation
   const previousBreadcrumb =
@@ -232,6 +238,8 @@ export default function ContentToolbar({
         searchQuery={searchTerm}
         folderType="room"
         roomId={roomId}
+        sortBy={apiSortBy}
+        sortOrder={sortOrder}
       />
     </div>
   );

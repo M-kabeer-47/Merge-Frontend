@@ -1,13 +1,21 @@
 import { Metadata } from "next";
-import SignUpPage from "@/pages/auth/SignUpPage";
+import SignUpPage from "@/page-components/auth/SignUpPage";
 
 export const metadata: Metadata = {
   title: "Sign Up | Merge",
-  description: "Create your Merge account to access thousands of courses, live sessions, and expert instructors",
-  keywords: ["sign up", "register", "create account", "merge", "education platform"],
+  description:
+    "Create your Merge account to access thousands of courses, live sessions, and expert instructors",
+  keywords: [
+    "sign up",
+    "register",
+    "create account",
+    "merge",
+    "education platform",
+  ],
   openGraph: {
     title: "Sign Up | Merge",
-    description: "Create your Merge account to access thousands of courses and expert instructors",
+    description:
+      "Create your Merge account to access thousands of courses and expert instructors",
     type: "website",
   },
   twitter: {

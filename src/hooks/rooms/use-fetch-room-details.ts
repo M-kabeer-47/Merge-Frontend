@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
 import axios from "axios";
-import { useState, useEffect } from "react";
 import rotateToken from "@/utils/rotate-token";
 import { toast } from "sonner";
 import { User } from "@/types/user";
+
+const isClient = typeof window !== "undefined";
 
 interface RoomMember {
   id: string;
@@ -35,18 +36,12 @@ export interface RoomDetails {
 }
 
 export default function useFetchRoomDetails(roomId: string) {
-  const [isClient, setIsClient] = useState(false);
-
   const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
     oldToken:
       isClient && localStorage.getItem("refreshToken")
         ? localStorage.getItem("refreshToken")!
         : "",
   });
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const fetchRoomDetails = async (): Promise<RoomDetails | null> => {
     const token = localStorage.getItem("accessToken");

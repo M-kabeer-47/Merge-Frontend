@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { AnimatePresence } from "motion/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ContentToolbar from "@/components/content/ContentToolbar";
@@ -17,14 +17,14 @@ import {
 import ContentSkeleton from "@/components/content/ContentSkeleton";
 import ErrorState from "@/components/ui/ErrorState";
 import useFetchRoomContent from "@/hooks/rooms/use-fetch-room-content";
+import useUploadFile from "@/hooks/rooms/use-upload-file";
+import type { ViewMode, SortOption, FilterType } from "@/types/content";
 import type {
-  ViewMode,
-  SortOption,
-  FilterType,
-  UploadProgress,
-  FileType,
-} from "@/types/content";
-import type { ContentSortBy, ContentSortOrder } from "@/types/room-content";
+  ContentSortBy,
+  ContentSortOrder,
+  RoomContentItem,
+} from "@/types/room-content";
+import { isRoomContentFolder } from "@/types/room-content";
 
 export default function ContentTab() {
   const params = useParams();
@@ -40,7 +40,23 @@ export default function ContentTab() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortOption>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [uploads, setUploads] = useState<UploadProgress[]>([]);
+
+  // File input ref for upload button
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle upload button click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file input change
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      uploadFiles(e.target.files);
+      // Reset input so same file can be selected again
+      e.target.value = "";
+    }
+  };
 
   // Map UI sort options to API sort params
   const apiSortBy: ContentSortBy =
@@ -56,6 +72,15 @@ export default function ContentTab() {
       sortBy: apiSortBy,
       sortOrder: apiSortBy ? apiSortOrder : null,
     });
+
+  // File upload hook with real progress tracking
+  const { uploads, uploadFiles, removeUpload, clearAll } = useUploadFile({
+    roomId,
+    folderId,
+    searchQuery: searchTerm,
+    sortBy: apiSortBy,
+    sortOrder: apiSortBy ? apiSortOrder : null,
+  });
 
   // Build breadcrumbs - prepend root, use API breadcrumb as-is
   const toolbarBreadcrumbs = [
@@ -76,58 +101,24 @@ export default function ContentTab() {
     router.push(`/rooms/${roomId}/content?folderId=${folderId}`);
   };
 
-  // Combined items for display (folders first, then files)
-  const contentItems = useMemo(() => {
-    const folderItems = folders.map((f) => ({
-      id: f.id,
-      name: f.name,
-      type: "folder" as const,
-      itemCount: f.totalItems,
-      createdAt: new Date(f.createdAt),
-      modifiedAt: new Date(f.updatedAt),
-      owner: { id: "owner", name: "Owner", avatar: "" },
-    }));
-
-    const fileItems = files.map((f) => ({
-      id: f.id,
-      name: f.name,
-      type: "file" as const,
-      fileType: (f.mimeType.split("/").pop() || "other") as FileType,
-      size: f.size,
-      createdAt: new Date(f.createdAt),
-      modifiedAt: new Date(f.updatedAt),
-      owner: { id: "owner", name: "Owner", avatar: "" },
-    }));
-
-    return [...folderItems, ...fileItems];
+  // Combined items for display (folders first, then files) - NO TRANSFORMATION
+  const contentItems: RoomContentItem[] = useMemo(() => {
+    return [...folders, ...files];
   }, [folders, files]);
 
   // Filter content client-side by type
   const filteredContent = useMemo(() => {
     if (activeFilter === "all") return contentItems;
     if (activeFilter === "folders")
-      return contentItems.filter((i) => i.type === "folder");
+      return contentItems.filter((item) => isRoomContentFolder(item));
 
     return contentItems.filter((item) => {
-      if (item.type === "folder") return false;
-      const fileItem = item as any;
+      if (isRoomContentFolder(item)) return false;
       switch (activeFilter) {
-        case "docs":
-          return ["docx", "txt", "md", "doc"].includes(fileItem.fileType);
-        case "slides":
-          return ["pptx", "ppt"].includes(fileItem.fileType);
-        case "pdfs":
-          return fileItem.fileType === "pdf";
         case "images":
-          return ["png", "jpg", "jpeg", "gif", "webp"].includes(
-            fileItem.fileType
-          );
-        case "videos":
-          return ["mp4", "mov", "avi"].includes(fileItem.fileType);
-        case "audio":
-          return ["mp3", "wav"].includes(fileItem.fileType);
-        case "archives":
-          return ["zip", "rar"].includes(fileItem.fileType);
+          return item.mimeType.startsWith("image/");
+        case "files":
+          return true;
         default:
           return true;
       }
@@ -155,8 +146,11 @@ export default function ContentTab() {
     }
   };
 
-  const handleItemClick = (id: string, type: "folder" | "file") => {
-    if (type === "folder") {
+  const handleItemClick = (id: string) => {
+    const item = contentItems.find((i) => i.id === id);
+    if (!item) return;
+
+    if (isRoomContentFolder(item)) {
       handleFolderClick(id);
     } else {
       console.log("Open file:", id);
@@ -164,46 +158,23 @@ export default function ContentTab() {
     }
   };
 
-  // Handle files dropped - UploadDropzone manages isDragging internally
-  const handleFilesDropped = (files: FileList) => {
-    // Simulate upload progress for demo
-    Array.from(files).forEach((file, index) => {
-      const uploadId = `upload-${Date.now()}-${index}`;
-      const newUpload: UploadProgress = {
-        id: uploadId,
-        fileName: file.name,
-        progress: 0,
-        size: file.size,
-        status: "uploading",
-      };
-
-      setUploads((prev) => [...prev, newUpload]);
-
-      // Simulate progress
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.id === uploadId
-                ? { ...u, progress: 100, status: "completed" }
-                : u
-            )
-          );
-        } else {
-          setUploads((prev) =>
-            prev.map((u) => (u.id === uploadId ? { ...u, progress } : u))
-          );
-        }
-      }, 500);
-    });
+  // Handle files dropped - use real upload hook
+  const handleFilesDropped = (droppedFiles: FileList) => {
+    uploadFiles(droppedFiles);
   };
 
   return (
     <UploadDropzone onFilesDropped={handleFilesDropped}>
+      {/* Hidden file input for upload button */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileInputChange}
+        multiple
+        className="hidden"
+        aria-hidden="true"
+      />
+
       {/* Toolbar - always visible */}
       <ContentToolbar
         breadcrumbs={toolbarBreadcrumbs}
@@ -215,9 +186,11 @@ export default function ContentTab() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         sortBy={sortBy}
+        sortOrder={apiSortOrder}
         onSortChange={setSortBy}
         selectedCount={selectedItems.size}
         onClearSelection={() => setSelectedItems(new Set())}
+        onUpload={handleUploadClick}
       />
 
       {/* Main Content Area */}
@@ -258,7 +231,7 @@ export default function ContentTab() {
                   item={item}
                   isSelected={selectedItems.has(item.id)}
                   onSelect={handleSelectItem}
-                  onClick={() => handleItemClick(item.id, item.type)}
+                  onClick={handleItemClick}
                   onMenuClick={(id: string) => console.log("Menu:", id)}
                 />
               ))}
@@ -282,7 +255,7 @@ export default function ContentTab() {
                 item={item}
                 isSelected={selectedItems.has(item.id)}
                 onSelect={handleSelectItem}
-                onClick={() => handleItemClick(item.id, item.type)}
+                onClick={handleItemClick}
                 onMenuClick={(id: string) => console.log("Menu:", id)}
               />
             ))}
@@ -295,18 +268,12 @@ export default function ContentTab() {
         {uploads.length > 0 && (
           <UploadProgressTray
             uploads={uploads}
-            onCancel={(id: string) =>
-              setUploads((prev) => prev.filter((u) => u.id !== id))
-            }
-            onDismiss={(id: string) =>
-              setUploads((prev) => prev.filter((u) => u.id !== id))
-            }
-            onDismissAll={() => setUploads([])}
+            onCancel={removeUpload}
+            onDismiss={removeUpload}
+            onDismissAll={clearAll}
           />
         )}
       </AnimatePresence>
-
-      {/* Create Folder Modal */}
     </UploadDropzone>
   );
 }

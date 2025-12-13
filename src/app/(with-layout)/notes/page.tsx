@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import NotesPage from "@/pages/notes/NotesPage";
+import NotesPage from "@/page-components/notes/NotesPage";
 import NotesListSkeleton from "@/components/notes/NotesListSkeleton";
+
+// This page uses useSearchParams and React Query hooks
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Notes | Merge",

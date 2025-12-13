@@ -1,5 +1,8 @@
 import { Metadata } from "next";
-import EditNotePage from "@/pages/notes/EditNotePage";
+import EditNotePage from "@/page-components/notes/EditNotePage";
+
+// This page uses dynamic params and cannot be statically prerendered
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Edit Note | Merge",

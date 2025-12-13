@@ -3,8 +3,9 @@ import { useMutation } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
 import { toast } from "sonner";
 import { ApiError } from "@/types/api-error";
-
+import { useRouter } from "next/navigation";
 export default function useRotateToken({ oldToken }: { oldToken: string }) {
+  const router = useRouter();
   const rotateTokenFunction = async () => {
     let response = await apiRequest(
       axios.post(
@@ -44,10 +45,9 @@ export default function useRotateToken({ oldToken }: { oldToken: string }) {
         localStorage.removeItem("userID");
         // Redirect to login
         setTimeout(() => {
-          window.location.href = "/sign-in";
+          router.push("/sign-in");
         }, 1000);
       }
-      toast.error("Please try again later...");
     },
   });
 

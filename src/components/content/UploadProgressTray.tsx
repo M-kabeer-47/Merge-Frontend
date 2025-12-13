@@ -36,7 +36,8 @@ export default function UploadProgressTray({
       <div className="p-4 border-b border-light-border flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-heading">
-            Uploading {activeUploads.length > 0 ? activeUploads.length : ""} file
+            Uploading {activeUploads.length > 0 ? activeUploads.length : ""}{" "}
+            file
             {activeUploads.length !== 1 ? "s" : ""}
           </h3>
           {activeUploads.length > 0 && (

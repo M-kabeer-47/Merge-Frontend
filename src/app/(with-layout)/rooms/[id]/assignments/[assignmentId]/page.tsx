@@ -18,9 +18,9 @@ export default function AssignmentDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  
-  const assignmentId = params.assignmentId as string;
-  const roomId = params.id as string;
+
+  const assignmentId = params ? (params.assignmentId as string) : "";
+  const roomId = params ? (params.id as string) : "";
 
   // Get role from authenticated user
   const isInstructor = user?.role === "instructor";

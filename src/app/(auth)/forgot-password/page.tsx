@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import ForgotPasswordPage from "@/page-components/auth/ForgotPasswordPage";
 
 export const metadata: Metadata = {
   title: "Forgot Password | Merge",

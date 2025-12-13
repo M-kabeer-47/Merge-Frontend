@@ -14,23 +14,28 @@ import {
   Presentation,
   MoreVertical,
 } from "lucide-react";
-import type { ContentItem, FileItem, FolderItem } from "@/types/content";
+import type {
+  RoomContentItem,
+  RoomContentFile,
+  RoomContentFolder,
+} from "@/types/room-content";
+import { isRoomContentFolder } from "@/types/room-content";
 import {
-  getFileIconType,
-  getFileIconColor,
+  getIconTypeFromMimeType,
+  getIconColorFromMimeType,
   formatFileSize,
 } from "@/utils/file-helpers";
 
 interface ContentListRowProps {
-  item: ContentItem;
+  item: RoomContentItem;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
   onClick?: (id: string) => void;
   onMenuClick?: (id: string) => void;
 }
 
-function ItemIcon({ item }: { item: ContentItem }) {
-  if (item.type === "folder") {
+function ItemIcon({ item }: { item: RoomContentItem }) {
+  if (isRoomContentFolder(item)) {
     return (
       <Folder
         className="h-8 w-8 sm:h-10 sm:w-10 text-secondary"
@@ -39,9 +44,9 @@ function ItemIcon({ item }: { item: ContentItem }) {
     );
   }
 
-  const fileItem = item as FileItem;
-  const iconType = getFileIconType(fileItem.fileType);
-  const iconColor = getFileIconColor(fileItem.fileType);
+  const fileItem = item as RoomContentFile;
+  const iconType = getIconTypeFromMimeType(fileItem.mimeType);
+  const iconColor = getIconColorFromMimeType(fileItem.mimeType);
   const iconClass = `h-8 w-8 sm:h-10 sm:w-10 ${iconColor}`;
 
   switch (iconType) {
@@ -67,6 +72,35 @@ function ItemIcon({ item }: { item: ContentItem }) {
   }
 }
 
+// Helper to get display name
+function getItemName(item: RoomContentItem): string {
+  if (isRoomContentFolder(item)) {
+    return item.name;
+  }
+  return (item as RoomContentFile).originalName;
+}
+
+// Helper to get owner name
+function getOwnerName(item: RoomContentItem): string {
+  if (isRoomContentFolder(item)) {
+    const folder = item as RoomContentFolder;
+    if (folder.owner) {
+      return `${folder.owner.firstName} ${folder.owner.lastName}`;
+    }
+    return "Unknown";
+  }
+  const file = item as RoomContentFile;
+  return `${file.uploader.firstName} ${file.uploader.lastName}`;
+}
+
+// Helper to get metadata text
+function getMetadataText(item: RoomContentItem): string {
+  if (isRoomContentFolder(item)) {
+    return `${item.totalItems} items`;
+  }
+  return formatFileSize((item as RoomContentFile).size);
+}
+
 export default function ContentListRow({
   item,
   isSelected = false,
@@ -74,13 +108,10 @@ export default function ContentListRow({
   onClick,
   onMenuClick,
 }: ContentListRowProps) {
-  const isFolder = item.type === "folder";
-  const fileItem = item as FileItem;
-  const folderItem = item as FolderItem;
-
-  const metadataText = isFolder
-    ? `${folderItem.itemCount} items`
-    : formatFileSize(fileItem.size);
+  const itemName = getItemName(item);
+  const ownerName = getOwnerName(item);
+  const metadataText = getMetadataText(item);
+  const modifiedAt = new Date(item.updatedAt);
 
   return (
     <tr
@@ -131,16 +162,16 @@ export default function ContentListRow({
           <div className="min-w-0 flex-1">
             <p
               className="text-sm sm:text-[15px] font-semibold text-heading truncate leading-tight"
-              title={item.name}
+              title={itemName}
             >
-              {item.name}
+              {itemName}
             </p>
             <p className="text-xs sm:text-[13px] text-para-muted leading-tight">
               {metadataText}
               {/* Show date on mobile since column is hidden */}
               <span className="sm:hidden">
                 {" • "}
-                {item.modifiedAt.toLocaleDateString("en-US", {
+                {modifiedAt.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                 })}
@@ -152,19 +183,19 @@ export default function ContentListRow({
 
       {/* Created By - hidden on mobile */}
       <td className="hidden md:table-cell w-[180px] px-3 py-4">
-        <div className="text-sm text-para truncate">{item.owner.name}</div>
+        <div className="text-sm text-para truncate">{ownerName}</div>
       </td>
 
       {/* Last Modified - hidden on small screens */}
       <td className="hidden sm:table-cell w-[200px] px-3 py-4">
         <div className="text-sm text-para whitespace-nowrap">
-          {item.modifiedAt.toLocaleDateString("en-US", {
+          {modifiedAt.toLocaleDateString("en-US", {
             month: "2-digit",
             day: "2-digit",
             year: "numeric",
           })}{" "}
           |{" "}
-          {item.modifiedAt.toLocaleTimeString("en-US", {
+          {modifiedAt.toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,

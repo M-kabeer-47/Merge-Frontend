@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import rotateToken from "@/utils/rotate-token";
 import type {
   RoomContentFolder,
@@ -11,6 +11,8 @@ import type {
   ContentSortBy,
   ContentSortOrder,
 } from "@/types/room-content";
+
+const isClient = typeof window !== "undefined";
 
 interface UseRoomContentParams {
   roomId: string;
@@ -27,7 +29,6 @@ export default function useFetchRoomContent({
   sortBy,
   sortOrder,
 }: UseRoomContentParams) {
-  const [isClient, setIsClient] = useState(false);
   const queryClient = useQueryClient();
 
   const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
@@ -36,10 +37,6 @@ export default function useFetchRoomContent({
         ? localStorage.getItem("refreshToken")!
         : "",
   });
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const fetchContentData = async (queryParams: string) => {
     const token = localStorage.getItem("accessToken");
@@ -110,7 +107,7 @@ export default function useFetchRoomContent({
         staleTime: 3 * 60 * 1000,
       });
     });
-  }, [data?.folders, isClient, roomId, sortBy, sortOrder]);
+  }, [data?.folders, roomId, sortBy, sortOrder]);
 
   return {
     folders: (data?.folders as RoomContentFolder[]) || [],

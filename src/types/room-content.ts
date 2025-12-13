@@ -3,19 +3,36 @@
 export interface RoomContentFolder {
   id: string;
   name: string;
+  type: string;
+  parentFolder: string;
   subfolderCount: number;
   fileCount: number;
   totalItems: number;
+  owner?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    image?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
 
 export interface RoomContentFile {
   id: string;
-  name: string;
+  originalName: string;
+  fileName: string;
+  filePath: string;
   mimeType: string;
   size: number;
-  url: string;
+  type: string;
+  uploader: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    image: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -52,3 +69,20 @@ export interface RoomContentResponse {
 
 export type ContentSortBy = "name" | "createdAt" | "updatedAt" | null;
 export type ContentSortOrder = "ASC" | "DESC" | null;
+
+// Union type for content items
+export type RoomContentItem = RoomContentFolder | RoomContentFile;
+
+// Type guard to check if item is a folder
+export function isRoomContentFolder(
+  item: RoomContentItem
+): item is RoomContentFolder {
+  return "totalItems" in item;
+}
+
+// Type guard to check if item is a file
+export function isRoomContentFile(
+  item: RoomContentItem
+): item is RoomContentFile {
+  return "mimeType" in item;
+}

@@ -1,13 +1,15 @@
+"use client";
 import { useQuery } from "@tanstack/react-query";
 import apiRequest from "@/utils/api-request";
 import { User } from "@/types/user";
 import axios from "axios";
-import { useState, useEffect } from "react";
 import rotateToken from "@/utils/rotate-token";
 
-export default function useGetUser() {
-  const [isClient, setIsClient] = useState(false);
+const isClient = typeof window !== "undefined";
 
+export default function useGetUser() {
+  // Token extraction from URL params is now handled by /callback page
+  // This hook only reads tokens from localStorage
   const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
     oldToken:
       isClient && localStorage.getItem("refreshToken")
@@ -15,13 +17,12 @@ export default function useGetUser() {
         : "",
   });
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   const fetchUser = async () => {
     const token = localStorage.getItem("accessToken");
-    if (!token) return null;
+
+    if (!token) {
+      throw new Error("No access token available");
+    }
 
     try {
       const response = await apiRequest(
@@ -38,12 +39,11 @@ export default function useGetUser() {
         const result = await refreshTokenFn();
         // If token rotation was successful, retry fetching user
         if (result?.token) {
-          return fetchUser()
+          return fetchUser();
         }
       }
       throw error;
     }
-
   };
 
   const {
@@ -54,13 +54,9 @@ export default function useGetUser() {
   } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
-    enabled: isClient && !!localStorage.getItem("accessToken"),
+    enabled: isClient,
     retry: false, // Don't retry on error, we handle it manually
     staleTime: 60 * 60 * 1000, // 1 hour
-    refetchOnMount: false,        // 👈 ADD: Don't refetch on mount
-    refetchOnWindowFocus: false,  // 👈 ADD: Don't refetch on focus
-    refetchOnReconnect: false,    // 👈 ADD: Don't refetch on reconnect
-
   });
 
   return {
