@@ -12,7 +12,7 @@ export default function AuthCallbackContent() {
   useEffect(() => {
     const token = searchParams?.get("token");
     const refreshToken = searchParams?.get("refreshToken");
-    const redirect = searchParams?.get("redirect") || "/dashboard";
+    const redirect = searchParams?.get("redirect") || "/rooms";
 
     if (token && refreshToken) {
       // Store tokens in localStorage
