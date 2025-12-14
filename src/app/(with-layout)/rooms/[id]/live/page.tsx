@@ -45,7 +45,7 @@ import type { ChatMessage, Attendee, CanvasElement, SessionFile } from "@/types/
 
 export default function LiveSessionHostPage() {
   const params = useParams();
-  const sessionId = params.id as string;
+  
 
   // Host controls state
   const [micOn, setMicOn] = useState(true);

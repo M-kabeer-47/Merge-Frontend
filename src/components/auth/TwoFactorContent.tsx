@@ -11,7 +11,7 @@ import useResendOTP from "@/hooks/auth/two-factor/use-resend-otp";
 export default function TwoFactorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "your email";
+  const email = searchParams?.get("email") || "your email";
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);

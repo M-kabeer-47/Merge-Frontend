@@ -6,7 +6,7 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { FormField } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
 import RoleSelectionCards from "./RoleSelectionCards";
-import { partialUserSchema, userSchema, UserType } from "@/schemas/user/user";
+import { userSchema, UserType } from "@/schemas/user/user";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";

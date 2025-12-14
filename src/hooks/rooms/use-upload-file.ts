@@ -16,6 +16,12 @@ interface UseUploadFileOptions {
   sortOrder?: ContentSortOrder;
 }
 
+interface PresignedUrlResponse {
+  uploadUrl: string;
+  fileKey: string;
+  fileUrl: string;
+}
+
 export default function useUploadFile({
   roomId,
   folderId,
@@ -62,43 +68,130 @@ export default function useUploadFile({
     setUploads([]);
   }, []);
 
-  // Upload a single file with progress tracking
-  const uploadFile = useCallback(
-    async (file: File, uploadId: string) => {
+  // Step 1: Get pre-signed URL from backend
+  const getPresignedUrl = useCallback(
+    async (file: File): Promise<PresignedUrlResponse> => {
       const accessToken = localStorage.getItem("accessToken");
 
-      const formData = new FormData();
-      formData.append("file", file);
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/files/presigned-url/room/${roomId}`,
+        {
+          originalName: file.name,
+          contentType: file.type || "application/octet-stream",
+          size: file.size,
+          folderId: folderId || undefined,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      // Add folderId if present
-      if (folderId) {
-        formData.append("folderId", folderId);
-      }
+      return response.data;
+    },
+    [roomId, folderId]
+  );
+
+  // Step 2: Upload directly to S3 using XMLHttpRequest for real progress
+  const uploadToS3 = useCallback(
+    (
+      uploadUrl: string,
+      file: File,
+      contentType: string,
+      onProgress: (percent: number) => void
+    ): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            console.error("S3 upload failed:", xhr.status, xhr.responseText);
+            reject(new Error(`S3 upload failed with status ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = () => {
+          console.error("S3 upload network error - check CORS configuration");
+          reject(
+            new Error(
+              "Network error during S3 upload. Check S3 CORS configuration."
+            )
+          );
+        };
+
+        xhr.open("PUT", uploadUrl);
+        // Set the Content-Type to match what the pre-signed URL was created with
+        xhr.setRequestHeader("Content-Type", contentType);
+        xhr.send(file);
+      });
+    },
+    []
+  );
+
+  // Step 3: Confirm upload to backend (save file metadata to DB)
+  const confirmUpload = useCallback(
+    async (file: File, fileKey: string, fileUrl: string): Promise<any> => {
+      const accessToken = localStorage.getItem("accessToken");
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/files/confirm-upload/room/${roomId}`,
+        {
+          fileKey,
+          fileUrl,
+          originalName: file.name,
+          contentType: file.type || "application/octet-stream",
+          size: file.size,
+          folderId: folderId || undefined,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data;
+    },
+    [roomId, folderId]
+  );
+
+  // Upload a single file with pre-signed URL flow
+  const uploadFile = useCallback(
+    async (file: File, uploadId: string) => {
+      const contentType = file.type || "application/octet-stream";
 
       try {
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/files/upload/course-content/${roomId}`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "multipart/form-data",
-            },
-            onUploadProgress: (progressEvent) => {
-              if (progressEvent.total) {
-                const percentCompleted = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
-                );
-                updateUpload(uploadId, { progress: percentCompleted });
-              }
-            },
-          }
-        );
+        // Step 1: Get pre-signed URL
+        updateUpload(uploadId, { progress: 0 });
+        const { uploadUrl, fileKey, fileUrl } = await getPresignedUrl(file);
+
+        // Step 2: Upload to S3 with real progress
+        await uploadToS3(uploadUrl, file, contentType, (percent) => {
+          // Reserve last 5% for confirmation step
+          updateUpload(uploadId, { progress: Math.min(percent, 95) });
+        });
+
+        // Step 3: Confirm upload to backend
+        updateUpload(uploadId, { progress: 98 });
+        const result = await confirmUpload(file, fileKey, fileUrl);
 
         // Mark as completed
         updateUpload(uploadId, { status: "completed", progress: 100 });
 
-        return response.data;
+        return result;
       } catch (error: any) {
         // Handle 401 - try token rotation
         if (error?.response?.status === 401) {
@@ -117,12 +210,14 @@ export default function useUploadFile({
 
         // Handle other errors
         const errorMessage =
-          error?.response?.data?.message || "Upload failed. Please try again.";
+          error?.response?.data?.message ||
+          error?.message ||
+          "Upload failed. Please try again.";
         updateUpload(uploadId, { status: "error", error: errorMessage });
         throw error;
       }
     },
-    [roomId, folderId, updateUpload, rotateToken]
+    [getPresignedUrl, uploadToS3, confirmUpload, updateUpload, rotateToken]
   );
 
   // Upload multiple files

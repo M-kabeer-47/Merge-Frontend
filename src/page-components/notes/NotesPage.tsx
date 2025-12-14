@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -13,9 +13,11 @@ import NotesGridSkeleton from "@/components/notes/NotesGridSkeleton";
 import CreateFolderModal from "@/components/notes/CreateFolderModal";
 import DeleteConfirmation from "@/components/notes/DeleteConfirmation";
 import ErrorState from "@/components/notes/ErrorState";
-import NotesGridView from "@/components/notes/NotesGridView";
-import NotesListView from "@/components/notes/NotesListView";
+import SharedGridView from "@/components/shared/SharedGridView";
+import SharedListView from "@/components/shared/SharedListView";
+import { noteToDisplayItem } from "@/utils/display-adapters";
 import type { NoteOrFolder, NoteViewMode, Note } from "@/types/note";
+import type { MenuOption } from "@/types/display-item";
 import useFetchNotes from "@/hooks/notes/use-fetch-notes";
 import { useDownloadPdf } from "@/hooks/use-download-pdf";
 
@@ -119,9 +121,11 @@ export default function NotesPageClient() {
   const { downloadPdf } = useDownloadPdf();
 
   // Item menu options
-  const getItemMenuOptions = (id: string) => {
+  const getMenuOptions = (id: string): MenuOption[] => {
     const item = items.find((i) => i.id === id);
-    const options = [
+    if (!item) return [];
+
+    const options: MenuOption[] = [
       {
         title: item?.type === "folder" ? "Open" : "Edit",
         action: () => handleEdit(id),
@@ -148,6 +152,9 @@ export default function NotesPageClient() {
 
     return options;
   };
+
+  // Convert items to display format
+  const displayItems = useMemo(() => items.map(noteToDisplayItem), [items]);
 
   return (
     <div className="space-y-6 sm:px-6 px-4 sm:py-6 py-4">
@@ -216,16 +223,17 @@ export default function NotesPageClient() {
           onCreateFolder={handleCreateFolder}
         />
       ) : viewMode === "list" ? (
-        <NotesListView
-          items={items}
+        <SharedListView
+          items={displayItems}
           onItemClick={handleItemClick}
-          getItemMenuOptions={getItemMenuOptions}
+          getMenuOptions={getMenuOptions}
+          showOwner={false}
         />
       ) : (
-        <NotesGridView
-          items={items}
+        <SharedGridView
+          items={displayItems}
           onItemClick={handleItemClick}
-          getItemMenuOptions={getItemMenuOptions}
+          getMenuOptions={getMenuOptions}
         />
       )}
 

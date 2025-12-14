@@ -22,8 +22,8 @@ export default function DashboardContent() {
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    const accessToken = searchParams.get("token");
-    const refreshToken = searchParams.get("refreshToken");
+    const accessToken = searchParams?.get("token");
+    const refreshToken = searchParams?.get("refreshToken");
     if (accessToken && refreshToken) {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);

@@ -15,9 +15,9 @@ const DynamicNoteEditor = dynamic(
 export default function EditNotePage() {
     const params = useParams();
     const router = useRouter();
-    const noteId = params.id as string;
+    const noteId = params ? params.id as string : ""
 
-    const { note, isLoading, isError } = useFetchNoteById(noteId);
+    const { note, isLoading, isError } = useFetchNoteById(noteId );
     const { updateNote, isUpdating } = useUpdateNote(noteId);
 
     const handleUpdate = async (data: { title: string; content: string }) => {

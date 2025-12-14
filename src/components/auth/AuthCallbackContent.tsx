@@ -10,9 +10,9 @@ export default function AuthCallbackContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const refreshToken = searchParams.get("refreshToken");
-    const redirect = searchParams.get("redirect") || "/dashboard";
+    const token = searchParams?.get("token");
+    const refreshToken = searchParams?.get("refreshToken");
+    const redirect = searchParams?.get("redirect") || "/dashboard";
 
     if (token && refreshToken) {
       // Store tokens in localStorage

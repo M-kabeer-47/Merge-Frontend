@@ -4,8 +4,6 @@ export type NoteSortOption = "dateCreated" | "lastEdited" | "title" | "type";
 export type NoteViewMode = "grid" | "list";
 export type NoteItemType = "note" | "folder";
 
-
-
 export interface Note {
   id: string;
   title: string;
@@ -22,9 +20,8 @@ export interface Folder {
   name: string
   type: "notes" | "room" | "folder";
   parentFolderId: string | null;
-  roomId: string | null;
   ownerId: string;
-  itemCount?: number; // Total items inside (notes + folders)
+  itemCount?: number; 
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,7 +33,6 @@ export interface BreadcrumbItem {
   name: string;
 }
 
-// API Response Types for Backend Integration
 
 
 export interface CreateNoteData {

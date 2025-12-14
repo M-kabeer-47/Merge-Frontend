@@ -3,9 +3,6 @@ import { Metadata } from "next";
 import NotesPage from "@/page-components/notes/NotesPage";
 import NotesListSkeleton from "@/components/notes/NotesListSkeleton";
 
-// This page uses useSearchParams and React Query hooks
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "Notes | Merge",
   description: "Manage your notes, folders, and study materials",

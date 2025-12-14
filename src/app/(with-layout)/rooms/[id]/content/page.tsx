@@ -4,10 +4,8 @@ import React, { useState, useMemo, useRef } from "react";
 import { AnimatePresence } from "motion/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ContentToolbar from "@/components/content/ContentToolbar";
-import ContentListRow from "@/components/content/ContentListRow";
-import ContentListHeader from "@/components/content/ContentListHeader";
-import ContentGridItem from "@/components/content/ContentGridItem";
-import ContentGridHeader from "@/components/content/ContentGridHeader";
+import SharedGridView from "@/components/shared/SharedGridView";
+import SharedListView from "@/components/shared/SharedListView";
 import UploadDropzone from "@/components/content/UploadDropzone";
 import UploadProgressTray from "@/components/content/UploadProgressTray";
 import {
@@ -18,6 +16,7 @@ import ContentSkeleton from "@/components/content/ContentSkeleton";
 import ErrorState from "@/components/ui/ErrorState";
 import useFetchRoomContent from "@/hooks/rooms/use-fetch-room-content";
 import useUploadFile from "@/hooks/rooms/use-upload-file";
+import { contentToDisplayItem } from "@/utils/display-adapters";
 import type { ViewMode, SortOption, FilterType } from "@/types/content";
 import type {
   ContentSortBy,
@@ -25,6 +24,7 @@ import type {
   RoomContentItem,
 } from "@/types/room-content";
 import { isRoomContentFolder } from "@/types/room-content";
+import type { MenuOption } from "@/types/display-item";
 
 export default function ContentTab() {
   const params = useParams();
@@ -158,6 +158,26 @@ export default function ContentTab() {
     }
   };
 
+  // Menu options for each item
+  const getMenuOptions = (id: string): MenuOption[] => {
+    const item = contentItems.find((i) => i.id === id);
+    if (!item) return [];
+
+    if (isRoomContentFolder(item)) {
+      return [
+        { title: "Open", action: () => handleFolderClick(id) },
+        { title: "Rename", action: () => console.log("Rename:", id) },
+        { title: "Delete", action: () => console.log("Delete folder:", id) },
+      ];
+    }
+
+    return [
+      { title: "Download", action: () => console.log("Download:", id) },
+      { title: "Rename", action: () => console.log("Rename:", id) },
+      { title: "Delete", action: () => console.log("Delete file:", id) },
+    ];
+  };
+
   // Handle files dropped - use real upload hook
   const handleFilesDropped = (droppedFiles: FileList) => {
     uploadFiles(droppedFiles);
@@ -213,53 +233,25 @@ export default function ContentTab() {
             <EmptyFolderState />
           )
         ) : viewMode === "list" ? (
-          // List View - Table
-          <table className="w-full border-collapse">
-            <ContentListHeader
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              allSelected={
-                selectedItems.size === filteredContent.length &&
-                filteredContent.length > 0
-              }
-              onSelectAll={handleSelectAll}
-            />
-            <tbody>
-              {filteredContent.map((item) => (
-                <ContentListRow
-                  key={item.id}
-                  item={item}
-                  isSelected={selectedItems.has(item.id)}
-                  onSelect={handleSelectItem}
-                  onClick={handleItemClick}
-                  onMenuClick={(id: string) => console.log("Menu:", id)}
-                />
-              ))}
-            </tbody>
-          </table>
+          // List View - Using shared component
+          <SharedListView
+            items={filteredContent.map(contentToDisplayItem)}
+            selectedIds={selectedItems}
+            onItemClick={handleItemClick}
+            onSelect={handleSelectItem}
+            onSelectAll={handleSelectAll}
+            getMenuOptions={getMenuOptions}
+            showOwner={true}
+          />
         ) : (
-          // Grid View - CSS Grid rows (not cards)
-          <div>
-            <ContentGridHeader
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              allSelected={
-                selectedItems.size === filteredContent.length &&
-                filteredContent.length > 0
-              }
-              onSelectAll={handleSelectAll}
-            />
-            {filteredContent.map((item) => (
-              <ContentGridItem
-                key={item.id}
-                item={item}
-                isSelected={selectedItems.has(item.id)}
-                onSelect={handleSelectItem}
-                onClick={handleItemClick}
-                onMenuClick={(id: string) => console.log("Menu:", id)}
-              />
-            ))}
-          </div>
+          // Grid View - Using shared component
+          <SharedGridView
+            items={filteredContent.map(contentToDisplayItem)}
+            selectedIds={selectedItems}
+            onItemClick={handleItemClick}
+            onSelect={handleSelectItem}
+            getMenuOptions={getMenuOptions}
+          />
         )}
       </div>
 
