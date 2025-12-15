@@ -14,6 +14,7 @@ import {
 } from "@/components/content/EmptyStates";
 import ContentSkeleton from "@/components/content/ContentSkeleton";
 import ErrorState from "@/components/ui/ErrorState";
+import DeleteConfirmation from "@/components/content/DeleteConfirmation";
 import useFetchRoomContent from "@/hooks/rooms/use-fetch-room-content";
 import useUploadFile from "@/hooks/rooms/use-upload-file";
 import { contentToDisplayItem } from "@/utils/display-adapters";
@@ -39,7 +40,13 @@ export default function ContentTab() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortOption>(null);
+  const [apiSortOrder, setApiSortOrder] = useState<ContentSortOrder>(null);
+
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+  // Delete confirmation state
+  const [deleteItem, setDeleteItem] = useState<RoomContentItem | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   // File input ref for upload button
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,7 +68,6 @@ export default function ContentTab() {
   // Map UI sort options to API sort params
   const apiSortBy: ContentSortBy =
     sortBy === "name" ? "name" : sortBy === "date" ? "updatedAt" : null;
-  const apiSortOrder: ContentSortOrder = "DESC";
 
   // Fetch room content from API
   const { folders, files, breadcrumb, roomInfo, isLoading, isError, refetch } =
@@ -79,8 +85,20 @@ export default function ContentTab() {
     folderId,
     searchQuery: searchTerm,
     sortBy: apiSortBy,
-    sortOrder: apiSortBy ? apiSortOrder : null,
+    sortOrder: apiSortOrder,
   });
+
+  // Handle opening delete confirmation
+  const handleDeleteClick = (item: RoomContentItem) => {
+    setDeleteItem(item);
+    setIsDeleteOpen(true);
+  };
+
+  // Handle closing delete confirmation
+  const handleDeleteClose = () => {
+    setIsDeleteOpen(false);
+    setDeleteItem(null);
+  };
 
   // Build breadcrumbs - prepend root, use API breadcrumb as-is
   const toolbarBreadcrumbs = [
@@ -167,14 +185,14 @@ export default function ContentTab() {
       return [
         { title: "Open", action: () => handleFolderClick(id) },
         { title: "Rename", action: () => console.log("Rename:", id) },
-        { title: "Delete", action: () => console.log("Delete folder:", id) },
+        { title: "Delete", action: () => handleDeleteClick(item) },
       ];
     }
 
     return [
       { title: "Download", action: () => console.log("Download:", id) },
       { title: "Rename", action: () => console.log("Rename:", id) },
-      { title: "Delete", action: () => console.log("Delete file:", id) },
+      { title: "Delete", action: () => handleDeleteClick(item) },
     ];
   };
 
@@ -266,6 +284,18 @@ export default function ContentTab() {
           />
         )}
       </AnimatePresence>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmation
+        item={deleteItem}
+        isOpen={isDeleteOpen}
+        onClose={handleDeleteClose}
+        roomId={roomId}
+        folderId={folderId}
+        searchQuery={searchTerm}
+        sortBy={apiSortBy}
+        sortOrder={apiSortOrder}
+      />
     </UploadDropzone>
   );
 }

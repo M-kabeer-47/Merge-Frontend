@@ -2,11 +2,13 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function AuthCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,12 +21,15 @@ export default function AuthCallbackContent() {
       localStorage.setItem("accessToken", token);
       localStorage.setItem("refreshToken", refreshToken);
 
+      // Invalidate the user query so it refetches with the new token
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+
       // Redirect to the intended destination
       router.replace(redirect);
     } else {
       setError("Missing authentication tokens. Please try logging in again.");
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, queryClient]);
 
   if (error) {
     return (

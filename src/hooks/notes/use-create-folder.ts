@@ -33,34 +33,55 @@ export default function useCreateFolder({
   const createFolderFunction = async (payload: CreateFolderPayload) => {
     const accessToken = localStorage.getItem("accessToken");
 
-    // Prepare body
-    const body: any = {
-      name: payload.name,
-      type: payload.type,
-    };
+    // Different endpoints and body structure for notes vs room folders
+    if (payload.type === "notes") {
+      // Notes folder endpoint
+      const body: any = {
+        name: payload.name,
+      };
 
-    // Only add parentFolderId if it's explicitly provided (can be null for root)
-    if (payload.parentFolderId !== undefined) {
-      body.parentFolderId = payload.parentFolderId;
+      // Only add parentFolderId if provided
+      if (payload.parentFolderId) {
+        body.parentFolderId = payload.parentFolderId;
+      }
+
+      const response = await apiRequest(
+        axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/folders/create/notes-folder`,
+          body,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        )
+      );
+      return response.data;
+    } else {
+      // Room content folder endpoint
+      const body: any = {
+        name: payload.name,
+        roomId: payload.roomId,
+      };
+
+      // Only add parentFolderId if provided
+      if (payload.parentFolderId) {
+        body.parentFolderId = payload.parentFolderId;
+      }
+
+      const response = await apiRequest(
+        axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/folders/create/room-folder`,
+          body,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        )
+      );
+      return response.data;
     }
-
-    // Add roomId for room folders
-    if (payload.type === "room" && payload.roomId) {
-      body.roomId = payload.roomId;
-    }
-
-    let response = await apiRequest(
-      axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/folders/create`,
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      )
-    );
-    return response.data;
   };
 
   const {
@@ -83,8 +104,9 @@ export default function useCreateFolder({
               sortOrder,
             ]
           : ["notes", variables.parentFolderId || null, searchQuery];
-
-      // Update cache with the actual folder data from API response
+      console.log("queryKey", queryKey);
+      console.log("Created Folder: ", createdFolder);
+      // Update cache with the actual fol der data from API response
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
 

@@ -6,21 +6,21 @@ import type { ContentSortBy, ContentSortOrder } from "@/types/room-content";
 
 const isClient = typeof window !== "undefined";
 
-interface UseDeleteFileOptions {
+interface UseDeleteContentFolderOptions {
   roomId: string;
-  folderId?: string | null;
+  parentFolderId?: string | null;
   searchQuery?: string;
   sortBy?: ContentSortBy;
   sortOrder?: ContentSortOrder;
 }
 
-export default function useDeleteFile({
+export default function useDeleteContentFolder({
   roomId,
-  folderId,
+  parentFolderId,
   searchQuery = "",
   sortBy,
   sortOrder,
-}: UseDeleteFileOptions) {
+}: UseDeleteContentFolderOptions) {
   const queryClient = useQueryClient();
 
   const { rotateToken, isRotationPending } = useRotateToken({
@@ -30,11 +30,11 @@ export default function useDeleteFile({
         : "",
   });
 
-  const deleteFileFunction = async (fileId: string) => {
+  const deleteFolderFunction = async (folderId: string) => {
     const accessToken = localStorage.getItem("accessToken");
 
     const response = await axios.delete(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/files/${fileId}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/folders/${folderId}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -49,15 +49,15 @@ export default function useDeleteFile({
     isPending: isDeleting,
     isError: isDeleteError,
     isSuccess: isDeleteSuccess,
-    mutateAsync: deleteFile,
+    mutateAsync: deleteFolder,
   } = useMutation({
-    mutationFn: deleteFileFunction,
-    onSuccess: (_, deletedFileId) => {
-      // Update the cache to remove the deleted file
+    mutationFn: deleteFolderFunction,
+    onSuccess: (_, deletedFolderId) => {
+      // Update the cache to remove the deleted folder
       const queryKey = [
         "room-content",
         roomId,
-        folderId || null,
+        parentFolderId || null,
         searchQuery,
         sortBy,
         sortOrder,
@@ -68,24 +68,24 @@ export default function useDeleteFile({
 
         return {
           ...old,
-          files: (old.files || []).filter(
-            (file: any) => file.id !== deletedFileId
+          folders: (old.folders || []).filter(
+            (folder: any) => folder.id !== deletedFolderId
           ),
           total: {
             ...old.total,
-            files: Math.max((old.total?.files || 1) - 1, 0),
+            folders: Math.max((old.total?.folders || 1) - 1, 0),
             combined: Math.max((old.total?.combined || 1) - 1, 0),
           },
         };
       });
 
-      toast.success("File deleted successfully!");
+      toast.success("Folder deleted successfully!");
     },
-    onError: async (error: any, fileId) => {
+    onError: async (error: any, folderId) => {
       if (error?.response?.status === 401) {
         try {
           await rotateToken();
-          await deleteFile(fileId);
+          await deleteFolder(folderId);
         } catch (rotationError) {
           toast.error("Session expired. Please sign in again.");
         }
@@ -93,13 +93,13 @@ export default function useDeleteFile({
       }
       toast.error(
         error?.response?.data?.message ||
-          "Failed to delete file. Please try again."
+          "Failed to delete folder. Please try again."
       );
     },
   });
 
   return {
-    deleteFile,
+    deleteFolder,
     isDeleting,
     isDeleteError,
     isDeleteSuccess,

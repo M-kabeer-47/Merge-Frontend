@@ -31,5 +31,3 @@ export interface MenuOption {
   title: string;
   action: () => void;
 }
-
-

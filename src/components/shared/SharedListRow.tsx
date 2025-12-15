@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Folder,
   FileText,
@@ -90,7 +90,7 @@ export default function SharedListRow({
     <tr
       className={`
         border-b border-light-border cursor-pointer hover:bg-background transition-colors
-        ${isSelected ? "bg-gray-50" : ""}
+        ${isSelected ? "bg-background" : ""}
       `}
       onClick={() => onClick?.(item.id)}
     >
@@ -199,7 +199,7 @@ export default function SharedListRow({
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="w-8 h-8 rounded hover:bg-gray-100 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded  flex items-center justify-center transition-colors"
             aria-label="More options"
           >
             <MoreVertical className="h-5 w-5 text-para-muted" />

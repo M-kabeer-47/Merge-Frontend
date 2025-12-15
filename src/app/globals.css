@@ -35,7 +35,7 @@
   --input: #374151; /* Dark gray for inputs */
   --muted: #111827; /* Very dark for muted sections */
   --popover: #1f2937; /* Dark for popovers */
-  --destructive: #ff6b6b;
+  --destructive: #d53232;
   --success: #34d399; /* Brighter green for dark mode */
   --info: #60a5fa; /* Lighter blue for dark mode */
   --light-border: #363e4e; /* Dark gray for light borders */ /* White text */
@@ -101,67 +101,63 @@ body {
     @apply bg-background text-foreground;
   }
 }
-.bn-container [data-color-scheme="light"]{
+.bn-container [data-color-scheme="light"] {
   background-color: var(--main-background) !important;
 }
-.bn-suggestion-menu{
-  border: 0px ;
+.bn-suggestion-menu {
+  border: 0px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   background-color: var(--main-background);
-  
 }
-.bn-editor{
+.bn-editor {
   background-color: var(--main-background) !important;
-  color: var(--heading) !important;  
+  color: var(--heading) !important;
   padding-inline: 0 !important;
-  
 }
 
-.bn-button:hover{
+.bn-button:hover {
   background-color: #8668c01a;
   color: var(--heading);
-  
 }
 .bn-suggestion-menu-item span {
   color: #fff;
-
 }
 
-.bn-suggestion-menu-item:hover{
+.bn-suggestion-menu-item:hover {
   background-color: var(--primary);
   color: white;
 }
 
 /* Hide scrollbar for horizontal scroll */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+  display: none; /* Chrome, Safari and Opera */
 }
 
-.bn-panel{
+.bn-panel {
   background-color: var(--background);
   border: 1px solid var(--light-border);
 }
 
-.bg-card{
+.bg-card {
   border: 0px;
   box-shadow: none;
 }
 .bn-tab-panel > input {
-  border: 1px solid var(--light-border); 
-   @apply bg-secondary/5;
+  border: 1px solid var(--light-border);
+  @apply bg-secondary/5;
 }
-.bn-toolbar{
+.bn-toolbar {
   background-color: var(--main-background);
   border: 1px solid var(--light-border);
 }
-[data-radix-popper-content-wrapper]{
+[data-radix-popper-content-wrapper] {
   background-color: var(--main-background);
 }
-[data-radix-popper-content-wrapper]>div{
+[data-radix-popper-content-wrapper] > div {
   border: 1px solid var(--light-border);
 }

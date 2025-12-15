@@ -9,7 +9,6 @@ import type {
   BreadcrumbItem,
   RoomInfo,
   ContentSortBy,
-  ContentSortOrder,
 } from "@/types/room-content";
 
 const isClient = typeof window !== "undefined";
@@ -18,8 +17,8 @@ interface UseRoomContentParams {
   roomId: string;
   folderId?: string | null;
   search?: string;
-  sortBy?: ContentSortBy;
-  sortOrder?: ContentSortOrder;
+  sortBy?: ContentSortBy["type"];
+  sortOrder?: ContentSortBy["order"];
 }
 
 export default function useFetchRoomContent({

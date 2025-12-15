@@ -47,7 +47,7 @@ export function noteToDisplayItem(item: NoteOrFolder): BaseDisplayItem {
     isFolder: true,
     updatedAt: new Date(folder.updatedAt),
     metadata:
-      folder.itemCount !== undefined ? `${folder.itemCount} items` : undefined,
+      folder.itemCount !== undefined ? `${folder.itemCount} items` : `0 items`,
     iconType: "folder",
     iconColor: "text-secondary",
   };
@@ -57,6 +57,9 @@ export function noteToDisplayItem(item: NoteOrFolder): BaseDisplayItem {
  * Convert RoomContentItem to BaseDisplayItem
  */
 export function contentToDisplayItem(item: RoomContentItem): BaseDisplayItem {
+  console.log("Item: " + JSON.stringify(item));
+  let isRoomContentFolderResult = isRoomContentFolder(item);
+  console.log("isRoomContentFolder: " + isRoomContentFolderResult);
   if (isRoomContentFolder(item)) {
     const folder = item as RoomContentFolder;
     return {
@@ -64,7 +67,7 @@ export function contentToDisplayItem(item: RoomContentItem): BaseDisplayItem {
       name: folder.name,
       isFolder: true,
       updatedAt: new Date(folder.updatedAt),
-      metadata: `${folder.totalItems} items`,
+      metadata: `${folder.totalItems || 0} items`,
       owner: folder.owner
         ? `${folder.owner.firstName} ${folder.owner.lastName}`
         : undefined,

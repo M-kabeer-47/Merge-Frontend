@@ -68,7 +68,8 @@ export default function ConfirmDialog({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3 }}
-        className="bg-main-background rounded-lg shadow-xl w-full max-w-xl mx-4 border border-light-border">
+        className="bg-main-background rounded-lg shadow-xl w-full max-w-xl mx-4 border border-light-border"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-light-border">
           <div className="flex items-center gap-3">
@@ -92,24 +93,23 @@ export default function ConfirmDialog({
 
         {/* Content */}
         <div className="px-6 py-4">
-          <p className="text-para text-sm leading-relaxed">{message}
+          <p className="text-para text-sm leading-relaxed">
+            {message}
 
             <span className="font-bold">{" " + itemName + "?"}</span>
-            {isDeleteFolder && " All content inside this folder will also be deleted."}
+            {isDeleteFolder &&
+              " All content inside this folder will also be deleted."}
           </p>
-
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-light-border bg-background/50">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-light-border">
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
             disabled={isLoading}
             className="min-w-[110px]"
-
-
           >
             {cancelText}
           </Button>
@@ -117,10 +117,13 @@ export default function ConfirmDialog({
             type="button"
             onClick={handleConfirm}
             disabled={isLoading}
-
             className={`${styles.button} min-w-[110px]`}
           >
-            {isLoading ? <LoadingSpinner size="sm" text="Please wait..." /> : confirmText}
+            {isLoading ? (
+              <LoadingSpinner size="sm" text="Please wait..." />
+            ) : (
+              confirmText
+            )}
           </Button>
         </div>
       </motion.div>

@@ -17,6 +17,7 @@ import type {
   FilterType,
 } from "@/types/content";
 import { useParams, useRouter } from "next/navigation";
+import { ContentSortOrder } from "@/types/room-content";
 
 interface ContentToolbarProps {
   breadcrumbs: BreadcrumbItem[];
@@ -28,7 +29,7 @@ interface ContentToolbarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   sortBy: SortOption;
-  sortOrder: "ASC" | "DESC";
+  sortOrder: ContentSortOrder;
   onSortChange: (sort: SortOption) => void;
   selectedCount: number;
   onUpload?: () => void;

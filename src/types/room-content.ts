@@ -74,10 +74,11 @@ export type ContentSortOrder = "ASC" | "DESC" | null;
 export type RoomContentItem = RoomContentFolder | RoomContentFile;
 
 // Type guard to check if item is a folder
+// Files have mimeType, folders don't - this works for both fetched folders and newly created ones
 export function isRoomContentFolder(
   item: RoomContentItem
 ): item is RoomContentFolder {
-  return "totalItems" in item;
+  return !("mimeType" in item);
 }
 
 // Type guard to check if item is a file

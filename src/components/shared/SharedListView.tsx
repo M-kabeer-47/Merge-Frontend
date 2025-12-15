@@ -30,7 +30,7 @@ export default function SharedListView({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.2 }}
-      className="border border-light-border rounded-lg overflow-hidden bg-main-background"
+      className="border border-light-border rounded-lg min-h-screen bg-main-background"
     >
       <table className="w-full">
         {/* Header */}

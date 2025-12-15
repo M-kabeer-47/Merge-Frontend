@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import useCreateNote from "@/hooks/notes/use-create-note";

@@ -6,7 +6,6 @@ import { Roboto, Raleway } from "next/font/google";
 import { CircleCheck, InfoIcon } from "lucide-react";
 import { ThemeProvider } from "next-themes";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
-import { AuthProvider } from "@/providers/AuthProvider";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -25,6 +24,7 @@ export const metadata: Metadata = {
   description:
     "Advanced collaborative learning and project management platform",
 };
+
 const toastIcons = {
   success: (
     <CircleCheck
@@ -53,9 +53,17 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ReactQueryProvider>
-            <AuthProvider>{children}</AuthProvider>
-
-            <Toaster icons={toastIcons} />
+            {children}
+            <Toaster
+              icons={toastIcons}
+              toastOptions={{
+                style: {
+                  background: "var(--bg-main-background)",
+                  color: "var(--para)",
+                  border: "1px solid var(--light-border)",
+                },
+              }}
+            />
           </ReactQueryProvider>
         </ThemeProvider>
       </body>
