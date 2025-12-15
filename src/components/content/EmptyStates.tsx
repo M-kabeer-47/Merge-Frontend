@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { motion } from "motion/react";
-import { FolderOpen, Upload, FolderPlus, Search, FileX } from "lucide-react";
+import { Upload, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface EmptyFolderStateProps {
@@ -22,10 +23,18 @@ export function EmptyFolderState({
     >
       {/* Illustration */}
       <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="w-15 h-15 bg-secondary/10 rounded-full flex items-center justify-center mb-6"
+        className="mb-6"
       >
-        <FolderOpen className="h-6 w-6 text-primary" />
+        <Image
+          src="/illustrations/empty-folder.png"
+          alt="Empty folder"
+          width={160}
+          height={160}
+          className="object-contain"
+        />
       </motion.div>
 
       {/* Heading */}
@@ -87,12 +96,18 @@ export function NoSearchResults({
     >
       {/* Illustration */}
       <motion.div
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="w-32 h-32 bg-gradient-to-br from-para/10 to-para-muted/10 rounded-full flex items-center justify-center mb-6"
+        className="mb-6"
       >
-        <Search className="h-16 w-16 text-para-muted" />
+        <Image
+          src="/illustrations/no-search-results.png"
+          alt="No search results"
+          width={160}
+          height={160}
+          className="object-contain"
+        />
       </motion.div>
 
       {/* Heading */}
@@ -141,12 +156,18 @@ export function NoContentState({
     >
       {/* Illustration */}
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="w-32 h-32 bg-gradient-to-br from-para/10 to-para-muted/10 rounded-full flex items-center justify-center mb-6"
+        className="mb-6"
       >
-        <FileX className="h-16 w-16 text-para-muted" />
+        <Image
+          src="/illustrations/empty-folder.png"
+          alt="No content"
+          width={160}
+          height={160}
+          className="object-contain"
+        />
       </motion.div>
 
       {/* Heading */}

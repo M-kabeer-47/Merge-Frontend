@@ -4,12 +4,14 @@ import SearchBar from "@/components/ui/SearchBar";
 import type { NoteViewMode } from "@/types/note";
 
 interface NotesToolbarProps {
+  searchTerm: string;
   onSearch: (term: string) => void;
   viewMode: NoteViewMode;
   setViewMode: (mode: NoteViewMode) => void;
 }
 
 export default function NotesToolbar({
+  searchTerm,
   onSearch,
   viewMode,
   setViewMode,
@@ -24,6 +26,7 @@ export default function NotesToolbar({
       <div className="flex-1 max-w-md">
         <SearchBar
           onSearch={onSearch}
+          defaultValue={searchTerm}
           placeholder="Search notes and folders..."
         />
       </div>

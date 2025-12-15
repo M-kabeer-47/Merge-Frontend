@@ -11,17 +11,7 @@ interface CreateFolderPayload {
   roomId?: string;
 }
 
-interface UseCreateFolderOptions {
-  searchQuery: string;
-  sortBy?: string | null;
-  sortOrder?: string | null;
-}
-
-export default function useCreateFolder({
-  searchQuery,
-  sortBy,
-  sortOrder,
-}: UseCreateFolderOptions) {
+export default function useCreateFolder() {
   const queryClient = useQueryClient();
   const { rotateToken, isRotationPending } = usesRotateToken({
     oldToken:
@@ -93,18 +83,18 @@ export default function useCreateFolder({
     mutationFn: createFolderFunction,
     onSuccess: (createdFolder, variables) => {
       // Determine the query key based on folder type
+      // Use default values (no search/sort filters) to update the base cache
       const queryKey =
         variables.type === "room"
           ? [
               "room-content",
               variables.roomId,
               variables.parentFolderId || null,
-              searchQuery,
-              sortBy,
-              sortOrder,
+              "", // searchQuery - default empty
+              null, // sortBy - default null
+              null, // sortOrder - default null
             ]
-          : ["notes", variables.parentFolderId || null, searchQuery];
-      console.log("queryKey", queryKey);
+          : ["notes", variables.parentFolderId || null, ""];
       console.log("Created Folder: ", createdFolder);
       // Update cache with the actual fol der data from API response
       queryClient.setQueryData(queryKey, (old: any) => {

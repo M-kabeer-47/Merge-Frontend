@@ -38,6 +38,7 @@ interface ContentToolbarProps {
   onBulkDelete?: () => void;
   onBulkTag?: () => void;
   onClearSelection?: () => void;
+  onResetFilters?: () => void;
 }
 
 const filterOptions: { value: FilterType; label: string }[] = [
@@ -65,7 +66,7 @@ export default function ContentToolbar({
   viewMode,
   onViewModeChange,
   sortBy,
-  sortOrder,
+
   onSortChange,
   selectedCount,
   onUpload,
@@ -74,6 +75,7 @@ export default function ContentToolbar({
   onBulkDelete,
   onBulkTag,
   onClearSelection,
+  onResetFilters,
 }: ContentToolbarProps) {
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const params = useParams();
@@ -158,6 +160,7 @@ export default function ContentToolbar({
           {/* Search */}
           <div className="flex-1 w-full lg:max-w-md">
             <SearchBar
+              defaultValue={searchTerm}
               onSearch={onSearchChange}
               placeholder="Search files and folders..."
             />
@@ -236,11 +239,9 @@ export default function ContentToolbar({
         isOpen={isCreateFolderModalOpen}
         onClose={() => setIsCreateFolderModalOpen(false)}
         folderId={currentFolderId}
-        searchQuery={searchTerm}
         folderType="room"
         roomId={roomId}
-        sortBy={apiSortBy}
-        sortOrder={sortOrder}
+        onSuccess={onResetFilters}
       />
     </div>
   );

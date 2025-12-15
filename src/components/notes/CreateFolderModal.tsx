@@ -11,29 +11,21 @@ interface CreateFolderModalProps {
   isOpen: boolean;
   onClose: () => void;
   folderId?: string | null;
-  searchQuery: string;
   folderType?: "notes" | "room";
   roomId?: string;
-  sortBy?: string | null;
-  sortOrder?: string | null;
+  onSuccess?: () => void;
 }
 
 export default function CreateFolderModal({
   isOpen,
   onClose,
   folderId,
-  searchQuery,
   folderType = "notes",
   roomId,
-  sortBy,
-  sortOrder,
+  onSuccess,
 }: CreateFolderModalProps) {
   const [folderName, setFolderName] = useState("");
-  const { createFolder, isCreating } = useCreateFolder({
-    searchQuery,
-    sortBy,
-    sortOrder,
-  });
+  const { createFolder, isCreating } = useCreateFolder();
 
   if (!isOpen) return null;
 
@@ -47,6 +39,7 @@ export default function CreateFolderModal({
         roomId: folderType === "room" ? roomId : undefined,
       });
       setFolderName("");
+      onSuccess?.(); // Call onSuccess to reset UI state (search, sort, etc.)
       onClose();
     }
   };

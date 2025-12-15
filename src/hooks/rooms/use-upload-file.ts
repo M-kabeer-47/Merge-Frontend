@@ -5,16 +5,12 @@ import { toast } from "sonner";
 import useRotateToken from "@/utils/rotate-token";
 import { uploadToS3 } from "@/utils/s3-upload";
 import type { UploadProgress } from "@/types/content";
-import type { ContentSortBy, ContentSortOrder } from "@/types/room-content";
-
 const isClient = typeof window !== "undefined";
 
 interface UseUploadFileOptions {
   roomId: string;
   folderId?: string | null;
-  searchQuery?: string;
-  sortBy?: ContentSortBy;
-  sortOrder?: ContentSortOrder;
+  onSuccess?: () => void;
 }
 
 interface UploadResult {
@@ -26,9 +22,7 @@ interface UploadResult {
 export default function useUploadFile({
   roomId,
   folderId,
-  searchQuery = "",
-  sortBy,
-  sortOrder,
+  onSuccess,
 }: UseUploadFileOptions) {
   const queryClient = useQueryClient();
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
@@ -40,14 +34,15 @@ export default function useUploadFile({
         : "",
   });
 
-  // Query key for cache updates
+  // Query key for cache updates - use default values (no search/sort filters)
+  // This ensures the base unfiltered cache is updated when files are uploaded
   const queryKey = [
     "room-content",
     roomId,
     folderId || null,
-    searchQuery,
-    sortBy,
-    sortOrder,
+    "", // searchQuery - default empty
+    null, // sortBy - default null
+    null, // sortOrder - default null
   ];
 
   // Helper to update a specific upload's progress (not a useCallback - only used inside mutation)
@@ -202,6 +197,9 @@ export default function useUploadFile({
           ? "File uploaded successfully!"
           : `${fileArray.length} files uploaded successfully!`
       );
+
+      // Call onSuccess callback to reset UI state (search, sort, etc.)
+      onSuccess?.();
     } catch (error) {
       // Individual errors are already handled in onError
       console.error("Some uploads failed:", error);

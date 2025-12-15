@@ -32,6 +32,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
     return () => clearTimeout(timer);
   }, [value, debounceMs]); // Note: intentionally omitting onSearch to avoid re-triggering
 
+  useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
+
   const handleClear = useCallback(() => {
     setValue("");
     onSearch(""); // Immediately clear

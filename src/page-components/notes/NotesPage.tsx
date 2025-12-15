@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -172,6 +172,7 @@ export default function NotesPageClient() {
 
       {/* Toolbar */}
       <NotesToolbar
+        searchTerm={searchTerm}
         onSearch={setSearchTerm}
         viewMode={viewMode}
         setViewMode={setViewMode}
@@ -242,7 +243,7 @@ export default function NotesPageClient() {
         isOpen={showCreateFolderModal}
         onClose={() => setShowCreateFolderModal(false)}
         folderId={folderId}
-        searchQuery={searchTerm}
+        onSuccess={() => setSearchTerm("")}
       />
 
       {/* Delete Confirmation */}

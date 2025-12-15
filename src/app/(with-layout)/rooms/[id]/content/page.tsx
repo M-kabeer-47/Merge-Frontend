@@ -79,13 +79,18 @@ export default function ContentTab() {
       sortOrder: apiSortBy ? apiSortOrder : null,
     });
 
+  // Reset filters callback - clears search and sort so new items are visible
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSortBy(null);
+    setApiSortOrder(null);
+  };
+
   // File upload hook with real progress tracking
   const { uploads, uploadFiles, removeUpload, clearAll } = useUploadFile({
     roomId,
     folderId,
-    searchQuery: searchTerm,
-    sortBy: apiSortBy,
-    sortOrder: apiSortOrder,
+    onSuccess: resetFilters,
   });
 
   // Handle opening delete confirmation
@@ -229,6 +234,7 @@ export default function ContentTab() {
         selectedCount={selectedItems.size}
         onClearSelection={() => setSelectedItems(new Set())}
         onUpload={handleUploadClick}
+        onResetFilters={resetFilters}
       />
 
       {/* Main Content Area */}

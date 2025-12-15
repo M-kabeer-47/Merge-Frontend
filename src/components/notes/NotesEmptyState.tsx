@@ -1,5 +1,6 @@
+import Image from "next/image";
 import { motion } from "motion/react";
-import { SearchIcon, Plus, FolderPlus } from "lucide-react";
+import { Plus, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface NotesEmptyStateProps {
@@ -20,9 +21,26 @@ export default function NotesEmptyState({
       transition={{ delay: 0.3 }}
       className="flex flex-col items-center justify-center py-20"
     >
-      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-        <SearchIcon className="w-10 h-10 text-primary" />
-      </div>
+      {/* Illustration */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 200, damping: 15 }}
+        className="mb-6"
+      >
+        <Image
+          src={
+            searchTerm
+              ? "/illustrations/no-search-results.png"
+              : "/illustrations/empty-notes.png"
+          }
+          alt={searchTerm ? "No search results" : "Empty notes"}
+          width={160}
+          height={160}
+          className="object-contain"
+        />
+      </motion.div>
+
       <h3 className="text-xl font-bold text-heading mb-2">
         {searchTerm ? "No items found" : "Empty folder"}
       </h3>

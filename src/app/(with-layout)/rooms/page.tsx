@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useMemo } from "react";
+import Image from "next/image";
 import { motion } from "motion/react";
-import { IconPlus, IconUsers, IconSearch } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { Link } from "lucide-react";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
@@ -231,11 +232,26 @@ export default function RoomsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-center py-12"
+          className="flex flex-col items-center justify-center py-12"
         >
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <IconSearch className="h-8 w-8 text-para-muted" />
-          </div>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="mb-6"
+          >
+            <Image
+              src={
+                searchTerm
+                  ? "/illustrations/no-search-results.png"
+                  : "/illustrations/empty-rooms.png"
+              }
+              alt={searchTerm ? "No search results" : "No rooms"}
+              width={160}
+              height={160}
+              className="object-contain"
+            />
+          </motion.div>
           <h3 className="text-lg font-semibold text-heading mb-2">
             No rooms found
           </h3>
