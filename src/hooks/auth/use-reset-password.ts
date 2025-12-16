@@ -1,7 +1,6 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
+import api from "@/utils/api";
 
 interface ResetPasswordPayload {
   token: string;
@@ -10,9 +9,8 @@ interface ResetPasswordPayload {
 
 export default function useResetPassword() {
   const resetPasswordFunction = async (payload: ResetPasswordPayload) => {
-    return await apiRequest(
-      axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/reset-password`, payload)
-    );
+    const response = await api.post("/auth/reset-password", payload);
+    return response.data;
   };
 
   const {
@@ -22,10 +20,10 @@ export default function useResetPassword() {
     mutateAsync: resetPassword,
   } = useMutation({
     mutationFn: resetPasswordFunction,
-    onError: (error: any) => {
+    onError: () => {
       toast.error("Failed to reset password. Please try again.");
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Password reset successfully");
     },
   });

@@ -19,24 +19,24 @@ export default function NotesEmptyState({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="flex flex-col items-center justify-center py-20"
+      className="flex flex-col items-center justify-center py-10"
     >
       {/* Illustration */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="mb-6"
+        className="mb-2"
       >
         <Image
           src={
             searchTerm
               ? "/illustrations/no-search-results.png"
-              : "/illustrations/empty-notes.png"
+              : "/illustrations/empty-folder.png"
           }
           alt={searchTerm ? "No search results" : "Empty notes"}
-          width={160}
-          height={160}
+          width={searchTerm ? 150 : 120}
+          height={searchTerm ? 150 : 120}
           className="object-contain"
         />
       </motion.div>

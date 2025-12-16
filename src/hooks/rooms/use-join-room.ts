@@ -1,27 +1,12 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
-import usesRotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 import { JoinRoomType } from "@/schemas/room/join-room";
 
 export default function useJoinRoom() {
-  const { rotateToken, isRotationPending } = usesRotateToken({
-    oldToken:
-      typeof window !== "undefined"
-        ? localStorage.getItem("refreshToken") || ""
-        : "",
-  });
-
   const joinRoomFunction = async (data: JoinRoomType) => {
-    const accessToken = localStorage.getItem("accessToken");
-    return await apiRequest(
-      axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/room/join`, data, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-    );
+    const response = await api.post("/room/join", data);
+    return response.data;
   };
 
   const {
@@ -32,22 +17,13 @@ export default function useJoinRoom() {
     data: joinedRoom,
   } = useMutation({
     mutationFn: joinRoomFunction,
-    onError: async (error: any, variables) => {
-      if (error?.response?.data?.statusCode === 401) {
-        try {
-          await rotateToken();
-          await joinRoom(variables);
-        } catch (rotationError) {
-          toast.error("Session expired. Please sign in again.");
-        }
-        return;
-      }
+    onError: (error: any) => {
       toast.error(
-        error?.response?.data?.message || 
-        "Failed to send join request. Please check the room code."
+        error?.response?.data?.message ||
+          "Failed to send join request. Please check the room code."
       );
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Join request sent successfully! Waiting for approval.");
     },
   });
@@ -58,6 +34,5 @@ export default function useJoinRoom() {
     isJoinError,
     isJoinSuccess,
     joinedRoom,
-    isRotationPending,
   };
 }

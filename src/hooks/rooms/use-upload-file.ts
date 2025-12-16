@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
-import useRotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 import { uploadToS3 } from "@/utils/s3-upload";
 import type { UploadProgress } from "@/types/content";
-const isClient = typeof window !== "undefined";
 
 interface UseUploadFileOptions {
   roomId: string;
@@ -26,13 +24,6 @@ export default function useUploadFile({
 }: UseUploadFileOptions) {
   const queryClient = useQueryClient();
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
-
-  const { rotateToken } = useRotateToken({
-    oldToken:
-      isClient && localStorage.getItem("refreshToken")
-        ? localStorage.getItem("refreshToken")!
-        : "",
-  });
 
   // Query key for cache updates - use default values (no search/sort filters)
   // This ensures the base unfiltered cache is updated when files are uploaded
@@ -63,25 +54,18 @@ export default function useUploadFile({
       file: File;
       uploadId: string;
     }): Promise<UploadResult> => {
-      const accessToken = localStorage.getItem("accessToken");
       const contentType = file.type || "application/octet-stream";
 
       // Step 1: Get pre-signed URL from backend
       updateUpload(uploadId, { progress: 0 });
 
-      const presignedResponse = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/files/presigned-url/room/${roomId}`,
+      const presignedResponse = await api.post(
+        `/files/presigned-url/room/${roomId}`,
         {
           originalName: file.name,
           contentType,
           size: file.size,
           folderId: folderId || undefined,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
         }
       );
 
@@ -96,8 +80,8 @@ export default function useUploadFile({
       // Step 3: Confirm upload to backend (saves metadata to DB)
       updateUpload(uploadId, { progress: 98 });
 
-      const confirmResponse = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/files/confirm-upload/room/${roomId}`,
+      const confirmResponse = await api.post(
+        `/files/confirm-upload/room/${roomId}`,
         {
           fileKey,
           fileUrl,
@@ -105,12 +89,6 @@ export default function useUploadFile({
           contentType,
           size: file.size,
           folderId: folderId || undefined,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
         }
       );
 
@@ -121,24 +99,7 @@ export default function useUploadFile({
       updateUpload(uploadId, { status: "completed", progress: 100 });
     },
 
-    onError: async (error: any, { file, uploadId }) => {
-      // Handle 401 - try token rotation
-      if (error?.response?.status === 401) {
-        try {
-          await rotateToken();
-          // Retry the upload
-          uploadMutation.mutate({ file, uploadId });
-          return;
-        } catch {
-          updateUpload(uploadId, {
-            status: "error",
-            error: "Session expired. Please sign in again.",
-          });
-          return;
-        }
-      }
-
-      // Handle other errors
+    onError: (error: any, { uploadId }) => {
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||

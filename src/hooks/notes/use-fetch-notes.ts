@@ -1,8 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import apiRequest from "@/utils/api-request";
-import axios from "axios";
 import { useEffect } from "react";
-import rotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 import { Note, Folder } from "@/types/note";
 
 const isClient = typeof window !== "undefined";
@@ -15,40 +13,14 @@ interface NoteFilters {
 export default function useFetchNotes(filters?: NoteFilters) {
   const queryClient = useQueryClient();
 
-  const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
-    oldToken:
-      isClient && localStorage.getItem("refreshToken")
-        ? localStorage.getItem("refreshToken")!
-        : "",
-  });
-
   // Reusable fetch function that takes query params
   const fetchNotesData = async (queryParams: string) => {
-    const token = localStorage.getItem("accessToken");
+    const token = isClient ? localStorage.getItem("accessToken") : null;
     if (!token) return null;
 
-    try {
-      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/notes${
-        queryParams ? `?${queryParams}` : ""
-      }`;
-
-      const response = await apiRequest(
-        axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      );
-      return response.data;
-    } catch (error: any) {
-      if (error?.response?.status === 401 || error?.statusCode === 401) {
-        const result = await refreshTokenFn();
-        if (result?.token) {
-          return fetchNotesData(queryParams);
-        }
-      }
-      throw error;
-    }
+    const url = `/notes${queryParams ? `?${queryParams}` : ""}`;
+    const response = await api.get(url);
+    return response.data;
   };
 
   const fetchNotes = async () => {
@@ -89,7 +61,7 @@ export default function useFetchNotes(filters?: NoteFilters) {
     breadcrumb: data?.breadcrumb || [],
     currentFolder: (data?.currentFolder as Folder | null) || null,
     total: data?.total || 0,
-    isLoading: isLoading || !isClient || isRotationPending || isPending,
+    isLoading: isLoading || !isClient || isPending,
     isError,
     refetch,
   };

@@ -1,17 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import apiRequest from "@/utils/api-request";
+import api from "@/utils/api";
 
-import axios from "axios";
 export default function VerifyPage({ token }: { token: string }) {
   const router = useRouter();
-  const { mutateAsync, isPending, isError, error } = useMutation({
+
+  const { mutateAsync, isPending, isError } = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(
-        axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verify?token=${token}`
-        )
-      );
+      const response = await api.get(`/auth/verify?token=${token}`);
       return response.data;
     },
     onSuccess: (data) => {
@@ -32,5 +28,6 @@ export default function VerifyPage({ token }: { token: string }) {
       console.error("Verification failed:", err);
     },
   });
+
   return { verifyEmail: mutateAsync, isPending, isError };
 }

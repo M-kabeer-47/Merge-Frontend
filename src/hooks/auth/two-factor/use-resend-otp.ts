@@ -1,8 +1,6 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
-import usesRotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 
 interface UseResendOTPProps {
   email: string;
@@ -16,11 +14,10 @@ export default function useResendOTP({
   setResendTimer,
 }: UseResendOTPProps) {
   const resendOTPFunction = async () => {
-    return await apiRequest(
-      axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/resend-otp`, {
-        email: email.toLowerCase(),
-      })
-    );
+    const response = await api.post("/auth/resend-otp", {
+      email: email.toLowerCase(),
+    });
+    return response.data;
   };
 
   const {
@@ -29,10 +26,10 @@ export default function useResendOTP({
     mutateAsync: resendOTP,
   } = useMutation({
     mutationFn: resendOTPFunction,
-    onError: async (error: any) => {
+    onError: () => {
       toast.error("Failed to resend OTP. Please try again.");
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       setResendTimer(60);
       setCanResend(false);
       toast.success("OTP resent successfully");

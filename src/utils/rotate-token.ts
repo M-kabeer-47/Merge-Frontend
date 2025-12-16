@@ -4,9 +4,13 @@ import apiRequest from "@/utils/api-request";
 import { toast } from "sonner";
 import { ApiError } from "@/types/api-error";
 import { useRouter } from "next/navigation";
-export default function useRotateToken({ oldToken }: { oldToken: string }) {
+export default function useRotateToken() {
   const router = useRouter();
   const rotateTokenFunction = async () => {
+    let oldToken =
+      typeof window !== "undefined"
+        ? localStorage.getItem("refreshToken") || ""
+        : "";
     let response = await apiRequest(
       axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,

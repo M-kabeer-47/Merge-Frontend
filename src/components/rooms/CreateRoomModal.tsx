@@ -53,13 +53,8 @@ export default function CreateRoomModal({
   onClose,
   onSuccess,
 }: CreateRoomModalProps) {
-  const {
-    createRoom,
-    isCreating,
-    isCreateSuccess,
-    createdRoom,
-    isRotationPending,
-  } = useCreateRoom();
+  const { createRoom, isCreating, isCreateSuccess, createdRoom } =
+    useCreateRoom();
 
   const {
     control,
@@ -212,7 +207,7 @@ export default function CreateRoomModal({
             disabled={isCreating || !isValid}
             className="flex-1"
           >
-            {isCreating || isRotationPending ? (
+            {isCreating ? (
               <LoadingSpinner />
             ) : (
               <>

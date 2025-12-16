@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import useCreateNote from "@/hooks/notes/use-create-note";
 import NoteEditorSkeleton from "@/components/ui/skeletons/NotesEditorSkeleton";
@@ -12,20 +12,16 @@ const DynamicNoteEditor = dynamic(
 );
 
 export default function CreateNotePage() {
-  const router = useRouter();
-  const { createNote, isCreating, isCreateSuccess } = useCreateNote();
+  const searchParams = useSearchParams();
+  const folderId = searchParams?.get("folderId");
+  const { createNote, isCreating } = useCreateNote();
 
   const handleSave = async (data: { title: string; content: string }) => {
-    alert("Title: " + data.title);
     await createNote({
       title: data.title,
       content: data.content,
+      folderId: folderId || "",
     });
-    if (isCreateSuccess) {
-      router.push("/notes");
-    } else {
-      throw new Error("Note creation failed");
-    }
   };
 
   return (

@@ -1,8 +1,6 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
-import usesRotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 
 interface UseToggleTwoFactorProps {
   twoFactorEnabled: boolean;
@@ -13,19 +11,12 @@ export default function useToggleTwoFactor({
   twoFactorEnabled,
   password,
 }: UseToggleTwoFactorProps) {
-  const { isRotationSuccess, rotateToken, isRotationPending } = usesRotateToken(
-    {
-      oldToken: localStorage.getItem("refreshToken") || "",
-    }
-  );
-
   const toggleTwoFactorFunction = async () => {
-    return await apiRequest(
-      axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/2fa/toggle`, {
-        enable: !twoFactorEnabled,
-        password,
-      })
-    );
+    const response = await api.post("/auth/2fa/toggle", {
+      enable: !twoFactorEnabled,
+      password,
+    });
+    return response.data;
   };
 
   const {
@@ -34,21 +25,12 @@ export default function useToggleTwoFactor({
     mutateAsync: toggleTwoFactor,
   } = useMutation({
     mutationFn: toggleTwoFactorFunction,
-    onError: async (error: any) => {
-      if (error?.response?.data?.statusCode === 401) {
-        try {
-          await rotateToken();
-          await toggleTwoFactorFunction();
-        } catch (rotationError) {
-          toast.error("Session expired. Please sign in again.");
-        }
-        return; // Prevents the error toast below
-      }
+    onError: () => {
       toast.error(
         "Failed to toggle two-factor authentication. Please try again."
       );
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Two-factor authentication toggled successfully");
     },
   });
@@ -57,6 +39,5 @@ export default function useToggleTwoFactor({
     toggleTwoFactor,
     isToggling,
     isToggleError,
-    isRotationPending,
   };
 }

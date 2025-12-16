@@ -1,8 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import apiRequest from "@/utils/api-request";
-import axios from "axios";
 import { useEffect } from "react";
-import rotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 import type {
   RoomContentFolder,
   RoomContentFile,
@@ -17,8 +15,8 @@ interface UseRoomContentParams {
   roomId: string;
   folderId?: string | null;
   search?: string;
-  sortBy?: ContentSortBy["type"];
-  sortOrder?: ContentSortBy["order"];
+  sortBy?: ContentSortBy;
+  sortOrder?: ContentSortOrder;
 }
 
 export default function useFetchRoomContent({
@@ -30,39 +28,15 @@ export default function useFetchRoomContent({
 }: UseRoomContentParams) {
   const queryClient = useQueryClient();
 
-  const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
-    oldToken:
-      isClient && localStorage.getItem("refreshToken")
-        ? localStorage.getItem("refreshToken")!
-        : "",
-  });
-
   const fetchContentData = async (queryParams: string) => {
-    const token = localStorage.getItem("accessToken");
+    const token = isClient ? localStorage.getItem("accessToken") : null;
     if (!token) return null;
 
-    try {
-      const url = `${
-        process.env.NEXT_PUBLIC_BACKEND_URL
-      }/room/${roomId}/course-content${queryParams ? `?${queryParams}` : ""}`;
-
-      const response = await apiRequest(
-        axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      );
-      return response.data;
-    } catch (error: any) {
-      if (error?.response?.status === 401 || error?.statusCode === 401) {
-        const result = await refreshTokenFn();
-        if (result?.token) {
-          return fetchContentData(queryParams);
-        }
-      }
-      throw error;
-    }
+    const url = `/room/${roomId}/course-content${
+      queryParams ? `?${queryParams}` : ""
+    }`;
+    const response = await api.get(url);
+    return response.data;
   };
 
   const fetchContent = async () => {
@@ -115,7 +89,7 @@ export default function useFetchRoomContent({
     currentFolder: (data?.currentFolder as BreadcrumbItem | null) || null,
     roomInfo: (data?.roomInfo as RoomInfo) || null,
     total: data?.total || { folders: 0, files: 0, combined: 0 },
-    isLoading: isLoading || !isClient || isRotationPending || isFetching,
+    isLoading: isLoading || !isClient || isFetching,
     isError,
     refetch,
   };

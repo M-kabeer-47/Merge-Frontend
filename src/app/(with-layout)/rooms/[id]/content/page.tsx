@@ -26,6 +26,7 @@ import type {
 } from "@/types/room-content";
 import { isRoomContentFolder } from "@/types/room-content";
 import type { MenuOption } from "@/types/display-item";
+import { toast } from "sonner";
 
 export default function ContentTab() {
   const params = useParams();
@@ -58,6 +59,9 @@ export default function ContentTab() {
 
   // Handle file input change
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 3) {
+      toast.error("You can only upload up to 3 files at a time.");
+    }
     if (e.target.files && e.target.files.length > 0) {
       uploadFiles(e.target.files);
       // Reset input so same file can be selected again

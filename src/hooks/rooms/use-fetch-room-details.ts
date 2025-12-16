@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import apiRequest from "@/utils/api-request";
-import axios from "axios";
-import rotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 import { toast } from "sonner";
 import { User } from "@/types/user";
 
@@ -36,37 +34,16 @@ export interface RoomDetails {
 }
 
 export default function useFetchRoomDetails(roomId: string) {
-  const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
-    oldToken:
-      isClient && localStorage.getItem("refreshToken")
-        ? localStorage.getItem("refreshToken")!
-        : "",
-  });
-
   const fetchRoomDetails = async (): Promise<RoomDetails | null> => {
-    const token = localStorage.getItem("accessToken");
+    const token = isClient ? localStorage.getItem("accessToken") : null;
     if (!token || !roomId) return null;
 
     try {
-      const response = await apiRequest(
-        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/room/${roomId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      );
+      const response = await api.get(`/room/${roomId}`);
       return response.data;
     } catch (error: any) {
-      // Check if error is 401 (Unauthorized)
-      if (error?.response?.status === 401 || error?.statusCode === 401) {
-        const result = await refreshTokenFn();
-        // If token rotation was successful, retry fetching room details
-        if (result?.token) {
-          return fetchRoomDetails();
-        }
-      }
       toast.error("Failed to fetch room details");
-      return null;
+      throw error;
     }
   };
 
@@ -80,7 +57,7 @@ export default function useFetchRoomDetails(roomId: string) {
 
   return {
     room: data,
-    isLoading: isLoading || isFetching || !isClient || isRotationPending,
+    isLoading: isLoading || isFetching || !isClient,
     isError,
     refetch,
   };

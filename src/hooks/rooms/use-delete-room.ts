@@ -1,8 +1,6 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
-import usesRotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 
 interface DeleteRoomParams {
   roomId: string;
@@ -12,22 +10,10 @@ interface DeleteRoomParams {
 
 export default function useDeleteRoom() {
   const queryClient = useQueryClient();
-  const { rotateToken, isRotationPending } = usesRotateToken({
-    oldToken:
-      typeof window !== "undefined"
-        ? localStorage.getItem("refreshToken") || ""
-        : "",
-  });
 
   const deleteRoomFunction = async (roomId: string) => {
-    const accessToken = localStorage.getItem("accessToken");
-    return await apiRequest(
-      axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/room/${roomId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-    );
+    const response = await api.delete(`/room/${roomId}`);
+    return response.data;
   };
 
   const {
@@ -37,16 +23,7 @@ export default function useDeleteRoom() {
     mutateAsync: deleteRoom,
   } = useMutation({
     mutationFn: ({ roomId }: DeleteRoomParams) => deleteRoomFunction(roomId),
-    onError: async (error: any, variables) => {
-      if (error?.response?.data?.statusCode === 401) {
-        try {
-          await rotateToken();
-          await deleteRoom(variables);
-        } catch (rotationError) {
-          toast.error("Session expired. Please sign in again.");
-        }
-        return;
-      }
+    onError: (error: any) => {
       toast.error(
         error?.response?.data?.message ||
           "Failed to delete room. Please try again."
@@ -76,6 +53,5 @@ export default function useDeleteRoom() {
     isDeleting,
     isDeleteError,
     isDeleteSuccess,
-    isRotationPending,
   };
 }

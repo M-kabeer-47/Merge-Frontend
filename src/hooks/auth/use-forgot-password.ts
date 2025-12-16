@@ -1,7 +1,6 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
+import api from "@/utils/api";
 
 interface ForgotPasswordPayload {
   email: string;
@@ -9,9 +8,8 @@ interface ForgotPasswordPayload {
 
 export default function useForgotPassword() {
   const forgotPasswordFunction = async (payload: ForgotPasswordPayload) => {
-    return await apiRequest(
-      axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/forgot-password`, payload)
-    );
+    const response = await api.post("/auth/forgot-password", payload);
+    return response.data;
   };
 
   const {
@@ -21,10 +19,10 @@ export default function useForgotPassword() {
     mutateAsync: sendResetLink,
   } = useMutation({
     mutationFn: forgotPasswordFunction,
-    onError: (error: any) => {
+    onError: () => {
       toast.error("Failed to send reset link. Please try again.");
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Password reset link sent to your email");
     },
   });

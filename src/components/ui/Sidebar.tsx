@@ -102,7 +102,7 @@ export const DesktopSidebar = ({
         )}
         initial={false}
         animate={{
-          width:  (open ? "240px" : "80px") ,
+          width: open ? "240px" : "80px",
         }}
         transition={{
           duration: 0.3,
@@ -230,7 +230,9 @@ export const SidebarLink = ({
               isActive ? "text-primary" : "text-para-muted"
             }`}
           >
-            {link.icon}
+            
+              {link.icon}
+            
           </div>
           <motion.span
             animate={{

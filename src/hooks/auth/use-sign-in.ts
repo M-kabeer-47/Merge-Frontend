@@ -1,38 +1,34 @@
 import { UserType } from "@/schemas/user/user";
-import apiRequest from "@/utils/api-request";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";
 import { ApiError } from "@/types/api-error";
+import api from "@/utils/api";
 
 export default function signIn({
   setError,
   email,
-  password
 }: {
   setError: UseFormSetError<UserType>;
   email: string;
   password: string;
 }) {
-  const signIn = async ({
+  const signInFn = async ({
     email,
     password,
   }: {
     email: string;
     password: string;
   }) => {
-    const response = await apiRequest(
-      axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signin`, {
-        email,
-        password,
-      })
-    );
+    const response = await api.post("/auth/signin", {
+      email,
+      password,
+    });
     return response.data;
   };
 
   const { mutateAsync, isError, isPending } = useMutation({
-    mutationFn: signIn,
+    mutationFn: signInFn,
     onSuccess: (data) => {
       if (data.message === "A new OTP has been sent to your email.") {
         window.location.href = `/two-factor?email=${email}`; // Redirect to 2FA page
@@ -43,7 +39,7 @@ export default function signIn({
         localStorage.setItem("accessToken", data.token);
         localStorage.setItem("refreshToken", data.refreshToken);
         localStorage.setItem("userID", data.userId);
-        
+
         toast.success("Signed in successfully!");
         setTimeout(() => {
           window.location.href = "/dashboard"; // Redirect to dashboard or desired page

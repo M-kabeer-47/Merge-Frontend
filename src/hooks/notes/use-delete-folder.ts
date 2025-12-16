@@ -1,8 +1,6 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
-import usesRotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 
 interface DeleteFolderParams {
   folderId: string;
@@ -12,25 +10,10 @@ interface DeleteFolderParams {
 
 export default function useDeleteFolder() {
   const queryClient = useQueryClient();
-  const { rotateToken, isRotationPending } = usesRotateToken({
-    oldToken:
-      typeof window !== "undefined"
-        ? localStorage.getItem("refreshToken") || ""
-        : "",
-  });
 
   const deleteFolderFunction = async (folderId: string) => {
-    const accessToken = localStorage.getItem("accessToken");
-    return await apiRequest(
-      axios.delete(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/folders/${folderId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      )
-    );
+    const response = await api.delete(`/folders/${folderId}`);
+    return response.data;
   };
 
   const {
@@ -41,16 +24,7 @@ export default function useDeleteFolder() {
   } = useMutation({
     mutationFn: ({ folderId }: DeleteFolderParams) =>
       deleteFolderFunction(folderId),
-    onError: async (error: any, variables) => {
-      if (error?.response?.data?.statusCode === 401) {
-        try {
-          await rotateToken();
-          await deleteFolder(variables);
-        } catch (rotationError) {
-          toast.error("Session expired. Please sign in again.");
-        }
-        return;
-      }
+    onError: (error: any) => {
       toast.error(
         error?.response?.data?.message ||
           "Failed to delete folder. Please try again."
@@ -79,6 +53,5 @@ export default function useDeleteFolder() {
     isDeleting,
     isDeleteError,
     isDeleteSuccess,
-    isRotationPending,
   };
 }

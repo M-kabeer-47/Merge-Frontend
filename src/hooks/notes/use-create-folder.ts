@@ -1,8 +1,6 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
-import usesRotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 
 interface CreateFolderPayload {
   name: string;
@@ -13,16 +11,8 @@ interface CreateFolderPayload {
 
 export default function useCreateFolder() {
   const queryClient = useQueryClient();
-  const { rotateToken, isRotationPending } = usesRotateToken({
-    oldToken:
-      typeof window !== "undefined"
-        ? localStorage.getItem("refreshToken") || ""
-        : "",
-  });
 
   const createFolderFunction = async (payload: CreateFolderPayload) => {
-    const accessToken = localStorage.getItem("accessToken");
-
     // Different endpoints and body structure for notes vs room folders
     if (payload.type === "notes") {
       // Notes folder endpoint
@@ -35,17 +25,7 @@ export default function useCreateFolder() {
         body.parentFolderId = payload.parentFolderId;
       }
 
-      const response = await apiRequest(
-        axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/folders/create/notes-folder`,
-          body,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        )
-      );
+      const response = await api.post("/folders/create/notes-folder", body);
       return response.data;
     } else {
       // Room content folder endpoint
@@ -59,17 +39,7 @@ export default function useCreateFolder() {
         body.parentFolderId = payload.parentFolderId;
       }
 
-      const response = await apiRequest(
-        axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/folders/create/room-folder`,
-          body,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        )
-      );
+      const response = await api.post("/folders/create/room-folder", body);
       return response.data;
     }
   };
@@ -96,7 +66,7 @@ export default function useCreateFolder() {
             ]
           : ["notes", variables.parentFolderId || null, ""];
       console.log("Created Folder: ", createdFolder);
-      // Update cache with the actual fol der data from API response
+      // Update cache with the actual folder data from API response
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
 
@@ -112,16 +82,7 @@ export default function useCreateFolder() {
       });
       toast.success("Folder created successfully!");
     },
-    onError: async (error: any, variables) => {
-      if (error?.response?.data?.statusCode === 401) {
-        try {
-          await rotateToken();
-          await createFolder(variables);
-        } catch (rotationError) {
-          toast.error("Session expired. Please sign in again.");
-        }
-        return;
-      }
+    onError: (error: any) => {
       toast.error(
         error?.response?.data?.message ||
           "Failed to create folder. Please try again."
@@ -134,6 +95,5 @@ export default function useCreateFolder() {
     isCreating,
     isCreateError,
     isCreateSuccess,
-    isRotationPending,
   };
 }

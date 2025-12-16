@@ -90,7 +90,7 @@ export default function NotesPageClient() {
 
   // Handlers
   const handleCreateNote = () => {
-    router.push("/notes/create");
+    router.push(`/notes/create?folderId=${folderId}`);
   };
 
   const handleCreateFolder = () => {

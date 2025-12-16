@@ -1,26 +1,15 @@
-import apiRequest from "@/utils/api-request";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
+import api from "@/utils/api";
 
 export default function useLogout() {
   const queryClient = useQueryClient();
 
   const logoutFunction = async () => {
-    const accessToken = localStorage.getItem("accessToken");
-    console.log("Access Token:", accessToken);
-    return await apiRequest(
-      axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`,
-        {}, // Empty body (no data to send)
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      )
-    );
+    const response = await api.post("/auth/logout", {});
+    return response.data;
   };
+
   const {
     isPending,
     isError,
@@ -28,17 +17,17 @@ export default function useLogout() {
     mutateAsync: logout,
   } = useMutation({
     mutationFn: logoutFunction,
-    onError: async (error: any) => {
+    onError: async () => {
       // Even if logout fails, clear local data
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("userId");
       queryClient.invalidateQueries({ queryKey: ["user"] });
-      
+
       // Redirect to login anyway
       window.location.href = "/sign-in";
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("userId");

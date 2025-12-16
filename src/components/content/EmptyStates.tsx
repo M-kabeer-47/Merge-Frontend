@@ -26,13 +26,13 @@ export function EmptyFolderState({
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="mb-6"
+        className="mb-2"
       >
         <Image
           src="/illustrations/empty-folder.png"
           alt="Empty folder"
-          width={160}
-          height={160}
+          width={120}
+          height={120}
           className="object-contain"
         />
       </motion.div>

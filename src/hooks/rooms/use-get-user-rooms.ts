@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import apiRequest from "@/utils/api-request";
-import axios from "axios";
-import rotateToken from "@/utils/rotate-token";
+import api from "@/utils/api";
 import { toast } from "sonner";
 
 const isClient = typeof window !== "undefined";
@@ -63,41 +61,19 @@ export default function useGetUserRooms({
   filter: "all" | "created" | "joined";
   search?: string;
 }) {
-  const { rotateToken: refreshTokenFn, isRotationPending } = rotateToken({
-    oldToken:
-      isClient && localStorage.getItem("refreshToken")
-        ? localStorage.getItem("refreshToken")!
-        : "",
-  });
-
   const fetchUserRooms = async (): Promise<RoomsResponse | null> => {
-    const token = localStorage.getItem("accessToken");
+    const token = isClient ? localStorage.getItem("accessToken") : null;
     if (!token) return null;
 
     try {
       const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
-      const response = await apiRequest(
-        axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/rooms?filter=${filter}${searchParam}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
+      const response = await api.get(
+        `/user/rooms?filter=${filter}${searchParam}`
       );
       return response.data;
     } catch (error: any) {
-      // Check if error is 401 (Unauthorized)
-      if (error?.response?.status === 401 || error?.statusCode === 401) {
-        const result = await refreshTokenFn();
-        // If token rotation was successful, retry fetching user rooms
-        if (result?.token) {
-          return fetchUserRooms();
-        }
-      }
       toast.error("Failed to fetch rooms, please try again later");
-      return null;
+      throw error;
     }
   };
 
@@ -113,7 +89,7 @@ export default function useGetUserRooms({
     rooms: data?.rooms || [],
     counts: data?.counts || { created: 0, joined: 0, total: 0 },
     total: data?.total || 0,
-    isLoading: isLoading || !isClient || isRotationPending,
+    isLoading: isLoading || !isClient,
     isError,
     refetch,
   };
