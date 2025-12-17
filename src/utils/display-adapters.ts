@@ -45,7 +45,8 @@ export function noteToDisplayItem(item: NoteOrFolder): BaseDisplayItem {
     id: folder.id,
     name: folder.name,
     isFolder: true,
-    updatedAt: new Date(folder.updatedAt),
+    updatedAt:
+      folder.updatedAt === "Just now" ? "Just now" : new Date(folder.updatedAt),
     metadata:
       folder.itemCount !== undefined ? `${folder.itemCount} items` : `0 items`,
     iconType: "folder",
@@ -66,7 +67,10 @@ export function contentToDisplayItem(item: RoomContentItem): BaseDisplayItem {
       id: folder.id,
       name: folder.name,
       isFolder: true,
-      updatedAt: new Date(folder.updatedAt),
+      updatedAt:
+        folder.updatedAt === "Just now"
+          ? "Just now"
+          : new Date(folder.updatedAt),
       metadata: `${folder.totalItems || 0} items`,
       owner: folder.owner
         ? `${folder.owner.firstName} ${folder.owner.lastName}`
@@ -85,8 +89,10 @@ export function contentToDisplayItem(item: RoomContentItem): BaseDisplayItem {
     id: file.id,
     name: file.originalName,
     isFolder: false,
-    updatedAt: new Date(file.updatedAt),
+    updatedAt:
+      file.updatedAt === "Just now" ? "Just now" : new Date(file.updatedAt),
     metadata: formatFileSize(file.size),
+    filePath: file.filePath,
     owner: `${file.uploader.firstName} ${file.uploader.lastName}`,
     iconType: iconType as BaseDisplayItem["iconType"],
     iconColor,

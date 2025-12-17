@@ -72,7 +72,10 @@ export default function useCreateFolder() {
 
         return {
           ...old,
-          folders: [...(old.folders || []), createdFolder],
+          folders: [
+            ...(old.folders || []),
+            { ...createdFolder, updatedAt: "Just now" },
+          ],
           total: {
             ...old.total,
             folders: (old.total?.folders || 0) + 1,

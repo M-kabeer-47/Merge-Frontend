@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import {
   Folder,
   FileText,
@@ -43,6 +44,21 @@ function ItemIcon({ item }: { item: RoomContentItem }) {
   const iconType = getIconTypeFromMimeType(fileItem.mimeType);
   const iconColor = getIconColorFromMimeType(fileItem.mimeType);
   const iconClass = `w-12 h-12 ${iconColor}`;
+
+  // Show actual thumbnail for images
+  if (iconType === "image" && fileItem.filePath) {
+    return (
+      <div className="w-16 h-16 relative rounded-lg overflow-hidden bg-gray-100">
+        <Image
+          src={fileItem.filePath}
+          alt={fileItem.originalName}
+          fill
+          className="object-cover"
+          sizes="64px"
+        />
+      </div>
+    );
+  }
 
   switch (iconType) {
     case "pdf":

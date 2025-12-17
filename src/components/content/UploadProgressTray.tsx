@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import type { UploadProgress as UploadProgressType } from "@/types/content";

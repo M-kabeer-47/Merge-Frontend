@@ -24,7 +24,7 @@ export default function SharedListView({
   showOwner = true,
 }: SharedListViewProps) {
   const allSelected = selectedIds.size === items.length && items.length > 0;
-
+  console.log("Items: " + JSON.stringify(items));
   return (
     <motion.div
       initial={{ opacity: 0 }}

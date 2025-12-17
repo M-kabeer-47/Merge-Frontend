@@ -17,7 +17,7 @@ import type {
   FilterType,
 } from "@/types/content";
 import { useParams, useRouter } from "next/navigation";
-import { ContentSortOrder } from "@/types/room-content";
+import { ContentSortBy, ContentSortOrder } from "@/types/room-content";
 
 interface ContentToolbarProps {
   breadcrumbs: BreadcrumbItem[];
@@ -32,10 +32,11 @@ interface ContentToolbarProps {
   sortOrder: ContentSortOrder;
   onSortChange: (sort: SortOption) => void;
   selectedCount: number;
+  selectedIds: Set<string>;
+  contentItems: Array<{ id: string; type: "folder" | "file" }>;
   onUpload?: () => void;
   onBulkDownload?: () => void;
   onBulkMove?: () => void;
-  onBulkDelete?: () => void;
   onBulkTag?: () => void;
   onClearSelection?: () => void;
   onResetFilters?: () => void;
@@ -66,13 +67,14 @@ export default function ContentToolbar({
   viewMode,
   onViewModeChange,
   sortBy,
-
+  sortOrder,
   onSortChange,
   selectedCount,
+  selectedIds,
+  contentItems,
   onUpload,
   onBulkDownload,
   onBulkMove,
-  onBulkDelete,
   onBulkTag,
   onClearSelection,
   onResetFilters,
@@ -83,7 +85,7 @@ export default function ContentToolbar({
   const roomId = params?.id as string;
 
   // Map UI sort options to API sort params for the modal
-  const apiSortBy =
+  const apiSortBy: ContentSortBy =
     sortBy === "name" ? "name" : sortBy === "date" ? "updatedAt" : null;
 
   // Get the previous breadcrumb for back navigation
@@ -228,11 +230,15 @@ export default function ContentToolbar({
       {/* Bulk Action Bar */}
       <BulkActionBar
         selectedCount={selectedCount}
+        selectedIds={selectedIds}
+        contentItems={contentItems}
         onClearSelection={onClearSelection || (() => {})}
+        roomId={roomId}
+        folderId={currentFolderId}
+        onResetFilters={onResetFilters}
         onTag={onBulkTag}
         onMove={onBulkMove}
         onDownload={onBulkDownload}
-        onDelete={onBulkDelete}
       />
 
       <CreateFolderModal

@@ -142,9 +142,14 @@ export default function useUploadFile({
       // Update React Query cache with new files
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
+        // Add "Just now" timestamp to newly uploaded files
+        const filesWithTimestamp = uploadedFiles.map((file: any) => ({
+          ...file,
+          updatedAt: "Just now",
+        }));
         return {
           ...old,
-          files: [...(old.files || []), ...uploadedFiles],
+          files: [...(old.files || []), ...filesWithTimestamp],
           total: {
             ...old.total,
             files: (old.total?.files || 0) + uploadedFiles.length,

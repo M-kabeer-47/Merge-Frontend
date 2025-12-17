@@ -15,14 +15,17 @@ import {
 import ContentSkeleton from "@/components/content/ContentSkeleton";
 import ErrorState from "@/components/ui/ErrorState";
 import DeleteConfirmation from "@/components/content/DeleteConfirmation";
+import ImageViewerModal from "@/components/content/ImageViewerModal";
 import useFetchRoomContent from "@/hooks/rooms/use-fetch-room-content";
 import useUploadFile from "@/hooks/rooms/use-upload-file";
 import { contentToDisplayItem } from "@/utils/display-adapters";
+import { downloadFile } from "@/utils/download-file";
 import type { ViewMode, SortOption, FilterType } from "@/types/content";
 import type {
   ContentSortBy,
   ContentSortOrder,
   RoomContentItem,
+  RoomContentFile,
 } from "@/types/room-content";
 import { isRoomContentFolder } from "@/types/room-content";
 import type { MenuOption } from "@/types/display-item";
@@ -49,6 +52,11 @@ export default function ContentTab() {
   const [deleteItem, setDeleteItem] = useState<RoomContentItem | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
+  // Image viewer state
+  const [viewingImage, setViewingImage] = useState<RoomContentFile | null>(
+    null
+  );
+
   // File input ref for upload button
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,6 +69,7 @@ export default function ContentTab() {
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 3) {
       toast.error("You can only upload up to 3 files at a time.");
+      return;
     }
     if (e.target.files && e.target.files.length > 0) {
       uploadFiles(e.target.files);
@@ -133,6 +142,14 @@ export default function ContentTab() {
     return [...folders, ...files];
   }, [folders, files]);
 
+  // Simplified content items for BulkActionBar
+  const contentItemsForBulkAction = useMemo(() => {
+    return contentItems.map((item) => ({
+      id: item.id,
+      type: isRoomContentFolder(item) ? ("folder" as const) : ("file" as const),
+    }));
+  }, [contentItems]);
+
   // Filter content client-side by type
   const filteredContent = useMemo(() => {
     if (activeFilter === "all") return contentItems;
@@ -180,8 +197,14 @@ export default function ContentTab() {
     if (isRoomContentFolder(item)) {
       handleFolderClick(id);
     } else {
-      console.log("Open file:", id);
-      // TODO: Open file preview
+      const file = item as RoomContentFile;
+      // Open image viewer for images
+      if (file.mimeType.startsWith("image/")) {
+        setViewingImage(file);
+      } else {
+        // For other files, could open download or preview
+        console.log("Open file:", id);
+      }
     }
   };
 
@@ -198,8 +221,12 @@ export default function ContentTab() {
       ];
     }
 
+    const file = item as RoomContentFile;
     return [
-      { title: "Download", action: () => console.log("Download:", id) },
+      {
+        title: "Download",
+        action: () => downloadFile(file.filePath, file.originalName),
+      },
       { title: "Rename", action: () => console.log("Rename:", id) },
       { title: "Delete", action: () => handleDeleteClick(item) },
     ];
@@ -236,6 +263,8 @@ export default function ContentTab() {
         sortOrder={apiSortOrder}
         onSortChange={setSortBy}
         selectedCount={selectedItems.size}
+        selectedIds={selectedItems}
+        contentItems={contentItemsForBulkAction}
         onClearSelection={() => setSelectedItems(new Set())}
         onUpload={handleUploadClick}
         onResetFilters={resetFilters}
@@ -305,6 +334,19 @@ export default function ContentTab() {
         searchQuery={searchTerm}
         sortBy={apiSortBy}
         sortOrder={apiSortOrder}
+      />
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        isOpen={!!viewingImage}
+        onClose={() => setViewingImage(null)}
+        imageSrc={viewingImage?.filePath || ""}
+        imageName={viewingImage?.originalName || ""}
+        onDownload={() => {
+          if (viewingImage) {
+            downloadFile(viewingImage.filePath, viewingImage.originalName);
+          }
+        }}
       />
     </UploadDropzone>
   );

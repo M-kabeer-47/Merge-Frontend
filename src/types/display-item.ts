@@ -5,11 +5,11 @@ export interface BaseDisplayItem {
   id: string;
   name: string;
   isFolder: boolean;
-  updatedAt: Date;
+  updatedAt: Date | string;
   // Optional metadata
   metadata?: string; // e.g., "3 items" or "2.5 MB"
   owner?: string; // Owner/uploader name
-  isPinned?: boolean;
+  filePath?: string;
   // For file type icons
   iconType?:
     | "folder"

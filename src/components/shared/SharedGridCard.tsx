@@ -1,58 +1,17 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Folder,
-  FileText,
-  FileImage,
-  FileVideo,
-  FileAudio,
-  FileArchive,
-  File,
-  FileCode,
-  FileSpreadsheet,
-  Presentation,
-  MoreVertical,
-  Pin,
-} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+
 import type { BaseDisplayItem, MenuOption } from "@/types/display-item";
 import DropdownMenu from "@/components/ui/Dropdown";
-
+import { ItemIcon } from "@/utils/get-file-icon";
+import { MoreVertical } from "lucide-react";
 interface SharedGridCardProps {
   item: BaseDisplayItem;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
   onClick?: (id: string) => void;
   menuOptions?: MenuOption[];
-}
-
-function ItemIcon({ item }: { item: BaseDisplayItem }) {
-  const iconClass = `w-12 h-12 ${item.iconColor || "text-secondary"}`;
-
-  switch (item.iconType) {
-    case "folder":
-      return <Folder className={iconClass} fill="currentColor" />;
-    case "note":
-    case "pdf":
-    case "document":
-      return <FileText className={iconClass} />;
-    case "presentation":
-      return <Presentation className={iconClass} />;
-    case "spreadsheet":
-      return <FileSpreadsheet className={iconClass} />;
-    case "image":
-      return <FileImage className={iconClass} />;
-    case "video":
-      return <FileVideo className={iconClass} />;
-    case "audio":
-      return <FileAudio className={iconClass} />;
-    case "archive":
-      return <FileArchive className={iconClass} />;
-    case "code":
-      return <FileCode className={iconClass} />;
-    default:
-      return <File className={iconClass} />;
-  }
 }
 
 // Format date for display
@@ -110,13 +69,6 @@ export default function SharedGridCard({
       `}
       onClick={() => onClick?.(item.id)}
     >
-      {/* Pinned indicator */}
-      {item.isPinned && (
-        <div className="absolute top-3 right-10">
-          <Pin className="w-3.5 h-3.5 text-accent" fill="currentColor" />
-        </div>
-      )}
-
       {/* Selection checkbox */}
       {onSelect && (
         <div
@@ -201,7 +153,11 @@ export default function SharedGridCard({
         ) : (
           <span />
         )}
-        <span>{formatDate(item.updatedAt)}</span>
+        <span>
+          {typeof item.updatedAt === "string"
+            ? item.updatedAt
+            : formatDate(item.updatedAt)}
+        </span>
       </div>
     </div>
   );

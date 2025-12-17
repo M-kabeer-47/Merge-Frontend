@@ -1,23 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Folder,
-  FileText,
-  FileImage,
-  FileVideo,
-  FileAudio,
-  FileArchive,
-  File,
-  FileCode,
-  FileSpreadsheet,
-  Presentation,
-  MoreVertical,
-  Pin,
-} from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import type { BaseDisplayItem, MenuOption } from "@/types/display-item";
 import DropdownMenu from "@/components/ui/Dropdown";
-
+import { ItemIcon } from "@/utils/get-file-icon";
 interface SharedListRowProps {
   item: BaseDisplayItem;
   isSelected?: boolean;
@@ -25,37 +12,6 @@ interface SharedListRowProps {
   onClick?: (id: string) => void;
   menuOptions?: MenuOption[];
   showOwner?: boolean;
-}
-
-function ItemIcon({ item }: { item: BaseDisplayItem }) {
-  const iconClass = `h-8 w-8 sm:h-10 sm:w-10 ${
-    item.iconColor || "text-secondary"
-  }`;
-
-  switch (item.iconType) {
-    case "folder":
-      return <Folder className={iconClass} fill="currentColor" />;
-    case "note":
-    case "pdf":
-    case "document":
-      return <FileText className={iconClass} />;
-    case "presentation":
-      return <Presentation className={iconClass} />;
-    case "spreadsheet":
-      return <FileSpreadsheet className={iconClass} />;
-    case "image":
-      return <FileImage className={iconClass} />;
-    case "video":
-      return <FileVideo className={iconClass} />;
-    case "audio":
-      return <FileAudio className={iconClass} />;
-    case "archive":
-      return <FileArchive className={iconClass} />;
-    case "code":
-      return <FileCode className={iconClass} />;
-    default:
-      return <File className={iconClass} />;
-  }
 }
 
 export default function SharedListRow({
@@ -143,12 +99,6 @@ export default function SharedListRow({
               >
                 {item.name}
               </p>
-              {item.isPinned && (
-                <Pin
-                  className="w-3.5 h-3.5 text-accent flex-shrink-0"
-                  fill="currentColor"
-                />
-              )}
             </div>
             {item.metadata && (
               <p className="text-xs sm:text-[13px] text-para-muted">
@@ -156,10 +106,12 @@ export default function SharedListRow({
                 {/* Show date on mobile */}
                 <span className="sm:hidden">
                   {" • "}
-                  {modifiedAt.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {typeof modifiedAt === "string"
+                    ? modifiedAt
+                    : modifiedAt.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
                 </span>
               </p>
             )}
@@ -177,17 +129,23 @@ export default function SharedListRow({
       {/* Last Modified - hidden on mobile */}
       <td className="hidden sm:table-cell px-3 py-3 w-[200px]">
         <div className="text-sm text-para whitespace-nowrap">
-          {modifiedAt.toLocaleDateString("en-US", {
-            month: "2-digit",
-            day: "2-digit",
-            year: "numeric",
-          })}{" "}
-          |{" "}
-          {modifiedAt.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          })}
+          {typeof modifiedAt === "string" ? (
+            modifiedAt
+          ) : (
+            <>
+              {modifiedAt.toLocaleDateString("en-US", {
+                month: "2-digit",
+                day: "2-digit",
+                year: "numeric",
+              })}{" "}
+              |{" "}
+              {modifiedAt.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </>
+          )}
         </div>
       </td>
 

@@ -12,18 +12,17 @@ export interface Note {
   content: string;
   createdAt: Date;
   updatedAt: Date;
-
 }
 
 export interface Folder {
   id: string;
-  name: string
+  name: string;
   type: "notes" | "room" | "folder";
   parentFolderId: string | null;
   ownerId: string;
-  itemCount?: number; 
-  createdAt: Date;
-  updatedAt: Date;
+  itemCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export type NoteOrFolder = Note | Folder;
@@ -32,8 +31,6 @@ export interface BreadcrumbItem {
   id: string;
   name: string;
 }
-
-
 
 export interface CreateNoteData {
   title: string;
@@ -47,12 +44,8 @@ export interface UpdateNoteData {
   folderId?: string | null;
 }
 
-
-
 export interface NotesResponse {
   notes: Note[];
   folders: Folder[];
   total: number;
 }
-
-

@@ -58,7 +58,7 @@ export default function RootLayout({
               icons={toastIcons}
               toastOptions={{
                 style: {
-                  background: "var(--bg-main-background)",
+                  background: "var(--toast-bg)",
                   color: "var(--para)",
                   border: "1px solid var(--light-border)",
                 },
