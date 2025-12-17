@@ -48,7 +48,9 @@ export function noteToDisplayItem(item: NoteOrFolder): BaseDisplayItem {
     updatedAt:
       folder.updatedAt === "Just now" ? "Just now" : new Date(folder.updatedAt),
     metadata:
-      folder.itemCount !== undefined ? `${folder.itemCount} items` : `0 items`,
+      folder.totalItems !== undefined
+        ? `${folder.totalItems} items`
+        : `0 items`,
     iconType: "folder",
     iconColor: "text-secondary",
   };

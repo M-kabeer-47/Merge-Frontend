@@ -63,6 +63,7 @@ body {
   --color-heading: var(--heading);
   --color-para: var(--para);
   --color-para-muted: var(--para-muted);
+  --color-toast-bg: var(--toast-bg);
   --color-button: var(--button);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);

@@ -52,6 +52,7 @@ api.interceptors.response.use(
 
     // Only handle 401 errors and avoid infinite loops
     if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log("401 Unauthorized");
       originalRequest._retry = true;
 
       // If already refreshing, queue this request

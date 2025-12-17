@@ -20,7 +20,7 @@ export interface Folder {
   type: "notes" | "room" | "folder";
   parentFolderId: string | null;
   ownerId: string;
-  itemCount?: number;
+  totalItems?: number;
   createdAt: Date | string;
   updatedAt: Date | string;
 }

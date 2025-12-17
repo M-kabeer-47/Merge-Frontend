@@ -61,7 +61,8 @@ export default function useFetchRoomContent({
     queryFn: fetchContent,
     enabled: isClient && !!roomId && !!localStorage.getItem("accessToken"),
     retry: false,
-    staleTime: 3 * 60 * 1000,
+    staleTime: Infinity, // Never refetch automatically - updates via socket events
+    gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours
   });
 
   // Prefetch subfolders when folders are loaded
@@ -77,7 +78,8 @@ export default function useFetchRoomContent({
       queryClient.prefetchQuery({
         queryKey: ["room-content", roomId, folder.id, "", sortBy, sortOrder],
         queryFn: () => fetchContentData(params.toString()),
-        staleTime: 3 * 60 * 1000,
+        staleTime: Infinity,
+        gcTime: 24 * 60 * 60 * 1000,
       });
     });
   }, [data?.folders, roomId, sortBy, sortOrder]);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CloudUpload } from "lucide-react";
 
@@ -9,21 +9,30 @@ interface UploadDropzoneProps {
   onFilesDropped?: (files: FileList) => void;
 }
 
-export default function UploadDropzone({ children, onFilesDropped }: UploadDropzoneProps) {
+export default function UploadDropzone({
+  children,
+  onFilesDropped,
+}: UploadDropzoneProps) {
   // State managed internally - no need for parent to know
   const [isDragging, setIsDragging] = useState(false);
+  // Use a counter to track nested drag events
+  const dragCounter = useRef(0);
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
+    dragCounter.current++;
+    if (dragCounter.current === 1) {
+      setIsDragging(true);
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only hide if leaving the container (not entering a child)
-    if (e.currentTarget === e.target) {
+    dragCounter.current--;
+    // Close dropzone when all drag events have left (including out of window)
+    if (dragCounter.current === 0) {
       setIsDragging(false);
     }
   };
@@ -36,6 +45,7 @@ export default function UploadDropzone({ children, onFilesDropped }: UploadDropz
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    dragCounter.current = 0;
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -93,14 +103,15 @@ export default function UploadDropzone({ children, onFilesDropped }: UploadDropz
 
               {/* Description */}
               <p className="text-para-muted text-center text-sm">
-                Files will be stored in this room only. All team members with access
-                can view and download them.
+                Files will be stored in this room only. All team members with
+                access can view and download them.
               </p>
 
               {/* Hint */}
               <div className="mt-6 p-3 bg-secondary/10 rounded-lg">
                 <p className="text-xs text-para text-center">
-                  Supported formats: PDF, DOCX, PPTX, XLSX, Images, Videos, Audio, ZIP
+                  Supported formats: PDF, DOCX, PPTX, XLSX, Images, Videos,
+                  Audio, ZIP
                 </p>
               </div>
             </motion.div>
@@ -110,4 +121,3 @@ export default function UploadDropzone({ children, onFilesDropped }: UploadDropz
     </div>
   );
 }
-

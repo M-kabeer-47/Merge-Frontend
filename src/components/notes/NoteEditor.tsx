@@ -223,14 +223,13 @@ export default function NoteEditor({
 
           {/* BlockNote Editor */}
 
-            <BlockNoteView
-              editor={editor}
-              theme="light"
-              onChange={handleEditorChange}
-              onScroll={handleScroll}
-              onPaste={handlePaste}
-            />
-          
+          <BlockNoteView
+            editor={editor}
+            theme="light"
+            onChange={handleEditorChange}
+            onScroll={handleScroll}
+            onPaste={handlePaste}
+          />
         </div>
       </div>
     </div>

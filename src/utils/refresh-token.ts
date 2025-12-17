@@ -49,9 +49,9 @@ export async function refreshToken(): Promise<string | null> {
     toast.error("Session expired. Please sign in again.");
 
     // Redirect to sign-in (can't use useRouter outside React)
-    setTimeout(() => {
-      window.location.href = "/sign-in";
-    }, 500);
+    // setTimeout(() => {
+    //   window.location.href = "/sign-in";
+    // }, 500);
 
     return null;
   }

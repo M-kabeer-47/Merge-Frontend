@@ -44,7 +44,6 @@ export default function ContentTab() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortOption>(null);
-  const [apiSortOrder, setApiSortOrder] = useState<ContentSortOrder>(null);
 
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
@@ -79,8 +78,10 @@ export default function ContentTab() {
   };
 
   // Map UI sort options to API sort params
-  const apiSortBy: ContentSortBy =
-    sortBy === "name" ? "name" : sortBy === "date" ? "updatedAt" : null;
+  // sortBy now contains both field and direction (e.g., "date-desc")
+  const apiSortBy: ContentSortBy = sortBy ? "updatedAt" : null;
+  const derivedSortOrder: ContentSortOrder =
+    sortBy === "date-asc" ? "ASC" : sortBy === "date-desc" ? "DESC" : null;
 
   // Fetch room content from API
   const { folders, files, breadcrumb, roomInfo, isLoading, isError, refetch } =
@@ -89,14 +90,13 @@ export default function ContentTab() {
       folderId,
       search: searchTerm,
       sortBy: apiSortBy,
-      sortOrder: apiSortBy ? apiSortOrder : null,
+      sortOrder: derivedSortOrder,
     });
 
   // Reset filters callback - clears search and sort so new items are visible
   const resetFilters = () => {
     setSearchTerm("");
     setSortBy(null);
-    setApiSortOrder(null);
   };
 
   // File upload hook with real progress tracking
@@ -260,7 +260,7 @@ export default function ContentTab() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         sortBy={sortBy}
-        sortOrder={apiSortOrder}
+        sortOrder={derivedSortOrder}
         onSortChange={setSortBy}
         selectedCount={selectedItems.size}
         selectedIds={selectedItems}
@@ -333,7 +333,7 @@ export default function ContentTab() {
         folderId={folderId}
         searchQuery={searchTerm}
         sortBy={apiSortBy}
-        sortOrder={apiSortOrder}
+        sortOrder={derivedSortOrder}
       />
 
       {/* Image Viewer Modal */}

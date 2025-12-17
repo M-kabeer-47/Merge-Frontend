@@ -7,7 +7,7 @@ import SearchBar from "@/components/ui/SearchBar";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import FilterChips from "@/components/ui/FilterChips";
 import ViewModeToggle from "@/components/ui/ViewModeToggle";
-import SortDropdown from "@/components/ui/SortDropdown";
+import SortToggle from "@/components/ui/SortToggle";
 import BulkActionBar from "@/components/ui/BulkActionBar";
 import CreateFolderModal from "../notes/CreateFolderModal";
 import type {
@@ -49,14 +49,6 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "images", label: "Images" },
 ];
 
-const sortOptions: { value: SortOption; label: string; description: string }[] =
-  [
-    { value: "name", label: "Name", description: "A to Z" },
-    { value: "date", label: "Date Modified", description: "Newest first" },
-    { value: "size", label: "Size", description: "Largest first" },
-    { value: "type", label: "Type", description: "Grouped by type" },
-  ];
-
 export default function ContentToolbar({
   breadcrumbs,
   currentFolderId,
@@ -85,8 +77,7 @@ export default function ContentToolbar({
   const roomId = params?.id as string;
 
   // Map UI sort options to API sort params for the modal
-  const apiSortBy: ContentSortBy =
-    sortBy === "name" ? "name" : sortBy === "date" ? "updatedAt" : null;
+  const apiSortBy: ContentSortBy = sortBy ? "updatedAt" : null;
 
   // Get the previous breadcrumb for back navigation
   const previousBreadcrumb =
@@ -179,23 +170,13 @@ export default function ContentToolbar({
             </div>
             {/* Sort on mobile - same row as filters */}
             <div className="sm:hidden flex-shrink-0">
-              <SortDropdown
-                options={sortOptions}
-                value={sortBy}
-                onChange={onSortChange}
-                placeholder="Sort"
-              />
+              <SortToggle value={sortBy} onChange={onSortChange} />
             </div>
           </div>
 
           {/* View Controls - desktop only */}
           <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-            <SortDropdown
-              options={sortOptions}
-              value={sortBy}
-              onChange={onSortChange}
-              placeholder="Sort by"
-            />
+            <SortToggle value={sortBy} onChange={onSortChange} />
             <ViewModeToggle
               viewMode={viewMode}
               onViewModeChange={onViewModeChange}

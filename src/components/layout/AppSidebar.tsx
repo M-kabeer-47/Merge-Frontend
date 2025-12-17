@@ -62,7 +62,7 @@ export default function AppSidebar() {
   const pathname = usePathname();
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
-  const isActive = (href: string) => pathname.endsWith(href);
+  const isActive = (href: string) => pathname.includes(href);
   const links = sidebarLinks;
   return (
     <Sidebar open={open} setOpen={setOpen}>

@@ -1,20 +1,16 @@
 "use client";
-import React from "react";
 import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
 import ToggleSwitch from "@/components/navbar/DarkModeToggle";
 import NotificationDropdown from "@/components/navbar/Notifications";
 import ProfileDropdown from "@/components/navbar/ProfileDropdown";
 import useLogout from "@/hooks/auth/use-logout";
-import { User } from "@/types/user";
 
 interface NavbarProps {
   notificationCount?: number;
 }
 
-export default function Navbar({
-  notificationCount = 3,
-}: NavbarProps) {
-  const { isPending, logout, isError } = useLogout();
+export default function Navbar({ notificationCount = 3 }: NavbarProps) {
+  const { logout } = useLogout();
 
   const handleNotificationClick = (notification: any) => {
     console.log("Notification clicked:", notification);
@@ -52,7 +48,7 @@ export default function Navbar({
   ];
 
   return (
-    <nav className="bg-main-background border-b border-light-border px-6 py-3 shadow-sm">
+    <nav className="bg-main-background border-b border-light-border px-6 py-3 shadow-sm ">
       <div className="flex items-center justify-end">
         {/* Navigation items */}
         <div className="flex items-center space-x-6">

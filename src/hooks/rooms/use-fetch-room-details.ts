@@ -52,7 +52,7 @@ export default function useFetchRoomDetails(roomId: string) {
     queryFn: fetchRoomDetails,
     enabled: isClient && !!roomId,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: Infinity, // 5 minutes
   });
 
   return {

@@ -16,14 +16,14 @@ export default function WithLayoutLayout({
         <AppSidebar />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col ">
           {/* Navbar */}
           <div className="hidden md:block">
             <Navbar />
           </div>
 
           {/* Page Content */}
-          <main className="flex-1 overflow-auto bg-main-background">
+          <main className="flex-1 bg-main-background">
             <div className="max-w-full mx-auto">{children}</div>
           </main>
         </div>

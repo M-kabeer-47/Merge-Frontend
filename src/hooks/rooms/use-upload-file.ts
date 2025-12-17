@@ -164,6 +164,11 @@ export default function useUploadFile({
           : `${fileArray.length} files uploaded successfully!`
       );
 
+      // Auto-dismiss the upload tray after 1 second
+      setTimeout(() => {
+        setUploads([]);
+      }, 1000);
+
       // Call onSuccess callback to reset UI state (search, sort, etc.)
       onSuccess?.();
     } catch (error) {
