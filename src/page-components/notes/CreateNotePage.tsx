@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import useCreateNote from "@/hooks/notes/use-create-note";
 import NoteEditorSkeleton from "@/components/ui/skeletons/NotesEditorSkeleton";
+import { Suspense } from "react";
 
 const DynamicNoteEditor = dynamic(
   () => import("@/components/notes/NoteEditor"),
@@ -11,7 +12,7 @@ const DynamicNoteEditor = dynamic(
   { ssr: false, loading: () => <NoteEditorSkeleton /> }
 );
 
-export default function CreateNotePage() {
+function CreateNotePageFunction() {
   const searchParams = useSearchParams();
   const folderId = searchParams?.get("folderId");
   const { createNote, isCreating } = useCreateNote();
@@ -30,5 +31,13 @@ export default function CreateNotePage() {
       onSave={handleSave}
       isSaving={isCreating}
     />
+  );
+}
+
+export default function CreateNotePage() {
+  return (
+    <Suspense fallback={<NoteEditorSkeleton />}>
+      <CreateNotePageFunction />
+    </Suspense>
   );
 }
