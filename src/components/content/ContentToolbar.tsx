@@ -7,7 +7,7 @@ import SearchBar from "@/components/ui/SearchBar";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import FilterChips from "@/components/ui/FilterChips";
 import ViewModeToggle from "@/components/ui/ViewModeToggle";
-import SortToggle from "@/components/ui/SortToggle";
+import SortDropdown from "@/components/ui/SortDropdown";
 import BulkActionBar from "@/components/ui/BulkActionBar";
 import CreateFolderModal from "../notes/CreateFolderModal";
 import type {
@@ -17,7 +17,7 @@ import type {
   FilterType,
 } from "@/types/content";
 import { useParams, useRouter } from "next/navigation";
-import { ContentSortBy, ContentSortOrder } from "@/types/room-content";
+import { ContentSortBy } from "@/types/room-content";
 
 interface ContentToolbarProps {
   breadcrumbs: BreadcrumbItem[];
@@ -29,7 +29,6 @@ interface ContentToolbarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   sortBy: SortOption;
-  sortOrder: ContentSortOrder;
   onSortChange: (sort: SortOption) => void;
   selectedCount: number;
   selectedIds: Set<string>;
@@ -49,6 +48,19 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "images", label: "Images" },
 ];
 
+// Sort options - extensible for future fields
+const sortOptions = [
+  {
+    field: "date" as const,
+    label: "Date Modified",
+    descLabel: "Newest first",
+    ascLabel: "Oldest first",
+  },
+  // Future options can be added here:
+  // { field: "name" as const, label: "Name", descLabel: "Z to A", ascLabel: "A to Z" },
+  // { field: "size" as const, label: "Size", descLabel: "Largest first", ascLabel: "Smallest first" },
+];
+
 export default function ContentToolbar({
   breadcrumbs,
   currentFolderId,
@@ -59,7 +71,6 @@ export default function ContentToolbar({
   viewMode,
   onViewModeChange,
   sortBy,
-  sortOrder,
   onSortChange,
   selectedCount,
   selectedIds,
@@ -77,7 +88,8 @@ export default function ContentToolbar({
   const roomId = params?.id as string;
 
   // Map UI sort options to API sort params for the modal
-  const apiSortBy: ContentSortBy = sortBy ? "updatedAt" : null;
+  const apiSortBy: ContentSortBy =
+    sortBy?.field === "date" ? "updatedAt" : null;
 
   // Get the previous breadcrumb for back navigation
   const previousBreadcrumb =
@@ -170,13 +182,21 @@ export default function ContentToolbar({
             </div>
             {/* Sort on mobile - same row as filters */}
             <div className="sm:hidden flex-shrink-0">
-              <SortToggle value={sortBy} onChange={onSortChange} />
+              <SortDropdown
+                options={sortOptions}
+                value={sortBy}
+                onChange={onSortChange}
+              />
             </div>
           </div>
 
           {/* View Controls - desktop only */}
           <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-            <SortToggle value={sortBy} onChange={onSortChange} />
+            <SortDropdown
+              options={sortOptions}
+              value={sortBy}
+              onChange={onSortChange}
+            />
             <ViewModeToggle
               viewMode={viewMode}
               onViewModeChange={onViewModeChange}

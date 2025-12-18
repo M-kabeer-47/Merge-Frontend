@@ -16,8 +16,11 @@ import ContentSkeleton from "@/components/content/ContentSkeleton";
 import ErrorState from "@/components/ui/ErrorState";
 import DeleteConfirmation from "@/components/content/DeleteConfirmation";
 import ImageViewerModal from "@/components/content/ImageViewerModal";
+import NameInputModal from "@/components/ui/NameInputModal";
 import useFetchRoomContent from "@/hooks/rooms/use-fetch-room-content";
 import useUploadFile from "@/hooks/rooms/use-upload-file";
+import useRenameFile from "@/hooks/rooms/use-rename-file";
+import useRenameFolder from "@/hooks/rooms/use-rename-folder";
 import { contentToDisplayItem } from "@/utils/display-adapters";
 import { downloadFile } from "@/utils/download-file";
 import type { ViewMode, SortOption, FilterType } from "@/types/content";
@@ -26,6 +29,7 @@ import type {
   ContentSortOrder,
   RoomContentItem,
   RoomContentFile,
+  RoomContentFolder,
 } from "@/types/room-content";
 import { isRoomContentFolder } from "@/types/room-content";
 import type { MenuOption } from "@/types/display-item";
@@ -56,6 +60,10 @@ export default function ContentTab() {
     null
   );
 
+  // Rename state
+  const [renameItem, setRenameItem] = useState<RoomContentItem | null>(null);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+
   // File input ref for upload button
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,10 +86,11 @@ export default function ContentTab() {
   };
 
   // Map UI sort options to API sort params
-  // sortBy now contains both field and direction (e.g., "date-desc")
-  const apiSortBy: ContentSortBy = sortBy ? "updatedAt" : null;
+  // sortBy is now an object with field and order
+  const apiSortBy: ContentSortBy =
+    sortBy?.field === "date" ? "updatedAt" : null;
   const derivedSortOrder: ContentSortOrder =
-    sortBy === "date-asc" ? "ASC" : sortBy === "date-desc" ? "DESC" : null;
+    (sortBy?.order.toUpperCase() as ContentSortOrder) ?? null;
 
   // Fetch room content from API
   const { folders, files, breadcrumb, roomInfo, isLoading, isError, refetch } =
@@ -198,13 +207,55 @@ export default function ContentTab() {
       handleFolderClick(id);
     } else {
       const file = item as RoomContentFile;
-      // Open image viewer for images
+
       if (file.mimeType.startsWith("image/")) {
+        // Open image viewer for images
         setViewingImage(file);
+      } else if (file.mimeType === "application/pdf") {
+        // Open PDF viewer
+        const encodedUrl = encodeURIComponent(file.filePath);
+        const encodedName = encodeURIComponent(file.originalName);
+        router.push(
+          `/rooms/${roomId}/view-document?url=${encodedUrl}&name=${encodedName}`
+        );
       } else {
-        // For other files, could open download or preview
-        console.log("Open file:", id);
+        // For other files, download
+        downloadFile(file.filePath, file.originalName);
       }
+    }
+  };
+
+  // Rename hooks
+  const { renameFile, isRenaming: isRenamingFile } = useRenameFile({
+    roomId,
+    folderId,
+  });
+  const { renameFolder, isRenaming: isRenamingFolder } = useRenameFolder({
+    roomId,
+    parentFolderId: folderId,
+  });
+
+  // Handle rename click
+  const handleRenameClick = (item: RoomContentItem) => {
+    setRenameItem(item);
+    setIsRenameOpen(true);
+  };
+
+  // Handle rename submit
+  const handleRenameSubmit = async (newName: string) => {
+    if (!renameItem) return;
+
+    if (isRoomContentFolder(renameItem)) {
+      await renameFolder({
+        folderId: renameItem.id,
+        newName,
+        parentFolderId: folderId,
+      });
+    } else {
+      await renameFile({
+        fileId: renameItem.id,
+        newName,
+      });
     }
   };
 
@@ -216,7 +267,7 @@ export default function ContentTab() {
     if (isRoomContentFolder(item)) {
       return [
         { title: "Open", action: () => handleFolderClick(id) },
-        { title: "Rename", action: () => console.log("Rename:", id) },
+        { title: "Rename", action: () => handleRenameClick(item) },
         { title: "Delete", action: () => handleDeleteClick(item) },
       ];
     }
@@ -227,7 +278,7 @@ export default function ContentTab() {
         title: "Download",
         action: () => downloadFile(file.filePath, file.originalName),
       },
-      { title: "Rename", action: () => console.log("Rename:", id) },
+      { title: "Rename", action: () => handleRenameClick(item) },
       { title: "Delete", action: () => handleDeleteClick(item) },
     ];
   };
@@ -260,7 +311,6 @@ export default function ContentTab() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         sortBy={sortBy}
-        sortOrder={derivedSortOrder}
         onSortChange={setSortBy}
         selectedCount={selectedItems.size}
         selectedIds={selectedItems}
@@ -347,6 +397,40 @@ export default function ContentTab() {
             downloadFile(viewingImage.filePath, viewingImage.originalName);
           }
         }}
+      />
+
+      {/* Rename Modal */}
+      <NameInputModal
+        isOpen={isRenameOpen}
+        onClose={() => {
+          setIsRenameOpen(false);
+          setRenameItem(null);
+        }}
+        onSubmit={handleRenameSubmit}
+        title={
+          renameItem
+            ? isRoomContentFolder(renameItem)
+              ? "Rename Folder"
+              : "Rename File"
+            : "Rename"
+        }
+        label={
+          renameItem
+            ? isRoomContentFolder(renameItem)
+              ? "Folder Name"
+              : "File Name"
+            : "Name"
+        }
+        placeholder="Enter new name..."
+        initialValue={
+          renameItem
+            ? isRoomContentFolder(renameItem)
+              ? renameItem.name
+              : (renameItem as RoomContentFile).originalName
+            : ""
+        }
+        submitText="Rename"
+        isLoading={isRenamingFile || isRenamingFolder}
       />
     </UploadDropzone>
   );

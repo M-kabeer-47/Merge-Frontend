@@ -18,7 +18,9 @@ export type ContentItemType = "file" | "folder";
 
 export type ViewMode = "grid" | "list";
 
-export type SortOption = "date-desc" | "date-asc" | null;
+export type SortField = "date" | "name" | "size"; // Extensible for future options
+export type SortOrder = "asc" | "desc";
+export type SortOption = { field: SortField; order: SortOrder } | null;
 
 export type FilterType = "all" | "files" | "folders" | "images";
 

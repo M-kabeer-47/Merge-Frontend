@@ -2,18 +2,26 @@
 
 import { Grid3x3, List } from "lucide-react";
 import type { ViewMode } from "@/types/content";
+import { cn } from "@/lib/shadcn/utils";
 
 interface ViewModeToggleProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  className?: string;
 }
 
 export default function ViewModeToggle({
   viewMode,
   onViewModeChange,
+  className,
 }: ViewModeToggleProps) {
   return (
-    <div className="flex items-center gap-1 p-1 bg-secondary/10 rounded-lg">
+    <div
+      className={cn(
+        "flex items-center gap-1 p-1 bg-secondary/10 rounded-lg",
+        className
+      )}
+    >
       <button
         onClick={() => onViewModeChange("grid")}
         className={`h-8 w-8 rounded flex items-center justify-center transition-colors ${
