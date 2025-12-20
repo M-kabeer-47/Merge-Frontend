@@ -7,6 +7,7 @@ import type {
   BreadcrumbItem,
   RoomInfo,
   ContentSortBy,
+  ContentSortOrder,
 } from "@/types/room-content";
 
 const isClient = typeof window !== "undefined";

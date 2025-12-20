@@ -2,85 +2,90 @@
 
 import React, { useState, useMemo } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
-import AssignmentCard from "@/components/assignments/AssignmentCard";
+import QuizCard from "@/components/quizzes/QuizCard";
 import {
-  EmptyAssignments,
+  EmptyQuizzes,
   NoSearchResults,
   EmptyFilterResults,
-} from "@/components/assignments/EmptyStates";
+} from "@/components/quizzes/EmptyStates";
 import {
-  sampleInstructorAssignments,
-  sampleStudentAssignments,
-} from "@/lib/constants/assignment-mock-data";
+  sampleInstructorQuizzes,
+  sampleStudentQuizzes,
+} from "@/lib/constants/quiz-mock-data";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
 import type {
-  Assignment,
-  AssignmentSortOption,
-  AssignmentFilterType,
-  StudentAssignment,
-} from "@/types/assignment";
+  Quiz,
+  QuizSortOption,
+  QuizFilterType,
+  StudentQuiz,
+} from "@/types/quiz";
 import { useAuth } from "@/providers/AuthProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 
-export default function AssignmentsTab() {
-  // State
+export default function QuizzesPage() {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilter, setActiveFilter] = useState<AssignmentFilterType>("all");
-  const [sortBy, setSortBy] = useState<AssignmentSortOption>("dueDate");
-  const [showSortMenu, setShowSortMenu] = useState(false);
+  const params = useParams();
+  const roomId = params?.id as string;
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilter, setActiveFilter] = useState<QuizFilterType>("all");
+  const [sortBy, setSortBy] = useState<QuizSortOption>("deadline");
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const userRole = user?.role;
-  const isInstructor = userRole === "instructor";
-  // Load appropriate data based on role
-  const assignments: Assignment[] = isInstructor
-    ? sampleInstructorAssignments
-    : sampleStudentAssignments;
+  const isInstructor = searchParams.get("role") === "instructor";
 
-  // Filter and sort assignments
-  const filteredAndSortedAssignments = useMemo(() => {
-    let items = [...assignments];
+  // Load appropriate data based on role
+  const quizzes: Quiz[] = isInstructor
+    ? sampleInstructorQuizzes
+    : sampleStudentQuizzes;
+
+  // Filter and sort quizzes
+  const filteredAndSortedQuizzes = useMemo(() => {
+    let items = [...quizzes];
 
     // Apply search filter
     if (searchTerm.trim()) {
       const search = searchTerm.toLowerCase();
-      items = items.filter(
-        (item) =>
-          item.title.toLowerCase().includes(search) ||
-          item.description.toLowerCase().includes(search)
-      );
+      items = items.filter((item) => item.title.toLowerCase().includes(search));
     }
 
-    // Apply status filter (for students)
-    if (!isInstructor && activeFilter !== "all") {
+    // Apply status filter
+    if (activeFilter !== "all") {
       items = items.filter((item) => {
-        const studentItem = item as StudentAssignment;
-        const submission = studentItem.submission;
-        const isOverdue = new Date() > new Date(item.dueDate);
+        if (isInstructor) {
+          // Instructor filters
+          switch (activeFilter) {
+            case "active":
+              return item.status === "published";
+            case "closed":
+              return item.status === "closed";
+            default:
+              return true;
+          }
+        } else {
+          // Student filters
+          const studentItem = item as StudentQuiz;
+          const attempt = studentItem.attempt;
+          const isOverdue = new Date() > new Date(item.deadline);
 
-        switch (activeFilter) {
-          case "completed":
-            return (
-              submission.status === "submitted" ||
-              submission.status === "graded"
-            );
-          case "pending":
-            // Pending means not submitted and not overdue
-            return submission.status === "pending" && !isOverdue;
-          case "graded":
-            return submission.status === "graded";
-          case "overdue":
-            // Overdue means either marked as overdue OR pending but past due date
-            return (
-              submission.status === "overdue" ||
-              (submission.status === "pending" && isOverdue)
-            );
-          default:
-            return true;
+          switch (activeFilter) {
+            case "pending":
+              return attempt.status === "pending" && !isOverdue;
+            case "completed":
+              return attempt.status === "completed";
+            case "missed":
+              return (
+                attempt.status === "missed" ||
+                (attempt.status === "pending" && isOverdue)
+              );
+            default:
+              return true;
+          }
         }
       });
     }
@@ -88,22 +93,17 @@ export default function AssignmentsTab() {
     // Apply sorting
     items.sort((a, b) => {
       switch (sortBy) {
-        case "dueDate":
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-        case "points":
-          return b.points - a.points;
+        case "deadline":
+          return (
+            new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+          );
         case "title":
           return a.title.localeCompare(b.title);
         case "status":
           if (!isInstructor) {
-            const statusOrder = {
-              overdue: 0,
-              pending: 1,
-              submitted: 2,
-              graded: 3,
-            };
-            const statusA = (a as StudentAssignment).submission.status;
-            const statusB = (b as StudentAssignment).submission.status;
+            const statusOrder = { pending: 0, completed: 1, missed: 2 };
+            const statusA = (a as StudentQuiz).attempt.status;
+            const statusB = (b as StudentQuiz).attempt.status;
             return statusOrder[statusA] - statusOrder[statusB];
           }
           return 0;
@@ -113,51 +113,39 @@ export default function AssignmentsTab() {
     });
 
     return items;
-  }, [assignments, searchTerm, activeFilter, sortBy, isInstructor]);
+  }, [quizzes, searchTerm, activeFilter, sortBy, isInstructor]);
 
   // Handlers
   const handleViewDetails = (id: string) => {
-    window.location.href = `/rooms/${
-      window.location.pathname.split("/")[2]
-    }/assignments/${id}`;
-  };
-
-  const handleViewResponses = (id: string) => {
-    window.location.href = `/rooms/${
-      window.location.pathname.split("/")[2]
-    }/assignments/${id}`;
+    router.push(`/rooms/${roomId}/quizzes/${id}`);
   };
 
   const handleEdit = (id: string) => {
-    console.log("Edit assignment:", id);
-    // TODO: Implement edit assignment functionality
+    console.log("Edit quiz:", id);
+    // TODO: Implement edit quiz functionality
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this assignment?")) {
-      console.log("Delete assignment:", id);
-      // TODO: Implement delete assignment functionality
+    if (confirm("Are you sure you want to delete this quiz?")) {
+      console.log("Delete quiz:", id);
+      // TODO: Implement delete quiz functionality
     }
   };
 
-  const handleCreateAssignment = () => {
-    const roomId = window.location.pathname.split("/")[2];
-    router.push(`/rooms/${roomId}/assignments/create`);
+  const handleStartQuiz = (id: string) => {
+    router.push(`/rooms/${roomId}/quizzes/${id}/attempt`);
+  };
+
+  const handleCreateQuiz = () => {
+    router.push(`/rooms/${roomId}/quizzes/create`);
   };
 
   // Sort options for dropdown
   const sortOptions = [
     {
-      title: "Due Date",
+      title: "Deadline",
       action: () => {
-        setSortBy("dueDate");
-        setShowSortMenu(false);
-      },
-    },
-    {
-      title: "Points",
-      action: () => {
-        setSortBy("points");
+        setSortBy("deadline");
         setShowSortMenu(false);
       },
     },
@@ -183,10 +171,8 @@ export default function AssignmentsTab() {
 
   const getSortLabel = () => {
     switch (sortBy) {
-      case "dueDate":
-        return "Due Date";
-      case "points":
-        return "Points";
+      case "deadline":
+        return "Deadline";
       case "title":
         return "Title";
       case "status":
@@ -196,7 +182,7 @@ export default function AssignmentsTab() {
     }
   };
 
-  const isEmpty = filteredAndSortedAssignments.length === 0;
+  const isEmpty = filteredAndSortedQuizzes.length === 0;
   const hasSearchTerm = searchTerm.trim().length > 0;
   const hasActiveFilter = activeFilter !== "all";
 
@@ -209,7 +195,7 @@ export default function AssignmentsTab() {
           <div className="flex-1 max-w-md">
             <SearchBar
               onSearch={setSearchTerm}
-              placeholder="Search assignments..."
+              placeholder="Search quizzes..."
             />
           </div>
           <div className="flex items-center gap-3">
@@ -218,7 +204,7 @@ export default function AssignmentsTab() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center gap-2  min-w-[140px] justify-center"
+                className="flex items-center gap-2 min-w-[140px] justify-center"
               >
                 <span className="flex items-center gap-2">
                   <SlidersHorizontal className="w-4 h-4" />
@@ -238,11 +224,11 @@ export default function AssignmentsTab() {
             </div>
             {isInstructor && (
               <Button
-                onClick={handleCreateAssignment}
+                onClick={handleCreateQuiz}
                 className="flex items-center gap-2"
               >
                 <Plus className="w-5 h-5" />
-                <span className="hidden sm:inline">New Assignment</span>
+                <span className="hidden sm:inline">New Quiz</span>
               </Button>
             )}
           </div>
@@ -250,39 +236,38 @@ export default function AssignmentsTab() {
 
         {/* Filter Tabs (For Students) */}
         {!isInstructor && (
-          <div className="max-w-[700px]">
+          <div className="max-w-[500px]">
             <Tabs
               options={[
                 { key: "all", label: "All" },
                 { key: "pending", label: "Pending" },
                 { key: "completed", label: "Completed" },
-                { key: "graded", label: "Graded" },
-                { key: "overdue", label: "Overdue" },
+                { key: "missed", label: "Missed" },
               ]}
               activeKey={activeFilter}
-              onChange={(key) => setActiveFilter(key as AssignmentFilterType)}
+              onChange={(key) => setActiveFilter(key as QuizFilterType)}
             />
           </div>
         )}
 
         {/* Filter Tabs (For Instructors) */}
         {isInstructor && (
-          <div className="max-w-[800px]">
+          <div className="max-w-[400px]">
             <Tabs
               options={[
                 { key: "all", label: "All" },
-                { key: "needs-grading", label: "Needs grading" },
-                { key: "graded", label: "Graded" },
+                { key: "active", label: "Active" },
+                { key: "closed", label: "Closed" },
               ]}
               activeKey={activeFilter}
-              onChange={(key) => setActiveFilter(key as AssignmentFilterType)}
+              onChange={(key) => setActiveFilter(key as QuizFilterType)}
             />
           </div>
         )}
       </div>
 
       {/* Main Content Area - Scrollable */}
-      <div className="flex-1 overflow-y-auto ">
+      <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
           <div className="h-full flex items-center justify-center">
             {hasSearchTerm ? (
@@ -296,24 +281,22 @@ export default function AssignmentsTab() {
                 onClearFilter={() => setActiveFilter("all")}
               />
             ) : (
-              <EmptyAssignments
+              <EmptyQuizzes
                 isInstructor={isInstructor}
-                onCreateFirst={
-                  isInstructor ? handleCreateAssignment : undefined
-                }
+                onCreateFirst={isInstructor ? handleCreateQuiz : undefined}
               />
             )}
           </div>
         ) : (
-          <div className="px-4 sm:px-6 py-4 space-y-4 ">
-            {filteredAndSortedAssignments.map((assignment) => (
-              <AssignmentCard
-                key={assignment.id}
-                assignment={assignment}
+          <div className="px-4 sm:px-6 py-4 space-y-4">
+            {filteredAndSortedQuizzes.map((quiz) => (
+              <QuizCard
+                key={quiz.id}
+                quiz={quiz}
                 onViewDetails={handleViewDetails}
-                onViewResponses={handleViewResponses}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onStartQuiz={handleStartQuiz}
               />
             ))}
           </div>

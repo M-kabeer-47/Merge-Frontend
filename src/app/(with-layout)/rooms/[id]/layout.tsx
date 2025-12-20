@@ -7,6 +7,7 @@ import {
   Bell,
   FileText,
   BookOpen,
+  FileQuestion,
   Video,
   Settings,
 } from "lucide-react";
@@ -44,6 +45,12 @@ const TABS = [
     id: "assignments",
     label: "Assignments",
     icon: BookOpen,
+    count: 0,
+  },
+  {
+    id: "quizzes",
+    label: "Quizzes",
+    icon: FileQuestion,
     count: 0,
   },
   {
@@ -86,6 +93,7 @@ const RoomLayout: React.FC<RoomLayoutProps> = ({ children }) => {
         "announcements",
         "content",
         "assignments",
+        "quizzes",
         "sessions",
         "settings",
       ].includes(lastSegment)

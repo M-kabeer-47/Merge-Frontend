@@ -1,5 +1,4 @@
-import { z } from "zod";
-
+import z from "zod";
 export const createAssignmentSchema = z.object({
   title: z
     .string()
@@ -8,23 +7,16 @@ export const createAssignmentSchema = z.object({
     .trim(),
   description: z
     .string()
-    .min(1, "Description is required")
     .max(2000, "Description must be 2000 characters or less")
-    .trim(),
-  points: z
-    .number()
-    .min(0, "Points must be a positive number")
-    .max(1000, "Points cannot exceed 1000"),
-  dueDate: z
-    .string()
-    .min(1, "Due date is required")
-    .refine((date) => {
-      const dueDate = new Date(date);
-      const now = new Date();
-      return dueDate > now;
-    }, "Due date must be in the future"),
-  allowLateSubmissions: z.boolean(),
-  attachments: z.array(z.instanceof(File)),
+    .optional(),
+  points: z.preprocess(
+    (val) => (val === "" || val === undefined ? 0 : Number(val)),
+    z
+      .number()
+      .min(0, "Points must be a positive number")
+      .max(1000, "Points cannot exceed 1000")
+  ),
+  startAt: z.string().optional(),
+  endAt: z.string().min(1, "Due date is required"),
+  isTurnInLateEnabled: z.boolean(),
 });
-
-export type CreateAssignmentType = z.infer<typeof createAssignmentSchema>;

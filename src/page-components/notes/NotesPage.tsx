@@ -12,7 +12,6 @@ import NotesListSkeleton from "@/components/notes/NotesListSkeleton";
 import NotesGridSkeleton from "@/components/notes/NotesGridSkeleton";
 import CreateFolderModal from "@/components/notes/CreateFolderModal";
 import DeleteConfirmation from "@/components/notes/DeleteConfirmation";
-import NameInputModal from "@/components/ui/NameInputModal";
 import ErrorState from "@/components/notes/ErrorState";
 import SharedGridView from "@/components/shared/SharedGridView";
 import SharedListView from "@/components/shared/SharedListView";
@@ -20,7 +19,6 @@ import { noteToDisplayItem } from "@/utils/display-adapters";
 import type { NoteOrFolder, NoteViewMode, Note } from "@/types/note";
 import type { MenuOption } from "@/types/display-item";
 import useFetchNotes from "@/hooks/notes/use-fetch-notes";
-import useRenameNote from "@/hooks/notes/use-rename-note";
 import { useDownloadPdf } from "@/hooks/use-download-pdf";
 
 export default function NotesPageClient() {
@@ -32,7 +30,6 @@ export default function NotesPageClient() {
   const [viewMode, setViewMode] = useState<NoteViewMode>("grid");
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<NoteOrFolder | null>(null);
-  const [itemToRename, setItemToRename] = useState<NoteOrFolder | null>(null);
 
   // Data fetching
   const { notes, folders, breadcrumb, isLoading, isError, refetch } =
@@ -122,30 +119,6 @@ export default function NotesPageClient() {
     }
   };
 
-  const { renameNote, isRenaming: isRenamingNote } = useRenameNote();
-
-  // Handle rename click
-  const handleRename = (id: string) => {
-    const item = items.find((i) => i.id === id);
-    if (item) {
-      setItemToRename(item);
-    }
-  };
-
-  // Handle rename submit
-  const handleRenameSubmit = async (newName: string) => {
-    if (!itemToRename) return;
-
-    if (itemToRename.type === "note") {
-      await renameNote({
-        noteId: itemToRename.id,
-        newTitle: newName,
-        folderId: folderId || null,
-        searchQuery: searchTerm,
-      });
-    }
-  };
-
   // Item menu options
   const getMenuOptions = (id: string): MenuOption[] => {
     const item = items.find((i) => i.id === id);
@@ -168,10 +141,6 @@ export default function NotesPageClient() {
             content: noteItem.content,
           });
         },
-      });
-      options.push({
-        title: "Rename",
-        action: () => handleRename(id),
       });
     }
 
@@ -277,31 +246,13 @@ export default function NotesPageClient() {
       />
 
       {/* Delete Confirmation */}
+      {/* Delete Confirmation */}
       <DeleteConfirmation
         item={itemToDelete}
         isOpen={!!itemToDelete}
         onClose={() => setItemToDelete(null)}
         folderId={folderId || "root"}
         searchQuery={searchTerm}
-      />
-
-      {/* Rename Modal */}
-      <NameInputModal
-        isOpen={!!itemToRename}
-        onClose={() => setItemToRename(null)}
-        onSubmit={handleRenameSubmit}
-        title={itemToRename?.type === "note" ? "Rename Note" : "Rename Folder"}
-        label={itemToRename?.type === "note" ? "Note Title" : "Folder Name"}
-        placeholder="Enter new name..."
-        initialValue={
-          itemToRename
-            ? itemToRename.type === "note"
-              ? (itemToRename as Note).title
-              : itemToRename.name
-            : ""
-        }
-        submitText="Rename"
-        isLoading={isRenamingNote}
       />
     </div>
   );

@@ -22,7 +22,6 @@ export default function useResendOTP({
 
   const {
     isPending: isResending,
-    isError: isResendError,
     mutateAsync: resendOTP,
   } = useMutation({
     mutationFn: resendOTPFunction,

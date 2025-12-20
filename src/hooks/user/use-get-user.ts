@@ -33,7 +33,7 @@ export default function useGetUser() {
   });
 
   return {
-    user: user as unknown as User,
+    user: user as User,
     isLoading: isLoading || !isClient,
     isError,
     refetch,

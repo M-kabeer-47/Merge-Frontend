@@ -1,7 +1,4 @@
-/**
- * Upload a file directly to S3 using XMLHttpRequest for real progress tracking.
- * This is a pure utility function with no React dependencies.
- */
+
 export function uploadToS3(
   uploadUrl: string,
   file: File,

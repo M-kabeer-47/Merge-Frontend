@@ -1,6 +1,7 @@
+"use client";
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Map, FileText, Bookmark, Calendar } from "lucide-react";
+import Link from "next/link";
 
 interface ProfileTabsProps {
   activeTab: string;
@@ -85,54 +86,55 @@ export default function ProfileTabs({
             const isActive = activeTab === tab.id;
 
             return (
-              <motion.button
-                key={tab.id}
-                ref={(el) => (tabRefs.current[tab.id] = el)}
-                onClick={() => onTabChange(tab.id)}
-                onMouseEnter={() => handleTabHover(tab.id)}
-                className={`relative group flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm whitespace-nowrap transition-all z-10 justify-center ${
-                  isActive
-                    ? "text-primary font-bold"
-                    : "text-para hover:text-primary"
-                }`}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Icon
-                  className={`w-4 h-4 transition-all ${
+              <Link href={tab.id} key={tab.id}>
+                <motion.button
+                  ref={(el) => (tabRefs.current[tab.id] = el)}
+                  // onClick={() => onTabChange(tab.id)}
+                  onMouseEnter={() => handleTabHover(tab.id)}
+                  className={`relative group flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm whitespace-nowrap transition-all z-10 justify-center ${
                     isActive
-                      ? "text-primary"
-                      : "text-para group-hover:text-primary"
-                  } flex-shrink-0`}
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-                <span
-                  className={`font-raleway ${
-                    isActive ? "font-bold" : ""
-                  } hidden xs:inline`}
+                      ? "text-primary font-bold"
+                      : "text-para hover:text-primary"
+                  }`}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  {tab.label}
-                </span>
-
-                {/* Mobile: Show abbreviated labels */}
-                <span className={`${isActive ? "font-bold" : ""} xs:hidden`}>
-                  {tab.label}
-                </span>
-
-                {/* Stats badge */}
-
-                {/* Active tab underline */}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTabUnderline"
-                    className="absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-0.5 bg-primary"
-                    transition={{
-                      type: "spring",
-                      bounce: 0.15,
-                      duration: 0.5,
-                    }}
+                  <Icon
+                    className={`w-4 h-4 transition-all ${
+                      isActive
+                        ? "text-primary"
+                        : "text-para group-hover:text-primary"
+                    } flex-shrink-0`}
+                    strokeWidth={isActive ? 2.5 : 2}
                   />
-                )}
-              </motion.button>
+                  <span
+                    className={`font-raleway ${
+                      isActive ? "font-bold" : ""
+                    } hidden xs:inline`}
+                  >
+                    {tab.label}
+                  </span>
+
+                  {/* Mobile: Show abbreviated labels */}
+                  <span className={`${isActive ? "font-bold" : ""} xs:hidden`}>
+                    {tab.label}
+                  </span>
+
+                  {/* Stats badge */}
+
+                  {/* Active tab underline */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabUnderline"
+                      className="absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-0.5 bg-primary"
+                      transition={{
+                        type: "spring",
+                        bounce: 0.15,
+                        duration: 0.5,
+                      }}
+                    />
+                  )}
+                </motion.button>
+              </Link>
             );
           })}
         </div>

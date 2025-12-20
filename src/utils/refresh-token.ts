@@ -9,10 +9,7 @@ interface RefreshTokenResponse {
   userId: string;
 }
 
-/**
- * Plain async function to refresh the access token.
- * NOT a React hook - can be used in axios interceptors.
- */
+
 export async function refreshToken(): Promise<string | null> {
   if (!isClient) return null;
 

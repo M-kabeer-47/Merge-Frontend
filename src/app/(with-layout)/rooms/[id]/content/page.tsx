@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { AnimatePresence } from "motion/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ContentToolbar from "@/components/content/ContentToolbar";
@@ -50,6 +50,11 @@ export default function ContentTab() {
   const [sortBy, setSortBy] = useState<SortOption>(null);
 
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+  // Clear selection when folder changes
+  useEffect(() => {
+    setSelectedItems(new Set());
+  }, [folderId]);
 
   // Delete confirmation state
   const [deleteItem, setDeleteItem] = useState<RoomContentItem | null>(null);
@@ -102,7 +107,7 @@ export default function ContentTab() {
       sortOrder: derivedSortOrder,
     });
 
-  // Reset filters callback - clears search and sort so new items are visible
+  
   const resetFilters = () => {
     setSearchTerm("");
     setSortBy(null);
