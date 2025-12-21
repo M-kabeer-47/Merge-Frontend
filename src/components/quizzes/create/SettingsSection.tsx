@@ -1,6 +1,11 @@
 "use client";
 
-import { type Control, Controller, FieldErrors } from "react-hook-form";
+import {
+  type Control,
+  Controller,
+  FieldErrors,
+  UseFormRegister,
+} from "react-hook-form";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import DateTimePicker from "@/components/ui/DateTimePicker";
@@ -11,11 +16,13 @@ interface SettingsSectionProps {
   control: Control<CreateQuizFormData>;
   errors: FieldErrors<CreateQuizFormData>;
   isDisabled?: boolean;
+  register: UseFormRegister<CreateQuizFormData>;
 }
 
 export default function SettingsSection({
   control,
   errors,
+  register,
   isDisabled = false,
 }: SettingsSectionProps) {
   return (
@@ -26,36 +33,30 @@ export default function SettingsSection({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Time Limit */}
-        <Controller
-          name="timeLimitMin"
-          control={control}
-          render={({ field }) => (
-            <FormField
-              label="Time Limit (minutes)"
-              htmlFor="timeLimitMin"
+
+        <FormField
+          label="Time Limit (minutes)"
+          htmlFor="timeLimitMin"
+          error={errors.timeLimitMin?.message}
+        >
+          <div className="relative">
+            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-para-muted" />
+            <Input
+              id="timeLimitMin"
+              type="number"
+              min={5}
+              max={180}
+              placeholder="30"
+              className="pl-10"
               error={errors.timeLimitMin?.message}
-            >
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-para-muted" />
-                <Input
-                  {...field}
-                  id="timeLimitMin"
-                  type="number"
-                  min={5}
-                  max={180}
-                  placeholder="30"
-                  className="pl-10"
-                  error={errors.timeLimitMin?.message}
-                  disabled={isDisabled}
-                  onChange={(e) => field.onChange(Number(e.target.value) || "")}
-                />
-              </div>
-              <p className="text-xs text-para-muted mt-1.5">
-                Between 5-180 minutes
-              </p>
-            </FormField>
-          )}
-        />
+              disabled={isDisabled}
+              {...register("timeLimitMin")}
+            />
+          </div>
+          <p className="text-xs text-para-muted mt-1.5">
+            Between 5-180 minutes
+          </p>
+        </FormField>
 
         {/* Deadline */}
         <Controller

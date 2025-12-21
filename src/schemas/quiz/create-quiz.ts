@@ -51,3 +51,17 @@ export const validateQuestion = (question: z.infer<typeof questionSchema>) => {
   }
   return null;
 };
+
+export const defaultValues = {
+  title: "",
+  timeLimitMin: 30,
+  deadline: "",
+  questions: [
+    {
+      text: "",
+      options: ["", "", "", ""],
+      correctOption: "",
+      points: 1,
+    },
+  ],
+};

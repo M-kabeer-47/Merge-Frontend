@@ -281,9 +281,7 @@ export default function QuizCard({
             </Button>
           ) : (
             <>
-              {isStudentQuiz(quiz) &&
-              quiz.attempt.status === "pending" &&
-              !isOverdue ? (
+              {isStudentQuiz(quiz) && quiz.attempt.status !== "missed" ? (
                 <Button
                   variant="default"
                   size="sm"
@@ -297,7 +295,7 @@ export default function QuizCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onViewDetails?.(quiz.id)}
+                  onClick={() => onStartQuiz?.(quiz.id)}
                   className="text-xs px-3 py-1.5"
                 >
                   <Eye className="w-4 h-4" />

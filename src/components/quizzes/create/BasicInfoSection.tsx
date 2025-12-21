@@ -1,18 +1,25 @@
 "use client";
 
-import { type Control, Controller, FieldErrors } from "react-hook-form";
+import {
+  type Control,
+  Controller,
+  FieldErrors,
+  UseFormRegister,
+} from "react-hook-form";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import type { CreateQuizFormData } from "@/schemas/quiz/create-quiz";
 
 interface BasicInfoSectionProps {
-  control: Control<CreateQuizFormData>;
   errors: FieldErrors<CreateQuizFormData>;
   isDisabled?: boolean;
+  register: UseFormRegister<CreateQuizFormData>;
+  title: string;
 }
 
 export default function BasicInfoSection({
-  control,
+  register,
+  title,
   errors,
   isDisabled = false,
 }: BasicInfoSectionProps) {
@@ -23,29 +30,24 @@ export default function BasicInfoSection({
       </h2>
 
       {/* Title */}
-      <Controller
-        name="title"
-        control={control}
-        render={({ field }) => (
-          <FormField
-            label="Quiz Title"
-            htmlFor="title"
-            error={errors.title?.message}
-          >
-            <Input
-              {...field}
-              id="title"
-              placeholder="e.g., JavaScript Fundamentals Quiz"
-              error={errors.title?.message}
-              disabled={isDisabled}
-              maxLength={200}
-            />
-            <p className="text-xs text-para-muted mt-1.5">
-              {field.value?.length || 0}/200 characters
-            </p>
-          </FormField>
-        )}
-      />
+      <FormField
+        label="Quiz Title"
+        htmlFor="title"
+        error={errors.title?.message}
+      >
+        <Input
+          id="title"
+          placeholder="e.g., JavaScript Fundamentals Quiz"
+          error={errors.title?.message}
+          disabled={isDisabled}
+          maxLength={200}
+          {...register("title")}
+        />
+
+        <p className="text-xs text-para-muted mt-1.5">
+          {title.length || 0}/200 characters
+        </p>
+      </FormField>
     </div>
   );
 }

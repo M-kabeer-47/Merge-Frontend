@@ -1,0 +1,31 @@
+/**
+ * Go/Rust-style error handling utility
+ * Wraps async functions and returns [result, null] on success or [null, error] on failure
+ *
+ * Usage:
+ * const [data, error] = await tryIt(fetchSomething());
+ * if (error) { handle error }
+ * else { use data }
+ */
+export async function tryIt<T>(
+  promise: Promise<T>
+): Promise<[T, null] | [null, Error]> {
+  try {
+    const result = await promise;
+    return [result, null];
+  } catch (error) {
+    return [null, error instanceof Error ? error : new Error(String(error))];
+  }
+}
+
+/**
+ * Sync version of tryIt for non-async functions
+ */
+export function tryItSync<T>(fn: () => T): [T, null] | [null, Error] {
+  try {
+    const result = fn();
+    return [result, null];
+  } catch (error) {
+    return [null, error instanceof Error ? error : new Error(String(error))];
+  }
+}
