@@ -8,6 +8,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import useCreateQuiz from "@/hooks/quizzes/use-create-quiz";
 import {
   createQuizSchema,
+  defaultValues,
   type CreateQuizFormData,
 } from "@/schemas/quiz/create-quiz";
 import QuizFormHeader from "@/components/quizzes/create/QuizFormHeader";
@@ -29,25 +30,14 @@ export default function CreateQuizPage() {
 
   const {
     control,
+    register,
     handleSubmit,
     watch,
     formState: { errors, isValid },
   } = useForm<CreateQuizFormData>({
     resolver: zodResolver(createQuizSchema),
     mode: "onChange",
-    defaultValues: {
-      title: "",
-      timeLimitMin: 30,
-      deadline: "",
-      questions: [
-        {
-          text: "",
-          options: ["", "", "", ""],
-          correctOption: "",
-          points: 1,
-        },
-      ],
-    },
+    defaultValues: defaultValues
   });
 
   const questions = watch("questions");
@@ -87,15 +77,17 @@ export default function CreateQuizPage() {
           {/* Left Column: Basic Info & Settings */}
           <div className="xl:col-span-5 space-y-6 h-fit sticky top-24">
             <BasicInfoSection
-              control={control}
               errors={errors}
               isDisabled={isCreating}
+              register={register}
+              title={watch("title")}
             />
 
             <SettingsSection
               control={control}
               errors={errors}
               isDisabled={isCreating}
+              register={register}
             />
           </div>
 

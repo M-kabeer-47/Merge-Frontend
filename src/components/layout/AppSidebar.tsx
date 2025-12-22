@@ -40,7 +40,7 @@ const sidebarLinks: Links[] = [
 
   {
     label: "Notes",
-    href: "/notes",
+    href: "/check",
     icon: <IconNotes className="h-5 w-5" />,
   },
 

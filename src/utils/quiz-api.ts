@@ -20,7 +20,8 @@ interface FetchQuizzesParams {
  * Uses a separate axios instance for server components (no localStorage/client interceptors)
  */
 export async function fetchQuizzes(
-  params: FetchQuizzesParams
+  params: FetchQuizzesParams,
+  accessToken: string
 ): Promise<Quiz[]> {
   const { roomId, sortBy, sortOrder, search } = params;
 
@@ -30,15 +31,10 @@ export async function fetchQuizzes(
   if (sortOrder) queryParams.sortOrder = sortOrder;
   if (search) queryParams.search = search;
 
-  // Get access token from cookies for server-side auth
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
-
   const [response, error] = await tryIt(
     serverApi.get<{ quizzes?: Quiz[] } | Quiz[]>("/quiz", {
       params: queryParams,
       headers: {
-        "Content-Type": "application/json",
         ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       },
     })
@@ -63,18 +59,15 @@ interface FetchQuizByIdParams {
  * Server-side function to fetch a single quiz by ID
  */
 export async function fetchQuizById(
-  params: FetchQuizByIdParams
+  params: FetchQuizByIdParams,
+  accessToken: string
 ): Promise<Quiz | null> {
   const { quizId, roomId } = params;
-
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
 
   const [response, error] = await tryIt(
     serverApi.get<Quiz>(`/quiz/${quizId}`, {
       params: { roomId },
       headers: {
-        "Content-Type": "application/json",
         ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       },
     })

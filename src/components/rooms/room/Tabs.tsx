@@ -89,7 +89,6 @@ export default function ProfileTabs({
               <Link href={tab.id} key={tab.id}>
                 <motion.button
                   ref={(el) => (tabRefs.current[tab.id] = el)}
-                  // onClick={() => onTabChange(tab.id)}
                   onMouseEnter={() => handleTabHover(tab.id)}
                   className={`relative group flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm whitespace-nowrap transition-all z-10 justify-center ${
                     isActive
