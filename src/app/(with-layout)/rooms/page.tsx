@@ -98,11 +98,10 @@ export default function RoomsPage() {
 
   return (
     <div className="sm:px-6 px-4 sm:py-6 py-4 min-h-screen bg-main-background space-y-6">
-      {/* Page Header - Simple fade in */}
+      {/* Page Header */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
@@ -136,8 +135,13 @@ export default function RoomsPage() {
         </div>
       </motion.div>
 
-      {/* Controls - No animation */}
-      <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+      {/* Controls */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between"
+      >
         {/* Tabs */}
         <div className="w-full flex-1 lg:max-w-lg">
           <Tabs
@@ -153,11 +157,19 @@ export default function RoomsPage() {
         <div className="lg:w-80">
           <SearchBar onSearch={setSearchTerm} placeholder="Search rooms..." />
         </div>
-      </div>
+      </motion.div>
+
+      {/* Results Info */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="flex items-center justify-between text-sm text-para-muted"
+      ></motion.div>
 
       {/* Loading State */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
@@ -174,23 +186,60 @@ export default function RoomsPage() {
           ))}
         </div>
       ) : rooms.length > 0 ? (
-        // Room Grid - No stagger, just CSS fade
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                delay: 0.3,
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {rooms.map((room) => (
-            <RoomCard
+            <motion.div
               key={room.id}
-              room={room}
-              onJoin={handleJoinRoom}
-              onView={handleViewRoom}
-              onEdit={handleEditRoom}
-              onDelete={setRoomToDelete}
-            />
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    duration: 0.4,
+                    ease: "easeOut",
+                  },
+                },
+              }}
+            >
+              <RoomCard
+                room={room}
+                onJoin={handleJoinRoom}
+                onView={handleViewRoom}
+                onEdit={handleEditRoom}
+                onDelete={setRoomToDelete}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
-        // Empty State - Simple animation
-        <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
-          <div className="mb-6">
+        /* Empty State */
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex flex-col items-center justify-center py-12"
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="mb-6"
+          >
             <Image
               src={
                 searchTerm
@@ -202,7 +251,7 @@ export default function RoomsPage() {
               height={160}
               className="object-contain"
             />
-          </div>
+          </motion.div>
           <h3 className="text-lg font-semibold text-heading mb-2">
             No rooms found
           </h3>
@@ -219,7 +268,7 @@ export default function RoomsPage() {
               Create Your First Room
             </Button>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* Create Room Modal */}
