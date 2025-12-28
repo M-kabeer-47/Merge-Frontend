@@ -21,7 +21,7 @@ import {
 interface CreateRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (room: any) => void;
+  onSuccess?: () => void;
 }
 
 // Predefined tags
@@ -80,11 +80,8 @@ export default function CreateRoomModal({
     if (isCreateSuccess && createdRoom) {
       reset();
       onClose();
-      if (onSuccess) {
-        onSuccess(createdRoom);
-      }
     }
-  }, [isCreateSuccess, createdRoom, reset, onClose, onSuccess]);
+  }, [isCreateSuccess, createdRoom]);
 
   const onSubmit = async (data: CreateRoomType) => {
     await createRoom(data);
