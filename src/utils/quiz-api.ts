@@ -1,14 +1,8 @@
-import { cookies } from "next/headers";
-import axios from "axios";
-import { tryIt } from "@/utils/try-it";
 import type { Quiz } from "@/types/quiz";
 
-// Server-side axios instance (no client interceptors)
-const serverApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
-});
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-interface FetchQuizzesParams {
+export interface FetchQuizzesParams {
   roomId: string;
   sortBy?: string;
   sortOrder?: string;
@@ -16,67 +10,81 @@ interface FetchQuizzesParams {
 }
 
 /**
- * Server-side function to fetch quizzes from the API
- * Uses a separate axios instance for server components (no localStorage/client interceptors)
+ * Server-side fetch with Next.js Data Cache
+ * Uses native fetch for caching support (axios doesn't work with Data Cache)
  */
-export async function fetchQuizzes(
+export async function fetchQuizzesServer(
   params: FetchQuizzesParams,
   accessToken: string
 ): Promise<Quiz[]> {
-  const { roomId, sortBy, sortOrder, search } = params;
+  const {
+    roomId,
+    sortBy = "deadline",
+    sortOrder = "asc",
+    search = "",
+  } = params;
 
-  // Build query params
-  const queryParams: Record<string, string> = { roomId };
-  if (sortBy) queryParams.sortBy = sortBy;
-  if (sortOrder) queryParams.sortOrder = sortOrder;
-  if (search) queryParams.search = search;
+  // Build query string
+  const queryParams = new URLSearchParams({ roomId });
+  if (sortBy) queryParams.append("sortBy", sortBy);
+  if (sortOrder) queryParams.append("sortOrder", sortOrder);
+  if (search) queryParams.append("search", search);
 
-  const [response, error] = await tryIt(
-    serverApi.get<{ quizzes?: Quiz[] } | Quiz[]>("/quiz", {
-      params: queryParams,
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      },
-    })
-  );
+  // Get access token from cookies
 
-  if (error) {
-    console.error("Failed to fetch quizzes:", error.message);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/quiz?${queryParams.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+        },
+        // Next.js Data Cache: revalidate every 60 seconds
+        next: { revalidate: 60 },
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Failed to fetch quizzes:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : data.quizzes || [];
+  } catch (error) {
+    console.error("Error fetching quizzes:", error);
     return [];
   }
-
-  const data = response.data;
-  // Handle both {quizzes: [...]} and [...] response formats
-  return Array.isArray(data) ? data : data.quizzes || [];
-}
-
-interface FetchQuizByIdParams {
-  quizId: string;
-  roomId: string;
 }
 
 /**
- * Server-side function to fetch a single quiz by ID
+ * Client-side fetch using axios (for React Query)
+ * This is called when filters change on the client
  */
-export async function fetchQuizById(
-  params: FetchQuizByIdParams,
-  accessToken: string
-): Promise<Quiz | null> {
-  const { quizId, roomId } = params;
+export async function fetchQuizzesClient(
+  params: FetchQuizzesParams
+): Promise<Quiz[]> {
+  // Dynamic import to avoid server-side issues
+  const { default: api } = await import("@/utils/api");
 
-  const [response, error] = await tryIt(
-    serverApi.get<Quiz>(`/quiz/${quizId}`, {
-      params: { roomId },
-      headers: {
-        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+  const { roomId, sortBy, sortOrder, search } = params;
+
+  try {
+    const response = await api.get<{ quizzes?: Quiz[] } | Quiz[]>("/quiz", {
+      params: {
+        roomId,
+        ...(sortBy && { sortBy }),
+        ...(sortOrder && { sortOrder }),
+        ...(search && { search }),
       },
-    })
-  );
+    });
 
-  if (error) {
-    console.error("Failed to fetch quiz:", error.message);
-    return null;
+    const data = response.data;
+    return Array.isArray(data) ? data : data.quizzes || [];
+  } catch (error) {
+    console.error("Failed to fetch quizzes:", error);
+    return [];
   }
-
-  return response.data;
 }

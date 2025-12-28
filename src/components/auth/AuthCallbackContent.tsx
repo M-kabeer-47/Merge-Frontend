@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { setAuthTokens } from "@/utils/auth-tokens";
 
 export default function AuthCallbackContent() {
   const searchParams = useSearchParams();
@@ -17,9 +18,8 @@ export default function AuthCallbackContent() {
     const redirect = searchParams?.get("redirect") || "/rooms";
 
     if (token && refreshToken) {
-      // Store tokens in localStorage
-      localStorage.setItem("accessToken", token);
-      localStorage.setItem("refreshToken", refreshToken);
+      // Store tokens in both localStorage and cookies
+      setAuthTokens(token, refreshToken);
 
       // Invalidate the user query so it refetches with the new token
       queryClient.invalidateQueries({ queryKey: ["user"] });

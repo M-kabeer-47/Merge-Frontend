@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, SlidersHorizontal } from "lucide-react";
 import QuizCard from "@/components/quizzes/QuizCard";
 import {
@@ -13,6 +14,8 @@ import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { fetchQuizzesClient } from "@/utils/quiz-api";
 import type {
   Quiz,
   QuizSortOption,
@@ -22,16 +25,13 @@ import type {
 
 interface QuizListClientProps {
   roomId: string;
-  quizzes: Quiz[];
   isInstructor: boolean;
   initialSearch?: string;
   initialSort?: QuizSortOption;
   initialFilter?: QuizFilterType;
 }
-
 export default function QuizListClient({
   roomId,
-  quizzes,
   isInstructor,
   initialSearch = "",
   initialSort = "deadline",
@@ -40,14 +40,44 @@ export default function QuizListClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Local state for immediate UI feedback
+  // State for filters
   const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [activeFilter, setActiveFilter] =
     useState<QuizFilterType>(initialFilter);
   const [sortBy, setSortBy] = useState<QuizSortOption>(initialSort);
+  const [sortOrder] = useState<"asc" | "desc">("asc");
   const [showSortMenu, setShowSortMenu] = useState(false);
 
-  // Update URL params (triggers server refetch)
+  // Debounce search
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Fetch quizzes - SAME queryKey as server prefetch for hydration to work
+  const {
+    data: quizzes = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: [
+      "quizzes",
+      roomId,
+      { sortBy, sortOrder, search: debouncedSearch },
+    ],
+    queryFn: () =>
+      fetchQuizzesClient({
+        roomId,
+        sortBy,
+        sortOrder,
+        search: debouncedSearch,
+      }),
+  });
+
+  // Update URL params for shareable links
   const updateUrlParams = useCallback(
     (params: { search?: string; sortBy?: string; filter?: string }) => {
       const current = new URLSearchParams(searchParams.toString());
@@ -72,23 +102,17 @@ export default function QuizListClient({
         }
       }
 
-      router.push(`/rooms/${roomId}/quizzes?${current.toString()}`);
+      router.push(`/rooms/${roomId}/quizzes?${current.toString()}`, {
+        scroll: false,
+      });
     },
     [router, roomId, searchParams]
   );
 
-  // Handle search with debounce effect via URL update
-  const handleSearch = useCallback(
-    (value: string) => {
-      setSearchTerm(value);
-      // Debounce URL update
-      const timeoutId = setTimeout(() => {
-        updateUrlParams({ search: value });
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    },
-    [updateUrlParams]
-  );
+  // Handle search
+  const handleSearch = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
 
   // Handle filter change
   const handleFilterChange = useCallback(
@@ -109,45 +133,40 @@ export default function QuizListClient({
     [updateUrlParams]
   );
 
-  // Client-side filtering for immediate feedback
+  // Client-side filtering for status (not sent to API)
   const filteredQuizzes = React.useMemo(() => {
-    let items = [...quizzes];
+    if (activeFilter === "all") return quizzes;
 
-    // Apply client-side filter while waiting for server response
-    if (activeFilter !== "all") {
-      items = items.filter((item) => {
-        if (isInstructor) {
-          switch (activeFilter) {
-            case "active":
-              return item.status === "published";
-            case "closed":
-              return item.status === "closed";
-            default:
-              return true;
-          }
-        } else {
-          const studentItem = item as StudentQuiz;
-          const attempt = studentItem.attempt;
-          const isOverdue = new Date() > new Date(item.deadline);
-
-          switch (activeFilter) {
-            case "pending":
-              return attempt.status === "pending" && !isOverdue;
-            case "completed":
-              return attempt.status === "completed";
-            case "missed":
-              return (
-                attempt.status === "missed" ||
-                (attempt.status === "pending" && isOverdue)
-              );
-            default:
-              return true;
-          }
+    return quizzes.filter((item) => {
+      if (isInstructor) {
+        switch (activeFilter) {
+          case "active":
+            return item.status === "published";
+          case "closed":
+            return item.status === "closed";
+          default:
+            return true;
         }
-      });
-    }
+      } else {
+        const studentItem = item as StudentQuiz;
+        const attempt = studentItem.attempt;
+        const isOverdue = new Date() > new Date(item.deadline);
 
-    return items;
+        switch (activeFilter) {
+          case "pending":
+            return attempt?.status === "pending" && !isOverdue;
+          case "completed":
+            return attempt?.status === "completed";
+          case "missed":
+            return (
+              attempt?.status === "missed" ||
+              (attempt?.status === "pending" && isOverdue)
+            );
+          default:
+            return true;
+        }
+      }
+    });
   }, [quizzes, activeFilter, isInstructor]);
 
   // Handlers
@@ -162,7 +181,6 @@ export default function QuizListClient({
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this quiz?")) {
       console.log("Delete quiz:", id);
-      // TODO: Implement delete mutation
     }
   };
 
@@ -274,7 +292,25 @@ export default function QuizListClient({
 
       {/* Main Content Area - Scrollable */}
       <div className="flex-1 overflow-y-auto">
-        {isEmpty ? (
+        {isLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <LoadingSpinner size="lg" text="Loading quizzes..." />
+          </div>
+        ) : isError ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center text-para-muted">
+              <p>Failed to load quizzes</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </div>
+          </div>
+        ) : isEmpty ? (
           <div className="h-full flex items-center justify-center">
             {hasSearchTerm ? (
               <NoSearchResults

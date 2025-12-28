@@ -4,6 +4,8 @@ import { UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";
 import { ApiError } from "@/types/api-error";
 import api from "@/utils/api";
+import { setAuthTokens } from "@/utils/auth-tokens";
+import { useRouter } from "next/navigation";
 
 export default function signIn({
   setError,
@@ -13,6 +15,7 @@ export default function signIn({
   email: string;
   password: string;
 }) {
+  const router = useRouter();
   const signInFn = async ({
     email,
     password,
@@ -36,13 +39,11 @@ export default function signIn({
       }
       // Handle successful sign-in, e.g., store tokens, redirect, etc.
       else if (data.token && data.refreshToken && data.userId) {
-        localStorage.setItem("accessToken", data.token);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        localStorage.setItem("userID", data.userId);
+        setAuthTokens(data.token, data.refreshToken);
 
         toast.success("Signed in successfully!");
         setTimeout(() => {
-          window.location.href = "/dashboard"; // Redirect to dashboard or desired page
+          router.push("/rooms"); // Redirect to dashboard or desired page
         }, 500);
       }
     },

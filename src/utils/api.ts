@@ -26,17 +26,21 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 // Create axios instance
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  withCredentials: true, // Send cookies with requests
 });
 
 // Request interceptor - attach access token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Only access localStorage on client
     if (isClient) {
       const token = localStorage.getItem("accessToken");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+    // On server, cookies are sent automatically via withCredentials
+    // If you need explicit token on server, pass it via headers option when calling api
     return config;
   },
   (error) => Promise.reject(error)
@@ -50,8 +54,8 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Only handle 401 errors and avoid infinite loops
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Only handle 401 errors on client (server can't refresh)
+    if (error.response?.status === 401 && !originalRequest._retry && isClient) {
       console.log("401 Unauthorized");
       originalRequest._retry = true;
 

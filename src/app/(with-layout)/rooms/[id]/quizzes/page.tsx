@@ -1,290 +1,83 @@
-"use client";
-
-import React, { useState, useMemo } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Plus, SlidersHorizontal } from "lucide-react";
-import QuizCard from "@/components/quizzes/QuizCard";
+import { Suspense } from "react";
 import {
-  EmptyQuizzes,
-  NoSearchResults,
-  EmptyFilterResults,
-} from "@/components/quizzes/EmptyStates";
-import Tabs from "@/components/ui/Tabs";
-import SearchBar from "@/components/ui/SearchBar";
-import { Button } from "@/components/ui/Button";
-import DropdownMenu from "@/components/ui/Dropdown";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import useFetchQuizzes from "@/hooks/quizzes/use-fetch-quizzes";
-import type { QuizSortOption, QuizFilterType, StudentQuiz } from "@/types/quiz";
-import { useAuth } from "@/providers/AuthProvider";
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { fetchQuizzesServer } from "@/utils/quiz-api";
+import QuizListClient from "@/components/quizzes/QuizListClient";
+import QuizzesSkeleton from "@/components/quizzes/QuizzesSkeleton";
+import type { QuizSortOption, QuizFilterType } from "@/types/quiz";
+import { cookies } from "next/headers";
 
-export default function QuizzesPage() {
-  const router = useRouter();
-  const params = useParams();
-  const roomId = params?.id as string;
-  const { user } = useAuth();
+interface QuizzesPageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    search?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    filter?: string;
+    role?: string;
+  }>;
+}
 
-  // State for filters (drives re-fetching)
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<QuizFilterType>("all");
-  const [sortBy, setSortBy] = useState<QuizSortOption>("deadline");
-  const [sortOrder] = useState<"asc" | "desc">("asc");
-  const [showSortMenu, setShowSortMenu] = useState(false);
-
-  // Determine role
-  const isInstructor = false;
-
-  // Debounce search
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
-
-  // Fetch quizzes with React Query - re-fetches when dependencies change
-  const {
-    data: quizzes = [],
-    isLoading,
-    isError,
-  } = useFetchQuizzes({
-    roomId,
-    sortBy,
-    sortOrder,
-    search: debouncedSearch,
+// Separate async component for data fetching with Suspense
+async function QuizzesContent({
+  roomId,
+  search,
+  sortBy,
+  sortOrder,
+  filter,
+  isInstructor,
+}: {
+  roomId: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  filter?: string;
+  isInstructor: boolean;
+}) {
+  // Create QueryClient and prefetch using server-side function (with Data Cache)
+  const queryClient = new QueryClient();
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  await queryClient.prefetchQuery({
+    queryKey: ["quizzes", roomId, { sortBy, sortOrder, search }],
+    queryFn: () =>
+      fetchQuizzesServer({ roomId, sortBy, sortOrder, search }, accessToken),
   });
 
-  // Client-side filtering for status (not sent to API)
-  const filteredQuizzes = useMemo(() => {
-    if (activeFilter === "all") return quizzes;
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <QuizListClient
+        roomId={roomId}
+        isInstructor={isInstructor}
+        initialSearch={search || ""}
+        initialSort={(sortBy as QuizSortOption) || "deadline"}
+        initialFilter={(filter as QuizFilterType) || "all"}
+      />
+    </HydrationBoundary>
+  );
+}
 
-    return quizzes.filter((item) => {
-      if (isInstructor) {
-        switch (activeFilter) {
-          case "active":
-            return item.status === "published";
-          case "closed":
-            return item.status === "closed";
-          default:
-            return true;
-        }
-      } else {
-        const studentItem = item as StudentQuiz;
-        const attempt = studentItem.attempt;
-        const isOverdue = new Date() > new Date(item.deadline);
-
-        switch (activeFilter) {
-          case "pending":
-            return attempt?.status === "pending" && !isOverdue;
-          case "completed":
-            return attempt?.status === "completed";
-          case "missed":
-            return (
-              attempt?.status === "missed" ||
-              (attempt?.status === "pending" && isOverdue)
-            );
-          default:
-            return true;
-        }
-      }
-    });
-  }, [quizzes, activeFilter, isInstructor]);
-
-  // Handlers
-  const handleViewDetails = (id: string) => {
-    router.push(`/rooms/${roomId}/quizzes/${id}`);
-  };
-
-  const handleEdit = (id: string) => {
-    router.push(`/rooms/${roomId}/quizzes/${id}/edit`);
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this quiz?")) {
-      console.log("Delete quiz:", id);
-    }
-  };
-
-  const handleStartQuiz = (id: string) => {
-    router.push(`/rooms/${roomId}/quizzes/${id}/attempt`);
-  };
-
-  const handleCreateQuiz = () => {
-    router.push(`/rooms/${roomId}/quizzes/create`);
-  };
-
-  // Sort options
-  const sortOptions = [
-    {
-      title: "Deadline",
-      action: () => {
-        setSortBy("deadline");
-        setShowSortMenu(false);
-      },
-    },
-    {
-      title: "Title",
-      action: () => {
-        setSortBy("title");
-        setShowSortMenu(false);
-      },
-    },
-    ...(isInstructor
-      ? []
-      : [
-          {
-            title: "Status",
-            action: () => {
-              setSortBy("status");
-              setShowSortMenu(false);
-            },
-          },
-        ]),
-  ];
-
-  const getSortLabel = () => {
-    switch (sortBy) {
-      case "deadline":
-        return "Deadline";
-      case "title":
-        return "Title";
-      case "status":
-        return "Status";
-      default:
-        return "Sort";
-    }
-  };
-
-  const isEmpty = filteredQuizzes.length === 0;
-  const hasSearchTerm = searchTerm.trim().length > 0;
-  const hasActiveFilter = activeFilter !== "all";
+export default async function QuizzesPage({
+  params,
+  searchParams,
+}: QuizzesPageProps) {
+  const { id: roomId } = await params;
+  const { search, sortBy, sortOrder, filter, role } = await searchParams;
+  const isInstructor = role === "instructor";
 
   return (
-    <div className="h-full flex flex-col bg-main-background">
-      {/* Header with Search and Controls */}
-      <div className="px-4 sm:px-6 py-4 border-b border-light-border space-y-4">
-        {/* Top Row: Search and Create Button */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 max-w-md">
-            <SearchBar
-              onSearch={setSearchTerm}
-              placeholder="Search quizzes..."
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center gap-2 min-w-[140px] justify-center"
-              >
-                <span className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4" />
-                  {getSortLabel()}
-                </span>
-              </Button>
-
-              {showSortMenu && (
-                <div className="absolute right-0 top-full z-10">
-                  <DropdownMenu
-                    options={sortOptions}
-                    onClose={() => setShowSortMenu(false)}
-                    align="right"
-                  />
-                </div>
-              )}
-            </div>
-            {isInstructor && (
-              <Button
-                onClick={handleCreateQuiz}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                <span className="hidden sm:inline">New Quiz</span>
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="max-w-[500px]">
-          <Tabs
-            options={
-              isInstructor
-                ? [
-                    { key: "all", label: "All" },
-                    { key: "active", label: "Active" },
-                    { key: "closed", label: "Closed" },
-                  ]
-                : [
-                    { key: "all", label: "All" },
-                    { key: "pending", label: "Pending" },
-                    { key: "completed", label: "Completed" },
-                    { key: "missed", label: "Missed" },
-                  ]
-            }
-            activeKey={activeFilter}
-            onChange={(key) => setActiveFilter(key as QuizFilterType)}
-          />
-        </div>
-      </div>
-
-      {/* Main Content Area - Scrollable */}
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="h-full flex items-center justify-center">
-            <LoadingSpinner size="lg" text="Loading quizzes..." />
-          </div>
-        ) : isError ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center text-para-muted">
-              <p>Failed to load quizzes</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </Button>
-            </div>
-          </div>
-        ) : isEmpty ? (
-          <div className="h-full flex items-center justify-center">
-            {hasSearchTerm ? (
-              <NoSearchResults
-                searchTerm={searchTerm}
-                onClearSearch={() => setSearchTerm("")}
-              />
-            ) : hasActiveFilter ? (
-              <EmptyFilterResults
-                filterType={activeFilter}
-                onClearFilter={() => setActiveFilter("all")}
-              />
-            ) : (
-              <EmptyQuizzes
-                isInstructor={isInstructor}
-                onCreateFirst={isInstructor ? handleCreateQuiz : undefined}
-              />
-            )}
-          </div>
-        ) : (
-          <div className="px-4 sm:px-6 py-4 space-y-4">
-            {filteredQuizzes.map((quiz) => (
-              <QuizCard
-                key={quiz.id}
-                quiz={quiz}
-                onViewDetails={handleViewDetails}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onStartQuiz={handleStartQuiz}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    <Suspense fallback={<QuizzesSkeleton />}>
+      <QuizzesContent
+        roomId={roomId}
+        search={search}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        filter={filter}
+        isInstructor={isInstructor}
+      />
+    </Suspense>
   );
 }
