@@ -12,17 +12,10 @@ interface RoomCardProps {
   onJoin?: (roomId: string) => void;
   onView?: (roomId: string) => void;
   onEdit?: (roomId: string) => void;
-  onDelete?: React.Dispatch<
-    React.SetStateAction<{ id: string; title: string } | null>
-  >;
+  onDelete?: (room: { id: string; title: string }) => void;
 }
 
-export default function RoomCard({
-  room,
-  onJoin,
-  onView,
-  onDelete,
-}: RoomCardProps) {
+export default function RoomCard({ room, onJoin, onDelete }: RoomCardProps) {
   const { width } = useWindowSize();
   const router = useRouter();
 
@@ -98,7 +91,8 @@ export default function RoomCard({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {room.members.length > 0 &&
+            {room.members &&
+              room.members.length > 0 &&
               (width && width > 640 ? (
                 <MemberAvatars
                   members={room.members.map((m) => ({

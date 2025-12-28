@@ -31,7 +31,7 @@ export default function useDeleteRoom() {
     },
     onSuccess: (_, { roomId, filter, search }) => {
       // Update cache after successful deletion
-      queryClient.setQueryData(["user-rooms", filter, search], (old: any) => {
+      queryClient.setQueryData(["rooms", filter, search], (old: any) => {
         if (!old) return old;
         return {
           ...old,
