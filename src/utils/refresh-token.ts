@@ -1,6 +1,6 @@
 import axios from "axios";
 import { toast } from "sonner";
-
+import { setAuthTokens } from "@/utils/auth-tokens";
 const isClient = typeof window !== "undefined";
 
 interface RefreshTokenResponse {
@@ -8,7 +8,6 @@ interface RefreshTokenResponse {
   refreshToken: string;
   userId: string;
 }
-
 
 export async function refreshToken(): Promise<string | null> {
   if (!isClient) return null;
@@ -32,6 +31,10 @@ export async function refreshToken(): Promise<string | null> {
     const { token, refreshToken: newRefreshToken, userId } = response.data;
 
     // Store new tokens
+
+    //set in cookies as well
+    setAuthTokens(token, newRefreshToken);
+
     localStorage.setItem("accessToken", token);
     localStorage.setItem("refreshToken", newRefreshToken);
     localStorage.setItem("userID", userId);

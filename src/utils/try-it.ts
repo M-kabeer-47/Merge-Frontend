@@ -8,12 +8,3 @@ export async function tryIt<T>(
     return [null, error instanceof Error ? error : new Error(String(error))];
   }
 }
-
-export function tryItSync<T>(fn: () => T): [T, null] | [null, Error] {
-  try {
-    const result = fn();
-    return [result, null];
-  } catch (error) {
-    return [null, error instanceof Error ? error : new Error(String(error))];
-  }
-}

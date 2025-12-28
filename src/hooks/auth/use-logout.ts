@@ -1,9 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { useRouter } from "next/navigation";
 
 export default function useLogout() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const logoutFunction = async () => {
     const response = await api.post("/auth/logout", {});
@@ -22,19 +24,19 @@ export default function useLogout() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("userId");
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.clear();
 
       // Redirect to login anyway
-      window.location.href = "/sign-in";
+      router.push("/sign-in");
     },
     onSuccess: () => {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("userId");
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.clear();
       toast.success("Logged out successfully");
       setTimeout(() => {
-        window.location.href = "/sign-in"; // Redirect to sign-in page after logout
+        router.push("/sign-in");
       }, 1000);
     },
   });
