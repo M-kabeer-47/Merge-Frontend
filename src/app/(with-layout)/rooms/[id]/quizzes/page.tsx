@@ -1,14 +1,6 @@
-import { Suspense } from "react";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
-import { fetchQuizzesServer } from "@/utils/quiz-api";
+import { getQuizzes } from "@/server-api/quizzes";
 import QuizListClient from "@/components/quizzes/QuizListClient";
-import QuizzesSkeleton from "@/components/quizzes/QuizzesSkeleton";
 import type { QuizSortOption, QuizFilterType } from "@/types/quiz";
-import { cookies } from "next/headers";
 
 interface QuizzesPageProps {
   params: Promise<{ id: string }>;
@@ -21,45 +13,6 @@ interface QuizzesPageProps {
   }>;
 }
 
-// Separate async component for data fetching with Suspense
-async function QuizzesContent({
-  roomId,
-  search,
-  sortBy,
-  sortOrder,
-  filter,
-  isInstructor,
-}: {
-  roomId: string;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: string;
-  filter?: string;
-  isInstructor: boolean;
-}) {
-  // Create QueryClient and prefetch using server-side function (with Data Cache)
-  const queryClient = new QueryClient();
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
-  await queryClient.prefetchQuery({
-    queryKey: ["quizzes", roomId, { sortBy, sortOrder, search }],
-    queryFn: () =>
-      fetchQuizzesServer({ roomId, sortBy, sortOrder, search }, accessToken),
-  });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <QuizListClient
-        roomId={roomId}
-        isInstructor={isInstructor}
-        initialSearch={search || ""}
-        initialSort={(sortBy as QuizSortOption) || "deadline"}
-        initialFilter={(filter as QuizFilterType) || "all"}
-      />
-    </HydrationBoundary>
-  );
-}
-
 export default async function QuizzesPage({
   params,
   searchParams,
@@ -68,16 +21,22 @@ export default async function QuizzesPage({
   const { search, sortBy, sortOrder, filter, role } = await searchParams;
   const isInstructor = role === "instructor";
 
+  // Direct server-side fetch with Next.js Data Cache (revalidate: 60)
+  const quizzes = await getQuizzes({
+    roomId,
+    sortBy,
+    sortOrder,
+    search,
+  });
+
   return (
-    <Suspense fallback={<QuizzesSkeleton />}>
-      <QuizzesContent
-        roomId={roomId}
-        search={search}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        filter={filter}
-        isInstructor={isInstructor}
-      />
-    </Suspense>
+    <QuizListClient
+      quizzes={quizzes}
+      roomId={roomId}
+      isInstructor={isInstructor}
+      initialSearch={search || ""}
+      initialSort={(sortBy as QuizSortOption) || "deadline"}
+      initialFilter={(filter as QuizFilterType) || "all"}
+    />
   );
 }

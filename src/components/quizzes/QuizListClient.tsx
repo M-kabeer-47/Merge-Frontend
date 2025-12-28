@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { Plus, SlidersHorizontal } from "lucide-react";
 import QuizCard from "@/components/quizzes/QuizCard";
 import {
@@ -14,8 +13,6 @@ import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { fetchQuizzesClient } from "@/utils/quiz-api";
 import type {
   Quiz,
   QuizSortOption,
@@ -24,6 +21,7 @@ import type {
 } from "@/types/quiz";
 
 interface QuizListClientProps {
+  quizzes: Quiz[] | StudentQuiz[]; // Receive quizzes from server
   roomId: string;
   isInstructor: boolean;
   initialSearch?: string;
@@ -31,6 +29,7 @@ interface QuizListClientProps {
   initialFilter?: QuizFilterType;
 }
 export default function QuizListClient({
+  quizzes: initialQuizzes,
   roomId,
   isInstructor,
   initialSearch = "",
@@ -42,40 +41,13 @@ export default function QuizListClient({
 
   // State for filters
   const [searchTerm, setSearchTerm] = useState(initialSearch);
-  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [activeFilter, setActiveFilter] =
     useState<QuizFilterType>(initialFilter);
   const [sortBy, setSortBy] = useState<QuizSortOption>(initialSort);
-  const [sortOrder] = useState<"asc" | "desc">("asc");
   const [showSortMenu, setShowSortMenu] = useState(false);
 
-  // Debounce search
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
-
-  // Fetch quizzes - SAME queryKey as server prefetch for hydration to work
-  const {
-    data: quizzes = [],
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: [
-      "quizzes",
-      roomId,
-      { sortBy, sortOrder, search: debouncedSearch },
-    ],
-    queryFn: () =>
-      fetchQuizzesClient({
-        roomId,
-        sortBy,
-        sortOrder,
-        search: debouncedSearch,
-      }),
-  });
+  // Use server-provided quizzes (no client-side fetching)
+  const quizzes = initialQuizzes;
 
   // Update URL params for shareable links
   const updateUrlParams = useCallback(
@@ -292,25 +264,7 @@ export default function QuizListClient({
 
       {/* Main Content Area - Scrollable */}
       <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="h-full flex items-center justify-center">
-            <LoadingSpinner size="lg" text="Loading quizzes..." />
-          </div>
-        ) : isError ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center text-para-muted">
-              <p>Failed to load quizzes</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </Button>
-            </div>
-          </div>
-        ) : isEmpty ? (
+        {filteredQuizzes.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             {hasSearchTerm ? (
               <NoSearchResults
