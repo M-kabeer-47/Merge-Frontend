@@ -42,7 +42,7 @@ export async function fetchQuizzesServer(
           ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
         },
         // Next.js Data Cache: revalidate every 60 seconds
-        next: { tags: ["quizzes", roomId] },
+        next: { revalidate: 60 },
       }
     );
 

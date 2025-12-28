@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, SlidersHorizontal } from "lucide-react";
 import QuizCard from "@/components/quizzes/QuizCard";
 import {
@@ -13,6 +14,8 @@ import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { fetchQuizzesClient } from "@/utils/quiz-api";
 import type {
   Quiz,
   QuizSortOption,
@@ -22,16 +25,13 @@ import type {
 
 interface QuizListClientProps {
   roomId: string;
-  quizzes: Quiz[];
   isInstructor: boolean;
   initialSearch?: string;
   initialSort?: QuizSortOption;
   initialFilter?: QuizFilterType;
 }
-
 export default function QuizListClient({
   roomId,
-  quizzes,
   isInstructor,
   initialSearch = "",
   initialSort = "deadline",
@@ -40,14 +40,44 @@ export default function QuizListClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Local state for immediate UI feedback
+  // State for filters
   const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [activeFilter, setActiveFilter] =
     useState<QuizFilterType>(initialFilter);
   const [sortBy, setSortBy] = useState<QuizSortOption>(initialSort);
+  const [sortOrder] = useState<"asc" | "desc">("asc");
   const [showSortMenu, setShowSortMenu] = useState(false);
 
-  // Update URL params (triggers server refetch via Next.js)
+  // Debounce search
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Fetch quizzes - SAME queryKey as server prefetch for hydration to work
+  const {
+    data: quizzes = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: [
+      "quizzes",
+      roomId,
+      { sortBy, sortOrder, search: debouncedSearch },
+    ],
+    queryFn: () =>
+      fetchQuizzesClient({
+        roomId,
+        sortBy,
+        sortOrder,
+        search: debouncedSearch,
+      }),
+  });
+
+  // Update URL params for shareable links
   const updateUrlParams = useCallback(
     (params: { search?: string; sortBy?: string; filter?: string }) => {
       const current = new URLSearchParams(searchParams.toString());
@@ -79,30 +109,35 @@ export default function QuizListClient({
     [router, roomId, searchParams]
   );
 
-  // Debounced search - update URL after typing stops
-  const handleSearch = (value: string) => {
+  // Handle search
+  const handleSearch = useCallback((value: string) => {
     setSearchTerm(value);
-    updateUrlParams({ search: value });
-  };
+  }, []);
 
   // Handle filter change
-  const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter as QuizFilterType);
-    updateUrlParams({ filter });
-  };
+  const handleFilterChange = useCallback(
+    (filter: string) => {
+      setActiveFilter(filter as QuizFilterType);
+      updateUrlParams({ filter });
+    },
+    [updateUrlParams]
+  );
 
   // Handle sort change
-  const handleSortChange = (sort: QuizSortOption) => {
-    setSortBy(sort);
-    setShowSortMenu(false);
-    updateUrlParams({ sortBy: sort });
-  };
+  const handleSortChange = useCallback(
+    (sort: QuizSortOption) => {
+      setSortBy(sort);
+      setShowSortMenu(false);
+      updateUrlParams({ sortBy: sort });
+    },
+    [updateUrlParams]
+  );
 
-  // Client-side filtering for status tabs (not sent to API)
-  const filteredQuizzes = useMemo(() => {
+  // Client-side filtering for status (not sent to API)
+  const filteredQuizzes = React.useMemo(() => {
     if (activeFilter === "all") return quizzes;
 
-    return quizzes.filter((item: Quiz) => {
+    return quizzes.filter((item) => {
       if (isInstructor) {
         switch (activeFilter) {
           case "active":
@@ -134,7 +169,7 @@ export default function QuizListClient({
     });
   }, [quizzes, activeFilter, isInstructor]);
 
-  // Navigation handlers
+  // Handlers
   const handleViewDetails = (id: string) => {
     router.push(`/rooms/${roomId}/quizzes/${id}`);
   };
@@ -146,7 +181,6 @@ export default function QuizListClient({
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this quiz?")) {
       console.log("Delete quiz:", id);
-      // TODO: Call delete mutation
     }
   };
 
@@ -258,7 +292,25 @@ export default function QuizListClient({
 
       {/* Main Content Area - Scrollable */}
       <div className="flex-1 overflow-y-auto">
-        {isEmpty ? (
+        {isLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <LoadingSpinner size="lg" text="Loading quizzes..." />
+          </div>
+        ) : isError ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center text-para-muted">
+              <p>Failed to load quizzes</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </div>
+          </div>
+        ) : isEmpty ? (
           <div className="h-full flex items-center justify-center">
             {hasSearchTerm ? (
               <NoSearchResults
@@ -279,7 +331,7 @@ export default function QuizListClient({
           </div>
         ) : (
           <div className="px-4 sm:px-6 py-4 space-y-4">
-            {filteredQuizzes.map((quiz: Quiz) => (
+            {filteredQuizzes.map((quiz) => (
               <QuizCard
                 key={quiz.id}
                 quiz={quiz}
