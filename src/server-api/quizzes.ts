@@ -21,9 +21,9 @@ interface QuizzesResponse {
 export async function getQuizzes(params: FetchQuizzesParams): Promise<Quiz[]> {
   const {
     roomId,
-    sortBy = "deadline",
-    sortOrder = "asc",
-    search = "",
+    sortBy,
+    sortOrder,
+    search,
   } = params;
 
   // Build query string

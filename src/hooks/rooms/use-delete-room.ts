@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { refreshRoomsCache } from "@/server-actions/rooms";
 
 interface DeleteRoomParams {
   roomId: string;
@@ -44,6 +45,7 @@ export default function useDeleteRoom() {
           },
         };
       });
+      refreshRoomsCache("all")
       toast.success("Room deleted successfully!");
     },
   });

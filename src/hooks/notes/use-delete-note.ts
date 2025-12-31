@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { revalidateNotesCache } from "@/server-actions/notes";
 
 interface DeleteNoteParams {
   noteId: string;
@@ -30,7 +31,7 @@ export default function useDeleteNote() {
       );
     },
     onSuccess: (_, { noteId, folderId, searchQuery }) => {
-      // Update cache after successful deletion
+      // Update client cache after successful deletion
       queryClient.setQueryData(["notes", folderId, searchQuery], (old: any) => {
         if (!old) return old;
         return {
@@ -38,6 +39,10 @@ export default function useDeleteNote() {
           notes: old.notes.filter((note: any) => note.id !== noteId),
         };
       });
+
+      // Invalidate server cache (fire and forget - don't block UI)
+      revalidateNotesCache();
+
       toast.success("Note deleted successfully!");
     },
   });

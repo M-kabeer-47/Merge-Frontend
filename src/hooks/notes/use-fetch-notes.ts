@@ -31,13 +31,15 @@ export default function useFetchNotes(filters?: NoteFilters) {
     return fetchNotesData(params.toString());
   };
 
-  const { data, isLoading, isPending, isError, refetch } = useQuery({
-    queryKey: ["notes", filters?.folderId || null, filters?.search || ""],
-    queryFn: fetchNotes,
-    enabled: isClient && !!localStorage.getItem("accessToken"),
-    retry: false,
-    staleTime: 2 * 60 * 1000,
-  });
+  const { data, isLoading, isPending, isFetching, isError, refetch } = useQuery(
+    {
+      queryKey: ["notes", filters?.folderId || null, filters?.search || ""],
+      queryFn: fetchNotes,
+      enabled: isClient && !!localStorage.getItem("accessToken"),
+      retry: false,
+      staleTime: Infinity,
+    }
+  );
 
   // Prefetch all subfolders when folders are loaded
   useEffect(() => {
@@ -62,6 +64,7 @@ export default function useFetchNotes(filters?: NoteFilters) {
     currentFolder: (data?.currentFolder as Folder | null) || null,
     total: data?.total || 0,
     isLoading: isLoading || !isClient || isPending,
+    isFetching,
     isError,
     refetch,
   };

@@ -9,7 +9,6 @@ import { signInSchema, SignInType } from "@/schemas/auth/sign-in";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { toast } from "sonner";
 import Link from "next/link";
 import useSignIn from "@/hooks/auth/use-sign-in";
 import { useRouter } from "next/navigation";

@@ -12,7 +12,7 @@ import {
   Settings,
 } from "lucide-react";
 import ProfessionalTabs from "@/components/rooms/room/Tabs";
-import InviteModal from "@/components/rooms/InviteModal";
+import InviteModal from "@/components/rooms/modals/InviteModal";
 import RoomHeader from "@/components/rooms/RoomHeader";
 import RoomHeaderSkeleton from "@/components/rooms/RoomHeaderSkeleton";
 import useFetchRoomDetails from "@/hooks/rooms/use-fetch-room-details";

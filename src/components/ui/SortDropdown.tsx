@@ -8,8 +8,8 @@ import type { SortOption, SortField } from "@/types/content";
 interface SortOptionConfig {
   field: SortField;
   label: string;
-  descLabel?: string; // e.g., "Newest first"
-  ascLabel?: string; // e.g., "Oldest first"
+  descLabel?: string;
+  ascLabel?: string;
 }
 
 interface SortDropdownProps {
@@ -83,11 +83,10 @@ export default function SortDropdown({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`h-10 px-4 rounded-lg border transition-all duration-200 flex items-center gap-2 text-sm font-medium ${
-          value
-            ? "border-secondary bg-secondary/5 text-secondary shadow-sm"
-            : "border-light-border bg-main-background hover:border-secondary/40 hover:bg-secondary/5 text-para"
-        }`}
+        className="h-10 px-4 rounded-lg border transition-all duration-200 flex items-center gap-2 text-sm font-medium 
+          
+             border-light-border  text-para shadow-sm
+  "
         aria-label="Sort options"
         aria-expanded={isOpen}
         aria-haspopup="menu"
@@ -102,7 +101,7 @@ export default function SortDropdown({
         <ChevronDown
           className={`h-4 w-4 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
-          } ${value ? "text-secondary" : "text-para-muted"}`}
+          } ${value ? "text-primary" : "text-para-muted"}`}
         />
       </button>
 
@@ -141,7 +140,7 @@ export default function SortDropdown({
                     <div className="flex flex-col gap-0.5">
                       <span
                         className={`text-sm font-medium ${
-                          isSelected ? "text-secondary" : "text-heading"
+                          isSelected ? "text-primary" : "text-heading"
                         }`}
                       >
                         {option.label}

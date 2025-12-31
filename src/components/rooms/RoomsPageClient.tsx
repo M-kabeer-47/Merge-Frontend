@@ -7,11 +7,11 @@ import { IconPlus } from "@tabler/icons-react";
 import { Link } from "lucide-react";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
-import CreateRoomModal from "@/components/rooms/CreateRoomModal";
-import JoinRoomModal from "@/components/rooms/JoinRoomModal";
-import DeleteRoomModal from "@/components/rooms/DeleteRoomModal";
+import CreateRoomModal from "@/components/rooms/modals/CreateRoomModal";
+import JoinRoomModal from "@/components/rooms/modals/JoinRoomModal";
+import DeleteRoomModal from "@/components/rooms/modals/DeleteRoomModal";
 import { Button } from "@/components/ui/Button";
-import { RoomActionsProvider } from "@/contexts/RoomActionsContext";
+import { RoomsProvider } from "@/contexts/RoomsContext";
 import type { Room } from "@/server-api/rooms";
 
 interface RoomsPageClientProps {
@@ -86,7 +86,9 @@ export default function RoomsPageClient({ children }: RoomsPageClientProps) {
         }
       }
 
-      router.push(`/rooms?${current.toString()}`, { scroll: false });
+      // Use replace instead of push to avoid triggering server re-render
+      // Data fetching is handled by React Query on client side
+      router.replace(`/rooms?${current.toString()}`, { scroll: false });
     },
     [router, searchParams]
   );
@@ -99,16 +101,10 @@ export default function RoomsPageClient({ children }: RoomsPageClientProps) {
   };
 
   // Handle search
-  const handleSearch = useCallback(
-    (value: string) => {
-      setSearchTerm(value);
-      const timeoutId = setTimeout(() => {
-        updateUrlParams({ search: value });
-      }, 500);
-      return () => clearTimeout(timeoutId);
-    },
-    [updateUrlParams]
-  );
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    updateUrlParams({ search: value });
+  };
 
   const getPageTitle = () => {
     switch (activeTab) {
@@ -189,9 +185,13 @@ export default function RoomsPageClient({ children }: RoomsPageClientProps) {
       </motion.div>
 
       {/* Server Component passed as children */}
-      <RoomActionsProvider onDeleteRoom={setRoomToDelete}>
+      <RoomsProvider
+        filter={currentFilter}
+        search={searchTerm}
+        onDeleteRoom={setRoomToDelete}
+      >
         {children}
-      </RoomActionsProvider>
+      </RoomsProvider>
 
       {/* Modals */}
       <CreateRoomModal

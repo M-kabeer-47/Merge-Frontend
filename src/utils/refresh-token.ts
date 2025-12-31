@@ -42,9 +42,9 @@ export async function refreshToken(): Promise<string | null> {
     return token;
   } catch (error: any) {
     // Clear tokens on refresh failure
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userID");
+    // localStorage.removeItem("accessToken");
+    // localStorage.removeItem("refreshToken");
+    // localStorage.removeItem("userID");
 
     toast.error("Session expired. Please sign in again.");
 

@@ -23,7 +23,8 @@ export default function AuthCallbackContent() {
 
       // Invalidate the user query so it refetches with the new token
       queryClient.invalidateQueries({ queryKey: ["user"] });
-
+      
+      
       // Redirect to the intended destination
       router.replace(redirect);
     } else {

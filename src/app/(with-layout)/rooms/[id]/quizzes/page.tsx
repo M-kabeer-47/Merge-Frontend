@@ -1,5 +1,7 @@
-import { getQuizzes } from "@/server-api/quizzes";
-import QuizListClient from "@/components/quizzes/QuizListClient";
+import { Suspense } from "react";
+import QuizListHeader from "@/components/quizzes/QuizListHeader";
+import QuizCards from "@/components/quizzes/QuizCards";
+import QuizCardsSkeleton from "@/components/quizzes/QuizCardsSkeleton";
 import type { QuizSortOption, QuizFilterType } from "@/types/quiz";
 
 interface QuizzesPageProps {
@@ -21,22 +23,32 @@ export default async function QuizzesPage({
   const { search, sortBy, sortOrder, filter, role } = await searchParams;
   const isInstructor = role === "instructor";
 
-  // Direct server-side fetch with Next.js Data Cache (revalidate: 60)
-  const quizzes = await getQuizzes({
-    roomId,
-    sortBy,
-    sortOrder,
-    search,
-  });
+  // Create a key that changes when search params change
+  // This forces Suspense to re-trigger and show the fallback
+  const suspenseKey = `${search}-${sortBy}-${sortOrder}-${filter}`;
 
   return (
-    <QuizListClient
-      quizzes={quizzes}
-      roomId={roomId}
-      isInstructor={isInstructor}
-      initialSearch={search || ""}
-      initialSort={(sortBy as QuizSortOption) || "deadline"}
-      initialFilter={(filter as QuizFilterType) || "all"}
-    />
+    <div className="h-full flex flex-col bg-main-background">
+      {/* Header - always visible */}
+      <QuizListHeader
+        roomId={roomId}
+        isInstructor={isInstructor}
+        initialSearch={search}
+        initialSort={sortBy as QuizSortOption}
+        initialFilter={filter as QuizFilterType}
+      />
+
+      {/* Quiz Cards - shows skeleton during loading */}
+      <Suspense key={suspenseKey} fallback={<QuizCardsSkeleton />}>
+        <QuizCards
+          roomId={roomId}
+          isInstructor={isInstructor}
+          search={search}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          filter={filter}
+        />
+      </Suspense>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Clock,
   Trophy,
@@ -18,6 +18,7 @@ import { isInstructorQuiz, isStudentQuiz } from "@/types/quiz";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
 import { useAuth } from "@/providers/AuthProvider";
+import Image from "next/image";
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -201,15 +202,30 @@ export default function QuizCard({
 
           <div className="flex items-center gap-3 flex-wrap text-sm text-para-muted py-2">
             <span className="flex items-center gap-1">
-              <Trophy className="w-4 h-4" />
+              <Image
+                src="/icons/trophy.jpg"
+                alt="Average"
+                width={25}
+                height={25}
+              />
               {quiz.totalPoints} points
             </span>
             <span className="flex items-center gap-1">
-              <Timer className="w-4 h-4" />
+              <Image
+                src="/icons/timer.png"
+                alt="Average"
+                width={25}
+                height={25}
+              />
               {quiz.timeLimitMin} min
             </span>
             <span className="flex items-center gap-1">
-              <FileText className="w-4 h-4" />
+              <Image
+                src="/icons/question.png"
+                alt="Average"
+                width={25}
+                height={25}
+              />
               {quiz.questions.length} question
               {quiz.questions.length !== 1 ? "s" : ""}
             </span>
@@ -244,7 +260,12 @@ export default function QuizCard({
               </div>
               {quiz.submissionStats.averageScore > 0 && (
                 <div className="flex items-center gap-1 font-medium text-sm">
-                  <Trophy className="w-4 h-4 text-accent" />
+                  <Image
+                    src="/icons/trophy.jpg"
+                    alt="Average"
+                    width={20}
+                    height={20}
+                  />
                   <span className="text-accent">
                     Avg: {Math.round(quiz.submissionStats.averageScore)}%
                   </span>

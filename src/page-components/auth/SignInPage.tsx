@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import AuthIllustration from "@/components/auth/AuthIllustration";
 import SignInForm from "@/components/auth/sign-in/SignInForm";
 

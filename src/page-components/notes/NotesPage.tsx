@@ -1,159 +1,90 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import NotesHeader from "@/components/notes/NotesHeader";
 import NotesBreadcrumbs from "@/components/notes/NotesBreadcrumbs";
 import NotesToolbar from "@/components/notes/NotesToolbar";
-import NotesEmptyState from "@/components/notes/NotesEmptyState";
-import NotesListSkeleton from "@/components/notes/NotesListSkeleton";
-import NotesGridSkeleton from "@/components/notes/NotesGridSkeleton";
 import CreateFolderModal from "@/components/notes/CreateFolderModal";
 import DeleteConfirmation from "@/components/notes/DeleteConfirmation";
-import ErrorState from "@/components/notes/ErrorState";
-import SharedGridView from "@/components/shared/SharedGridView";
-import SharedListView from "@/components/shared/SharedListView";
-import { noteToDisplayItem } from "@/utils/display-adapters";
-import type { NoteOrFolder, NoteViewMode, Note } from "@/types/note";
-import type { MenuOption } from "@/types/display-item";
+import { NotesProvider } from "@/contexts/NotesContext";
+import type { NoteOrFolder, NoteViewMode } from "@/types/note";
 import useFetchNotes from "@/hooks/notes/use-fetch-notes";
-import { useDownloadPdf } from "@/hooks/use-download-pdf";
 
-export default function NotesPageClient() {
+interface NotesPageClientProps {
+  children: React.ReactNode;
+}
+
+export default function NotesPageClient({ children }: NotesPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const folderId = searchParams?.get("folderId");
+  const folderId = searchParams?.get("folderId") || null;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<NoteViewMode>("grid");
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<NoteOrFolder | null>(null);
 
-  // Data fetching
-  const { notes, folders, breadcrumb, isLoading, isError, refetch } =
-    useFetchNotes({
-      folderId: folderId || undefined,
-      search: searchTerm || undefined,
-    });
+  // Get breadcrumb data from hook
+  const { breadcrumb } = useFetchNotes({
+    folderId: folderId || undefined,
+  });
 
-  const { downloadPdf } = useDownloadPdf();
   // Build breadcrumbs from API data
-  const breadcrumbs = [
-    {
-      id: "root",
-      name: "Notes",
-      path: "/notes",
-    },
-    ...breadcrumb.map((item: { id: string; name: string }) => ({
-      id: item.id,
-      name: item.name,
-      path: `/notes?folderId=${item.id}`,
-    })),
-  ];
-
-  // Navigate to folder
-  const handleFolderNavigation = (folderId: string) => {
-    router.push(`/notes?folderId=${folderId}`);
-  };
+  const breadcrumbs = useMemo(
+    () => [
+      {
+        id: "root",
+        name: "Notes",
+        path: "/notes",
+      },
+      ...breadcrumb.map((item: { id: string; name: string }) => ({
+        id: item.id,
+        name: item.name,
+        path: `/notes?folderId=${item.id}`,
+      })),
+    ],
+    [breadcrumb]
+  );
 
   // Navigate to breadcrumb by index
-  const handleBreadcrumbClick = (index: number) => {
-    if (index === -1) {
-      // Home button clicked
-      router.push("/notes");
-    } else if (index >= 0 && index < breadcrumbs.length) {
-      router.push(breadcrumbs[index].path);
-    }
-  };
+  const handleBreadcrumbClick = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        router.push("/notes");
+      } else if (index >= 0 && index < breadcrumbs.length) {
+        router.push(breadcrumbs[index].path);
+      }
+    },
+    [router, breadcrumbs]
+  );
 
   // Navigate back
-  const handleBackNavigation = () => {
+  const handleBackNavigation = useCallback(() => {
     if (breadcrumbs.length > 1) {
       const previousBreadcrumb = breadcrumbs[breadcrumbs.length - 2];
       router.push(previousBreadcrumb.path);
     }
-  };
+  }, [router, breadcrumbs]);
 
-  // Combine items for display (folders first, then notes) - just add type property
-  const items: NoteOrFolder[] = [
-    ...folders.map((folder) => ({
-      ...folder,
-      type: "folder" as const,
-    })),
-    ...notes.map((note) => ({
-      ...note,
-      type: "note" as const,
-      name: note.title, // Map title to name for consistency
-    })),
-  ];
+  // Action handlers
+  const handleCreateNote = useCallback(() => {
+    router.push(`/notes/create?folderId=${folderId || ""}`);
+  }, [router, folderId]);
 
-  // Handlers
-  const handleCreateNote = () => {
-    router.push(`/notes/create?folderId=${folderId}`);
-  };
-
-  const handleCreateFolder = () => {
+  const handleCreateFolder = useCallback(() => {
     setShowCreateFolderModal(true);
-  };
+  }, []);
 
-  const handleItemClick = (id: string) => {
-    const item = items.find((i) => i.id === id);
+  const handleDeleteItem = useCallback((item: NoteOrFolder) => {
+    setItemToDelete(item);
+  }, []);
 
-    if (item?.type === "folder") {
-      handleFolderNavigation(id);
-    } else {
-      router.push(`/notes/${id}`);
-    }
-  };
-
-  const handleEdit = (id: string) => {
-    router.push(`/notes/${id}/edit`);
-  };
-
-  const handleDelete = (id: string) => {
-    const item = items.find((i) => i.id === id);
-    if (item) {
-      setItemToDelete(item);
-    }
-  };
-
-  // Item menu options
-  const getMenuOptions = (id: string): MenuOption[] => {
-    const item = items.find((i) => i.id === id);
-    if (!item) return [];
-
-    const options: MenuOption[] = [
-      {
-        title: item?.type === "folder" ? "Open" : "Edit",
-        action: () => handleEdit(id),
-      },
-    ];
-
-    if (item?.type === "note") {
-      options.push({
-        title: "Download",
-        action: () => {
-          const noteItem = item as Note;
-          downloadPdf({
-            title: noteItem.title,
-            content: noteItem.content,
-          });
-        },
-      });
-    }
-
-    options.push({
-      title: "Delete",
-      action: () => handleDelete(id),
-    });
-
-    return options;
-  };
-
-  // Convert items to display format
-  const displayItems = useMemo(() => items.map(noteToDisplayItem), [items]);
+  const handleSearch = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
 
   return (
     <div className="space-y-6 sm:px-6 px-4 sm:py-6 py-4">
@@ -172,7 +103,7 @@ export default function NotesPageClient() {
       {/* Toolbar */}
       <NotesToolbar
         searchTerm={searchTerm}
-        onSearch={setSearchTerm}
+        onSearch={handleSearch}
         viewMode={viewMode}
         setViewMode={setViewMode}
       />
@@ -193,49 +124,21 @@ export default function NotesPageClient() {
             Back
           </button>
         )}
-        <span className="text-sm text-para-muted">
-          {items.length} item{items.length !== 1 ? "s" : ""}
-          {searchTerm && (
-            <span className="ml-2">
-              • Searching for &quot;{searchTerm}&quot;
-            </span>
-          )}
-        </span>
       </motion.div>
 
-      {/* Content */}
-      {isLoading ? (
-        viewMode === "list" ? (
-          <NotesListSkeleton />
-        ) : (
-          <NotesGridSkeleton />
-        )
-      ) : isError ? (
-        <ErrorState
-          title="Failed to load notes"
-          message="There was an error loading your notes. Please try again."
-          onRetry={refetch}
-        />
-      ) : items.length === 0 ? (
-        <NotesEmptyState
-          searchTerm={searchTerm}
-          onCreateNote={handleCreateNote}
-          onCreateFolder={handleCreateFolder}
-        />
-      ) : viewMode === "list" ? (
-        <SharedListView
-          items={displayItems}
-          onItemClick={handleItemClick}
-          getMenuOptions={getMenuOptions}
-          showOwner={false}
-        />
-      ) : (
-        <SharedGridView
-          items={displayItems}
-          onItemClick={handleItemClick}
-          getMenuOptions={getMenuOptions}
-        />
-      )}
+      {/* Content with Provider */}
+      <NotesProvider
+        folderId={folderId}
+        search={searchTerm}
+        viewMode={viewMode}
+        onDeleteItem={handleDeleteItem}
+        onCreateNote={handleCreateNote}
+        onCreateFolder={handleCreateFolder}
+        setViewMode={setViewMode}
+        setSearch={handleSearch}
+      >
+        {children}
+      </NotesProvider>
 
       {/* Create Folder Modal */}
       <CreateFolderModal
@@ -246,12 +149,11 @@ export default function NotesPageClient() {
       />
 
       {/* Delete Confirmation */}
-      {/* Delete Confirmation */}
       <DeleteConfirmation
         item={itemToDelete}
         isOpen={!!itemToDelete}
         onClose={() => setItemToDelete(null)}
-        folderId={folderId || "root"}
+        folderId={folderId}
         searchQuery={searchTerm}
       />
     </div>

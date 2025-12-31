@@ -2,12 +2,7 @@ import { motion } from "motion/react";
 
 export default function NotesGridSkeleton() {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.3 }}
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-    >
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {[...Array(8)].map((_, index) => (
         <div
           key={index}
@@ -30,6 +25,6 @@ export default function NotesGridSkeleton() {
           </div>
         </div>
       ))}
-    </motion.div>
+    </div>
   );
 }

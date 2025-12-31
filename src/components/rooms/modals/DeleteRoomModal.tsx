@@ -6,7 +6,7 @@ import { AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import useDeleteRoom from "@/hooks/rooms/use-delete-room";
-import LoadingSpinner from "../ui/LoadingSpinner";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 
 interface DeleteRoomModalProps {
   isOpen: boolean;
@@ -105,17 +105,17 @@ export default function DeleteRoomModal({
                 <p className="text-sm text-para">
                   You are about to delete{" "}
                   <span className="font-semibold text-heading">
-                    "{roomTitle}"
+                    {roomTitle}
                   </span>
                   . All content, files, and member access will be permanently
                   removed.
                 </p>
 
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-heading">
                     Type{" "}
                     <span className="font-semibold text-destructive">
-                      "{roomTitle}"
+                      {roomTitle}
                     </span>{" "}
                     to confirm
                   </label>

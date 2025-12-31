@@ -1,5 +1,3 @@
-"use client";
-
 export default function QuizzesSkeleton() {
   return (
     <div className="h-full flex flex-col bg-main-background animate-pulse">

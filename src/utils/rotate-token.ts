@@ -42,6 +42,7 @@ export default function useRotateToken() {
     },
     onError: (error: ApiError) => {
       if (error?.response?.data.statusCode === 401) {
+        console.log("Session expired From Client");
         toast.error("Session expired. Please login again.");
         // Clear tokens
         localStorage.removeItem("accessToken");

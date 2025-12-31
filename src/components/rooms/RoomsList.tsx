@@ -1,56 +1,19 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import RoomCard from "./RoomCard";
 import RoomsSkeleton from "./RoomsSkeleton";
-import type { RoomsResponse } from "@/server-api/rooms";
-import { useRoomActions } from "@/contexts/RoomActionsContext";
+import { useRoomActions, useRoomFilters } from "@/contexts/RoomsContext";
+import useGetUserRooms from "@/hooks/rooms/use-get-user-rooms";
 
-// Client-side fetch function for React Query
-async function fetchRoomsClient(
-  filter: string,
-  search: string
-): Promise<RoomsResponse> {
-  const { default: api } = await import("@/utils/api");
-  const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
-  const response = await api.get(`/user/rooms?filter=${filter}${searchParam}`);
-  return (
-    response.data ?? {
-      rooms: [],
-      total: 0,
-      totalPages: 0,
-      currentPage: 1,
-      filter: "all",
-      counts: { created: 0, joined: 0, total: 0 },
-    }
-  );
-}
-
-interface RoomsListProps {
-  filter: "all" | "created" | "joined";
-  search: string;
-  activeTab: "all" | "joined" | "my-rooms";
-}
-
-export default function RoomsList({ filter, search }: RoomsListProps) {
+export default function RoomsList() {
   const router = useRouter();
   const { onDeleteRoom } = useRoomActions();
+  const { filter, search } = useRoomFilters();
 
-  // Use React Query - data is hydrated from server on first render
-  const { data, isLoading } = useQuery({
-    queryKey: ["rooms", filter, search],
-    queryFn: () => fetchRoomsClient(filter, search),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  const rooms = data?.rooms ?? [];
-
-  const handleViewRoom = (roomId: string) => {
-    router.push(`/rooms/${roomId}`);
-  };
+  const { rooms, isFetching } = useGetUserRooms({ filter, search });
 
   const handleEditRoom = (roomId: string) => {
     router.push(`/rooms/${roomId}/settings`);
@@ -60,7 +23,7 @@ export default function RoomsList({ filter, search }: RoomsListProps) {
     console.log("Joining room:", roomId);
   };
 
-  if (isLoading) {
+  if (isFetching) {
     return <RoomsSkeleton />;
   }
 

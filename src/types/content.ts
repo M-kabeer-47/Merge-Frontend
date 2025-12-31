@@ -18,7 +18,14 @@ export type ContentItemType = "file" | "folder";
 
 export type ViewMode = "grid" | "list";
 
-export type SortField = "date" | "name" | "size"; // Extensible for future options
+export type SortField =
+  | "date"
+  | "name"
+  | "size" // Content sorting
+  | "deadline"
+  | "title"
+  | "status"; // Quiz sorting
+
 export type SortOrder = "asc" | "desc";
 export type SortOption = { field: SortField; order: SortOrder } | null;
 

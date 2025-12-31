@@ -9,8 +9,8 @@ import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import TagSelector from "./TagSelector";
-import VisibilitySelector from "./VisibilitySelector";
+import TagSelector from "../TagSelector";
+import VisibilitySelector from "../VisibilitySelector";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import useCreateRoom from "@/hooks/rooms/use-create-room";
 import {

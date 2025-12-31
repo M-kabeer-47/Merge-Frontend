@@ -36,10 +36,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setValue(defaultValue);
   }, [defaultValue]);
 
-  const handleClear = useCallback(() => {
+  const handleClear = () => {
     setValue("");
     onSearch(""); // Immediately clear
-  }, [onSearch]);
+  };
 
   return (
     <div className={`relative flex items-center w-full ${className}`}>

@@ -77,8 +77,8 @@ export default function useGetUserRooms({
     }
   };
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["user-rooms", filter, search],
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
+    queryKey: ["rooms", filter, search],
     queryFn: fetchUserRooms,
     enabled: isClient && !!localStorage.getItem("accessToken"),
     retry: false,
@@ -90,6 +90,7 @@ export default function useGetUserRooms({
     counts: data?.counts || { created: 0, joined: 0, total: 0 },
     total: data?.total || 0,
     isLoading: isLoading || !isClient,
+    isFetching,
     isError,
     refetch,
   };

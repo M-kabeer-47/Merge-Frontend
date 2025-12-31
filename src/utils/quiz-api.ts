@@ -9,10 +9,6 @@ export interface FetchQuizzesParams {
   search?: string;
 }
 
-/**
- * Server-side fetch with Next.js Data Cache
- * Uses native fetch for caching support (axios doesn't work with Data Cache)
- */
 export async function fetchQuizzesServer(
   params: FetchQuizzesParams,
   accessToken: string
@@ -42,7 +38,7 @@ export async function fetchQuizzesServer(
           ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
         },
         // Next.js Data Cache: revalidate every 60 seconds
-        next: { revalidate: 60 },
+        next: { tags: ["quizzes", roomId] },
       }
     );
 
