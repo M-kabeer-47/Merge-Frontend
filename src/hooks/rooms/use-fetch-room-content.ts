@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import api from "@/utils/api";
 import type {
   RoomContentFolder,
@@ -66,24 +65,7 @@ export default function useFetchRoomContent({
     gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours
   });
 
-  // Prefetch subfolders when folders are loaded
-  useEffect(() => {
-    if (!data?.folders || !isClient) return;
-
-    data.folders.forEach((folder: RoomContentFolder) => {
-      const params = new URLSearchParams();
-      params.append("folderId", folder.id);
-      sortBy && params.append("sortBy", sortBy);
-      sortOrder && params.append("sortOrder", sortOrder);
-
-      queryClient.prefetchQuery({
-        queryKey: ["room-content", roomId, folder.id, "", sortBy, sortOrder],
-        queryFn: () => fetchContentData(params.toString()),
-        staleTime: Infinity,
-        gcTime: 24 * 60 * 60 * 1000,
-      });
-    });
-  }, [data?.folders, roomId, sortBy, sortOrder]);
+  // Note: Subfolder prefetching is now handled server-side in ContentDataWrapper
 
   return {
     folders: (data?.folders as RoomContentFolder[]) || [],
@@ -92,7 +74,8 @@ export default function useFetchRoomContent({
     currentFolder: (data?.currentFolder as BreadcrumbItem | null) || null,
     roomInfo: (data?.roomInfo as RoomInfo) || null,
     total: data?.total || { folders: 0, files: 0, combined: 0 },
-    isLoading: isLoading || !isClient || isFetching,
+    isLoading: isLoading || !isClient,
+    isFetching,
     isError,
     refetch,
   };

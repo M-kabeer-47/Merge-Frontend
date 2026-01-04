@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { IconPlus } from "@tabler/icons-react";
 import { Link } from "lucide-react";
@@ -15,20 +15,23 @@ import { RoomsProvider } from "@/contexts/RoomsContext";
 import type { Room } from "@/server-api/rooms";
 
 interface RoomsPageClientProps {
-  children: React.ReactNode; // Server component will be passed as children
+  children: React.ReactNode;
+  initialFilter?: string;
+  initialSearch?: string;
 }
 
-export default function RoomsPageClient({ children }: RoomsPageClientProps) {
+export default function RoomsPageClient({
+  children,
+  initialFilter = "all",
+  initialSearch = "",
+}: RoomsPageClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // Get URL params
-  const filterParam = searchParams.get("filter") || "all";
-  const searchParam = searchParams.get("search") || "";
-
-  // Validate filter
+  // Validate filter from server props
   const validFilter =
-    filterParam === "created" || filterParam === "joined" ? filterParam : "all";
+    initialFilter === "created" || initialFilter === "joined"
+      ? initialFilter
+      : "all";
 
   // Local state for UI
   const [activeTab, setActiveTab] = useState<"all" | "joined" | "my-rooms">(
@@ -38,7 +41,7 @@ export default function RoomsPageClient({ children }: RoomsPageClientProps) {
       ? "joined"
       : "all"
   );
-  const [searchTerm, setSearchTerm] = useState(searchParam);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<{
@@ -68,7 +71,15 @@ export default function RoomsPageClient({ children }: RoomsPageClientProps) {
   // Update URL params
   const updateUrlParams = useCallback(
     (params: { filter?: string; search?: string }) => {
-      const current = new URLSearchParams(searchParams.toString());
+      const current = new URLSearchParams();
+
+      // Preserve current state in URL
+      if (filterMap[activeTab] !== "all") {
+        current.set("filter", filterMap[activeTab]);
+      }
+      if (searchTerm) {
+        current.set("search", searchTerm);
+      }
 
       if (params.filter !== undefined) {
         if (params.filter === "all") {
@@ -85,12 +96,12 @@ export default function RoomsPageClient({ children }: RoomsPageClientProps) {
           current.delete("search");
         }
       }
-
-      // Use replace instead of push to avoid triggering server re-render
-      // Data fetching is handled by React Query on client side
-      router.replace(`/rooms?${current.toString()}`, { scroll: false });
+      const queryString = current.toString();
+      router.replace(queryString ? `/rooms?${queryString}` : "/rooms", {
+        scroll: false,
+      });
     },
-    [router, searchParams]
+    [router, activeTab, searchTerm]
   );
 
   // Handle tab change

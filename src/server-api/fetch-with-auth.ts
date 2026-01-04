@@ -64,6 +64,7 @@ async function refreshTokenOnServer(): Promise<string | null> {
 /**
  * Server-side fetch with automatic token refresh
  * If request returns 401, attempts to refresh the token and retry
+ * Includes cache logging for debugging
  */
 export async function fetchWithAuth<T = unknown>(
   url: string,
@@ -73,6 +74,22 @@ export async function fetchWithAuth<T = unknown>(
   const accessToken = cookieStore.get("accessToken")?.value;
 
   const { next, ...fetchOptions } = options;
+
+  // Extract endpoint for cleaner logging
+  const endpoint = url.replace(API_BASE_URL || "", "");
+  const startTime = Date.now();
+
+  // Log the request with cache info
+  const cacheInfo = next
+    ? `revalidate: ${
+        next.revalidate === false ? "forever" : next.revalidate
+      }s, tags: [${next.tags?.join(", ") || "none"}]`
+    : "no cache config";
+  console.log(
+    `[Server API] ${
+      fetchOptions.method || "GET"
+    } ${endpoint} | Cache: ${cacheInfo}`
+  );
 
   const makeRequest = async (token: string | undefined) => {
     return fetch(url, {
@@ -89,6 +106,11 @@ export async function fetchWithAuth<T = unknown>(
   const [response, error] = await tryIt(makeRequest(accessToken));
 
   if (error || !response) {
+    console.log(
+      `[Server API] ❌ ${endpoint} | Error: ${
+        error?.message || "Request failed"
+      } | ${Date.now() - startTime}ms`
+    );
     return {
       data: null,
       error: error || new Error("Request failed"),
@@ -98,10 +120,17 @@ export async function fetchWithAuth<T = unknown>(
 
   // If 401, try to refresh token and retry
   if (response.status === 401) {
-    console.log("Access token expired, attempting refresh...");
+    console.log(
+      `[Server API] 🔄 ${endpoint} | 401 - Attempting token refresh...`
+    );
 
     const newToken = await refreshTokenOnServer();
     if (!newToken) {
+      console.log(
+        `[Server API] ❌ ${endpoint} | Token refresh failed | ${
+          Date.now() - startTime
+        }ms`
+      );
       return {
         data: null,
         error: new Error("Session expired. Please sign in again."),
@@ -112,6 +141,11 @@ export async function fetchWithAuth<T = unknown>(
     // Retry with new token
     const [retryResponse, retryError] = await tryIt(makeRequest(newToken));
     if (retryError || !retryResponse) {
+      console.log(
+        `[Server API] ❌ ${endpoint} | Retry failed: ${retryError?.message} | ${
+          Date.now() - startTime
+        }ms`
+      );
       return {
         data: null,
         error: retryError || new Error("Retry request failed"),
@@ -120,6 +154,11 @@ export async function fetchWithAuth<T = unknown>(
     }
 
     if (!retryResponse.ok) {
+      console.log(
+        `[Server API] ❌ ${endpoint} | HTTP ${
+          retryResponse.status
+        } after retry | ${Date.now() - startTime}ms`
+      );
       return {
         data: null,
         error: new Error(`HTTP ${retryResponse.status}`),
@@ -128,6 +167,11 @@ export async function fetchWithAuth<T = unknown>(
     }
 
     const [retryData, parseError] = await tryIt<T>(retryResponse.json());
+    console.log(
+      `[Server API] ✅ ${endpoint} | ${
+        retryResponse.status
+      } (after refresh) | ${Date.now() - startTime}ms`
+    );
     return {
       data: parseError ? null : retryData,
       error: parseError,
@@ -137,6 +181,11 @@ export async function fetchWithAuth<T = unknown>(
 
   // Original request succeeded
   if (!response.ok) {
+    console.log(
+      `[Server API] ❌ ${endpoint} | HTTP ${response.status} | ${
+        Date.now() - startTime
+      }ms`
+    );
     return {
       data: null,
       error: new Error(`HTTP ${response.status}`),
@@ -145,6 +194,11 @@ export async function fetchWithAuth<T = unknown>(
   }
 
   const [data, parseError] = await tryIt<T>(response.json());
+  console.log(
+    `[Server API] ✅ ${endpoint} | ${response.status} | ${
+      Date.now() - startTime
+    }ms`
+  );
   return {
     data: parseError ? null : data,
     error: parseError,

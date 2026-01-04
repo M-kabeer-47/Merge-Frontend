@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import { revalidateNotesCache } from "@/server-actions/notes";
+import { refreshFolderCache } from "@/server-actions/room-content";
 
 interface CreateFolderPayload {
   name: string;
@@ -88,6 +89,8 @@ export default function useCreateFolder() {
       // Invalidate server cache for notes folders (fire and forget)
       if (variables.type === "notes") {
         revalidateNotesCache();
+      } else if (variables.type === "room" && variables.roomId) {
+        refreshFolderCache(variables.roomId, variables.parentFolderId);
       }
 
       toast.success("Folder created successfully!");

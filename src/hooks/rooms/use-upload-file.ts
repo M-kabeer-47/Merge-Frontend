@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import api from "@/utils/api";
 import { uploadToS3 } from "@/utils/s3-upload";
 import type { UploadProgress } from "@/types/content";
+import { refreshFolderCache } from "@/server-actions/room-content";
+import { tryIt } from "@/utils/try-it";
 
 interface UseUploadFileOptions {
   roomId: string;
@@ -25,8 +27,6 @@ export default function useUploadFile({
   const queryClient = useQueryClient();
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
 
-  // Query key for cache updates - use default values (no search/sort filters)
-  // This ensures the base unfiltered cache is updated when files are uploaded
   const queryKey = [
     "room-content",
     roomId,
@@ -97,6 +97,7 @@ export default function useUploadFile({
 
     onSuccess: ({ uploadId }) => {
       updateUpload(uploadId, { status: "completed", progress: 100 });
+      refreshFolderCache(roomId, folderId);
     },
 
     onError: (error: any, { uploadId }) => {
@@ -108,7 +109,6 @@ export default function useUploadFile({
     },
   });
 
-  // Public API: Upload multiple files
   const uploadFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
     const uploadPromises: Promise<UploadResult>[] = [];
@@ -118,7 +118,6 @@ export default function useUploadFile({
         .toString(36)
         .substr(2, 9)}`;
 
-      // Add to uploads state immediately for UI feedback
       setUploads((prev) => [
         ...prev,
         {
@@ -130,30 +129,31 @@ export default function useUploadFile({
         },
       ]);
 
-      // Start upload
       uploadPromises.push(uploadMutation.mutateAsync({ file, uploadId }));
     }
 
-    // Wait for all uploads and update cache
-    try {
-      const results = await Promise.all(uploadPromises);
-      const uploadedFiles = results.map((r) => r.result);
+    // Update React Query cache with new files
 
-      // Update React Query cache with new files
+    // Call onSuccess callback to reset UI state (search, sort, etc.)
+
+    const [results, error] = await tryIt(Promise.all(uploadPromises));
+    if (results) {
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
-        // Add "Just now" timestamp to newly uploaded files
-        const filesWithTimestamp = uploadedFiles.map((file: any) => ({
-          ...file,
-          updatedAt: "Just now",
-        }));
+        // Extract the actual file data from the API response and add timestamp
+        const filesWithTimestamp = results.map(
+          (uploadResult: UploadResult) => ({
+            ...uploadResult.result, // result contains the file metadata from confirmResponse.data
+            updatedAt: "Just now",
+          })
+        );
         return {
           ...old,
           files: [...(old.files || []), ...filesWithTimestamp],
           total: {
             ...old.total,
-            files: (old.total?.files || 0) + uploadedFiles.length,
-            combined: (old.total?.combined || 0) + uploadedFiles.length,
+            files: (old.total?.files || 0) + results.length,
+            combined: (old.total?.combined || 0) + results.length,
           },
         };
       });
@@ -168,12 +168,8 @@ export default function useUploadFile({
       setTimeout(() => {
         setUploads([]);
       }, 1000);
-
-      // Call onSuccess callback to reset UI state (search, sort, etc.)
-      onSuccess?.();
-    } catch (error) {
-      // Individual errors are already handled in onError
-      console.error("Some uploads failed:", error);
+    } else if (error) {
+      toast.error(error?.response?.data?.message || "Failed to upload file.");
     }
   };
 

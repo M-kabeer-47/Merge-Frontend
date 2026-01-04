@@ -32,7 +32,7 @@ export async function getNotes(
   params: GetNotesParams = {}
 ): Promise<NotesResponse> {
   const { folderId, search = "" } = params;
-  console.log("Prefetching notes for folderId:", folderId);
+
   // Build query string
   const queryParams = new URLSearchParams();
   if (folderId) queryParams.append("folderId", folderId);

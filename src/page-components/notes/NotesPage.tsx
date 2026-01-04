@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "motion/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import NotesHeader from "@/components/notes/NotesHeader";
 import NotesBreadcrumbs from "@/components/notes/NotesBreadcrumbs";
@@ -15,12 +15,14 @@ import useFetchNotes from "@/hooks/notes/use-fetch-notes";
 
 interface NotesPageClientProps {
   children: React.ReactNode;
+  folderId: string | null;
 }
 
-export default function NotesPageClient({ children }: NotesPageClientProps) {
+export default function NotesPageClient({
+  children,
+  folderId,
+}: NotesPageClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const folderId = searchParams?.get("folderId") || null;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<NoteViewMode>("grid");
@@ -50,41 +52,38 @@ export default function NotesPageClient({ children }: NotesPageClientProps) {
   );
 
   // Navigate to breadcrumb by index
-  const handleBreadcrumbClick = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        router.push("/notes");
-      } else if (index >= 0 && index < breadcrumbs.length) {
-        router.push(breadcrumbs[index].path);
-      }
-    },
-    [router, breadcrumbs]
-  );
+  const handleBreadcrumbClick = (index: number) => {
+    if (index === -1) {
+      router.push("/notes");
+    } else if (index >= 0 && index < breadcrumbs.length) {
+      router.push(breadcrumbs[index].path);
+    }
+  };
 
   // Navigate back
-  const handleBackNavigation = useCallback(() => {
+  const handleBackNavigation = () => {
     if (breadcrumbs.length > 1) {
       const previousBreadcrumb = breadcrumbs[breadcrumbs.length - 2];
       router.push(previousBreadcrumb.path);
     }
-  }, [router, breadcrumbs]);
+  };
 
   // Action handlers
-  const handleCreateNote = useCallback(() => {
+  const handleCreateNote = () => {
     router.push(`/notes/create?folderId=${folderId || ""}`);
-  }, [router, folderId]);
+  };
 
-  const handleCreateFolder = useCallback(() => {
+  const handleCreateFolder = () => {
     setShowCreateFolderModal(true);
-  }, []);
+  };
 
-  const handleDeleteItem = useCallback((item: NoteOrFolder) => {
+  const handleDeleteItem = (item: NoteOrFolder) => {
     setItemToDelete(item);
-  }, []);
+  };
 
-  const handleSearch = useCallback((value: string) => {
+  const handleSearch = (value: string) => {
     setSearchTerm(value);
-  }, []);
+  };
 
   return (
     <div className="space-y-6 sm:px-6 px-4 sm:py-6 py-4">
