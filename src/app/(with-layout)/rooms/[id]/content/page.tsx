@@ -17,7 +17,7 @@ export default async function ContentPage({
 
   return (
     <ContentPageClient roomId={roomId} folderId={folderId}>
-      <Suspense fallback={<ContentSkeleton />}>
+      <Suspense key={folderId} fallback={<ContentSkeleton />}>
         <ContentDataWrapper roomId={roomId} folderId={folderId} />
       </Suspense>
     </ContentPageClient>

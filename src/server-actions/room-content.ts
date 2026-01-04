@@ -4,20 +4,8 @@ import { revalidateTag } from "next/cache";
 import { getRoomContent } from "@/server-api/room-content";
 
 /**
- * Invalidate a specific folder's cache only (no refetch)
- */
-export async function revalidateFolderCache(
-  roomId: string,
-  folderId?: string | null
-) {
-  const folderTag = `room-content-${roomId}-${folderId || "root"}`;
-  console.log(`[Cache] Revalidating folder: ${folderTag}`);
-  revalidateTag(folderTag, { expire: 0 });
-}
-
-/**
- * Invalidate and immediately re-prefetch to keep cache warm
- * Use after mutations to ensure fast navigation
+ * Invalidate and immediately re-prefetch a folder to keep cache warm
+ * Use after mutations (create folder, upload file, delete)
  */
 export async function refreshFolderCache(
   roomId: string,
@@ -27,7 +15,7 @@ export async function refreshFolderCache(
   console.log(`[Cache] Refreshing folder: ${folderTag}`);
   revalidateTag(folderTag, { expire: 0 });
   // Re-prefetch to warm cache (fire-and-forget)
-  getRoomContent({ roomId, folderId }).catch(() => {});
+  getRoomContent({ roomId, folderId });
 }
 
 /**

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import type { ContentSortBy, ContentSortOrder } from "@/types/room-content";
+import { refreshFolderCache } from "@/server-actions/room-content";
 
 interface UseDeleteFileOptions {
   roomId: string;
@@ -58,7 +59,7 @@ export default function useDeleteFile({
           },
         };
       });
-
+      refreshFolderCache(roomId);
       toast.success("File deleted successfully!");
     },
     onError: (error: any) => {
