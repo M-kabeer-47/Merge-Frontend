@@ -8,7 +8,7 @@ export interface CreateAssignmentData {
   roomId: string;
   title: string;
   description?: string;
-  points: number;
+  totalScore: number;
   startAt?: string; // ISO 8601 format
   endAt: string; // ISO 8601 format (due date)
   isTurnInLateEnabled: boolean;
@@ -73,7 +73,7 @@ export default function useCreateAssignment({
   };
 
   // Main mutation for creating assignment
-  const createAssignmentMutation = useMutation({
+  const { isPending, isSuccess, mutateAsync } = useMutation({
     mutationFn: async ({
       data,
       attachments,
@@ -92,42 +92,33 @@ export default function useCreateAssignment({
       );
       setAttachmentProgress(progressItems);
 
-      // Upload all attachments in parallel
-      const uploadedUrls: string[] = [];
+      // Upload all attachments (only first one will be used as assignmentUrl)
+      let assignmentUrl = "";
 
       if (attachments.length > 0) {
-        const uploadPromises = attachments.map(async (file, index) => {
-          const progressId = progressItems[index].id;
-          try {
-            const url = await uploadAttachment(file, data.roomId, progressId);
-            updateProgress(progressId, { status: "completed", progress: 100 });
-            return url;
-          } catch (error) {
-            updateProgress(progressId, {
-              status: "error",
-              error: "Upload failed",
-            });
-            throw error;
-          }
-        });
-
-        const results = await Promise.all(uploadPromises);
-        uploadedUrls.push(...results);
+        const progressId = progressItems[0].id;
+        try {
+          assignmentUrl = await uploadAttachment(
+            attachments[0],
+            data.roomId,
+            progressId
+          );
+          updateProgress(progressId, { status: "completed", progress: 100 });
+        } catch (error) {
+          updateProgress(progressId, {
+            status: "error",
+            error: "Upload failed",
+          });
+          throw error;
+        }
       }
 
-      // Create assignment with uploaded URLs
-      const payload = {
-        roomId: data.roomId,
-        title: data.title,
-        description: data.description || undefined,
-        assignmentUrls: uploadedUrls, // Array of S3 URLs
-        points: data.points,
-        startAt: data.startAt || undefined,
-        endAt: data.endAt,
-        isTurnInLateEnabled: data.isTurnInLateEnabled,
-      };
+      // Create assignment with uploaded URL
 
-      const response = await api.post("/assignments/create", payload);
+      const response = await api.post("/assignments/create", {
+        ...data,
+        assignmentUrl,
+      });
       return response.data;
     },
     onSuccess: (data, { data: assignmentData }) => {
@@ -149,17 +140,10 @@ export default function useCreateAssignment({
     },
   });
 
-  const createAssignment = async (
-    data: CreateAssignmentData,
-    attachments: File[]
-  ) => {
-    return createAssignmentMutation.mutateAsync({ data, attachments });
-  };
-
   return {
-    createAssignment,
-    isCreating: createAssignmentMutation.isPending,
-    isSuccess: createAssignmentMutation.isSuccess,
+    createAssignment: mutateAsync,
+    isCreating: isPending,
+    isSuccess: isSuccess,
     attachmentProgress,
   };
 }

@@ -66,7 +66,21 @@ export default function QuizCardsClient({
 
   // Handlers
   const handleViewDetails = (id: string) => {
-    router.push(`/rooms/${roomId}/quizzes/${id}`);
+    // For instructors, go to submissions overview
+    // For students with completed quiz, go to review page
+    const quiz = filteredQuizzes.find((q) => q.id === id);
+    if (!quiz) return;
+
+    if (isInstructor) {
+      router.push(`/rooms/${roomId}/quizzes/${id}/submissions`);
+    } else {
+      const studentQuiz = quiz as StudentQuiz;
+      if (studentQuiz.attempt?.status === "completed") {
+        router.push(`/rooms/${roomId}/quizzes/${id}/review`);
+      } else {
+        router.push(`/rooms/${roomId}/quizzes/${id}`);
+      }
+    }
   };
 
   const handleEdit = (id: string) => {

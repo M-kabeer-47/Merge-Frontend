@@ -240,23 +240,14 @@ export default function AssignmentCard({
           <div className="flex items-center gap-3 flex-wrap text-sm text-para-muted">
             <span className="flex items-center gap-1">
               <Trophy className="w-4 h-4" />
-              {assignment.points} points
+              {assignment.totalScore} points
             </span>
 
-            {/* Show submission date for instructor */}
-            {isInstructor && (
-              <span className="flex items-center gap-1 text-para-muted">
-                <Clock className="w-4 h-4" />
-                Due:{" "}
-                {new Date(assignment.dueDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </span>
-            )}
+            {/* Show deadline for both instructors and students */}
+            <span className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              {formatDueDate(assignment.endAt)}
+            </span>
 
             {/* Show grade in same row for student if graded */}
             {!isInstructor &&
@@ -265,7 +256,7 @@ export default function AssignmentCard({
               assignment.submission.grade !== undefined && (
                 <span className="flex items-center gap-1 text-secondary font-semibold">
                   <CheckCircle2 className="w-4 h-4 text-white" fill="#8668c0" />
-                  {assignment.submission.grade}/{assignment.points}
+                  {assignment.submission.grade}/{assignment.totalScore}
                 </span>
               )}
           </div>

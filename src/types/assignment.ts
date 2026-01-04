@@ -6,7 +6,12 @@ export type SubmissionStatus = "pending" | "submitted" | "graded" | "overdue";
 
 export type AssignmentSortOption = "dueDate" | "points" | "title" | "status";
 
-export type AssignmentFilterType = "all" | "completed" | "pending" | "graded" | "overdue";
+export type AssignmentFilterType =
+  | "all"
+  | "completed"
+  | "pending"
+  | "graded"
+  | "overdue";
 
 export interface AssignmentAuthor {
   id: string;
@@ -50,6 +55,7 @@ export interface BaseAssignment {
   createdAt: Date;
   dueDate: Date;
   points: number;
+  totalScore: number;
   status: AssignmentStatus;
   attachments?: AssignmentAttachment[];
 }
@@ -68,11 +74,14 @@ export interface StudentAssignment extends BaseAssignment {
 export type Assignment = InstructorAssignment | StudentAssignment;
 
 // Type guards
-export function isInstructorAssignment(assignment: Assignment): assignment is InstructorAssignment {
-  return 'submissionStats' in assignment;
+export function isInstructorAssignment(
+  assignment: Assignment
+): assignment is InstructorAssignment {
+  return "submissionStats" in assignment;
 }
 
-export function isStudentAssignment(assignment: Assignment): assignment is StudentAssignment {
-  return 'submission' in assignment;
+export function isStudentAssignment(
+  assignment: Assignment
+): assignment is StudentAssignment {
+  return "submission" in assignment;
 }
-

@@ -108,8 +108,20 @@ export interface AttemptQuizPayload {
 }
 
 export interface AttemptQuizResponse {
+  id: string;
+  submittedAt: string;
+  answers: Record<string, string>;
   score: number;
-  totalPoints: number;
-  correctAnswers: number;
-  totalQuestions: number;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image?: string;
+  };
+  quiz: {
+    id: string;
+    title: string;
+    totalScore: number;
+  };
 }

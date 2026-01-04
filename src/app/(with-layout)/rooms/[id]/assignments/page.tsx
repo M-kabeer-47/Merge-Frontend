@@ -8,14 +8,11 @@ import {
   NoSearchResults,
   EmptyFilterResults,
 } from "@/components/assignments/EmptyStates";
-import {
-  sampleInstructorAssignments,
-  sampleStudentAssignments,
-} from "@/lib/constants/assignment-mock-data";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import type {
   Assignment,
   AssignmentSortOption,
@@ -23,11 +20,15 @@ import type {
   StudentAssignment,
 } from "@/types/assignment";
 import { useAuth } from "@/providers/AuthProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import useFetchAssignments from "@/hooks/assignments/use-fetch-assignments";
 
 export default function AssignmentsTab() {
   // State
   const router = useRouter();
+  const params = useParams();
+  const roomId = params?.id as string;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<AssignmentFilterType>("all");
   const [sortBy, setSortBy] = useState<AssignmentSortOption>("dueDate");
@@ -36,10 +37,14 @@ export default function AssignmentsTab() {
   const { user } = useAuth();
   const userRole = user?.role;
   const isInstructor = userRole === "instructor";
-  // Load appropriate data based on role
-  const assignments: Assignment[] = isInstructor
-    ? sampleInstructorAssignments
-    : sampleStudentAssignments;
+
+  // Fetch assignments from API
+  const { data, isLoading } = useFetchAssignments({
+    roomId,
+    enabled: !!roomId,
+  });
+
+  const assignments: Assignment[] = data?.assignments || [];
 
   // Filter and sort assignments
   const filteredAndSortedAssignments = useMemo(() => {

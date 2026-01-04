@@ -19,12 +19,7 @@ interface QuizzesResponse {
  * Uses fetchWithAuth for automatic token refresh
  */
 export async function getQuizzes(params: FetchQuizzesParams): Promise<Quiz[]> {
-  const {
-    roomId,
-    sortBy,
-    sortOrder,
-    search,
-  } = params;
+  const { roomId, sortBy, sortOrder, search } = params;
 
   // Build query string
   const queryParams = new URLSearchParams({ roomId });

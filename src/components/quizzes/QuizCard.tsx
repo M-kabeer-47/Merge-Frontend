@@ -298,32 +298,18 @@ export default function QuizCard({
               className="text-xs px-3 py-1.5"
             >
               <Eye className="w-4 h-4" />
-              View Results
+              View Details
             </Button>
           ) : (
-            <>
-              {isStudentQuiz(quiz) && quiz.attempt.status !== "missed" ? (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => onStartQuiz?.(quiz.id)}
-                  className="text-xs px-3 py-1.5"
-                >
-                  <FileText className="w-4 h-4" />
-                  Start Quiz
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onStartQuiz?.(quiz.id)}
-                  className="text-xs px-3 py-1.5"
-                >
-                  <Eye className="w-4 h-4" />
-                  View Details
-                </Button>
-              )}
-            </>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onStartQuiz?.(quiz.id)}
+              className="text-xs px-3 py-1.5"
+            >
+              <FileText className="w-4 h-4" />
+              Attempt Quiz
+            </Button>
           )}
         </div>
       </div>

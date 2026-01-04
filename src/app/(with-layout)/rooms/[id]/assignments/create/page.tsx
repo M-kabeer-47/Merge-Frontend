@@ -43,27 +43,28 @@ export default function CreateAssignmentPage() {
       title: "",
       description: "",
       points: 0,
-      startAt: "",
+      startAt: new Date().toISOString(),
       endAt: "",
       isTurnInLateEnabled: false,
     },
   });
 
   const onSubmit = handleSubmit(async (data) => {
-    await createAssignment(
-      {
+    console.log("Form Data: " + JSON.stringify(data));
+    await createAssignment({
+      data: {
         roomId,
         title: data.title,
         description: data.description,
-        points: data.points,
+        totalScore: data.points,
         startAt: data.startAt
           ? new Date(data.startAt).toISOString()
-          : new Date().getDate().toString(),
+          : new Date().toISOString(),
         endAt: new Date(data.endAt).toISOString(),
         isTurnInLateEnabled: data.isTurnInLateEnabled,
       },
-      attachments
-    );
+      attachments,
+    });
   });
 
   const handleBack = () => {

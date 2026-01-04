@@ -15,7 +15,7 @@ export default function useAttemptQuiz({
   const attemptQuizMutation = useMutation({
     mutationFn: async (payload: AttemptQuizPayload) => {
       const response = await api.post<AttemptQuizResponse>(
-        "/quizzes/attempt",
+        "/quiz/attempts",
         payload
       );
       return response.data;
