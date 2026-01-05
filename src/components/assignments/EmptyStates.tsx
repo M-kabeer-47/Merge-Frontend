@@ -11,8 +11,6 @@ export function EmptyAssignments({
   isInstructor,
   onCreateFirst,
 }: EmptyAssignmentsProps) {
-  
-
   return (
     <div className="flex flex-col items-center justify-center h-full py-12 px-4">
       <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
@@ -82,14 +80,18 @@ export function EmptyFilterResults({
 }: EmptyFilterResultsProps) {
   const getFilterMessage = () => {
     switch (filterType) {
-      case "completed":
-        return "You haven't completed any assignments yet.";
+      // Student filters
       case "pending":
         return "You don't have any pending assignments at the moment.";
+      case "missed":
+        return "Great! You don't have any missed assignments.";
+      case "submitted":
+        return "You haven't submitted any assignments yet.";
+      // Instructor filters
+      case "needs-grading":
+        return "No assignments need grading at the moment.";
       case "graded":
         return "No graded assignments to show yet.";
-      case "overdue":
-        return "Great! You don't have any overdue assignments.";
       default:
         return "No assignments match this filter.";
     }

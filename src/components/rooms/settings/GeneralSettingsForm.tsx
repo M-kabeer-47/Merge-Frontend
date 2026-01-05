@@ -1,19 +1,15 @@
-/**
- * GeneralSettingsForm Component
- * 
- * Handles editing of room title, description, and tags (when room is public).
- * Includes validation, save/cancel controls, and last saved timestamp.
- */
-
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { Save, X, Clock } from "lucide-react";
 import { format } from "date-fns";
-import type { RoomSettings, UpdateGeneralSettingsPayload } from "@/types/room-settings";
+import type {
+  RoomSettings,
+  UpdateGeneralSettingsPayload,
+} from "@/types/room-settings";
 
 interface GeneralSettingsFormProps {
   room: RoomSettings;
@@ -129,7 +125,11 @@ export default function GeneralSettingsForm({
           />
           <div className="flex items-center justify-between mt-1.5">
             {errors.title ? (
-              <p id="title-error" className="text-xs text-destructive" role="alert">
+              <p
+                id="title-error"
+                className="text-xs text-destructive"
+                role="alert"
+              >
                 {errors.title}
               </p>
             ) : (
@@ -164,7 +164,11 @@ export default function GeneralSettingsForm({
           />
           <div className="flex items-center justify-between mt-1.5">
             {errors.description ? (
-              <p id="desc-error" className="text-xs text-destructive" role="alert">
+              <p
+                id="desc-error"
+                className="text-xs text-destructive"
+                role="alert"
+              >
                 {errors.description}
               </p>
             ) : (
@@ -227,7 +231,7 @@ export default function GeneralSettingsForm({
 
       {/* Action Buttons */}
       {hasChanges && (
-        <div className="flex items-center gap-3 mt-6 pt-6 border-t border-light-border">
+        <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-light-border">
           <Button
             onClick={handleSave}
             disabled={isSubmitting}

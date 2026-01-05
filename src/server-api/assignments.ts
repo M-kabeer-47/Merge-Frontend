@@ -1,60 +1,99 @@
 import { getWithAuth } from "./fetch-with-auth";
+import type {
+  StudentAssignment,
+  InstructorAssignment,
+} from "@/types/assignment";
 
-interface GetAssignmentsParams {
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+export interface FetchAssignmentsParams {
   roomId: string;
-  page?: number;
-  limit?: number;
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortOrder?: string;
+  search?: string;
 }
 
-export async function getAssignments({
-  roomId,
-  page = 1,
-  limit = 20,
-  sortBy,
-  sortOrder,
-}: GetAssignmentsParams) {
-  const params = new URLSearchParams({ roomId });
+interface StudentAssignmentsResponse {
+  assignments?: StudentAssignment[];
+}
 
-  if (page) params.append("page", page.toString());
-  if (limit) params.append("limit", limit.toString());
-  if (sortBy) params.append("sortBy", sortBy);
-  if (sortOrder) params.append("sortOrder", sortOrder);
+interface InstructorAssignmentsResponse {
+  assignments?: InstructorAssignment[];
+}
 
-  const url = `/assignments?${params.toString()}`;
+/**
+ * Server-side fetch for STUDENT assignments
+ * Calls student-specific endpoint with submission data
+ */
+export async function getStudentAssignments(
+  params: FetchAssignmentsParams
+): Promise<StudentAssignment[]> {
+  const { roomId, sortBy, sortOrder, search } = params;
 
-  console.log(
-    `[Server API] GET ${url} | Cache: revalidate: 60s, tags: [assignments, assignments-${roomId}]`
-  );
+  // Build query string
+  const queryParams = new URLSearchParams({ roomId });
+  if (sortBy) queryParams.append("sortBy", sortBy);
+  if (sortOrder) queryParams.append("sortOrder", sortOrder);
+  if (search) queryParams.append("search", search);
 
-  const data = await getWithAuth(url, {
+  const { data, error } = await getWithAuth<
+    StudentAssignmentsResponse | StudentAssignment[]
+  >(`${API_BASE_URL}/assignments/student?${queryParams.toString()}`, {
     next: {
-      revalidate: 60, // Revalidate every 60 seconds
-      tags: ["assignments", `assignments-${roomId}`],
+      revalidate: 60,
+      tags: ["assignments", `student-assignments-${roomId}`],
     },
   });
 
-  console.log(`[Server API] ✅ ${url} | 200`);
+  if (error || !data) {
+    console.error("Error fetching student assignments:", error);
+    return [];
+  }
 
-  return data;
+  return Array.isArray(data) ? data : data.assignments || [];
+}
+
+/**
+ * Server-side fetch for INSTRUCTOR assignments
+ * Calls instructor-specific endpoint with submission stats
+ */
+export async function getInstructorAssignments(
+  params: FetchAssignmentsParams
+): Promise<InstructorAssignment[]> {
+  const { roomId, sortBy, sortOrder, search } = params;
+
+  // Build query string
+  const queryParams = new URLSearchParams({ roomId });
+  if (sortBy) queryParams.append("sortBy", sortBy);
+  if (sortOrder) queryParams.append("sortOrder", sortOrder);
+  if (search) queryParams.append("search", search);
+
+  const { data, error } = await getWithAuth<
+    InstructorAssignmentsResponse | InstructorAssignment[]
+  >(`${API_BASE_URL}/assignments?${queryParams.toString()}`, {
+    next: {
+      revalidate: false,
+      tags: ["assignments", `instructor-assignments-${roomId}`],
+    },
+  });
+
+  if (error || !data) {
+    console.error("Error fetching instructor assignments:", error);
+    return [];
+  }
+
+  return Array.isArray(data) ? data : data.assignments || [];
 }
 
 export async function getAssignmentById(assignmentId: string) {
   const url = `/assignments/${assignmentId}`;
 
-  console.log(
-    `[Server API] GET ${url} | Cache: revalidate: 60s, tags: [assignment-${assignmentId}]`
-  );
-
   const data = await getWithAuth(url, {
     next: {
-      revalidate: 60,
+      revalidate: false,
       tags: ["assignments", `assignment-${assignmentId}`],
     },
   });
-
-  console.log(`[Server API] ✅ ${url} | 200`);
 
   return data;
 }

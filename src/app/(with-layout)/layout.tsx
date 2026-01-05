@@ -1,8 +1,7 @@
-"use client";
 import React from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import Navbar from "@/components/layout/Navbar";
-import { AuthProvider } from "@/providers/AuthProvider";
+import AuthProviderServer from "@/providers/AuthProviderServer";
 
 export default function WithLayoutLayout({
   children,
@@ -10,7 +9,7 @@ export default function WithLayoutLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
+    <AuthProviderServer>
       <div className=" flex md:flex-row flex-col h-screen w-full bg-gray-50">
         {/* Sidebar */}
         <AppSidebar />
@@ -28,6 +27,6 @@ export default function WithLayoutLayout({
           </main>
         </div>
       </div>
-    </AuthProvider>
+    </AuthProviderServer>
   );
 }

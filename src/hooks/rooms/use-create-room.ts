@@ -65,7 +65,7 @@ export default function useCreateRoom() {
       toast.success("Room created successfully!");
     },
     onSettled: async () => {
-      // Refresh Next.js Data Cache so next navigation is fresh
+      
       refreshRoomsCache("all");
     },
   });

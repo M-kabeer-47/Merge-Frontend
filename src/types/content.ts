@@ -24,7 +24,10 @@ export type SortField =
   | "size" // Content sorting
   | "deadline"
   | "title"
-  | "status"; // Quiz sorting
+  | "status" // Quiz sorting
+  | "dueDate"
+  | "points"
+  | "upload-date"; // Assignment sorting
 
 export type SortOrder = "asc" | "desc";
 export type SortOption = { field: SortField; order: SortOrder } | null;

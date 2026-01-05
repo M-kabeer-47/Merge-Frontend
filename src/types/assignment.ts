@@ -7,11 +7,14 @@ export type SubmissionStatus = "pending" | "submitted" | "graded" | "overdue";
 export type AssignmentSortOption = "dueDate" | "points" | "title" | "status";
 
 export type AssignmentFilterType =
+  // Student filters
   | "all"
-  | "completed"
   | "pending"
-  | "graded"
-  | "overdue";
+  | "missed"
+  | "submitted"
+  // Instructor filters
+  | "needs-grading"
+  | "graded";
 
 export interface AssignmentAuthor {
   id: string;

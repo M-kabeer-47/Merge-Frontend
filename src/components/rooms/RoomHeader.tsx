@@ -1,13 +1,18 @@
+"use client";
+
 import { Users, Video, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import type { RoomDetails } from "@/hooks/rooms/use-fetch-room-details";
+import { useRoom } from "@/providers/RoomProvider";
 
 interface RoomHeaderProps {
-  room: RoomDetails;
   onInviteClick: () => void;
 }
 
-export default function RoomHeader({ room, onInviteClick }: RoomHeaderProps) {
+export default function RoomHeader({ onInviteClick }: RoomHeaderProps) {
+  const { room } = useRoom();
+
+  if (!room) return null;
+
   return (
     <header className="bg-main-background border-b-[0.5px] border-light-border px-4 md:px-6 py-4 md:py-6 shadow-sm">
       <div className="flex items-center justify-between">

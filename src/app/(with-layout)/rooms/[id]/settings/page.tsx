@@ -1,24 +1,8 @@
-/**
- * Room Settings Page
- *
- * Comprehensive settings page for room configuration.
- * Only accessible to instructors/owners of the room.
- *
- * Features:
- * - General room information (title, description, tags)
- * - Visibility and join policy controls
- * - Moderator and permission management
- * - Member management (mute, remove, promote)
- * - Chat permissions configuration
- * - Ownership transfer
- * - Archive and delete room
- */
-
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Settings, ShieldAlert, ChevronLeft } from "lucide-react";
+import { ShieldAlert, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 // Import all setting components
@@ -40,15 +24,11 @@ import type {
   ModeratorPermissions,
 } from "@/types/room-settings";
 import { mockRoomSettings } from "@/lib/constants/room-settings-mock-data";
-
+import { useRoom } from "@/providers/RoomProvider";
+import RoomSettingsError from "@/components/rooms/settings/RoomSettingsError";
 export default function RoomSettingsPage() {
-  const params = useParams();
-  const router = useRouter();
-  const roomId = params.id as string;
-
-  // TODO: Replace with actual user role check from auth context
-  const currentUserRole = "instructor"; // Mock: should come from useAuth() or similar
-  const isInstructor = currentUserRole === "instructor";
+  const { room, userRole } = useRoom();
+  const isAdmin = userRole === "instructor" || userRole === "moderator";
 
   // State management
   const [roomSettings, setRoomSettings] =
@@ -56,38 +36,10 @@ export default function RoomSettingsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUnsavedChangesWarning, setShowUnsavedChangesWarning] =
     useState(false);
-
-  // Access control: Show 403 if not instructor
-  if (!isInstructor) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full bg-main-background border border-light-border rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShieldAlert className="w-8 h-8 text-destructive" />
-          </div>
-          <h1 className="text-2xl font-raleway font-bold text-heading mb-2">
-            Access Denied
-          </h1>
-          <p className="text-sm text-para-muted mb-6">
-            You do not have permission to access room settings. Only instructors
-            and room owners can modify settings.
-          </p>
-          <Button
-            onClick={() => router.push(`/rooms/${roomId}`)}
-            variant="outline"
-            className="w-full"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Back to Room
-          </Button>
-        </div>
-      </div>
-    );
+  const [isPending, startTransition] = useTransition();
+  if (!isAdmin && !isPending) {
+    return <RoomSettingsError roomID={room?.id as string} />;
   }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // EVENT HANDLERS
-  // ═══════════════════════════════════════════════════════════════════
 
   const handleSaveGeneral = (payload: UpdateGeneralSettingsPayload) => {
     setIsSubmitting(true);
@@ -277,10 +229,6 @@ export default function RoomSettingsPage() {
     // TODO: Show success toast and redirect
   };
 
-  // ═══════════════════════════════════════════════════════════════════
-  // RENDER
-  // ═══════════════════════════════════════════════════════════════════
-
   return (
     <div className="min-h-screen bg-main-background">
       {/* Header */}
@@ -291,7 +239,7 @@ export default function RoomSettingsPage() {
           {/* General Settings */}
           <section aria-labelledby="general-settings-heading">
             <GeneralSettingsForm
-              room={roomSettings}
+              room={room}
               onSave={handleSaveGeneral}
               isSubmitting={isSubmitting}
             />
