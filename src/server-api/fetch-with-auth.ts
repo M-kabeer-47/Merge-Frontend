@@ -84,6 +84,12 @@ export async function fetchWithAuth<T = unknown>(
   // Log the request with cache info
 
   const makeRequest = async (token: string | undefined) => {
+    console.log("Making request:", {
+      url,
+      method: fetchOptions.method,
+      headers: fetchOptions.headers,
+      next: next,
+    });
     return fetch(url, {
       ...fetchOptions,
       headers: {

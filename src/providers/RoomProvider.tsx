@@ -2,6 +2,8 @@
 import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { RoomDetails } from "@/types/room-details";
+import { useQuery } from "@tanstack/react-query";
+import { getRoomDetails } from "@/server-api/room";
 // Moderator type for room context
 export type RoomUserRole = "instructor" | "moderator" | "student" | null;
 
@@ -12,15 +14,19 @@ export interface RoomContextType {
 }
 
 interface RoomProviderProps {
-  room: RoomDetails | null;
+  roomID: string;
   children: ReactNode;
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
 
-export function RoomProvider({ room, children }: RoomProviderProps) {
+export function RoomProvider({ children, roomID }: RoomProviderProps) {
   const { user } = useAuth();
-
+  const { data: room } = useQuery({
+    queryKey: ["room", roomID],
+    queryFn: () => getRoomDetails(roomID),
+    staleTime: Infinity,
+  });
   // Determine user role within the room
   const userRole = () => {
     if (!room || !user) return null;
@@ -41,7 +47,7 @@ export function RoomProvider({ room, children }: RoomProviderProps) {
 
   // Create context value with role flags
   const contextValue = {
-    room,
+    room: room as RoomDetails,
     userRole: userRole(),
   };
 

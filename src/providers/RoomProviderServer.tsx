@@ -1,4 +1,9 @@
 import { ReactNode } from "react";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { getRoomDetails } from "@/server-api/room";
 import { RoomProvider } from "./RoomProvider";
 
@@ -11,7 +16,17 @@ export async function RoomProviderServer({
   roomId,
   children,
 }: RoomProviderServerProps) {
-  const room = await getRoomDetails(roomId);
+  const queryClient = new QueryClient();
 
-  return <RoomProvider room={room}>{children}</RoomProvider>;
+  // Prefetch room details on server
+  await queryClient.prefetchQuery({
+    queryKey: ["room", roomId],
+    queryFn: () => getRoomDetails(roomId),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <RoomProvider roomID={roomId}>{children}</RoomProvider>
+    </HydrationBoundary>
+  );
 }

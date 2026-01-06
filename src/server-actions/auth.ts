@@ -8,10 +8,6 @@ const COOKIE_OPTIONS = {
   sameSite: "lax" as const,
 };
 
-/**
- * Server Action to set auth cookies
- * Can be called from Server Components, Server Actions, or Client Components
- */
 export async function setAuthCookies(
   accessToken: string,
   refreshToken: string

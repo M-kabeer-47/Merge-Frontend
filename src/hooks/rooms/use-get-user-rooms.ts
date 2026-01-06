@@ -82,7 +82,7 @@ export default function useGetUserRooms({
     queryFn: fetchUserRooms,
     enabled: isClient && !!localStorage.getItem("accessToken"),
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: Infinity, // Trust server-prefetched data and optimistic updates
   });
 
   return {

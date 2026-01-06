@@ -69,8 +69,21 @@ export default function RoomLayoutClient({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const pathSegments = pathname.split("/");
+  const lastSegment = pathSegments[pathSegments.length - 1];
+  const ACTIVE_TAB = [
+    "general-chat",
+    "announcements",
+    "content",
+    "assignments",
+    "quizzes",
+    "sessions",
+    "settings",
+  ].includes(lastSegment)
+    ? lastSegment
+    : "general-chat";
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("general-chat");
+  const [activeTab, setActiveTab] = useState(ACTIVE_TAB);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const params = useParams();
   const id = (params?.id as string) ?? "";
