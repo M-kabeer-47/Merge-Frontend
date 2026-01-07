@@ -170,11 +170,11 @@ export default function StudentAssignmentView({
                 Submitted
               </span>
             )}
-            {(submission?.status === "overdue" ||
+            {(submission?.status === "missed" ||
               (submission?.status === "pending" && isOverdue)) && (
               <span className="inline-flex items-center justify-center gap-1.5 px-4 py-1 rounded-full text-xs font-semibold bg-destructive/20 text-white min-w-[100px]">
                 <XCircle className="w-3.5 h-3.5" />
-                Overdue
+                Missed
               </span>
             )}
             {submission?.status === "pending" && !isOverdue && (

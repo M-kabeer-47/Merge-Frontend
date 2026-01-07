@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import SortDropdown from "@/components/ui/SortDropdown";
 import { Button } from "@/components/ui/Button";
+import { useRoom } from "@/providers/RoomProvider";
 import type { AssignmentFilterType } from "@/types/assignment";
 import type { SortOption, SortField } from "@/types/content";
 
 interface AssignmentListHeaderProps {
   roomId: string;
-  isInstructor: boolean;
   initialSearch?: string;
   initialSort?: string;
   initialFilter?: AssignmentFilterType;
@@ -20,11 +20,12 @@ interface AssignmentListHeaderProps {
 
 export default function AssignmentListHeader({
   roomId,
-  isInstructor,
   initialSearch = "",
   initialSort = "dueDate",
   initialFilter = "all",
 }: AssignmentListHeaderProps) {
+  const { userRole } = useRoom();
+  const isInstructor = userRole === "instructor" || userRole === "moderator";
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -45,7 +46,7 @@ export default function AssignmentListHeader({
         { key: "all", label: "All" },
         { key: "pending", label: "Pending" },
         { key: "missed", label: "Missed" },
-        { key: "submitted", label: "Submitted" },
+        { key: "completed", label: "Completed" },
       ];
 
   // Update URL params for shareable links
@@ -172,7 +173,7 @@ export default function AssignmentListHeader({
       </div>
 
       {/* Filter Tabs */}
-      <div className={isInstructor ? "max-w-[600px]" : "max-w-[700px]"}>
+      <div className={isInstructor ? "max-w-[600px]" : "max-w-[800px]"}>
         <Tabs
           options={tabs}
           activeKey={activeFilter}

@@ -11,6 +11,7 @@ export interface FetchAssignmentsParams {
   sortBy?: string;
   sortOrder?: string;
   search?: string;
+  filter?: string;
 }
 
 interface StudentAssignmentsResponse {
@@ -28,13 +29,14 @@ interface InstructorAssignmentsResponse {
 export async function getStudentAssignments(
   params: FetchAssignmentsParams
 ): Promise<StudentAssignment[]> {
-  const { roomId, sortBy, sortOrder, search } = params;
+  const { roomId, sortBy, sortOrder, search, filter } = params;
 
   // Build query string
   const queryParams = new URLSearchParams({ roomId });
   if (sortBy) queryParams.append("sortBy", sortBy);
   if (sortOrder) queryParams.append("sortOrder", sortOrder);
   if (search) queryParams.append("search", search);
+  if (filter) queryParams.append("filter", filter);
 
   const { data, error } = await getWithAuth<
     StudentAssignmentsResponse | StudentAssignment[]
@@ -46,9 +48,11 @@ export async function getStudentAssignments(
   });
 
   if (error || !data) {
-    console.error("Error fetching student assignments:", error);
+    console.error("Error fetching student assignments:", error?.message);
+
     return [];
   }
+  console.log("Data: " + JSON.stringify(data));
 
   return Array.isArray(data) ? data : data.assignments || [];
 }
@@ -60,17 +64,18 @@ export async function getStudentAssignments(
 export async function getInstructorAssignments(
   params: FetchAssignmentsParams
 ): Promise<InstructorAssignment[]> {
-  const { roomId, sortBy, sortOrder, search } = params;
+  const { roomId, sortBy, sortOrder, search, filter = "all" } = params;
 
   // Build query string
   const queryParams = new URLSearchParams({ roomId });
   if (sortBy) queryParams.append("sortBy", sortBy);
   if (sortOrder) queryParams.append("sortOrder", sortOrder);
   if (search) queryParams.append("search", search);
+  if (filter) queryParams.append("filter", filter);
 
   const { data, error } = await getWithAuth<
     InstructorAssignmentsResponse | InstructorAssignment[]
-  >(`${API_BASE_URL}/assignments?${queryParams.toString()}`, {
+  >(`${API_BASE_URL}/assignments/instructor?${queryParams.toString()}`, {
     next: {
       revalidate: false,
       tags: ["assignments", `instructor-assignments-${roomId}`],

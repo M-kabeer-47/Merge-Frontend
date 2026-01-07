@@ -2,8 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/utils/api";
 import { toast } from "sonner";
 
-const isClient = typeof window !== "undefined";
-
 interface RoomAdmin {
   id: string;
   email: string;
@@ -62,11 +60,8 @@ export default function useGetUserRooms({
   search?: string;
 }) {
   const fetchUserRooms = async (): Promise<RoomsResponse | null> => {
-    const token = isClient ? localStorage.getItem("accessToken") : null;
-    if (!token) return null;
-
     try {
-      const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
+      const searchParam = search ? `&search=${search}` : "";
       const response = await api.get(
         `/user/rooms?filter=${filter}${searchParam}`
       );
@@ -80,7 +75,6 @@ export default function useGetUserRooms({
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["rooms", filter, search],
     queryFn: fetchUserRooms,
-    enabled: isClient && !!localStorage.getItem("accessToken"),
     retry: false,
     staleTime: Infinity, // Trust server-prefetched data and optimistic updates
   });
@@ -89,7 +83,7 @@ export default function useGetUserRooms({
     rooms: data?.rooms || [],
     counts: data?.counts || { created: 0, joined: 0, total: 0 },
     total: data?.total || 0,
-    isLoading: isLoading || !isClient,
+    isLoading,
     isFetching,
     isError,
     refetch,

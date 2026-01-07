@@ -2,7 +2,7 @@
 
 export type AssignmentStatus = "published" | "draft" | "closed";
 
-export type SubmissionStatus = "pending" | "submitted" | "graded" | "overdue";
+export type SubmissionStatus = "pending" | "submitted" | "graded" | "missed";
 
 export type AssignmentSortOption = "dueDate" | "points" | "title" | "status";
 

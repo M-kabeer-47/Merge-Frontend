@@ -13,22 +13,14 @@ import {
   AlertCircle,
   File as FileIcon,
 } from "lucide-react";
-import type {
-  Assignment,
-  InstructorAssignment,
-  StudentAssignment,
-} from "@/types/assignment";
-import {
-  isInstructorAssignment,
-  isStudentAssignment,
-} from "@/types/assignment";
+import type { Assignment, SubmissionStatus } from "@/types/assignment";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
-import { useAuth } from "@/providers/AuthProvider";
 import Icon from "../ui/Icon";
 
 interface AssignmentCardProps {
   assignment: Assignment;
+  isInstructor?: boolean;
   bgColor?: string;
   onViewDetails?: (id: string) => void;
   onViewResponses?: (id: string) => void;
@@ -38,6 +30,7 @@ interface AssignmentCardProps {
 
 export default function AssignmentCard({
   assignment,
+  isInstructor = true,
   bgColor,
   onViewDetails,
   onViewResponses,
@@ -45,10 +38,6 @@ export default function AssignmentCard({
   onDelete,
 }: AssignmentCardProps) {
   const [showMenu, setShowMenu] = useState(false);
-  const { user } = useAuth();
-
-  // Get role from authenticated user
-  const isInstructor = true;
 
   // Calculate if assignment is overdue
   const isOverdue = new Date() > new Date(assignment.dueDate);
@@ -57,11 +46,9 @@ export default function AssignmentCard({
   // Determine background color - use prop if provided, otherwise use default
   const cardBgColor = bgColor || "bg-background";
 
-  // Status configuration for student view (similar to BookingCard)
-  const getStudentStatusConfig = (
-    submission: StudentAssignment["submission"]
-  ) => {
-    if (submission.status === "graded") {
+  // Status configuration for student view based on submissionStatus
+  const getStudentStatusConfig = (status?: SubmissionStatus) => {
+    if (status === "graded") {
       return {
         icon: CheckCircle2,
         iconFill: "#10b981", // success color
@@ -70,7 +57,7 @@ export default function AssignmentCard({
         text: "Graded",
       };
     }
-    if (submission.status === "submitted") {
+    if (status === "submitted") {
       return {
         icon: CheckCircle2,
         iconFill: "#3b82f6", // info color
@@ -79,13 +66,13 @@ export default function AssignmentCard({
         text: "Submitted",
       };
     }
-    if (submission.status === "overdue") {
+    if (status === "missed") {
       return {
         icon: XCircle,
         iconFill: "#ef4444", // destructive color
         textColor: "text-destructive",
         bgColor: "bg-destructive/10",
-        text: "Overdue",
+        text: "Missed",
       };
     }
     // pending (default case)
@@ -226,12 +213,12 @@ export default function AssignmentCard({
                 {assignment.title}
               </h3>
 
-              {/* Status Badge for Student (similar to BookingCard) */}
-              {!isInstructor && isStudentAssignment(assignment) && (
+              {/* Status Badge for Student */}
+              {!isInstructor && (assignment as any).submissionStatus && (
                 <>
                   {(() => {
                     const statusConfig = getStudentStatusConfig(
-                      assignment.submission
+                      (assignment as any).submissionStatus
                     );
                     const StatusIcon = statusConfig.icon;
                     return (
@@ -290,9 +277,8 @@ export default function AssignmentCard({
 
               {/* Show grade in same row for student if graded */}
               {!isInstructor &&
-                isStudentAssignment(assignment) &&
-                assignment.submission.status === "graded" &&
-                assignment.submission.grade !== undefined && (
+                assignment.submissionStatus === "graded" &&
+                assignment.grade !== undefined && (
                   <span className="flex items-center gap-1 text-secondary font-semibold">
                     <CheckCircle2
                       className="w-4 h-4 text-white"
@@ -314,7 +300,7 @@ export default function AssignmentCard({
         <div className="flex items-center justify-between flex-wrap gap-3">
           {/* Left side - Status info */}
           <div className="flex items-center gap-3 flex-wrap">
-            {isInstructor && isInstructorAssignment(assignment) && (
+            {isInstructor && (
               <>
                 {/* Submission stats for instructor */}
                 <div className="flex items-center gap-1.5 text-primary font-medium text-sm">
@@ -344,10 +330,10 @@ export default function AssignmentCard({
               </>
             )}
 
-            {!isInstructor && isStudentAssignment(assignment) && (
+            {!isInstructor && (
               <>
                 {/* Show submission date if submitted */}
-                {assignment.submission.submittedAt && (
+                {assignment.submissionStatus === "submitted" && (
                   <span className="flex items-center gap-1.5 text-sm text-para-muted">
                     <Clock className="w-4 h-4" />
                     Submitted{" "}
