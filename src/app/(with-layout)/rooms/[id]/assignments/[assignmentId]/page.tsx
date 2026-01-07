@@ -80,9 +80,9 @@ export default function AssignmentDetailsPage() {
     });
   };
 
-  const handleSubmit = (files: File[]) => {
-    console.log("Submitting files:", files);
-    // TODO: Implement actual submission logic
+  const handleSubmit = (files: File[], comment: string) => {
+    console.log("Submitting files:", files, "with comment:", comment);
+    // TODO: Implement actual submission logic using upload utility
   };
 
   return (
@@ -132,6 +132,22 @@ export default function AssignmentDetailsPage() {
                     {submission.grade}/{assignment.totalScore}
                   </p>
                 </div>
+              )}
+
+            {/* Turn In Button for Students */}
+            {!isInstructor &&
+              !isOverdue &&
+              submission?.status === "pending" && (
+                <Button
+                  onClick={() => {
+                    // Scroll to submission area
+                    document
+                      .querySelector('[data-sidebar="your-work"]')
+                      ?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  Turn In
+                </Button>
               )}
           </div>
         </div>

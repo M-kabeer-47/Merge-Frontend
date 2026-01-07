@@ -57,6 +57,7 @@ export interface BaseAssignment {
   author: AssignmentAuthor;
   createdAt: Date;
   dueDate: Date;
+  endAt: Date;
   points: number;
   totalScore: number;
   status: AssignmentStatus;
@@ -68,9 +69,11 @@ export interface InstructorAssignment extends BaseAssignment {
   submissionStats: AssignmentSubmissionStats;
 }
 
-// For student view
+// For student view - includes flattened submission fields for convenience
 export interface StudentAssignment extends BaseAssignment {
   submission: StudentSubmission;
+  submissionStatus: SubmissionStatus;
+  grade?: number;
 }
 
 // Union type for general use

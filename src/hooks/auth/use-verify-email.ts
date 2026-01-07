@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import api from "@/utils/api";
+import { setAuthTokens } from "@/utils/auth-tokens";
 
 export default function VerifyPage({ token }: { token: string }) {
   const router = useRouter();
@@ -11,12 +12,9 @@ export default function VerifyPage({ token }: { token: string }) {
       return response.data;
     },
     onSuccess: (data) => {
-      // Store tokens in localStorage if provided
-      if (data.token) {
-        localStorage.setItem("accessToken", data.token);
-      }
-      if (data.refreshToken) {
-        localStorage.setItem("refreshToken", data.refreshToken);
+      // Store tokens in cookies if provided
+      if (data.token && data.refreshToken) {
+        setAuthTokens(data.token, data.refreshToken);
       }
 
       // Redirect to success page with type parameter

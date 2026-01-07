@@ -3,8 +3,6 @@ import api from "@/utils/api";
 import { toast } from "sonner";
 import { User } from "@/types/user";
 
-const isClient = typeof window !== "undefined";
-
 interface RoomMember {
   id: string;
   firstName: string;
@@ -35,8 +33,7 @@ export interface RoomDetails {
 
 export default function useFetchRoomDetails(roomId: string) {
   const fetchRoomDetails = async (): Promise<RoomDetails | null> => {
-    const token = isClient ? localStorage.getItem("accessToken") : null;
-    if (!token || !roomId) return null;
+    if (!roomId) return null;
 
     try {
       const response = await api.get(`/room/${roomId}`);
@@ -50,14 +47,14 @@ export default function useFetchRoomDetails(roomId: string) {
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["room-details", roomId],
     queryFn: fetchRoomDetails,
-    enabled: isClient && !!roomId,
+    enabled: !!roomId,
     retry: false,
-    staleTime: Infinity, // 5 minutes
+    staleTime: Infinity,
   });
 
   return {
     room: data,
-    isLoading: isLoading || isFetching || !isClient,
+    isLoading: isLoading || isFetching,
     isError,
     refetch,
   };

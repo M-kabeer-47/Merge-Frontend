@@ -15,6 +15,7 @@ import TaskCalendar, {
   sampleTasks,
 } from "@/components/dashboard/TaskCalendar";
 import { isSameDay } from "date-fns";
+import { setAuthTokens } from "@/utils/auth-tokens";
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
@@ -25,8 +26,7 @@ export default function DashboardContent() {
     const accessToken = searchParams?.get("token");
     const refreshToken = searchParams?.get("refreshToken");
     if (accessToken && refreshToken) {
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
+      setAuthTokens(accessToken, refreshToken);
     }
   }, [searchParams]);
 

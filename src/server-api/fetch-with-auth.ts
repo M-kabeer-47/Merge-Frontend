@@ -73,8 +73,6 @@ export async function fetchWithAuth<T = unknown>(
   options: FetchWithAuthOptions = {}
 ): Promise<{ data: T | null; error: Error | null; status: number }> {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
-
   const { next, ...fetchOptions } = options;
 
   // Extract endpoint for cleaner logging
@@ -83,25 +81,25 @@ export async function fetchWithAuth<T = unknown>(
 
   // Log the request with cache info
 
-  const makeRequest = async (token: string | undefined) => {
-    console.log("Making request:", {
-      url,
-      method: fetchOptions.method,
-      headers: fetchOptions.headers,
-      next: next,
-    });
+  const makeRequest = async () => {
+    // For server-side: read ALL cookies and forward them
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
     return fetch(url, {
       ...fetchOptions,
       headers: {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
+        Cookie: cookieHeader, // Forward cookies to backend
       },
       ...(next && { next }),
     });
   };
 
   // First attempt
-  const [response, error] = await tryIt(makeRequest(accessToken));
+  const [response, error] = await tryIt(makeRequest());
 
   if (error || !response) {
     return {
@@ -123,7 +121,7 @@ export async function fetchWithAuth<T = unknown>(
     }
 
     // Retry with new token
-    const [retryResponse, retryError] = await tryIt(makeRequest(newToken));
+    const [retryResponse, retryError] = await tryIt(makeRequest());
     if (retryError || !retryResponse) {
       return {
         data: null,

@@ -1,7 +1,5 @@
-import { Suspense } from "react";
 import AssignmentListHeader from "@/components/assignments/AssignmentListHeader";
-import AssignmentsDataWrapper from "@/components/assignments/AssignmentsDataWrapper";
-import AssignmentCardsSkeleton from "@/components/assignments/AssignmentCardsSkeleton";
+import AssignmentsList from "@/components/assignments/AssignmentsList";
 import type { AssignmentFilterType } from "@/types/assignment";
 
 interface AssignmentsPageProps {
@@ -21,9 +19,6 @@ export default async function AssignmentsPage({
   const { id: roomId } = await params;
   const { search, sortBy, filter } = await searchParams;
 
-  // Create a key that changes when search params change
-  const suspenseKey = `${search}-${sortBy}-${filter}`;
-
   return (
     <div className="h-full flex flex-col bg-main-background">
       <AssignmentListHeader
@@ -32,14 +27,12 @@ export default async function AssignmentsPage({
         initialSort={sortBy}
         initialFilter={filter as AssignmentFilterType}
       />
-      <Suspense key={suspenseKey} fallback={<AssignmentCardsSkeleton />}>
-        <AssignmentsDataWrapper
-          roomId={roomId}
-          search={search}
-          sortBy={sortBy}
-          filter={filter}
-        />
-      </Suspense>
+      {/* AssignmentsList is now a client component that:
+          - Uses useRoom() to get user role (already fetched in layout)
+          - Uses useSearchParams() to read URL filters
+          - Fetches assignments via React Query based on role
+      */}
+      <AssignmentsList roomId={roomId} />
     </div>
   );
 }

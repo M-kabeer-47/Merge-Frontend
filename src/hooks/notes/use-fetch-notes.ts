@@ -3,8 +3,6 @@ import { useEffect } from "react";
 import api from "@/utils/api";
 import { Note, Folder } from "@/types/note";
 
-const isClient = typeof window !== "undefined";
-
 interface NoteFilters {
   folderId?: string;
   search?: string;
@@ -13,11 +11,7 @@ interface NoteFilters {
 export default function useFetchNotes(filters?: NoteFilters) {
   const queryClient = useQueryClient();
 
-  // Reusable fetch function that takes query params
   const fetchNotesData = async (queryParams: string) => {
-    const token = isClient ? localStorage.getItem("accessToken") : null;
-    if (!token) return null;
-
     const url = `/notes${queryParams ? `?${queryParams}` : ""}`;
     const response = await api.get(url);
     return response.data;
@@ -35,7 +29,6 @@ export default function useFetchNotes(filters?: NoteFilters) {
     {
       queryKey: ["notes", filters?.folderId || null, filters?.search || ""],
       queryFn: fetchNotes,
-      enabled: isClient && !!localStorage.getItem("accessToken"),
       retry: false,
       staleTime: Infinity,
     }
@@ -43,7 +36,7 @@ export default function useFetchNotes(filters?: NoteFilters) {
 
   // Prefetch all subfolders when folders are loaded
   useEffect(() => {
-    if (!data?.folders || !isClient) return;
+    if (!data?.folders) return;
 
     data.folders.forEach((folder: Folder) => {
       const params = new URLSearchParams();
@@ -63,7 +56,7 @@ export default function useFetchNotes(filters?: NoteFilters) {
     breadcrumb: data?.breadcrumb || [],
     currentFolder: (data?.currentFolder as Folder | null) || null,
     total: data?.total || 0,
-    isLoading: isLoading || !isClient || isPending,
+    isLoading: isLoading || isPending,
     isFetching,
     isError,
     refetch,

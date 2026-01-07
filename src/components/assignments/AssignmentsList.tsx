@@ -1,46 +1,44 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRoom } from "@/providers/RoomProvider";
+import useFetchRoleBasedAssignments from "@/hooks/assignments/use-fetch-role-based-assignments";
 import AssignmentCard from "./AssignmentCard";
+import AssignmentCardsSkeleton from "./AssignmentCardsSkeleton";
 import {
   EmptyAssignments,
   NoSearchResults,
   EmptyFilterResults,
 } from "./EmptyStates";
-import AssignmentCardsSkeleton from "./AssignmentCardsSkeleton";
 import type {
   InstructorAssignment,
   StudentAssignment,
 } from "@/types/assignment";
 
 interface AssignmentsListProps {
-  instructorAssignments: InstructorAssignment[];
-  studentAssignments: StudentAssignment[];
   roomId: string;
-  filter?: string;
-  searchTerm: string;
 }
 
-export default function AssignmentsList({
-  instructorAssignments,
-  studentAssignments,
-  roomId,
-  filter = "all",
-  searchTerm,
-}: AssignmentsListProps) {
+export default function AssignmentsList({ roomId }: AssignmentsListProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { userRole } = useRoom();
 
   const isInstructor = userRole === "instructor" || userRole === "moderator";
 
-  // Show skeleton while role is being determined
-  if (!userRole) {
-    return <AssignmentCardsSkeleton />;
-  }
+  // Get filter params from URL
+  const search = searchParams.get("search") || "";
+  const sortBy = searchParams.get("sortBy") || "";
+  const filter = searchParams.get("filter") || "all";
 
-  // Use appropriate assignments based on role
-  const assignments = isInstructor ? instructorAssignments : studentAssignments;
+  // Fetch assignments based on role using existing provider data
+  const { data: assignments = [], isLoading } = useFetchRoleBasedAssignments({
+    roomId,
+    isInstructor,
+    search,
+    sortBy,
+    filter,
+  });
 
   const handleViewDetails = (id: string) => {
     router.push(`/rooms/${roomId}/assignments/${id}`);
@@ -70,8 +68,13 @@ export default function AssignmentsList({
     router.push(`/rooms/${roomId}/assignments/create`);
   };
 
+  // Show skeleton while loading or role is not yet determined
+  if (isLoading || !userRole) {
+    return <AssignmentCardsSkeleton />;
+  }
+
   const isEmpty = assignments.length === 0;
-  const hasSearchTerm = searchTerm.trim().length > 0;
+  const hasSearchTerm = search.trim().length > 0;
   const hasActiveFilter = filter !== "all";
 
   // Empty state
@@ -81,7 +84,7 @@ export default function AssignmentsList({
         <div className="h-full flex items-center justify-center">
           {hasSearchTerm ? (
             <NoSearchResults
-              searchTerm={searchTerm}
+              searchTerm={search}
               onClearSearch={handleClearFilters}
             />
           ) : hasActiveFilter ? (
@@ -105,10 +108,11 @@ export default function AssignmentsList({
     return (
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 sm:px-6 py-4 grid grid-cols-1 sm:grid-cols-2 items-center gap-5">
-          {instructorAssignments.map((assignment) => (
+          {(assignments as InstructorAssignment[]).map((assignment) => (
             <AssignmentCard
               key={assignment.id}
               assignment={assignment}
+              isInstructor={true}
               onViewResponses={handleViewResponses}
               onEdit={handleEdit}
               onDelete={handleDelete}
@@ -123,14 +127,14 @@ export default function AssignmentsList({
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="px-4 sm:px-6 py-4 space-y-4">
-        {studentAssignments.map((assignment) => (
+        {(assignments as StudentAssignment[]).map((assignment) => (
           <AssignmentCard
             key={assignment.id}
             assignment={assignment}
+            isInstructor={false}
             onViewDetails={handleViewDetails}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            isInstructor={false}
           />
         ))}
       </div>

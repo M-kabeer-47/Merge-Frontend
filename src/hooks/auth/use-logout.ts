@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import { useRouter } from "next/navigation";
+import { clearAuthTokens } from "@/utils/auth-tokens";
 
 export default function useLogout() {
   const queryClient = useQueryClient();
@@ -20,19 +21,15 @@ export default function useLogout() {
   } = useMutation({
     mutationFn: logoutFunction,
     onError: async () => {
-      // Even if logout fails, clear local data
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userId");
+      // Even if logout fails, clear local cookies and cache
+      clearAuthTokens();
       queryClient.clear();
 
       // Redirect to login anyway
       router.push("/sign-in");
     },
     onSuccess: () => {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userId");
+      clearAuthTokens();
       queryClient.clear();
       toast.success("Logged out successfully");
       setTimeout(() => {

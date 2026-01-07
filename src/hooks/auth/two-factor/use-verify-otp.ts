@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { setAuthTokens } from "@/utils/auth-tokens";
 
 interface UseVerifyOTPProps {
   email: string;
@@ -27,10 +28,8 @@ export default function useVerifyOTP({ email, otp }: UseVerifyOTPProps) {
     },
     onSuccess: (data) => {
       toast.success("OTP verified successfully");
-      if (data?.token && data?.refreshToken && data?.userId) {
-        localStorage.setItem("accessToken", data.token);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        localStorage.setItem("userId", data.userId);
+      if (data?.token && data?.refreshToken) {
+        setAuthTokens(data.token, data.refreshToken);
         window.location.href = "/dashboard";
       }
     },
