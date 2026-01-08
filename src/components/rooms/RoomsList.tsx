@@ -13,7 +13,20 @@ export default function RoomsList() {
   const { onDeleteRoom } = useRoomActions();
   const { filter, search } = useRoomFilters();
 
-  const { rooms, isFetching } = useGetUserRooms({ filter, search });
+  const { rooms, isFetching, isError } = useGetUserRooms({ filter, search });
+  console.log("Rooms: ", JSON.stringify(rooms));
+  console.log(
+    "[RoomsList] Filter:",
+    filter,
+    "Search:",
+    search,
+    "isFetching:",
+    isFetching,
+    "isError:",
+    isError,
+    "rooms:",
+    rooms.length
+  );
 
   const handleEditRoom = (roomId: string) => {
     router.push(`/rooms/${roomId}/settings`);
@@ -67,28 +80,18 @@ export default function RoomsList() {
 
   return (
     <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: { delay: 0.3, staggerChildren: 0.1 },
-        },
-      }}
+      key={filter} // Re-animate when filter changes
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      {rooms.map((room) => (
+      {rooms.map((room, index) => (
         <motion.div
           key={room.id}
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: { duration: 0.4, ease: "easeOut" },
-            },
-          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: index * 0.05 }}
         >
           <RoomCard
             room={room}

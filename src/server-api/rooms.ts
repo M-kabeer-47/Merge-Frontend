@@ -80,31 +80,20 @@ export async function getRooms(
   const queryParams = new URLSearchParams({ filter });
   if (search) queryParams.append("search", search);
 
-  // const { data, error } = await getWithAuth<RoomsResponse>(
-  //   `${API_BASE_URL}/user/rooms?${queryParams.toString()}`,
-  //   {
-  //     next: {
-  //       revalidate: false, // Cache forever until manual invalidation
-  //       tags: ["rooms", `rooms-${filter}`],
-  //     },
-  //   }
-  // );
-
-  // if (error || !data) {
-  //   console.error("Error fetching rooms:", error);
-  //   return EMPTY_RESPONSE;
-  // }
-
-  // return data;
-
-  const response = await axios.get<RoomsResponse>(
+  const { data, error } = await getWithAuth<RoomsResponse>(
     `${API_BASE_URL}/user/rooms?${queryParams.toString()}`,
     {
-      headers: {
-        "Content-Type": "application/json",
+      next: {
+        revalidate: false, // Cache forever until manual invalidation
+        tags: ["rooms", `rooms-${filter}`],
       },
     }
   );
 
-  return response.data;
+  if (error || !data) {
+    console.error("Error fetching rooms:", error);
+    return EMPTY_RESPONSE;
+  }
+
+  return data;
 }

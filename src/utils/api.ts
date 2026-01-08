@@ -21,8 +21,10 @@ const processQueue = (error: Error | null = null) => {
 };
 
 // Create axios instance
+// Use /api prefix which gets proxied to backend via Next.js rewrites
+// This makes cookies same-origin so they work properly
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  baseURL: "/api",
   withCredentials: true,
 });
 
