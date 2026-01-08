@@ -21,23 +21,14 @@ const processQueue = (error: Error | null = null) => {
 };
 
 // Create axios instance
-// Cookies are sent automatically with withCredentials: true
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
-  withCredentials: true, // Send cookies with all requests
+  withCredentials: true,
 });
 
-// Request interceptor - add debug logging
+// Request interceptor
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // Debug: Check if cookies exist in browser
-    if (typeof document !== "undefined") {
-      console.log("[axios] Request to:", config.url);
-      console.log("[axios] Document cookies:", document.cookie);
-      console.log("[axios] withCredentials:", config.withCredentials);
-    }
-    return config;
-  },
+  (config: InternalAxiosRequestConfig) => config,
   (error) => Promise.reject(error)
 );
 
@@ -63,7 +54,6 @@ api.interceptors.response.use(
           failedQueue.push({ resolve, reject });
         })
           .then(() => {
-            // Retry original request - cookies will have new token
             return api(originalRequest);
           })
           .catch((err) => Promise.reject(err));
@@ -72,24 +62,14 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint - backend extracts refresh token from cookies
-        // and sets new cookies automatically
         await api.post("/auth/refresh");
-
-        // Process queued requests - they will use new cookies
         processQueue(null);
-
-        // Retry original request with new cookies
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed - reject all queued requests
         processQueue(refreshError as Error);
-
-        // Redirect to login
         if (typeof window !== "undefined") {
           window.location.href = "/sign-in";
         }
-
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

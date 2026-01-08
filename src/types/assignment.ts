@@ -13,7 +13,7 @@ export type AssignmentFilterType =
   | "missed"
   | "submitted"
   // Instructor filters
-  | "needs-grading"
+  | "needs_grading"
   | "graded";
 
 export interface AssignmentAuthor {
@@ -32,12 +32,11 @@ export interface AssignmentAttachment {
   size?: number;
 }
 
-// Instructor-specific data
+// Instructor-specific data - matches API response
 export interface AssignmentSubmissionStats {
-  submitted: number;
-  total: number;
-  graded: number;
-  pending: number;
+  totalAttempts: number;
+  gradedAttempts: number;
+  ungradedAttempts: number;
 }
 
 // Student-specific data
@@ -60,20 +59,19 @@ export interface BaseAssignment {
   endAt: Date;
   points: number;
   totalScore: number;
-  status: AssignmentStatus;
   attachments?: AssignmentAttachment[];
 }
 
-// For instructor view
+// For instructor view - includes attempt stats from API
 export interface InstructorAssignment extends BaseAssignment {
-  submissionStats: AssignmentSubmissionStats;
+  totalAttempts: number;
+  gradedAttempts: number;
+  ungradedAttempts: number;
 }
 
 // For student view - includes flattened submission fields for convenience
 export interface StudentAssignment extends BaseAssignment {
-  submission: StudentSubmission;
-  submissionStatus: SubmissionStatus;
-  grade?: number;
+  submissionStatus?: SubmissionStatus;
 }
 
 // Union type for general use
@@ -83,11 +81,11 @@ export type Assignment = InstructorAssignment | StudentAssignment;
 export function isInstructorAssignment(
   assignment: Assignment
 ): assignment is InstructorAssignment {
-  return "submissionStats" in assignment;
+  return "totalAttempts" in assignment;
 }
 
 export function isStudentAssignment(
   assignment: Assignment
 ): assignment is StudentAssignment {
-  return "submission" in assignment;
+  return "submissionStatus" in assignment;
 }

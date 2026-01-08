@@ -2,31 +2,36 @@ import { FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { formatSubmissionDate } from "@/utils/assignment-helpers";
 
 interface InstructorStatsProps {
-  submissionStats: {
-    submitted: number;
-    total: number;
-    graded: number;
-  };
+  totalAttempts: number;
+  gradedAttempts: number;
+  ungradedAttempts: number;
   isClosed: boolean;
 }
 
 export function InstructorStats({
-  submissionStats,
+  totalAttempts,
+  gradedAttempts,
+  ungradedAttempts,
   isClosed,
 }: InstructorStatsProps) {
   return (
     <>
       <div className="flex items-center gap-1.5 text-primary font-medium text-sm">
         <FileText className="w-4 h-4" />
-        <span>
-          {submissionStats.submitted}/{submissionStats.total} submitted
-        </span>
+        <span>{totalAttempts} submitted</span>
       </div>
 
-      {submissionStats.graded > 0 && (
+      {gradedAttempts > 0 && (
         <div className="flex items-center gap-1 font-medium text-sm">
           <CheckCircle2 className="w-5 h-5 text-white" fill="#10b981" />
-          <span className="text-success">{submissionStats.graded} graded</span>
+          <span className="text-success">{gradedAttempts} graded</span>
+        </div>
+      )}
+
+      {ungradedAttempts > 0 && (
+        <div className="flex items-center gap-1 font-medium text-sm">
+          <Clock className="w-4 h-4 text-warning" />
+          <span className="text-warning">{ungradedAttempts} needs grading</span>
         </div>
       )}
 

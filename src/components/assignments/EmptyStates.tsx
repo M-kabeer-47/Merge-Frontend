@@ -71,13 +71,9 @@ export function NoSearchResults({
 
 interface EmptyFilterResultsProps {
   filterType: string;
-  onClearFilter: () => void;
 }
 
-export function EmptyFilterResults({
-  filterType,
-  onClearFilter,
-}: EmptyFilterResultsProps) {
+export function EmptyFilterResults({ filterType }: EmptyFilterResultsProps) {
   const getFilterMessage = () => {
     switch (filterType) {
       // Student filters
@@ -88,7 +84,7 @@ export function EmptyFilterResults({
       case "submitted":
         return "You haven't submitted any assignments yet.";
       // Instructor filters
-      case "needs-grading":
+      case "needs_grading":
         return "No assignments need grading at the moment.";
       case "graded":
         return "No graded assignments to show yet.";
@@ -104,17 +100,12 @@ export function EmptyFilterResults({
       </div>
 
       <h3 className="text-xl font-bold text-heading mb-2">
-        No {filterType.charAt(0).toUpperCase() + filterType.slice(1)}{" "}
-        Assignments
+        No Assignments Found
       </h3>
 
       <p className="text-para-muted text-center max-w-md mb-6">
         {getFilterMessage()}
       </p>
-
-      <Button variant="outline" onClick={onClearFilter}>
-        View All Assignments
-      </Button>
     </div>
   );
 }

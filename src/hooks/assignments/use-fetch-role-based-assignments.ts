@@ -38,8 +38,8 @@ export default function useFetchRoleBasedAssignments({
     roomId,
     isInstructor ? "instructor" : "student",
     search || "",
-    sortBy || "",
-    filter || "",
+    sortBy || null,
+    filter || null,
   ];
 
   return useQuery({
@@ -59,6 +59,6 @@ export default function useFetchRoleBasedAssignments({
       return Array.isArray(data) ? data : data.assignments || [];
     },
     enabled: !!roomId,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: Infinity,
   });
 }

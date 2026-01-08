@@ -38,15 +38,7 @@ async function refreshTokenOnServer(): Promise<string | null> {
   }
 
   const [response, error] = await tryIt(
-    axios.post<RefreshTokenResponse>(
-      `${API_BASE_URL}/auth/refresh`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${refreshToken}`,
-        },
-      }
-    )
+    axios.post<RefreshTokenResponse>(`${API_BASE_URL}/auth/refresh`, {})
   );
 
   if (error || !response) {
@@ -72,21 +64,26 @@ export async function fetchWithAuth<T = unknown>(
   url: string,
   options: FetchWithAuthOptions = {}
 ): Promise<{ data: T | null; error: Error | null; status: number }> {
-  const cookieStore = await cookies();
   const { next, ...fetchOptions } = options;
 
   // Extract endpoint for cleaner logging
 
-  const startTime = Date.now();
-
   // Log the request with cache info
 
   const makeRequest = async () => {
-    // For server-side: read ALL cookies and forward them
-    const cookieHeader = cookieStore
+    // Read fresh cookies each time (important for retry after refresh)
+    const freshCookies = await cookies();
+    const cookieHeader = freshCookies
       .getAll()
       .map((c) => `${c.name}=${c.value}`)
       .join("; ");
+
+    console.log("[fetchWithAuth] Request to:", url);
+    console.log(
+      "[fetchWithAuth] Cookie header:",
+      cookieHeader ? cookieHeader : "EMPTY"
+    );
+    // use axios for testing
 
     return fetch(url, {
       ...fetchOptions,
@@ -111,6 +108,7 @@ export async function fetchWithAuth<T = unknown>(
 
   // If 401, try to refresh token and retry
   if (response.status === 401) {
+    console.log("[fetchWithAuth] Got 401, attempting token refresh...");
     const newToken = await refreshTokenOnServer();
     if (!newToken) {
       return {

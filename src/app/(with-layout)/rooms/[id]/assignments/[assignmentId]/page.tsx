@@ -66,7 +66,7 @@ export default function AssignmentDetailsPage() {
 
   const isOverdue = new Date() > new Date(assignment.endAt);
   const submission = isStudentAssignment(assignment)
-    ? assignment.submission
+    ? assignment.submissionStatus
     : null;
 
   // Format dates
@@ -123,13 +123,12 @@ export default function AssignmentDetailsPage() {
             </div>
 
             {!isInstructor &&
-              submission &&
-              submission.status === "graded" &&
-              submission.grade !== undefined && (
+              assignment.submissionStatus === "graded" &&
+              assignment.grade !== undefined && (
                 <div className="text-right">
                   <p className="text-xs text-para-muted mb-1">Your Grade</p>
                   <p className="text-sm font-semibold text-heading">
-                    {submission.grade}/{assignment.totalScore}
+                    {assignment.grade}/{assignment.totalScore}
                   </p>
                 </div>
               )}
@@ -137,7 +136,7 @@ export default function AssignmentDetailsPage() {
             {/* Turn In Button for Students */}
             {!isInstructor &&
               !isOverdue &&
-              submission?.status === "pending" && (
+              assignment.submissionStatus === "pending" && (
                 <Button
                   onClick={() => {
                     // Scroll to submission area

@@ -2,6 +2,7 @@
 import React from "react";
 import Image from "next/image";
 import { User } from "@/lib/constants/mock-data";
+import Avatar from "../ui/Avatar";
 
 interface MemberAvatarsProps {
   members: User[];
@@ -46,19 +47,7 @@ export default function MemberAvatars({
       {/* Visible member avatars */}
       <div className="flex -space-x-2">
         {visibleMembers.map((member, index) => (
-          <div
-            key={member.id}
-            className={`${sizeClasses[size]} rounded-full border-2 border-light-border bg-gray-100 overflow-hidden relative z-10`}
-            style={{ zIndex: maxVisible - index }}
-          >
-            <Image
-              src={member.image}
-              alt={member.name}
-              width={28}
-              height={28}
-              className="object-cover"
-            />
-          </div>
+          <Avatar profileImage={member.image} size={size} key={member.id} />
         ))}
       </div>
 

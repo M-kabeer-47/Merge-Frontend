@@ -4,7 +4,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { setAuthTokens } from "@/utils/auth-tokens";
 
 export default function AuthCallbackContent() {
   const searchParams = useSearchParams();
@@ -13,18 +12,16 @@ export default function AuthCallbackContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Note: Backend sets cookies via Set-Cookie headers through the proxy
+    // We just need to redirect after OAuth callback
     const token = searchParams?.get("token");
     const refreshToken = searchParams?.get("refreshToken");
     const redirect = searchParams?.get("redirect") || "/rooms";
 
     if (token && refreshToken) {
-      // Store tokens in both localStorage and cookies
-      setAuthTokens(token, refreshToken);
-
       // Invalidate the user query so it refetches with the new token
       queryClient.invalidateQueries({ queryKey: ["user"] });
-      
-      
+
       // Redirect to the intended destination
       router.replace(redirect);
     } else {

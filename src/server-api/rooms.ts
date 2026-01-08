@@ -1,4 +1,5 @@
 import { getWithAuth } from "@/server-api/fetch-with-auth";
+import axios from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -79,20 +80,31 @@ export async function getRooms(
   const queryParams = new URLSearchParams({ filter });
   if (search) queryParams.append("search", search);
 
-  const { data, error } = await getWithAuth<RoomsResponse>(
+  // const { data, error } = await getWithAuth<RoomsResponse>(
+  //   `${API_BASE_URL}/user/rooms?${queryParams.toString()}`,
+  //   {
+  //     next: {
+  //       revalidate: false, // Cache forever until manual invalidation
+  //       tags: ["rooms", `rooms-${filter}`],
+  //     },
+  //   }
+  // );
+
+  // if (error || !data) {
+  //   console.error("Error fetching rooms:", error);
+  //   return EMPTY_RESPONSE;
+  // }
+
+  // return data;
+
+  const response = await axios.get<RoomsResponse>(
     `${API_BASE_URL}/user/rooms?${queryParams.toString()}`,
     {
-      next: {
-        revalidate: false, // Cache forever until manual invalidation
-        tags: ["rooms", `rooms-${filter}`],
+      headers: {
+        "Content-Type": "application/json",
       },
     }
   );
 
-  if (error || !data) {
-    console.error("Error fetching rooms:", error);
-    return EMPTY_RESPONSE;
-  }
-
-  return data;
+  return response.data;
 }

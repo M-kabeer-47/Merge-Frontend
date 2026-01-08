@@ -1,8 +1,8 @@
 import { FileText } from "lucide-react";
-import type {
+import {
   Assignment,
-  StudentAssignment,
   isStudentAssignment,
+  isInstructorAssignment,
 } from "@/types/assignment";
 import { Button } from "@/components/ui/Button";
 import AssignmentStatusBadge from "./card/AssignmentStatusBadge";
@@ -23,7 +23,7 @@ interface AssignmentCardProps {
 
 export default function AssignmentCard({
   assignment,
-  isInstructor = true,
+  isInstructor = false,
   bgColor,
   onViewDetails,
   onViewResponses,
@@ -35,6 +35,7 @@ export default function AssignmentCard({
 
   // Type-safe access to student-specific fields
   const studentAssignment = isStudentAssignment(assignment) ? assignment : null;
+  console.log("Student Assignment: " + isStudentAssignment(assignment));
 
   return (
     <div
@@ -88,9 +89,11 @@ export default function AssignmentCard({
         <div className="flex items-center justify-between flex-wrap gap-3">
           {/* Left side - Status info */}
           <div className="flex items-center gap-3 flex-wrap">
-            {isInstructor && "submissionStats" in assignment && (
+            {isInstructor && isInstructorAssignment(assignment) && (
               <InstructorStats
-                submissionStats={assignment.submissionStats}
+                totalAttempts={assignment.totalAttempts}
+                gradedAttempts={assignment.gradedAttempts}
+                ungradedAttempts={assignment.ungradedAttempts}
                 isClosed={isClosed}
               />
             )}

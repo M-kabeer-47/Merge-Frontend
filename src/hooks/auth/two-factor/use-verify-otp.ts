@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
-import { setAuthTokens } from "@/utils/auth-tokens";
 
 interface UseVerifyOTPProps {
   email: string;
@@ -28,8 +27,8 @@ export default function useVerifyOTP({ email, otp }: UseVerifyOTPProps) {
     },
     onSuccess: (data) => {
       toast.success("OTP verified successfully");
+      // Backend sets cookies via Set-Cookie headers through the proxy
       if (data?.token && data?.refreshToken) {
-        setAuthTokens(data.token, data.refreshToken);
         window.location.href = "/dashboard";
       }
     },

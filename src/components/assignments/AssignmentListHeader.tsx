@@ -25,10 +25,9 @@ export default function AssignmentListHeader({
   initialFilter = "all",
 }: AssignmentListHeaderProps) {
   const { userRole } = useRoom();
-  const isInstructor = userRole === "instructor" || userRole === "moderator";
   const router = useRouter();
   const searchParams = useSearchParams();
-
+  const isInstructor = userRole === "instructor" || userRole === "moderator";
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [activeFilter, setActiveFilter] =
     useState<AssignmentFilterType>(initialFilter);
@@ -39,7 +38,7 @@ export default function AssignmentListHeader({
   const tabs = isInstructor
     ? [
         { key: "all", label: "All" },
-        { key: "needs-grading", label: "Needs Grading" },
+        { key: "needs_grading", label: "Needs Grading" },
         { key: "graded", label: "Graded" },
       ]
     : [
@@ -120,7 +119,7 @@ export default function AssignmentListHeader({
     router.push(`/rooms/${roomId}/assignments/create`);
   };
 
-  // Sort options for the dropdown
+  // Sort options for the dropdown (same for both students and instructors)
   const sortOptions = [
     {
       field: "dueDate" as SortField,
@@ -129,16 +128,16 @@ export default function AssignmentListHeader({
       ascLabel: "Earliest first",
     },
     {
+      field: "createdAt" as SortField,
+      label: "Upload Date",
+      descLabel: "Newest first",
+      ascLabel: "Oldest first",
+    },
+    {
       field: "points" as SortField,
       label: "Points",
       descLabel: "Highest first",
       ascLabel: "Lowest first",
-    },
-    {
-      field: "title" as SortField,
-      label: "Title",
-      descLabel: "Z to A",
-      ascLabel: "A to Z",
     },
   ];
 

@@ -4,7 +4,7 @@ import Cookies from "js-cookie";
 // NOTE: For production, backend should set httpOnly cookies
 const COOKIE_OPTIONS = {
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
+  sameSite: "none" as const,
   expires: 7, // 7 days for refresh token
 };
 

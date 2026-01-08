@@ -88,10 +88,7 @@ export default function AssignmentsList({ roomId }: AssignmentsListProps) {
               onClearSearch={handleClearFilters}
             />
           ) : hasActiveFilter ? (
-            <EmptyFilterResults
-              filterType={filter}
-              onClearFilter={handleClearFilters}
-            />
+            <EmptyFilterResults filterType={filter} />
           ) : (
             <EmptyAssignments
               isInstructor={isInstructor}

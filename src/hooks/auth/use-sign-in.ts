@@ -4,7 +4,6 @@ import { UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";
 import { ApiError } from "@/types/api-error";
 import api from "@/utils/api";
-import { setAuthTokens } from "@/utils/auth-tokens";
 import { useRouter } from "next/navigation";
 
 export default function signIn({
@@ -34,16 +33,14 @@ export default function signIn({
     mutationFn: signInFn,
     onSuccess: (data) => {
       if (data.message === "A new OTP has been sent to your email.") {
-        window.location.href = `/two-factor?email=${email}`; // Redirect to 2FA page
+        window.location.href = `/two-factor?email=${email}`;
         return;
       }
-      // Handle successful sign-in, e.g., store tokens, redirect, etc.
-      else if (data.token && data.refreshToken && data.userId) {
-        setAuthTokens(data.token, data.refreshToken);
-
+      // Backend sets cookies via Set-Cookie headers (same-origin via proxy)
+      if (data.token && data.refreshToken && data.userId) {
         toast.success("Signed in successfully!");
         setTimeout(() => {
-          router.push("/rooms"); // Redirect to dashboard or desired page
+          router.push("/rooms");
         }, 500);
       }
     },
