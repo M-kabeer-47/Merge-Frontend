@@ -1,7 +1,5 @@
-import { Suspense } from "react";
 import QuizListHeader from "@/components/quizzes/QuizListHeader";
-import QuizCards from "@/components/quizzes/QuizCards";
-import QuizCardsSkeleton from "@/components/quizzes/QuizCardsSkeleton";
+import QuizzesList from "@/components/quizzes/QuizzesList";
 import type { QuizSortOption, QuizFilterType } from "@/types/quiz";
 
 interface QuizzesPageProps {
@@ -11,7 +9,6 @@ interface QuizzesPageProps {
     sortBy?: string;
     sortOrder?: string;
     filter?: string;
-    role?: string;
   }>;
 }
 
@@ -20,35 +17,22 @@ export default async function QuizzesPage({
   searchParams,
 }: QuizzesPageProps) {
   const { id: roomId } = await params;
-  const { search, sortBy, sortOrder, filter, role } = await searchParams;
-  const isInstructor = role === "instructor";
-
-  // Create a key that changes when search params change
-  // This forces Suspense to re-trigger and show the fallback
-  const suspenseKey = `${search}-${sortBy}-${sortOrder}-${filter}`;
+  const { search, sortBy, filter } = await searchParams;
 
   return (
     <div className="h-full flex flex-col bg-main-background">
-      {/* Header - always visible */}
       <QuizListHeader
         roomId={roomId}
-        isInstructor={isInstructor}
         initialSearch={search}
         initialSort={sortBy as QuizSortOption}
         initialFilter={filter as QuizFilterType}
       />
-
-      {/* Quiz Cards - shows skeleton during loading */}
-      <Suspense key={suspenseKey} fallback={<QuizCardsSkeleton />}>
-        <QuizCards
-          roomId={roomId}
-          isInstructor={isInstructor}
-          search={search}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          filter={filter}
-        />
-      </Suspense>
+      {/* QuizzesList is now a client component that:
+          - Uses useRoom() to get user role (already fetched in layout)
+          - Uses useSearchParams() to read URL filters
+          - Fetches quizzes via React Query based on role
+      */}
+      <QuizzesList roomId={roomId} />
     </div>
   );
 }

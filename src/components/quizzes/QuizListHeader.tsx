@@ -7,12 +7,12 @@ import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import SortDropdown from "@/components/ui/SortDropdown";
 import { Button } from "@/components/ui/Button";
+import { useRoom } from "@/providers/RoomProvider";
 import type { QuizSortOption, QuizFilterType } from "@/types/quiz";
 import type { SortOption, SortField } from "@/types/content";
 
 interface QuizListHeaderProps {
   roomId: string;
-  isInstructor: boolean;
   initialSearch?: string;
   initialSort?: QuizSortOption;
   initialFilter?: QuizFilterType;
@@ -20,11 +20,12 @@ interface QuizListHeaderProps {
 
 export default function QuizListHeader({
   roomId,
-  isInstructor,
   initialSearch = "",
   initialSort = "deadline",
   initialFilter = "all",
 }: QuizListHeaderProps) {
+  const { userRole } = useRoom();
+  const isInstructor = userRole === "instructor" || userRole === "moderator";
   const router = useRouter();
   const searchParams = useSearchParams();
 

@@ -40,12 +40,8 @@ export interface CreateQuizQuestion {
   points: number;
 }
 
-// Instructor-specific stats
-export interface QuizSubmissionStats {
-  attempted: number;
-  total: number;
-  averageScore: number;
-}
+// Instructor-specific stats (matches API response)
+// Note: These fields are directly on InstructorQuiz, not nested
 
 // Student attempt data
 export interface StudentAttempt {
@@ -70,9 +66,10 @@ export interface BaseQuiz {
   totalPoints: number; // Sum of all question points
 }
 
-// For instructor view
+// For instructor view - includes attempt counts
 export interface InstructorQuiz extends BaseQuiz {
-  submissionStats: QuizSubmissionStats;
+  attempts: number; // Number of students who attempted
+  totalAttempts: number; // Total number of students in room
 }
 
 // For student view
@@ -85,7 +82,7 @@ export type Quiz = InstructorQuiz | StudentQuiz;
 
 // Type guards
 export function isInstructorQuiz(quiz: Quiz): quiz is InstructorQuiz {
-  return "submissionStats" in quiz;
+  return "totalAttempts" in quiz;
 }
 
 export function isStudentQuiz(quiz: Quiz): quiz is StudentQuiz {

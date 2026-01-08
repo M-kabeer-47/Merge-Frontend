@@ -17,11 +17,11 @@ import type { Quiz, InstructorQuiz, StudentQuiz } from "@/types/quiz";
 import { isInstructorQuiz, isStudentQuiz } from "@/types/quiz";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
-import { useAuth } from "@/providers/AuthProvider";
 import Icon from "@/components/ui/Icon";
 
 interface QuizCardProps {
   quiz: Quiz;
+  isInstructor?: boolean;
   bgColor?: string;
   onViewDetails?: (id: string) => void;
   onEdit?: (id: string) => void;
@@ -31,6 +31,7 @@ interface QuizCardProps {
 
 export default function QuizCard({
   quiz,
+  isInstructor = false,
   bgColor,
   onViewDetails,
   onEdit,
@@ -38,9 +39,7 @@ export default function QuizCard({
   onStartQuiz,
 }: QuizCardProps) {
   const [showMenu, setShowMenu] = useState(false);
-  const { user } = useAuth();
 
-  const isInstructor = user?.role === "instructor";
   const isClosed = quiz.status === "closed";
   const isOverdue = new Date() > new Date(quiz.deadline);
 
@@ -300,23 +299,9 @@ export default function QuizCard({
                 <div className="flex items-center gap-1.5 text-primary font-medium text-sm">
                   <Users className="w-4 h-4" />
                   <span>
-                    {quiz.submissionStats.attempted}/
-                    {quiz.submissionStats.total} attempted
+                    {quiz.attempts}/{quiz.totalAttempts} attempted
                   </span>
                 </div>
-                {quiz.submissionStats.averageScore > 0 && (
-                  <div className="flex items-center gap-1 font-medium text-sm">
-                    <Icon
-                      src="/icons/trophy.jpg"
-                      alt="Trophy"
-                      width={20}
-                      height={20}
-                    />
-                    <span className="text-accent">
-                      Avg: {Math.round(quiz.submissionStats.averageScore)}%
-                    </span>
-                  </div>
-                )}
                 {isClosed && (
                   <div className="flex items-center gap-1.5 text-para-muted font-medium text-sm">
                     <XCircle className="w-4 h-4" />
