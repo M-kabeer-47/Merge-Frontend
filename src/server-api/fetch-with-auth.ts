@@ -107,7 +107,10 @@ export async function fetchWithAuth<T = unknown>(
   }
 
   // If 401, try to refresh token and retry
-  if (response.status === 401) {
+  if (
+    error?.response?.status === 401 ||
+    error?.response?.data.statusCode === 401
+  ) {
     console.log("[fetchWithAuth] Got 401, attempting token refresh...");
     const newToken = await refreshTokenOnServer();
     if (!newToken) {
