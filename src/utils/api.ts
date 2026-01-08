@@ -6,6 +6,7 @@ interface QueueItem {
   reject: (error: Error) => void;
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 let isRefreshing = false;
 let failedQueue: QueueItem[] = [];
 
@@ -24,7 +25,7 @@ const processQueue = (error: Error | null = null) => {
 // Use /api prefix which gets proxied to backend via Next.js rewrites
 // This makes cookies same-origin so they work properly
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: BASE_URL,
   withCredentials: true,
 });
 
