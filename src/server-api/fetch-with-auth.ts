@@ -69,11 +69,16 @@ export async function fetchWithAuth<T = unknown>(
 
   const makeRequest = async () => {
     // Read fresh cookies each time (important for retry after refresh)
-
+    const cookieStore = await cookies();
+    const allCookies = cookieStore
+      .getAll()
+      .map((cookie) => `${cookie.name}=${cookie.value}`)
+      .join(";");
     return fetch(url, {
       ...fetchOptions,
       headers: {
         "Content-Type": "application/json",
+        Cookie: allCookies,
       },
       ...(next && { next }),
     });
