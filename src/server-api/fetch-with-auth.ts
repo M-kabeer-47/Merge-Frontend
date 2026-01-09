@@ -53,10 +53,10 @@ async function refreshTokenOnServer(): Promise<string | null> {
   );
 
   if (error || !response) {
-    console.error("Token refresh failed:", error.response.data);
+    console.error("Token refresh failed:", error?.response?.data);
     return null;
   }
-
+  console.log("Response", response.data);
   const { token } = response.data;
 
   return token;
