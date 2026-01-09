@@ -41,7 +41,12 @@ async function refreshTokenOnServer(): Promise<string | null> {
       `${API_BASE_URL}/auth/refresh`,
       {},
       {
-        headers: { Cookie: cookieStore.getAll().join(";") },
+        headers: {
+          Cookie: cookieStore
+            .getAll()
+            .map((cookie) => `${cookie.name}=${cookie.value}`)
+            .join("; "),
+        },
         withCredentials: true,
       }
     )
