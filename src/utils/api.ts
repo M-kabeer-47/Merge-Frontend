@@ -45,7 +45,8 @@ api.interceptors.response.use(
 
     // Check if it's a 401 error that should trigger refresh
     const isTokenExpired =
-      (error.response?.data as any)?.message === "access token not provided";
+      (error.response?.data as any)?.message === "access token not provided" ||
+      (error.response?.data as any)?.message === "access token expired";
     if (isTokenExpired && !originalRequest._retry) {
       originalRequest._retry = true;
 

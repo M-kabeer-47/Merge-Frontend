@@ -139,7 +139,8 @@ export async function fetchWithAuth<T = unknown>(
   // Check for 401 - native fetch() doesn't throw on HTTP errors
   // Check both HTTP status and body statusCode
   const isAccessTokenExpired =
-    initialData?.message === "access token not provided";
+    initialData?.message === "access token not provided" ||
+    initialData?.message === "access token expired";
   console.log("initialData", initialData);
   if (isAccessTokenExpired) {
     console.log("[fetchWithAuth] Got 401, attempting token refresh...");
@@ -167,7 +168,10 @@ export async function fetchWithAuth<T = unknown>(
         retryResponse.clone().json()
       );
       // Check if retry also got 401 (refresh didn't help)
-      if (retryErrorData?.message === "access token not provided") {
+      if (
+        retryErrorData?.message === "access token not provided" ||
+        retryErrorData?.message === "access token expired"
+      ) {
         return {
           data: null,
           error: new Error("Session expired. Please sign in again."),
