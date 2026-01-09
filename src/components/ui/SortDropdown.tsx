@@ -53,11 +53,7 @@ export default function SortDropdown({
   // Get display text for current selection
   const getDisplayText = () => {
     if (!selectedOption || !value) return placeholder;
-    const orderLabel =
-      value.order === "desc"
-        ? selectedOption.descLabel
-        : selectedOption.ascLabel;
-    return orderLabel || selectedOption.label;
+    return selectedOption.label;
   };
 
   // Handle option click - toggle order if same field, otherwise select with desc

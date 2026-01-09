@@ -21,7 +21,7 @@ interface AssignmentListHeaderProps {
 export default function AssignmentListHeader({
   roomId,
   initialSearch = "",
-  initialSort = "dueDate",
+  initialSort = "endAt",
   initialFilter = "all",
 }: AssignmentListHeaderProps) {
   const { userRole } = useRoom();
@@ -120,10 +120,17 @@ export default function AssignmentListHeader({
   };
 
   // Sort options for the dropdown (same for both students and instructors)
+  // Backend accepts: createdAt, startAt, endAt, totalScore
   const sortOptions = [
     {
-      field: "dueDate" as SortField,
+      field: "endAt" as SortField,
       label: "Due Date",
+      descLabel: "Latest first",
+      ascLabel: "Earliest first",
+    },
+    {
+      field: "startAt" as SortField,
+      label: "Start Date",
       descLabel: "Latest first",
       ascLabel: "Earliest first",
     },
@@ -134,7 +141,7 @@ export default function AssignmentListHeader({
       ascLabel: "Oldest first",
     },
     {
-      field: "points" as SortField,
+      field: "totalScore" as SortField,
       label: "Points",
       descLabel: "Highest first",
       ascLabel: "Lowest first",
