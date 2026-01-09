@@ -3,7 +3,6 @@
 import { cookies } from "next/headers";
 import axios from "axios";
 import { tryIt } from "@/utils/try-it";
-import { setAuthCookies } from "@/server-actions/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -108,8 +107,8 @@ export async function fetchWithAuth<T = unknown>(
   // Check for 401 - native fetch() doesn't throw on HTTP errors
   // Check both HTTP status and body statusCode
   const isAccessTokenExpired =
-    initialData?.message === "access token is expired";
-
+    initialData?.message === "access token not provided";
+  console.log("initialData", initialData);
   if (isAccessTokenExpired) {
     console.log("[fetchWithAuth] Got 401, attempting token refresh...");
     const newToken = await refreshTokenOnServer();
@@ -136,7 +135,7 @@ export async function fetchWithAuth<T = unknown>(
         retryResponse.clone().json()
       );
       // Check if retry also got 401 (refresh didn't help)
-      if (retryErrorData?.message === "access token is expired") {
+      if (retryErrorData?.message === "access token not provided") {
         return {
           data: null,
           error: new Error("Session expired. Please sign in again."),
