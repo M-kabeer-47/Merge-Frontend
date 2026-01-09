@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import axios from "axios";
 import { tryIt } from "@/utils/try-it";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -36,30 +35,56 @@ async function refreshTokenOnServer(): Promise<string | null> {
     return null;
   }
   console.log("Cookie Store", cookieStore.getAll());
+
+  const cookieHeader = cookieStore
+    .getAll()
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join("; ");
+
+  console.log("[Refresh] URL:", `${API_BASE_URL}/auth/refresh`);
+  console.log("[Refresh] Cookie Header:", cookieHeader);
+  // Use native fetch instead of axios
   const [response, error] = await tryIt(
-    axios.post<RefreshTokenResponse>(
-      `${API_BASE_URL}/auth/refresh`,
-      {},
-      {
-        headers: {
-          Cookie: cookieStore
-            .getAll()
-            .map((cookie) => `${cookie.name}=${cookie.value}`)
-            .join("; "),
-        },
-        withCredentials: true,
-      }
-    )
+    fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      credentials: "include",
+    })
   );
 
-  if (error || !response) {
-    console.error("Token refresh failed:", error?.response?.data);
+  if (error || !response || !response.ok) {
+    const errorData = response ? await response.json().catch(() => null) : null;
+    console.error("Token refresh failed:", errorData);
     return null;
   }
-  console.log("Response", response.data);
-  const { token } = response.data;
 
-  return token;
+  if (response.data) {
+    const { token, refreshToken: newRefreshToken } = response.data;
+
+    // ✅ Manually set the cookies on the Next.js server's cookie store
+    // This will forward them to the browser via Set-Cookie headers
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none" as const,
+      domain: ".mergeedu.app",
+    };
+
+    cookieStore.set("accessToken", token, {
+      ...cookieOptions,
+      maxAge: 0.5 * 60, // 30 seconds (matching backend)
+    });
+
+    cookieStore.set("refreshToken", newRefreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    });
+
+    return token;
+  }
 }
 
 /**
