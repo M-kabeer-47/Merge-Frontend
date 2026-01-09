@@ -12,6 +12,7 @@ interface FetchAssignmentsParams {
   search?: string;
   sortBy?: string;
   filter?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 interface AssignmentsResponse<T> {
@@ -28,6 +29,7 @@ export default function useFetchRoleBasedAssignments({
   search,
   sortBy,
   filter,
+  sortOrder,
 }: FetchAssignmentsParams) {
   const endpoint = isInstructor
     ? "/assignments/instructor"
@@ -40,6 +42,7 @@ export default function useFetchRoleBasedAssignments({
     search || "",
     sortBy || null,
     filter || null,
+    sortOrder || null,
   ];
 
   return useQuery({
@@ -49,6 +52,7 @@ export default function useFetchRoleBasedAssignments({
       if (search) params.append("search", search);
       if (sortBy) params.append("sortBy", sortBy);
       if (filter) params.append("filter", filter);
+      if (sortOrder) params.append("sortOrder", sortOrder.toUpperCase());
 
       const response = await api.get<
         | AssignmentsResponse<StudentAssignment | InstructorAssignment>

@@ -17,7 +17,7 @@ export default async function AssignmentsPage({
   searchParams,
 }: AssignmentsPageProps) {
   const { id: roomId } = await params;
-  const { search, sortBy, filter } = await searchParams;
+  const { search, sortBy, filter, sortOrder } = await searchParams;
 
   return (
     <div className="h-full flex flex-col bg-main-background">
@@ -26,12 +26,8 @@ export default async function AssignmentsPage({
         initialSearch={search}
         initialSort={sortBy}
         initialFilter={filter as AssignmentFilterType}
+        initialSortOrder={sortOrder || "asc"}
       />
-      {/* AssignmentsList is now a client component that:
-          - Uses useRoom() to get user role (already fetched in layout)
-          - Uses useSearchParams() to read URL filters
-          - Fetches assignments via React Query based on role
-      */}
       <AssignmentsList roomId={roomId} />
     </div>
   );

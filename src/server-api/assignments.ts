@@ -34,7 +34,7 @@ export async function getStudentAssignments(
   // Build query string
   const queryParams = new URLSearchParams({ roomId });
   if (sortBy) queryParams.append("sortBy", sortBy);
-  if (sortOrder) queryParams.append("sortOrder", sortOrder);
+  if (sortOrder) queryParams.append("sortOrder", sortOrder.toUpperCase());
   if (search) queryParams.append("search", search);
   if (filter) queryParams.append("filter", filter);
 

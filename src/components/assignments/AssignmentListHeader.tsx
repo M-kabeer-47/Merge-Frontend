@@ -16,6 +16,7 @@ interface AssignmentListHeaderProps {
   initialSearch?: string;
   initialSort?: string;
   initialFilter?: AssignmentFilterType;
+  initialSortOrder: "asc" | "desc";
 }
 
 export default function AssignmentListHeader({
@@ -23,6 +24,7 @@ export default function AssignmentListHeader({
   initialSearch = "",
   initialSort = "endAt",
   initialFilter = "all",
+  initialSortOrder = "asc",
 }: AssignmentListHeaderProps) {
   const { userRole } = useRoom();
   const router = useRouter();
@@ -32,7 +34,9 @@ export default function AssignmentListHeader({
   const [activeFilter, setActiveFilter] =
     useState<AssignmentFilterType>(initialFilter);
   const [sortValue, setSortValue] = useState<SortOption>(
-    initialSort ? { field: initialSort as SortField, order: "desc" } : null
+    initialSort
+      ? { field: initialSort as SortField, order: initialSortOrder }
+      : null
   );
 
   const tabs = isInstructor
@@ -52,7 +56,7 @@ export default function AssignmentListHeader({
   const updateUrlParams = (params: {
     search?: string;
     sortBy?: string;
-    sortOrder?: string;
+    sortOrder?: "asc" | "desc";
     filter?: string;
   }) => {
     const current = new URLSearchParams(searchParams.toString());
@@ -111,7 +115,7 @@ export default function AssignmentListHeader({
     setSortValue(sort);
     updateUrlParams({
       sortBy: sort?.field || "",
-      sortOrder: sort?.order || "",
+      sortOrder: sort?.order || "asc",
     });
   };
 

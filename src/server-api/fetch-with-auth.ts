@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import axios from "axios";
 import { tryIt } from "@/utils/try-it";
+import { setAuthCookies } from "@/server-actions/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -35,19 +36,20 @@ async function refreshTokenOnServer(): Promise<string | null> {
     console.error("No refresh token found in cookies");
     return null;
   }
-
+  console.log("Cookie Store", cookieStore.getAll());
   const [response, error] = await tryIt(
     axios.post<RefreshTokenResponse>(
       `${API_BASE_URL}/auth/refresh`,
       {},
       {
+        headers: { Cookie: cookieStore.getAll().join(";") },
         withCredentials: true,
       }
     )
   );
 
   if (error || !response) {
-    console.error("Token refresh failed:", error);
+    console.error("Token refresh failed:", error.response.data);
     return null;
   }
 
@@ -74,6 +76,8 @@ export async function fetchWithAuth<T = unknown>(
       .getAll()
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join(";");
+
+    console.log("allCookies", allCookies);
     return fetch(url, {
       ...fetchOptions,
       headers: {
@@ -104,7 +108,6 @@ export async function fetchWithAuth<T = unknown>(
   // Check for 401 - native fetch() doesn't throw on HTTP errors
   // Check both HTTP status and body statusCode
   const is401 = response.status === 401 || initialData?.statusCode === 401;
-  console.log("is401", is401);
 
   if (is401) {
     console.log("[fetchWithAuth] Got 401, attempting token refresh...");
