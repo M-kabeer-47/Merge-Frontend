@@ -40,7 +40,7 @@ export async function POST() {
 
     const data: RefreshTokenResponse = await response.json();
     console.log("[API /auth/refresh] Got new tokens");
-
+    console.log("data", data);
     // Set cookies - Route Handlers CAN do this!
     const cookieOptions = {
       httpOnly: true,
