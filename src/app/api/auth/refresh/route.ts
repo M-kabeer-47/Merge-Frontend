@@ -1,46 +1,21 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-interface RefreshTokenResponse {
-  token: string;
-  refreshToken: string;
-  userId: string;
-}
+import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Route Handler for token refresh
- * Route Handlers CAN set cookies, unlike RSC during render
+ * Route Handler to SET cookies only
+ * The refresh logic is done elsewhere, this just receives tokens and sets them
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
+    const { accessToken, refreshToken } = body;
+
+    if (!accessToken || !refreshToken) {
+      return NextResponse.json({ error: "Missing tokens" }, { status: 400 });
+    }
+
     const cookieStore = await cookies();
-    const refreshToken = cookieStore.get("refreshToken")?.value;
 
-    if (!refreshToken) {
-      return NextResponse.json({ error: "No refresh token" }, { status: 401 });
-    }
-
-    // Call backend refresh endpoint
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: `refreshToken=${refreshToken}`,
-      },
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error("[API /auth/refresh] Backend refresh failed:", errorData);
-      return NextResponse.json({ error: "Refresh failed" }, { status: 401 });
-    }
-
-    const data: RefreshTokenResponse = await response.json();
-    console.log("[API /auth/refresh] Got new tokens");
-    console.log("data", data);
     // Set cookies - Route Handlers CAN do this!
     const cookieOptions = {
       httpOnly: true,
@@ -49,20 +24,19 @@ export async function POST() {
       path: "/",
     };
 
-    cookieStore.set("accessToken", data.token, {
+    cookieStore.set("accessToken", accessToken, {
       ...cookieOptions,
       maxAge: 60 * 60, // 1 hour
     });
 
-    cookieStore.set("refreshToken", data.refreshToken, {
+    cookieStore.set("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
-    return NextResponse.json({
-      success: true,
-      token: data.token,
-    });
+    console.log("[API /auth/refresh] Cookies set successfully");
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[API /auth/refresh] Error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

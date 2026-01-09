@@ -5,12 +5,6 @@ import { tryIt } from "@/utils/try-it";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-interface RefreshTokenResponse {
-  token: string;
-  refreshToken: string;
-  userId: string;
-}
-
 interface FetchWithAuthOptions extends Omit<RequestInit, "headers" | "next"> {
   headers?: Record<string, string>;
   next?: NextFetchRequestConfig;
@@ -22,50 +16,9 @@ interface NextFetchRequestConfig {
 }
 
 /**
- * Refresh the access token using our internal Route Handler
- * The Route Handler can set cookies (unlike RSC during render)
- */
-export async function refreshTokenOnServer(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("refreshToken")?.value;
-
-  if (!refreshToken) {
-    console.error("[refreshTokenOnServer] No refresh token found in cookies");
-    return null;
-  }
-
-  console.log("[refreshTokenOnServer] Calling internal API route...");
-
-  // Call our internal Route Handler which can set cookies
-  const baseUrl = "https://www.mergeedu.app";
-  const [response, error] = await tryIt(
-    fetch(`${baseUrl}/api/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: `refreshToken=${refreshToken}`,
-      },
-    })
-  );
-
-  if (error || !response || !response.ok) {
-    const errorData = response ? await response.json().catch(() => null) : null;
-    console.error("[refreshTokenOnServer] Refresh failed:", errorData);
-    return null;
-  }
-
-  const data = await response.json();
-  console.log(
-    "[refreshTokenOnServer] Got new token, cookies set by Route Handler"
-  );
-
-  return data.token;
-}
-
-/**
- * Server-side fetch with automatic token refresh
- * If request returns 401, attempts to refresh the token and retry
- * Includes cache logging for debugging
+ * Server-side fetch with auth cookies
+ * Middleware handles token refresh BEFORE page renders
+ * This just makes requests with current cookies
  */
 export async function fetchWithAuth<T = unknown>(
   url: string,
@@ -73,32 +26,23 @@ export async function fetchWithAuth<T = unknown>(
 ): Promise<{ data: T | null; error: Error | null; status: number }> {
   const { next, ...fetchOptions } = options;
 
-  // Make request with optional override token (for retry after refresh)
-  const makeRequest = async (overrideToken?: string) => {
-    const cookieStore = await cookies();
-    const allCookies = cookieStore
-      .getAll()
-      .map((cookie) => `${cookie.name}=${cookie.value}`)
-      .join(";");
+  const cookieStore = await cookies();
+  const allCookies = cookieStore
+    .getAll()
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join(";");
 
-    // If we have an override token, add it to the cookies string
-    const cookieHeader = overrideToken
-      ? `${allCookies};accessToken=${overrideToken}`
-      : allCookies;
-
-    console.log("allCookies", cookieHeader);
-    return fetch(url, {
+  const [response, error] = await tryIt(
+    fetch(url, {
       ...fetchOptions,
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
+        Cookie: allCookies,
+        ...options.headers,
       },
       ...(next && { next }),
-    });
-  };
-
-  // First attempt
-  const [response, error] = await tryIt(makeRequest());
+    })
+  );
 
   if (error || !response) {
     return {
@@ -108,92 +52,19 @@ export async function fetchWithAuth<T = unknown>(
     };
   }
 
-  // Clone response so we can read body twice if needed (for 401 check and retry)
-  const responseClone = response.clone();
-  const [initialData, initialParseError] = await tryIt<
-    T & { statusCode?: number; message?: string }
-  >(responseClone.json());
-
-  // Check for 401 - native fetch() doesn't throw on HTTP errors
-  // Check both HTTP status and body statusCode
-  const isAccessTokenExpired =
-    initialData?.message === "access token not provided" ||
-    initialData?.message === "access token expired";
-  console.log("initialData", initialData);
-  if (isAccessTokenExpired) {
-    console.log("[fetchWithAuth] Got 401, attempting token refresh...");
-    const newToken = await refreshTokenOnServer();
-    if (!newToken) {
-      return {
-        data: null,
-        error: new Error("Session expired. Please sign in again."),
-        status: 401,
-      };
-    }
-
-    // Retry with new token (passed directly, not from cookies)
-    const [retryResponse, retryError] = await tryIt(makeRequest(newToken));
-    if (retryError || !retryResponse) {
-      return {
-        data: null,
-        error: retryError || new Error("Retry request failed"),
-        status: 0,
-      };
-    }
-
-    if (!retryResponse.ok) {
-      const [retryErrorData] = await tryIt<{
-        statusCode?: number;
-        message?: string;
-      }>(retryResponse.clone().json());
-      // Check if retry also got 401 (refresh didn't help)
-      if (
-        retryErrorData?.message === "access token not provided" ||
-        retryErrorData?.message === "access token expired"
-      ) {
-        return {
-          data: null,
-          error: new Error("Session expired. Please sign in again."),
-          status: 401,
-        };
-      }
-      return {
-        data: null,
-        error: new Error(`HTTP ${retryResponse.status}`),
-        status: retryResponse.status,
-      };
-    }
-
-    const [retryData, parseError] = await tryIt<T>(retryResponse.json());
-
-    return {
-      data: parseError ? null : retryData,
-      error: parseError,
-      status: retryResponse.status,
-    };
-  }
-
-  // Original request succeeded (non-401)
   if (!response.ok) {
+    const [errorData] = await tryIt(response.json());
     return {
       data: null,
-      error: new Error(`HTTP ${response.status}`),
+      error: new Error(errorData?.message || `HTTP ${response.status}`),
       status: response.status,
     };
   }
 
-  // Use already parsed data if no parse error, otherwise we already have it
-  if (initialParseError) {
-    return {
-      data: null,
-      error: initialParseError,
-      status: response.status,
-    };
-  }
-
+  const [data, parseError] = await tryIt<T>(response.json());
   return {
-    data: initialData as T,
-    error: null,
+    data: parseError ? null : data,
+    error: parseError,
     status: response.status,
   };
 }
