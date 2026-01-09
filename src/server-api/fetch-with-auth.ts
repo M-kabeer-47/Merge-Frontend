@@ -22,72 +22,44 @@ interface NextFetchRequestConfig {
 }
 
 /**
- * Refresh the access token using the refresh token from cookies
- * Uses simple axios (not interceptor-enabled instance)
- * Persists new tokens via Server Action
+ * Refresh the access token using our internal Route Handler
+ * The Route Handler can set cookies (unlike RSC during render)
  */
 export async function refreshTokenOnServer(): Promise<string | null> {
-  "use server";
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get("refreshToken")?.value;
 
   if (!refreshToken) {
-    console.error("No refresh token found in cookies");
+    console.error("[refreshTokenOnServer] No refresh token found in cookies");
     return null;
   }
-  console.log("Cookie Store", cookieStore.getAll());
 
-  const cookieHeader = cookieStore
-    .getAll()
-    .map((cookie) => `${cookie.name}=${cookie.value}`)
-    .join("; ");
+  console.log("[refreshTokenOnServer] Calling internal API route...");
 
-  console.log("[Refresh] URL:", `${API_BASE_URL}/auth/refresh`);
-  console.log("[Refresh] Cookie Header:", cookieHeader);
-  // Use native fetch instead of axios
+  // Call our internal Route Handler which can set cookies
+  const baseUrl = "https://www.mergeedu.app";
   const [response, error] = await tryIt(
-    fetch(`${API_BASE_URL}/auth/refresh`, {
+    fetch(`${baseUrl}/api/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
+        Cookie: `refreshToken=${refreshToken}`,
       },
-      credentials: "include",
     })
   );
 
   if (error || !response || !response.ok) {
     const errorData = response ? await response.json().catch(() => null) : null;
-    console.error("Token refresh failed:", errorData);
+    console.error("[refreshTokenOnServer] Refresh failed:", errorData);
     return null;
   }
 
-  // Parse the JSON response (native fetch requires this)
-  const data: RefreshTokenResponse = await response.json();
-  console.log("[Refresh] Response:", data);
+  const data = await response.json();
+  console.log(
+    "[refreshTokenOnServer] Got new token, cookies set by Route Handler"
+  );
 
-  const { token, refreshToken: newRefreshToken } = data;
-
-  // ✅ Manually set the cookies on the Next.js server's cookie store
-  // This will forward them to the browser via Set-Cookie headers
-  const cookieOptions = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none" as const,
-    domain: ".mergeedu.app",
-  };
-
-  cookieStore.set("accessToken", token, {
-    ...cookieOptions,
-    maxAge: 0.5 * 60, // 30 seconds (matching backend)
-  });
-
-  cookieStore.set("refreshToken", newRefreshToken, {
-    ...cookieOptions,
-    maxAge: 7 * 24 * 60 * 60, // 7 days
-  });
-
-  return token;
+  return data.token;
 }
 
 /**
@@ -101,20 +73,25 @@ export async function fetchWithAuth<T = unknown>(
 ): Promise<{ data: T | null; error: Error | null; status: number }> {
   const { next, ...fetchOptions } = options;
 
-  const makeRequest = async () => {
-    // Read fresh cookies each time (important for retry after refresh)
+  // Make request with optional override token (for retry after refresh)
+  const makeRequest = async (overrideToken?: string) => {
     const cookieStore = await cookies();
     const allCookies = cookieStore
       .getAll()
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join(";");
 
-    console.log("allCookies", allCookies);
+    // If we have an override token, add it to the cookies string
+    const cookieHeader = overrideToken
+      ? `${allCookies};accessToken=${overrideToken}`
+      : allCookies;
+
+    console.log("allCookies", cookieHeader);
     return fetch(url, {
       ...fetchOptions,
       headers: {
         "Content-Type": "application/json",
-        Cookie: allCookies,
+        Cookie: cookieHeader,
       },
       ...(next && { next }),
     });
@@ -134,7 +111,7 @@ export async function fetchWithAuth<T = unknown>(
   // Clone response so we can read body twice if needed (for 401 check and retry)
   const responseClone = response.clone();
   const [initialData, initialParseError] = await tryIt<
-    T & { statusCode?: number }
+    T & { statusCode?: number; message?: string }
   >(responseClone.json());
 
   // Check for 401 - native fetch() doesn't throw on HTTP errors
@@ -154,8 +131,8 @@ export async function fetchWithAuth<T = unknown>(
       };
     }
 
-    // Retry with new token
-    const [retryResponse, retryError] = await tryIt(makeRequest());
+    // Retry with new token (passed directly, not from cookies)
+    const [retryResponse, retryError] = await tryIt(makeRequest(newToken));
     if (retryError || !retryResponse) {
       return {
         data: null,
@@ -165,9 +142,10 @@ export async function fetchWithAuth<T = unknown>(
     }
 
     if (!retryResponse.ok) {
-      const [retryErrorData] = await tryIt<{ statusCode?: number }>(
-        retryResponse.clone().json()
-      );
+      const [retryErrorData] = await tryIt<{
+        statusCode?: number;
+        message?: string;
+      }>(retryResponse.clone().json());
       // Check if retry also got 401 (refresh didn't help)
       if (
         retryErrorData?.message === "access token not provided" ||
