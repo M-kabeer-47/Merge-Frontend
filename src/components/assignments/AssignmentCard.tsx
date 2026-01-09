@@ -101,7 +101,7 @@ export default function AssignmentCard({
             {!isInstructor && studentAssignment && (
               <StudentStats
                 submissionStatus={studentAssignment.submissionStatus}
-                submittedAt={studentAssignment.submission?.submittedAt}
+                submittedAt={studentAssignment?.submittedAt}
               />
             )}
           </div>
