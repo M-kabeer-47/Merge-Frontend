@@ -26,7 +26,7 @@ interface NextFetchRequestConfig {
  * Uses simple axios (not interceptor-enabled instance)
  * Persists new tokens via Server Action
  */
-async function refreshTokenOnServer(): Promise<string | null> {
+export async function refreshTokenOnServer(): Promise<string | null> {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get("refreshToken")?.value;
 
@@ -61,30 +61,32 @@ async function refreshTokenOnServer(): Promise<string | null> {
     return null;
   }
 
-  if (response.data) {
-    const { token, refreshToken: newRefreshToken } = response.data;
+  // Parse the JSON response (native fetch requires this)
+  const data: RefreshTokenResponse = await response.json();
+  console.log("[Refresh] Response:", data);
 
-    // ✅ Manually set the cookies on the Next.js server's cookie store
-    // This will forward them to the browser via Set-Cookie headers
-    const cookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none" as const,
-      domain: ".mergeedu.app",
-    };
+  const { token, refreshToken: newRefreshToken } = data;
 
-    cookieStore.set("accessToken", token, {
-      ...cookieOptions,
-      maxAge: 0.5 * 60, // 30 seconds (matching backend)
-    });
+  // ✅ Manually set the cookies on the Next.js server's cookie store
+  // This will forward them to the browser via Set-Cookie headers
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none" as const,
+    domain: ".mergeedu.app",
+  };
 
-    cookieStore.set("refreshToken", newRefreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    });
+  cookieStore.set("accessToken", token, {
+    ...cookieOptions,
+    maxAge: 0.5 * 60, // 30 seconds (matching backend)
+  });
 
-    return token;
-  }
+  cookieStore.set("refreshToken", newRefreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60, // 7 days
+  });
+
+  return token;
 }
 
 /**
