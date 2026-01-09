@@ -27,6 +27,7 @@ interface NextFetchRequestConfig {
  * Persists new tokens via Server Action
  */
 export async function refreshTokenOnServer(): Promise<string | null> {
+  "use server";
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get("refreshToken")?.value;
 
