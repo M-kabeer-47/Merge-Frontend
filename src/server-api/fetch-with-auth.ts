@@ -46,11 +46,7 @@ async function refreshTokenOnServer(): Promise<string | null> {
     return null;
   }
 
-  const { token, refreshToken: newRefreshToken } = response.data;
-
-  // Persist new tokens using Server Action
-  await setAuthCookies(token, newRefreshToken);
-  console.log("Token refreshed and cookies updated on server");
+  const { token } = response.data;
 
   return token;
 }
@@ -72,24 +68,13 @@ export async function fetchWithAuth<T = unknown>(
 
   const makeRequest = async () => {
     // Read fresh cookies each time (important for retry after refresh)
-    const freshCookies = await cookies();
-    const cookieHeader = freshCookies
-      .getAll()
-      .map((c) => `${c.name}=${c.value}`)
-      .join("; ");
 
-    console.log("[fetchWithAuth] Request to:", url);
-    console.log(
-      "[fetchWithAuth] Cookie header:",
-      cookieHeader ? cookieHeader : "EMPTY"
-    );
     // use axios for testing
 
     return fetch(url, {
       ...fetchOptions,
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader, // Forward cookies to backend
       },
       ...(next && { next }),
     });
