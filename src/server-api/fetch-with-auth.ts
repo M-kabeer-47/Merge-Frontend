@@ -65,8 +65,6 @@ export async function fetchWithAuth<T = unknown>(
   const makeRequest = async () => {
     // Read fresh cookies each time (important for retry after refresh)
 
-    // use axios for testing
-
     return fetch(url, {
       ...fetchOptions,
       headers: {
@@ -87,11 +85,17 @@ export async function fetchWithAuth<T = unknown>(
     };
   }
 
-  // If 401, try to refresh token and retry
-  if (
-    error?.response?.status === 401 ||
-    error?.response?.data.statusCode === 401
-  ) {
+  // Clone response so we can read body twice if needed (for 401 check and retry)
+  const responseClone = response.clone();
+  const [initialData, initialParseError] = await tryIt<
+    T & { statusCode?: number }
+  >(responseClone.json());
+
+  // Check for 401 - native fetch() doesn't throw on HTTP errors
+  // Check both HTTP status and body statusCode
+  const is401 = response.status === 401 || initialData?.statusCode === 401;
+
+  if (is401) {
     console.log("[fetchWithAuth] Got 401, attempting token refresh...");
     const newToken = await refreshTokenOnServer();
     if (!newToken) {
@@ -113,6 +117,17 @@ export async function fetchWithAuth<T = unknown>(
     }
 
     if (!retryResponse.ok) {
+      const [retryErrorData] = await tryIt<{ statusCode?: number }>(
+        retryResponse.clone().json()
+      );
+      // Check if retry also got 401 (refresh didn't help)
+      if (retryResponse.status === 401 || retryErrorData?.statusCode === 401) {
+        return {
+          data: null,
+          error: new Error("Session expired. Please sign in again."),
+          status: 401,
+        };
+      }
       return {
         data: null,
         error: new Error(`HTTP ${retryResponse.status}`),
@@ -129,7 +144,7 @@ export async function fetchWithAuth<T = unknown>(
     };
   }
 
-  // Original request succeeded
+  // Original request succeeded (non-401)
   if (!response.ok) {
     return {
       data: null,
@@ -138,11 +153,18 @@ export async function fetchWithAuth<T = unknown>(
     };
   }
 
-  const [data, parseError] = await tryIt<T>(response.json());
+  // Use already parsed data if no parse error, otherwise we already have it
+  if (initialParseError) {
+    return {
+      data: null,
+      error: initialParseError,
+      status: response.status,
+    };
+  }
 
   return {
-    data: parseError ? null : data,
-    error: parseError,
+    data: initialData as T,
+    error: null,
     status: response.status,
   };
 }
