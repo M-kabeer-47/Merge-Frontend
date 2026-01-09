@@ -62,10 +62,6 @@ export async function fetchWithAuth<T = unknown>(
 ): Promise<{ data: T | null; error: Error | null; status: number }> {
   const { next, ...fetchOptions } = options;
 
-  // Extract endpoint for cleaner logging
-
-  // Log the request with cache info
-
   const makeRequest = async () => {
     // Read fresh cookies each time (important for retry after refresh)
 
