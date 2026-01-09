@@ -37,7 +37,13 @@ async function refreshTokenOnServer(): Promise<string | null> {
   }
 
   const [response, error] = await tryIt(
-    axios.post<RefreshTokenResponse>(`${API_BASE_URL}/auth/refresh`, {})
+    axios.post<RefreshTokenResponse>(
+      `${API_BASE_URL}/auth/refresh`,
+      {},
+      {
+        withCredentials: true,
+      }
+    )
   );
 
   if (error || !response) {
@@ -63,17 +69,11 @@ export async function fetchWithAuth<T = unknown>(
 
   const makeRequest = async () => {
     // Read fresh cookies each time (important for retry after refresh)
-    const cookieStore = await cookies();
-    // forward all cookies to backend
-    const allCookies = cookieStore
-      .getAll()
-      .map((cookie) => `${cookie.name}=${cookie.value}`)
-      .join(";");
+
     return fetch(url, {
       ...fetchOptions,
       headers: {
         "Content-Type": "application/json",
-        Cookie: allCookies,
       },
       ...(next && { next }),
     });
