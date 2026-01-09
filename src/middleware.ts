@@ -81,16 +81,18 @@ export async function middleware(request: NextRequest) {
 
     res.cookies.set("accessToken", data.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      domain: ".mergeedu.app",
+      secure: true,
+      sameSite: "none",
       path: "/",
       maxAge: 60 * 60, // 1 hour
     });
 
     res.cookies.set("refreshToken", data.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      domain: ".mergeedu.app",
+      secure: true,
+      sameSite: "none",
       path: "/",
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
