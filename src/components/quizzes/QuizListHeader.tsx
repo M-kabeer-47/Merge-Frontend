@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import SortDropdown from "@/components/ui/SortDropdown";
 import { Button } from "@/components/ui/Button";
 import { useRoom } from "@/providers/RoomProvider";
+import { useUrlParams } from "@/hooks/common/use-url-params";
 import type { QuizSortOption, QuizFilterType } from "@/types/quiz";
 import type { SortOption, SortField } from "@/types/content";
 
@@ -15,97 +16,54 @@ interface QuizListHeaderProps {
   roomId: string;
   initialSearch?: string;
   initialSort?: QuizSortOption;
+  initialSortOrder?: "asc" | "desc";
   initialFilter?: QuizFilterType;
 }
 
 export default function QuizListHeader({
   roomId,
   initialSearch = "",
-  initialSort = "deadline",
+  initialSort = "endAt",
   initialFilter = "all",
+  initialSortOrder = "desc",
 }: QuizListHeaderProps) {
   const { userRole } = useRoom();
   const isInstructor = userRole === "instructor" || userRole === "moderator";
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [activeFilter, setActiveFilter] =
     useState<QuizFilterType>(initialFilter);
   const [sortValue, setSortValue] = useState<SortOption>(
-    initialSort ? { field: initialSort as SortField, order: "desc" } : null
+    initialSort
+      ? { field: initialSort as SortField, order: initialSortOrder }
+      : null
   );
 
-  // Update URL params for shareable links
-  const updateUrlParams = useCallback(
-    (params: {
-      search?: string;
-      sortBy?: string;
-      sortOrder?: string;
-      filter?: string;
-    }) => {
-      const current = new URLSearchParams(searchParams.toString());
-
-      if (params.search !== undefined) {
-        if (params.search) {
-          current.set("search", params.search);
-        } else {
-          current.delete("search");
-        }
-      }
-
-      if (params.sortBy !== undefined) {
-        if (params.sortBy) {
-          current.set("sortBy", params.sortBy);
-        } else {
-          current.delete("sortBy");
-        }
-      }
-
-      if (params.sortOrder !== undefined) {
-        if (params.sortOrder) {
-          current.set("sortOrder", params.sortOrder);
-        } else {
-          current.delete("sortOrder");
-        }
-      }
-
-      if (params.filter) {
-        if (params.filter === "all") {
-          current.delete("filter");
-        } else {
-          current.set("filter", params.filter);
-        }
-      }
-
-      router.push(`/rooms/${roomId}/quizzes?${current.toString()}`, {
-        scroll: false,
-      });
-    },
-    [router, roomId, searchParams]
-  );
+  // Use the reusable URL params hook
+  const { updateParams } = useUrlParams({
+    basePath: `/rooms/${roomId}/quizzes`,
+    defaultValues: { filter: "all" },
+  });
 
   // Handle search
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    updateUrlParams({ search: value });
+    updateParams({ search: value });
   };
 
   // Handle filter change
-  const handleFilterChange = useCallback(
-    (filter: string) => {
-      setActiveFilter(filter as QuizFilterType);
-      updateUrlParams({ filter });
-    },
-    [updateUrlParams]
-  );
+  const handleFilterChange = (filter: string) => {
+    setActiveFilter(filter as QuizFilterType);
+    updateParams({ filter });
+  };
 
   // Handle sort change
   const handleSortChange = (sort: SortOption) => {
     setSortValue(sort);
-    updateUrlParams({
-      sortBy: sort?.field || "",
-      sortOrder: sort?.order || "",
+    updateParams({
+      sortBy: sort?.field,
+      sortOrder: sort?.order,
     });
   };
 
@@ -113,31 +71,28 @@ export default function QuizListHeader({
     router.push(`/rooms/${roomId}/quizzes/create`);
   };
 
-  // Sort options for the dropdown
-  const sortOptions = useMemo(() => {
-    const baseOptions = [
-      {
-        field: "deadline" as SortField,
-        label: "Deadline",
-        descLabel: "Deadline",
-        ascLabel: "Deadline",
-      },
-      {
-        field: "upload-date" as SortField,
-        label: "Upload Date" as SortField,
-        descLabel: "Upload Date",
-        ascLabel: "Upload Date",
-      },
-      {
-        field: "title" as SortField,
-        label: "Title",
-        descLabel: "Z to A",
-        ascLabel: "A to Z",
-      },
-    ];
-
-    return baseOptions;
-  }, [isInstructor]);
+  // Sort options for the dropdown (same for both students and instructors)
+  // Backend accepts: createdAt, endAt, totalScore
+  const sortOptions = [
+    {
+      field: "endAt" as SortField,
+      label: "Due Date",
+      descLabel: "Latest first",
+      ascLabel: "Earliest first",
+    },
+    {
+      field: "createdAt" as SortField,
+      label: "Upload Date",
+      descLabel: "Newest first",
+      ascLabel: "Oldest first",
+    },
+    {
+      field: "totalScore" as SortField,
+      label: "Points",
+      descLabel: "Highest first",
+      ascLabel: "Lowest first",
+    },
+  ];
 
   return (
     <div className="px-4 sm:px-6 py-4 border-b border-light-border space-y-4">

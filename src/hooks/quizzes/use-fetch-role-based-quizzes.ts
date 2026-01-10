@@ -8,6 +8,7 @@ interface FetchQuizzesParams {
   search?: string;
   sortBy?: string;
   filter?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 interface QuizzesResponse<T> {
@@ -24,6 +25,7 @@ export default function useFetchRoleBasedQuizzes({
   search,
   sortBy,
   filter,
+  sortOrder,
 }: FetchQuizzesParams) {
   const endpoint = isInstructor ? "/quiz/instructor" : "/quiz/student";
 
@@ -34,6 +36,7 @@ export default function useFetchRoleBasedQuizzes({
     search || "",
     sortBy || null,
     filter || null,
+    sortOrder || "desc",
   ];
 
   return useQuery({
@@ -43,6 +46,7 @@ export default function useFetchRoleBasedQuizzes({
       if (search) params.append("search", search);
       if (sortBy) params.append("sortBy", sortBy);
       if (filter) params.append("filter", filter);
+      if (sortOrder) params.append("sortOrder", sortOrder.toUpperCase());
 
       const response = await api.get<
         QuizzesResponse<StudentQuiz | InstructorQuiz> | Quiz[]

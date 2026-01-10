@@ -38,7 +38,7 @@ export function EmptyAssignments({
 }
 
 interface NoSearchResultsProps {
-  searchTerm: string;
+  searchTerm: string | undefined;
   onClearSearch: () => void;
 }
 
@@ -58,8 +58,8 @@ export function NoSearchResults({
 
       <p className="text-para-muted text-center max-w-md mb-6">
         No assignments match your search for &quot;
-        <span className="font-semibold text-para">{searchTerm}</span>&quot;. Try
-        adjusting your search terms or filters.
+        <span className="font-semibold text-para">{searchTerm || ""}</span>
+        &quot;. Try adjusting your search terms or filters.
       </p>
 
       <Button variant="outline" onClick={onClearSearch}>

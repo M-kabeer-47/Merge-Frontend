@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRoom } from "@/providers/RoomProvider";
 import useFetchRoleBasedQuizzes from "@/hooks/quizzes/use-fetch-role-based-quizzes";
 import QuizCard from "./QuizCard";
@@ -14,19 +14,23 @@ import type { InstructorQuiz, StudentQuiz } from "@/types/quiz";
 
 interface QuizzesListProps {
   roomId: string;
+  search: string | undefined;
+  sortBy: string | undefined;
+  filter: string | undefined;
+  sortOrder: "asc" | "desc";
 }
 
-export default function QuizzesList({ roomId }: QuizzesListProps) {
+export default function QuizzesList({
+  roomId,
+  search,
+  sortBy,
+  filter,
+  sortOrder,
+}: QuizzesListProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { userRole } = useRoom();
 
   const isInstructor = userRole === "instructor" || userRole === "moderator";
-
-  // Get filter params from URL
-  const search = searchParams.get("search") || "";
-  const sortBy = searchParams.get("sortBy") || "";
-  const filter = searchParams.get("filter") || "all";
 
   // Fetch quizzes based on role
   const { data: quizzes = [], isLoading } = useFetchRoleBasedQuizzes({
@@ -35,6 +39,7 @@ export default function QuizzesList({ roomId }: QuizzesListProps) {
     search,
     sortBy,
     filter,
+    sortOrder,
   });
 
   const handleViewDetails = (id: string) => {
@@ -82,20 +87,20 @@ export default function QuizzesList({ roomId }: QuizzesListProps) {
   }
 
   const isEmpty = quizzes.length === 0;
-  const hasSearchTerm = search.trim().length > 0;
-  const hasActiveFilter = filter !== "all";
+  const hasSearchTerm = search && search.trim().length > 0;
+  const hasActiveFilter = filter && filter !== "all";
 
   // Empty state
   if (isEmpty) {
     return (
       <div className="flex-1 overflow-y-auto">
         <div className="h-full flex items-center justify-center">
-          {hasSearchTerm ? (
+          {hasSearchTerm && search ? (
             <NoSearchResults
               searchTerm={search}
               onClearSearch={handleClearFilters}
             />
-          ) : hasActiveFilter ? (
+          ) : hasActiveFilter && filter ? (
             <EmptyFilterResults
               filterType={filter}
               onClearFilter={handleClearFilters}

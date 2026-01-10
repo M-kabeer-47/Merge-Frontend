@@ -19,10 +19,6 @@ interface AssignmentsResponse<T> {
   assignments?: T[];
 }
 
-/**
- * Client-side hook to fetch assignments based on user role
- * Uses the role from RoomProvider to determine which endpoint to call
- */
 export default function useFetchRoleBasedAssignments({
   roomId,
   isInstructor,

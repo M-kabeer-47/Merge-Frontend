@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import SortDropdown from "@/components/ui/SortDropdown";
 import { Button } from "@/components/ui/Button";
 import { useRoom } from "@/providers/RoomProvider";
+import { useUrlParams } from "@/hooks/common/use-url-params";
 import type { AssignmentFilterType } from "@/types/assignment";
 import type { SortOption, SortField } from "@/types/content";
 
@@ -24,11 +25,10 @@ export default function AssignmentListHeader({
   initialSearch = "",
   initialSort = "endAt",
   initialFilter = "all",
-  initialSortOrder = "asc",
+  initialSortOrder = "desc",
 }: AssignmentListHeaderProps) {
   const { userRole } = useRoom();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const isInstructor = userRole === "instructor" || userRole === "moderator";
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [activeFilter, setActiveFilter] =
@@ -38,6 +38,12 @@ export default function AssignmentListHeader({
       ? { field: initialSort as SortField, order: initialSortOrder }
       : null
   );
+
+  // Use the reusable URL params hook
+  const { updateParams } = useUrlParams({
+    basePath: `/rooms/${roomId}/assignments`,
+    defaultValues: { filter: "all" },
+  });
 
   const tabs = isInstructor
     ? [
@@ -52,70 +58,20 @@ export default function AssignmentListHeader({
         { key: "completed", label: "Completed" },
       ];
 
-  // Update URL params for shareable links
-  const updateUrlParams = (params: {
-    search?: string;
-    sortBy?: string;
-    sortOrder?: "asc" | "desc";
-    filter?: string;
-  }) => {
-    const current = new URLSearchParams(searchParams.toString());
-
-    if (params.search !== undefined) {
-      if (params.search) {
-        current.set("search", params.search);
-      } else {
-        current.delete("search");
-      }
-    }
-
-    if (params.sortBy !== undefined) {
-      if (params.sortBy) {
-        current.set("sortBy", params.sortBy);
-      } else {
-        current.delete("sortBy");
-      }
-    }
-
-    if (params.sortOrder !== undefined) {
-      if (params.sortOrder) {
-        current.set("sortOrder", params.sortOrder);
-      } else {
-        current.delete("sortOrder");
-      }
-    }
-
-    if (params.filter) {
-      if (params.filter === "all") {
-        current.delete("filter");
-      } else {
-        current.set("filter", params.filter);
-      }
-    }
-
-    router.push(`/rooms/${roomId}/assignments?${current.toString()}`, {
-      scroll: false,
-    });
-  };
-
-  // Handle search
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    updateUrlParams({ search: value });
+    updateParams({ search: value });
   };
-
-  // Handle filter change
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter as AssignmentFilterType);
-    updateUrlParams({ filter });
+    updateParams({ filter });
   };
 
-  // Handle sort change
   const handleSortChange = (sort: SortOption) => {
     setSortValue(sort);
-    updateUrlParams({
+    updateParams({
       sortBy: sort?.field || "",
-      sortOrder: sort?.order || "asc",
+      sortOrder: sort?.order || "",
     });
   };
 
@@ -123,18 +79,10 @@ export default function AssignmentListHeader({
     router.push(`/rooms/${roomId}/assignments/create`);
   };
 
-  // Sort options for the dropdown (same for both students and instructors)
-  // Backend accepts: createdAt, startAt, endAt, totalScore
   const sortOptions = [
     {
       field: "endAt" as SortField,
       label: "Due Date",
-      descLabel: "Latest first",
-      ascLabel: "Earliest first",
-    },
-    {
-      field: "startAt" as SortField,
-      label: "Start Date",
       descLabel: "Latest first",
       ascLabel: "Earliest first",
     },

@@ -20,7 +20,7 @@ interface QuizzesResponse {
  */
 export default function useFetchQuizzes({
   roomId,
-  sortBy = "deadline",
+  sortBy = "endAt",
   sortOrder = "asc",
   search = "",
   enabled = true,
@@ -30,7 +30,7 @@ export default function useFetchQuizzes({
     queryFn: async () => {
       const params: Record<string, string> = { roomId };
       if (sortBy) params.sortBy = sortBy;
-      if (sortOrder) params.sortOrder = sortOrder;
+      if (sortOrder) params.sortOrder = sortOrder.toUpperCase();
       if (search) params.search = search;
 
       const response = await api.get<QuizzesResponse | Quiz[]>("/quiz", {

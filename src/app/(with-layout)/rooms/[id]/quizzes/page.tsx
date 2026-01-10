@@ -17,7 +17,7 @@ export default async function QuizzesPage({
   searchParams,
 }: QuizzesPageProps) {
   const { id: roomId } = await params;
-  const { search, sortBy, filter } = await searchParams;
+  const { search, sortBy, filter, sortOrder } = await searchParams;
 
   return (
     <div className="h-full flex flex-col bg-main-background">
@@ -26,13 +26,15 @@ export default async function QuizzesPage({
         initialSearch={search}
         initialSort={sortBy as QuizSortOption}
         initialFilter={filter as QuizFilterType}
+        initialSortOrder={sortOrder as "asc" | "desc"}
       />
-      {/* QuizzesList is now a client component that:
-          - Uses useRoom() to get user role (already fetched in layout)
-          - Uses useSearchParams() to read URL filters
-          - Fetches quizzes via React Query based on role
-      */}
-      <QuizzesList roomId={roomId} />
+      <QuizzesList
+        roomId={roomId}
+        search={search}
+        sortBy={sortBy}
+        filter={filter}
+        sortOrder={sortOrder as "asc" | "desc"}
+      />
     </div>
   );
 }

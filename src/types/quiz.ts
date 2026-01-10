@@ -4,7 +4,7 @@ export type QuizStatus = "published" | "draft" | "closed";
 
 export type QuizAttemptStatus = "pending" | "completed" | "missed";
 
-export type QuizSortOption = "deadline" | "title" | "status";
+export type QuizSortOption = "endAt" | "createdAt" | "totalScore";
 
 export type QuizFilterType =
   | "all"

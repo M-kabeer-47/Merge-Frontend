@@ -47,64 +47,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  // Has access token - proceed normally
-  if (accessToken) {
-    return NextResponse.next();
-  }
-
-  // Has refresh token but no access token - try to refresh
-  console.log("[Middleware] No accessToken, attempting refresh...");
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: `refreshToken=${refreshToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      console.error("[Middleware] Refresh failed, redirecting to sign-in");
-      // Clear invalid tokens and redirect
-      const res = NextResponse.redirect(new URL("/sign-in", request.url));
-      res.cookies.delete("accessToken");
-      res.cookies.delete("refreshToken");
-      return res;
-    }
-
-    const data: RefreshTokenResponse = await response.json();
-    console.log("[Middleware] Refresh successful, setting cookies");
-
-    // Create response and set new cookies
-    const res = NextResponse.next();
-
-    res.cookies.set("accessToken", data.token, {
-      httpOnly: true,
-      domain: ".mergeedu.app",
-      secure: true,
-      sameSite: "none",
-      path: "/",
-      maxAge: 60 * 60, // 1 hour
-    });
-
-    res.cookies.set("refreshToken", data.refreshToken, {
-      httpOnly: true,
-      domain: ".mergeedu.app",
-      secure: true,
-      sameSite: "none",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    });
-
-    return res;
-  } catch (error) {
-    console.error("[Middleware] Error during refresh:", error);
-    const res = NextResponse.redirect(new URL("/sign-in", request.url));
-    res.cookies.delete("accessToken");
-    res.cookies.delete("refreshToken");
-    return res;
-  }
+  // Has accessToken OR refreshToken - let the page render
+  // If only refreshToken exists, client-side axios will handle refresh
+  // This way the page shows skeleton loading instead of frozen screen
+  return NextResponse.next();
 }
 
 export const config = {

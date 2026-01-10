@@ -26,9 +26,15 @@ export default async function AssignmentsPage({
         initialSearch={search}
         initialSort={sortBy}
         initialFilter={filter as AssignmentFilterType}
-        initialSortOrder={sortOrder || "asc"}
+        initialSortOrder={sortOrder as "asc" | "desc"}
       />
-      <AssignmentsList roomId={roomId} />
+      <AssignmentsList
+        roomId={roomId}
+        search={search}
+        sortBy={sortBy}
+        filter={filter}
+        sortOrder={sortOrder as "asc" | "desc"}
+      />
     </div>
   );
 }

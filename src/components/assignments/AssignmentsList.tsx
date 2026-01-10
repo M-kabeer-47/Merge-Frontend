@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRoom } from "@/providers/RoomProvider";
 import useFetchRoleBasedAssignments from "@/hooks/assignments/use-fetch-role-based-assignments";
 import AssignmentCard from "./AssignmentCard";
@@ -17,27 +17,32 @@ import type {
 
 interface AssignmentsListProps {
   roomId: string;
+  search: string | undefined;
+  sortBy: string | undefined;
+  filter: string | undefined;
+  sortOrder: "asc" | "desc";
 }
 
-export default function AssignmentsList({ roomId }: AssignmentsListProps) {
+export default function AssignmentsList({
+  roomId,
+  search,
+  sortBy,
+  filter,
+  sortOrder,
+}: AssignmentsListProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { userRole } = useRoom();
 
   const isInstructor = userRole === "instructor" || userRole === "moderator";
 
-  // Get filter params from URL
-  const search = searchParams.get("search") || "";
-  const sortBy = searchParams.get("sortBy") || "";
-  const filter = searchParams.get("filter") || "all";
-
-  // Fetch assignments based on role using existing provider data
+  // Fetch assignments based on role
   const { data: assignments = [], isLoading } = useFetchRoleBasedAssignments({
     roomId,
     isInstructor,
     search,
     sortBy,
     filter,
+    sortOrder,
   });
 
   const handleViewDetails = (id: string) => {
@@ -74,7 +79,7 @@ export default function AssignmentsList({ roomId }: AssignmentsListProps) {
   }
 
   const isEmpty = assignments.length === 0;
-  const hasSearchTerm = search.trim().length > 0;
+  const hasSearchTerm = search && search.trim().length > 0;
   const hasActiveFilter = filter !== "all";
 
   // Empty state
@@ -87,7 +92,7 @@ export default function AssignmentsList({ roomId }: AssignmentsListProps) {
               searchTerm={search}
               onClearSearch={handleClearFilters}
             />
-          ) : hasActiveFilter ? (
+          ) : hasActiveFilter && filter ? (
             <EmptyFilterResults filterType={filter} />
           ) : (
             <EmptyAssignments
