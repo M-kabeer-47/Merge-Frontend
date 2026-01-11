@@ -1,4 +1,6 @@
+import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
+import { tryIt } from "./utils/try-it";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -51,51 +53,53 @@ export async function middleware(request: NextRequest) {
   if (!accessToken && refreshToken) {
     console.log("[Middleware] No accessToken, attempting refresh");
 
-    try {
-      // Call backend refresh endpoint with cookies
-      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: "POST",
-        headers: {
-          Cookie: `refreshToken=${refreshToken}`,
-        },
+    // Call backend refresh endpoint with cookies
+    const [refreshResponse, error] = await tryIt(
+      axios.post(
+        `${API_BASE_URL}/auth/refresh`,
+        {},
+        {
+          withCredentials: true,
+        }
+      )
+    );
+    if (refreshResponse) {
+      const { token, refreshToken }: RefreshTokenResponse =
+        refreshResponse.data;
+      console.log("[Middleware] Token refreshed successfully");
+
+      // Set new cookies on the response
+      const response = NextResponse.next();
+      const cookieOptions = {
+        httpOnly: true,
+        domain: ".mergeedu.app",
+        secure: true,
+        sameSite: "none" as const,
+        path: "/",
+      };
+
+      response.cookies.set("accessToken", token, {
+        ...cookieOptions,
+        maxAge: 60 * 60, // 1 hour
       });
-
-      if (refreshResponse.ok) {
-        const data: RefreshTokenResponse = await refreshResponse.json();
-        console.log("[Middleware] Token refreshed successfully");
-
-        // Set new cookies on the response
-        const response = NextResponse.next();
-        const cookieOptions = {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax" as const,
-          path: "/",
-        };
-
-        response.cookies.set("accessToken", data.token, {
-          ...cookieOptions,
-          maxAge: 60 * 60, // 1 hour
-        });
-        response.cookies.set("refreshToken", data.refreshToken, {
-          ...cookieOptions,
-          maxAge: 7 * 24 * 60 * 60, // 7 days
-        });
-
-        return response;
-      }
-
-      // Refresh failed - redirect to sign-in
-      console.log("[Middleware] Refresh failed, redirecting to sign-in");
-      const response = NextResponse.redirect(new URL("/sign-in", request.url));
-      response.cookies.delete("accessToken");
-      response.cookies.delete("refreshToken");
-
-      return response;
-    } catch (error) {
-      console.error("[Middleware] Refresh error:", error);
-      return NextResponse.redirect(new URL("/sign-in", request.url));
+      response.cookies.set("refreshToken", refreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+      });
     }
+    if (error) {
+      console.log("[Middleware] Refresh failed, redirecting to sign-in");
+      console.log("Error: " + JSON.stringify(error.response.data));
+      console.log(error.message);
+    }
+
+    // Refresh failed - redirect to sign-in
+    console.log("[Middleware] Refresh failed, redirecting to sign-in");
+    const response = NextResponse.redirect(new URL("/sign-in", request.url));
+    response.cookies.delete("accessToken");
+    response.cookies.delete("refreshToken");
+
+    return response;
   }
 
   // Has accessToken - proceed normally
