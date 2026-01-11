@@ -77,6 +77,7 @@ export async function middleware(request: NextRequest) {
         response.cookies.delete("refreshToken");
         response.cookies.delete("userId");
         const cookieOptions = {
+          domain: ".mergeedu.app",
           httpOnly: true,
           secure: true,
           sameSite: "none" as const,
