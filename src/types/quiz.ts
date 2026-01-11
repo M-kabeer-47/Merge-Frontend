@@ -75,6 +75,7 @@ export interface InstructorQuiz extends BaseQuiz {
 // For student view
 export interface StudentQuiz extends BaseQuiz {
   attempt: StudentAttempt;
+  submissionStatus?: QuizAttemptStatus; // Same pattern as assignments
 }
 
 // Union type for general use
@@ -86,7 +87,7 @@ export function isInstructorQuiz(quiz: Quiz): quiz is InstructorQuiz {
 }
 
 export function isStudentQuiz(quiz: Quiz): quiz is StudentQuiz {
-  return "attempt" in quiz;
+  return "attempt" in quiz || "submissionStatus" in quiz;
 }
 
 // API Payloads

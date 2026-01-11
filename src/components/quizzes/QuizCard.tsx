@@ -46,8 +46,8 @@ export default function QuizCard({
   const cardBgColor = bgColor || "bg-background";
 
   // Status configuration for student view
-  const getStudentStatusConfig = (attempt: StudentQuiz["attempt"]) => {
-    if (attempt.status === "completed") {
+  const getStudentStatusConfig = (status: StudentQuiz["attempt"]["status"]) => {
+    if (status === "completed") {
       return {
         icon: CheckCircle2,
         iconFill: "#10b981",
@@ -56,10 +56,7 @@ export default function QuizCard({
         text: "Completed",
       };
     }
-    if (
-      attempt.status === "missed" ||
-      (isOverdue && attempt.status === "pending")
-    ) {
+    if (status === "missed" || (isOverdue && status === "pending")) {
       return {
         icon: XCircle,
         iconFill: "#ef4444",
@@ -213,7 +210,9 @@ export default function QuizCard({
               {!isInstructor && isStudentQuiz(quiz) && (
                 <>
                   {(() => {
-                    const statusConfig = getStudentStatusConfig(quiz.attempt);
+                    const statusConfig = getStudentStatusConfig(
+                      quiz.submissionStatus || quiz.attempt?.status || "pending"
+                    );
                     const StatusIcon = statusConfig.icon;
                     return (
                       <div

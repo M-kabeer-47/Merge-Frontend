@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 
 interface ProfileTabsProps {
+  roomID: string;
   activeTab: string;
   onTabChange: (tab: string) => void;
   tabs: {
@@ -14,6 +15,7 @@ interface ProfileTabsProps {
 }
 
 export default function ProfileTabs({
+  roomID,
   tabs,
   activeTab,
   onTabChange,
@@ -86,7 +88,7 @@ export default function ProfileTabs({
             const isActive = activeTab === tab.id;
 
             return (
-              <Link href={tab.id} key={tab.id}>
+              <Link href={`/rooms/${roomID}/${tab.id}`} key={tab.id}>
                 <motion.button
                   ref={(el) => (tabRefs.current[tab.id] = el)}
                   onMouseEnter={() => handleTabHover(tab.id)}

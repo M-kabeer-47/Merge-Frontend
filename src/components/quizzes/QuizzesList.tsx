@@ -50,7 +50,9 @@ export default function QuizzesList({
       router.push(`/rooms/${roomId}/quizzes/${id}/submissions`);
     } else {
       const studentQuiz = quiz as StudentQuiz;
-      if (studentQuiz.attempt?.status === "completed") {
+      const status =
+        studentQuiz.submissionStatus || studentQuiz.attempt?.status;
+      if (status === "completed") {
         router.push(`/rooms/${roomId}/quizzes/${id}/review`);
       } else {
         router.push(`/rooms/${roomId}/quizzes/${id}`);

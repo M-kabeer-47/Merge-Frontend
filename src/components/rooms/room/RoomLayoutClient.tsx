@@ -135,6 +135,7 @@ export default function RoomLayoutClient({
       <div className="bg-background">
         <ProfessionalTabs
           tabs={TABS}
+          roomID={id}
           activeTab={activeTab}
           onTabChange={handleTabChange}
         />

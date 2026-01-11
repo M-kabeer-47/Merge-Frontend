@@ -3,8 +3,6 @@
 import { cookies } from "next/headers";
 import { tryIt } from "@/utils/try-it";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
 interface FetchWithAuthOptions extends Omit<RequestInit, "headers" | "next"> {
   headers?: Record<string, string>;
   next?: NextFetchRequestConfig;

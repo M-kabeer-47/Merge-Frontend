@@ -10,6 +10,7 @@ import StudentAssignmentView from "@/components/assignments/StudentAssignmentVie
 import InstructorAssignmentView from "@/components/assignments/InstructorAssignmentView";
 import { useAuth } from "@/providers/AuthProvider";
 import useFetchAssignmentById from "@/hooks/assignments/use-fetch-assignment-by-id";
+import { useRoom } from "@/providers/RoomProvider";
 
 export default function AssignmentDetailsPage() {
   const params = useParams();
@@ -20,12 +21,14 @@ export default function AssignmentDetailsPage() {
   const roomId = params ? (params.id as string) : "";
 
   // Get role from authenticated user
-  const isInstructor = false;
+  const { userRole } = useRoom();
+  const isInstructor = userRole === "instructor" || userRole === "moderator";
+  console.log("userRole", userRole);
 
   // Fetch assignment data from API
   const { data: assignment, isLoading: isAssignmentLoading } =
     useFetchAssignmentById(assignmentId, !!assignmentId);
-
+  console.log("submissionStatus", assignment?.submissionStatus);
   const isLoading = isAuthLoading || isAssignmentLoading;
 
   // Show loading state
@@ -135,9 +138,11 @@ export default function AssignmentDetailsPage() {
 
             {/* Turn In Button for Students */}
             {!isInstructor &&
-              !isOverdue &&
-              assignment.submissionStatus === "pending" && (
+              (assignment.submissionStatus === "pending" ||
+                (assignment.submissionStatus === "missed" &&
+                  assignment.isTurnInLateEnabled)) && (
                 <Button
+                  className="w-[300px]"
                   onClick={() => {
                     // Scroll to submission area
                     document

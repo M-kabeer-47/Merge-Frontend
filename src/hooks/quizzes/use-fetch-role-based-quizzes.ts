@@ -36,7 +36,7 @@ export default function useFetchRoleBasedQuizzes({
     search || "",
     sortBy || null,
     filter || null,
-    sortOrder || "desc",
+    sortOrder || null,
   ];
 
   return useQuery({
@@ -47,7 +47,7 @@ export default function useFetchRoleBasedQuizzes({
       if (sortBy) params.append("sortBy", sortBy);
       if (filter) params.append("filter", filter);
       if (sortOrder) params.append("sortOrder", sortOrder.toUpperCase());
-
+      console.log("params", params);
       const response = await api.get<
         QuizzesResponse<StudentQuiz | InstructorQuiz> | Quiz[]
       >(`${endpoint}?${params.toString()}`);
