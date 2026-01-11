@@ -1,5 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/utils/api";
 import { Note, Folder } from "@/types/note";
 
@@ -9,8 +8,6 @@ interface NoteFilters {
 }
 
 export default function useFetchNotes(filters?: NoteFilters) {
-  const queryClient = useQueryClient();
-
   const fetchNotesData = async (queryParams: string) => {
     const url = `/notes${queryParams ? `?${queryParams}` : ""}`;
     const response = await api.get(url);
@@ -33,22 +30,6 @@ export default function useFetchNotes(filters?: NoteFilters) {
       staleTime: Infinity,
     }
   );
-
-  // Prefetch all subfolders when folders are loaded
-  useEffect(() => {
-    if (!data?.folders) return;
-
-    data.folders.forEach((folder: Folder) => {
-      const params = new URLSearchParams();
-      params.append("folderId", folder.id);
-
-      queryClient.prefetchQuery({
-        queryKey: ["notes", folder.id, ""],
-        queryFn: () => fetchNotesData(params.toString()),
-        staleTime: 2 * 60 * 1000,
-      });
-    });
-  }, [data?.folders, queryClient]);
 
   return {
     notes: (data?.notes as Note[]) || [],
