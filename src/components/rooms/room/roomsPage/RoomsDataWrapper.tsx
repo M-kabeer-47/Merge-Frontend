@@ -6,6 +6,8 @@ import {
 import { getRooms } from "@/server-api/rooms";
 import RoomsList from "./RoomsList";
 
+// Server component prefetches default rooms data for initial page load
+// Filter/search changes are handled by React Query on the client
 export default async function RoomsDataWrapper() {
   const queryClient = new QueryClient();
 

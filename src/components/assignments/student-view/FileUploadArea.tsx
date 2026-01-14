@@ -2,25 +2,20 @@
 
 import React, { useState, useRef } from "react";
 import { Upload, FileText, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { formatFileSize } from "@/utils/file-helpers";
 
 interface FileUploadAreaProps {
   selectedFiles: File[];
   onFilesSelected: (files: File[]) => void;
   onRemoveFile: (index: number) => void;
-  onSubmit: () => void;
   isSubmitted: boolean;
-  isUploading?: boolean;
 }
 
 export default function FileUploadArea({
   selectedFiles,
   onFilesSelected,
   onRemoveFile,
-  onSubmit,
   isSubmitted,
-  isUploading = false,
 }: FileUploadAreaProps) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,12 +46,6 @@ export default function FileUploadArea({
 
   return (
     <div className="pt-4 border-t border-light-border">
-      {isSubmitted && (
-        <p className="text-xs text-para-muted mb-3">
-          You can update your submission before the due date
-        </p>
-      )}
-
       {/* Dropzone */}
       <div
         onDragOver={handleDragOver}
@@ -64,8 +53,8 @@ export default function FileUploadArea({
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-lg p-5 sm:p-6 text-center transition-colors cursor-pointer ${
           isDragging
-            ? "border-primary bg-primary/5"
-            : "border-para-muted hover:border-primary/50 bg-white/5"
+            ? "border-primary "
+            : "border-para-muted hover:border-primary/50"
         }`}
         onClick={() => fileInputRef.current?.click()}
       >
@@ -110,19 +99,6 @@ export default function FileUploadArea({
               </button>
             </div>
           ))}
-
-          <Button
-            onClick={onSubmit}
-            disabled={isUploading}
-            className="w-full mt-2"
-            size="sm"
-          >
-            {isUploading
-              ? "Uploading..."
-              : isSubmitted
-              ? "Update submission"
-              : "Turn in"}
-          </Button>
         </div>
       )}
     </div>

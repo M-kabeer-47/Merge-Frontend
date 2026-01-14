@@ -14,6 +14,34 @@ interface QuizzesResponse {
   quizzes?: Quiz[];
 }
 
+export interface QuizAnswerKeyItem {
+  id: string;
+  text: string;
+  options: string[];
+  correctOption: string;
+  points: number;
+}
+
+export interface QuizAttemptResult {
+  id: string;
+  submittedAt: string;
+  answers: Record<string, string>; // questionId -> selectedAnswer
+  score: number;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image?: string | null;
+  };
+  quiz: {
+    id: string;
+    title: string;
+    totalScore: number;
+  };
+  answerKey: QuizAnswerKeyItem[];
+}
+
 /**
  * Server-side fetch for quizzes with Next.js Data Cache
  * Uses fetchWithAuth for automatic token refresh
@@ -64,6 +92,34 @@ export async function getQuizById(
 
   if (error || !data) {
     console.error("Error fetching quiz:", error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * 
+
+ 
+ * Server-side fetch for student's quiz attempt (for review page)
+ */
+export async function getMyQuizAttempt(
+  quizId: string,
+  roomId: string
+): Promise<QuizAttemptResult | null> {
+  const { data, error } = await getWithAuth<QuizAttemptResult>(
+    `${API_BASE_URL}/quiz/${quizId}/my-attempt?roomId=${roomId}`,
+    {
+      next: {
+        revalidate: 60,
+        tags: ["quiz-attempt", `quiz-attempt-${quizId}`],
+      },
+    }
+  );
+  console.log("Quiz attempt data:", JSON.stringifydata);
+  if (error || !data) {
+    console.error("Error fetching quiz attempt:", error);
     return null;
   }
 

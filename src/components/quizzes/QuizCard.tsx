@@ -13,7 +13,7 @@ import {
   Timer,
   Users,
 } from "lucide-react";
-import type { Quiz, InstructorQuiz, StudentQuiz } from "@/types/quiz";
+import type { Quiz, StudentQuiz } from "@/types/quiz";
 import { isInstructorQuiz, isStudentQuiz } from "@/types/quiz";
 import { Button } from "@/components/ui/Button";
 import DropdownMenu from "@/components/ui/Dropdown";
@@ -27,6 +27,7 @@ interface QuizCardProps {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   onStartQuiz?: (id: string) => void;
+  onReviewQuiz?: (id: string) => void;
 }
 
 export default function QuizCard({
@@ -37,23 +38,24 @@ export default function QuizCard({
   onEdit,
   onDelete,
   onStartQuiz,
+  onReviewQuiz,
 }: QuizCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
-  const isClosed = quiz.status === "closed";
+  const isClosed = quiz.isClosed;
   const isOverdue = new Date() > new Date(quiz.deadline);
 
   const cardBgColor = bgColor || "bg-background";
 
   // Status configuration for student view
-  const getStudentStatusConfig = (status: StudentQuiz["attempt"]["status"]) => {
-    if (status === "completed") {
+  const getStudentStatusConfig = (status: StudentQuiz["submissionStatus"]) => {
+    if (status === "graded") {
       return {
         icon: CheckCircle2,
         iconFill: "#10b981",
         textColor: "text-success",
         bgColor: "bg-success/10",
-        text: "Completed",
+        text: "Graded",
       };
     }
     if (status === "missed" || (isOverdue && status === "pending")) {
@@ -140,65 +142,9 @@ export default function QuizCard({
     <div
       className={`relative border-2 border-primary/20 shadow-lg rounded-2xl overflow-hidden ${cardBgColor} hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group`}
     >
-      {/* Bold gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
-
-      {/* Educational background pattern - Light mode */}
-      <div
-        className="absolute inset-0 opacity-20 dark:opacity-0"
-        style={{
-          backgroundImage: "url(/patterns/card-pattern-light.png)",
-          backgroundSize: "400px 400px",
-          backgroundRepeat: "repeat",
-        }}
-      />
-
-      {/* Educational background pattern - Dark mode */}
-      <div
-        className="absolute inset-0 opacity-0 dark:opacity-15"
-        style={{
-          backgroundImage: "url(/patterns/card-pattern-dark.png)",
-          backgroundSize: "400px 400px",
-          backgroundRepeat: "repeat",
-        }}
-      />
-
-      {/* Colorful left bar */}
       <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-primary via-secondary to-accent" />
 
-      {/* Top wave */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-accent opacity-60" />
-
-      {/* Decorative circles */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 blur-2xl" />
-      <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.08]">
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <circle
-            cx="70"
-            cy="30"
-            r="40"
-            fill="currentColor"
-            className="text-primary"
-          />
-          <circle
-            cx="50"
-            cy="10"
-            r="25"
-            fill="currentColor"
-            className="text-secondary"
-          />
-          <circle
-            cx="85"
-            cy="15"
-            r="15"
-            fill="currentColor"
-            className="text-accent"
-          />
-        </svg>
-      </div>
-
       <div className="relative p-6">
-        {/* Header with background */}
         <div className="flex items-start justify-between mb-4 -mx-6 -mt-6 px-6 pt-6 pb-4 bg-gradient-to-r from-secondary/5 to-transparent border-b border-primary/10">
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3 mb-1">
@@ -206,12 +152,11 @@ export default function QuizCard({
                 {quiz.title}
               </h3>
 
-              {/* Status Badge for Student */}
               {!isInstructor && isStudentQuiz(quiz) && (
                 <>
                   {(() => {
                     const statusConfig = getStudentStatusConfig(
-                      quiz.submissionStatus || quiz.attempt?.status || "pending"
+                      quiz.submissionStatus
                     );
                     const StatusIcon = statusConfig.icon;
                     return (
@@ -233,7 +178,6 @@ export default function QuizCard({
                 </>
               )}
 
-              {/* Three dots menu for Instructor only */}
               {isInstructor && (
                 <div className="relative flex-shrink-0">
                   <button
@@ -274,14 +218,14 @@ export default function QuizCard({
               {/* Show score for student if completed */}
               {!isInstructor &&
                 isStudentQuiz(quiz) &&
-                quiz.attempt.status === "completed" &&
+                quiz.submissionStatus === "graded" &&
                 quiz.attempt.score !== undefined && (
                   <span className="flex items-center gap-1 text-secondary font-semibold">
                     <CheckCircle2
                       className="w-4 h-4 text-white"
                       fill="#8668c0"
                     />
-                    {quiz.attempt.score}/{quiz.attempt.totalPoints}
+                    {quiz.attempt.score}/{quiz.totalPoints}
                   </span>
                 )}
             </div>
@@ -331,15 +275,55 @@ export default function QuizCard({
                 View Details
               </Button>
             ) : (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => onStartQuiz?.(quiz.id)}
-                className="text-xs px-3 py-1.5"
-              >
-                <FileText className="w-4 h-4" />
-                Attempt Quiz
-              </Button>
+              (() => {
+                // Determine the button state for students
+                const isGraded =
+                  isStudentQuiz(quiz) && quiz.submissionStatus === "graded";
+                const isMissed =
+                  isStudentQuiz(quiz) &&
+                  (quiz.submissionStatus === "missed" ||
+                    (isOverdue && quiz.submissionStatus === "pending"));
+
+                if (isGraded) {
+                  return (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => onReviewQuiz?.(quiz.id)}
+                      className="text-xs px-3 py-1.5"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Review Quiz
+                    </Button>
+                  );
+                }
+
+                if (isMissed) {
+                  return (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled
+                      className="text-xs px-3 py-1.5 opacity-50 cursor-not-allowed"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      Missed
+                    </Button>
+                  );
+                }
+
+                return (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => onStartQuiz?.(quiz.id)}
+                    className="text-xs px-3 py-1.5"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Attempt Quiz
+                  </Button>
+                );
+              })()
             )}
           </div>
         </div>

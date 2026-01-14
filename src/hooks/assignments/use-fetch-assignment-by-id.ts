@@ -1,20 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/utils/api";
+import type {
+  StudentAssignment,
+  InstructorAssignment,
+} from "@/types/assignment";
 
-/**
- * Client-side hook to fetch assignment by ID
- */
-export default function useFetchAssignmentById(
-  assignmentId: string,
-  enabled: boolean = true
-) {
-  return useQuery({
-    queryKey: ["assignment", assignmentId],
+interface UseFetchAssignmentByIdParams {
+  assignmentId: string;
+  roomId: string;
+  isInstructor: boolean;
+  enabled?: boolean;
+}
+
+export default function useFetchAssignmentById({
+  assignmentId,
+  roomId,
+  isInstructor,
+  enabled = true,
+}: UseFetchAssignmentByIdParams) {
+  return useQuery<StudentAssignment | InstructorAssignment>({
+    queryKey: [
+      "assignment",
+      assignmentId,
+      isInstructor ? "instructor" : "student",
+    ],
     queryFn: async () => {
-      const response = await api.get(`/assignments/${assignmentId}`);
+      const endpoint = isInstructor
+        ? `/assignments/instructor/${assignmentId}?roomId=${roomId}`
+        : `/assignments/student/${assignmentId}?roomId=${roomId}`;
+
+      const response = await api.get(endpoint);
       return response.data;
     },
     enabled: enabled && !!assignmentId,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: Infinity,
   });
 }

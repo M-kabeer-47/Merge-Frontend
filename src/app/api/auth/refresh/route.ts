@@ -1,44 +1,75 @@
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 /**
- * Route Handler to SET cookies only
- * The refresh logic is done elsewhere, this just receives tokens and sets them
+ * Proxy refresh requests to backend and rewrite cookies for localhost
+ * Works for both local development (proxy mode) and production (token setting mode)
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { accessToken, refreshToken } = body;
+    // Get existing cookies to forward to backend
+    const refreshToken = request.cookies.get("refreshToken")?.value;
 
-    if (!accessToken || !refreshToken) {
-      return NextResponse.json({ error: "Missing tokens" }, { status: 400 });
+    if (!refreshToken) {
+      return NextResponse.json(
+        { message: "No refresh token" },
+        { status: 401 }
+      );
     }
 
-    const cookieStore = await cookies();
-
-    // Set cookies - Route Handlers CAN do this!
-    const cookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax" as const,
-      path: "/",
-    };
-
-    cookieStore.set("accessToken", accessToken, {
-      ...cookieOptions,
-      maxAge: 60 * 60, // 1 hour
+    // Forward request to backend
+    const backendResponse = await fetch(`${BACKEND_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `refreshToken=${refreshToken}`,
+      },
     });
 
-    cookieStore.set("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+    // Get response data
+    const data = await backendResponse.json();
+
+    // Create response
+    const response = NextResponse.json(data, {
+      status: backendResponse.status,
     });
 
-    console.log("[API /auth/refresh] Cookies set successfully");
+    // If successful, extract cookies from backend and rewrite for localhost
+    if (backendResponse.ok) {
+      const setCookieHeaders = backendResponse.headers.getSetCookie();
 
-    return NextResponse.json({ success: true });
+      for (const cookieHeader of setCookieHeaders) {
+        // Parse the cookie
+        const parts = cookieHeader.split(";").map((p) => p.trim());
+        const [nameValue, ...attributes] = parts;
+        const [name, value] = nameValue.split("=");
+
+        // Extract maxAge from original cookie
+        let maxAge = 3600; // Default 1 hour
+        for (const attr of attributes) {
+          if (attr.toLowerCase().startsWith("max-age=")) {
+            maxAge = parseInt(attr.split("=")[1], 10);
+          }
+        }
+
+        // Set cookie with localhost-friendly options
+        response.cookies.set(name, value, {
+          httpOnly: true,
+          secure: false, // localhost uses HTTP
+          sameSite: "lax",
+          path: "/",
+          maxAge,
+        });
+      }
+    }
+
+    return response;
   } catch (error) {
-    console.error("[API /auth/refresh] Error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    console.error("[Proxy] Refresh error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

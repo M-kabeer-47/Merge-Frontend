@@ -92,17 +92,19 @@ export default function useCreateAssignment({
       );
       setAttachmentProgress(progressItems);
 
-      // Upload all attachments (only first one will be used as assignmentUrl)
-      let assignmentUrl = "";
+      // Upload all attachments and build assignmentFiles array
+      const assignmentFiles: { name: string; url: string }[] = [];
 
-      if (attachments.length > 0) {
-        const progressId = progressItems[0].id;
+      for (let i = 0; i < attachments.length; i++) {
+        const file = attachments[i];
+        const progressId = progressItems[i].id;
+
         try {
-          assignmentUrl = await uploadAttachment(
-            attachments[0],
-            data.roomId,
-            progressId
-          );
+          const fileUrl = await uploadAttachment(file, data.roomId, progressId);
+          assignmentFiles.push({
+            name: file.name,
+            url: fileUrl,
+          });
           updateProgress(progressId, { status: "completed", progress: 100 });
         } catch (error) {
           updateProgress(progressId, {
@@ -113,16 +115,26 @@ export default function useCreateAssignment({
         }
       }
 
-      // Create assignment with uploaded URL
-
+      // Create assignment with uploaded files
       const response = await api.post("/assignments/create", {
         ...data,
-        assignmentUrl,
+        assignmentFiles,
       });
       return response.data;
     },
-    onSuccess: (data, { data: assignmentData }) => {
-      // Invalidate assignments query to refresh the list
+    onSuccess: (newAssignment, { data: assignmentData }) => {
+      // Optimistically update all assignment list caches for this room
+      // Match all queries starting with ["assignments", roomId, "instructor"]
+      queryClient.setQueriesData<any[]>(
+        { queryKey: ["assignments", assignmentData.roomId, "instructor"] },
+        (old) => {
+          if (!old) return old;
+          // Add new assignment at the beginning of the list
+          return [newAssignment, ...old];
+        }
+      );
+
+      // Invalidate to ensure data is in sync
       queryClient.invalidateQueries({
         queryKey: ["assignments", assignmentData.roomId],
       });

@@ -1,48 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { X, Copy, Check, Users, Share2 } from "lucide-react";
+import { X, Copy, Check, Users } from "lucide-react";
+import { useRoom } from "@/providers/RoomProvider";
 
 interface InviteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  roomId: string;
   roomName: string;
 }
 
 export default function InviteModal({
   isOpen,
   onClose,
-  roomId,
   roomName,
 }: InviteModalProps) {
   const [copied, setCopied] = useState(false);
+  const { room } = useRoom();
 
-  // Generate a 6-digit code (in production, this should come from backend)
-  const inviteCode = "A7K9M2"; // Mock code - replace with actual API call
+  // Get room code from context
+  const inviteCode = room?.roomCode || "";
 
   if (!isOpen) return null;
 
   const handleCopyCode = async () => {
+    if (!inviteCode) return;
+
     try {
       await navigator.clipboard.writeText(inviteCode);
       setCopied(true);
-      console.log("copyInviteCode", { code: inviteCode, roomId });
-
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy code:", err);
-    }
-  };
-
-  const handleCopyLink = async () => {
-    const inviteLink = `${window.location.origin}/rooms/join?code=${inviteCode}`;
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      console.log("copyInviteLink", { link: inviteLink, roomId });
-      // You can add a toast notification here
-    } catch (err) {
-      console.error("Failed to copy link:", err);
     }
   };
 
@@ -97,8 +86,6 @@ export default function InviteModal({
 
           {/* Content */}
           <div className="p-6 space-y-6">
-            {/* Instructions */}
-
             {/* Invite Code Display */}
             <div>
               <label className="block text-sm font-medium text-heading mb-3">
@@ -106,28 +93,27 @@ export default function InviteModal({
               </label>
               <div className="relative">
                 <div className="bg-main-background border-2 border-primary/20 rounded-lg p-6 text-center">
-                  <div className="text-4xl font-bold text-primary tracking-[0.5em] font-mono">
-                    {inviteCode}
+                  <div className="text-4xl font-bold text-primary tracking-[0.3em] font-mono">
+                    {inviteCode || "------"}
                   </div>
                   <p className="text-xs text-para-muted mt-2">
-                    6-digit access code
+                    Share this code with students
                   </p>
                 </div>
 
                 {/* Copy Button */}
                 <button
                   onClick={handleCopyCode}
+                  disabled={!inviteCode}
                   className={`
                     absolute top-3 right-3 px-2 py-1.5 rounded-lg text-xs font-medium
                     transition-all duration-200 flex items-center gap-2
-                       bg-primary text-white hover:bg-primary/90
+                    bg-primary text-white hover:bg-primary/90 disabled:opacity-50
                   `}
                   aria-label={copied ? "Code copied" : "Copy code"}
                 >
                   {copied ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                    </>
+                    <Check className="w-4 h-4" />
                   ) : (
                     <>
                       <Copy className="w-3 h-3 text-white" strokeWidth={2.5} />
@@ -137,10 +123,6 @@ export default function InviteModal({
                 </button>
               </div>
             </div>
-
-            {/* Additional Options */}
-
-            {/* Share Link Button */}
           </div>
 
           {/* Footer */}

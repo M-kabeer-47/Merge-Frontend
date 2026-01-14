@@ -1,15 +1,22 @@
 "use client";
 
-import { Users, Video, UserPlus } from "lucide-react";
+import { Users, Video, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useRoom } from "@/providers/RoomProvider";
 
 interface RoomHeaderProps {
   onInviteClick: () => void;
+  onJoinRequestsClick?: () => void;
+  pendingRequestsCount?: number;
 }
 
-export default function RoomHeader({ onInviteClick }: RoomHeaderProps) {
-  const { room } = useRoom();
+export default function RoomHeader({
+  onInviteClick,
+  onJoinRequestsClick,
+  pendingRequestsCount = 0,
+}: RoomHeaderProps) {
+  const { room, userRole } = useRoom();
+  const isInstructor = userRole === "instructor";
 
   if (!room) return null;
 
@@ -38,6 +45,25 @@ export default function RoomHeader({ onInviteClick }: RoomHeaderProps) {
             <Video className="h-4 w-4" />
             <span className="hidden md:inline ml-2">Start a live session</span>
           </Button>
+
+          {/* Join Requests - Instructor Only */}
+          {isInstructor && onJoinRequestsClick && (
+            <Button
+              variant="outline"
+              className="px-3 md:px-4 relative"
+              aria-label="View join requests"
+              onClick={onJoinRequestsClick}
+            >
+              <UserCheck className="h-4 w-4" />
+              <span className="hidden md:inline ml-2">Requests</span>
+              {pendingRequestsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-destructive text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
+                </span>
+              )}
+            </Button>
+          )}
+
           <Button
             className="px-3 md:px-4"
             aria-label="Invite participants"

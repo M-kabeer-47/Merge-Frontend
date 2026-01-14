@@ -7,6 +7,11 @@ interface QueueItem {
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+// Use NEXT_PUBLIC_ prefix so it's available on client-side
+// Set NEXT_PUBLIC_USE_AUTH_PROXY=true in .env.local for development
+const USE_API_PROXY =
+  process.env.NEXT_PUBLIC_USE_AUTH_PROXY === "true" || false;
+
 let isRefreshing = false;
 let failedQueue: QueueItem[] = [];
 
@@ -22,10 +27,10 @@ const processQueue = (error: Error | null = null) => {
 };
 
 // Create axios instance
-// Use /api prefix which gets proxied to backend via Next.js rewrites
-// This makes cookies same-origin so they work properly
+// In development with proxy enabled, all requests go through /api/*
+// In production, requests go directly to backend
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: USE_API_PROXY ? "/api" : BASE_URL,
   withCredentials: true,
 });
 

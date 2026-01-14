@@ -9,7 +9,7 @@ import QuizQuestionDisplay from "./attempt/QuizQuestionDisplay";
 import QuizAnswerOptions from "./attempt/QuizAnswerOptions";
 import QuizNavigationButtons from "./attempt/QuizNavigationButtons";
 import QuizNavigatorSidebar from "./attempt/QuizNavigatorSidebar";
-import QuizSubmitConfirmModal from "./attempt/QuizSubmitConfirmModal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import QuizCompletionScreen from "./attempt/QuizCompletionScreen";
 
 interface QuizAttemptClientProps {
@@ -36,14 +36,14 @@ export default function QuizAttemptClient({ quiz }: QuizAttemptClientProps) {
   });
 
   // Submit quiz
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     setShowConfirmSubmit(false);
     await attemptQuiz({
       quizId,
       roomId,
       answers,
     });
-  }, [attemptQuiz, quizId, roomId, answers]);
+  };
 
   // Timer countdown
   useEffect(() => {
@@ -108,7 +108,7 @@ export default function QuizAttemptClient({ quiz }: QuizAttemptClientProps) {
         currentQuestionIndex={currentQuestionIndex}
         totalQuestions={quiz.questions.length}
         timeRemaining={timeRemaining}
-        onExit={handleExit}
+        backHref={`/rooms/${roomId}/quizzes`}
       />
 
       <main className="flex-1 flex flex-col lg:flex-row">
@@ -147,13 +147,23 @@ export default function QuizAttemptClient({ quiz }: QuizAttemptClientProps) {
         />
       </main>
 
-      <QuizSubmitConfirmModal
+      <ConfirmDialog
         isOpen={showConfirmSubmit}
-        answeredCount={Object.keys(answers).length}
-        totalQuestions={quiz.questions.length}
-        isSubmitting={isSubmitting}
+        onClose={() => setShowConfirmSubmit(false)}
         onConfirm={handleSubmit}
-        onCancel={() => setShowConfirmSubmit(false)}
+        title="Submit Quiz"
+        message={
+          Object.keys(answers).length < quiz.questions.length
+            ? `You have ${
+                quiz.questions.length - Object.keys(answers).length
+              } unanswered questions. Are you sure you want to submit`
+            : "Once submitted, you cannot change your answers. Are you sure you want to submit"
+        }
+        itemName="this quiz"
+        confirmText="Submit"
+        cancelText="Cancel"
+        isLoading={isSubmitting}
+        variant="default"
       />
     </div>
   );

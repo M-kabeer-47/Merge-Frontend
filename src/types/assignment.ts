@@ -2,7 +2,12 @@
 
 export type AssignmentStatus = "published" | "draft" | "closed";
 
-export type SubmissionStatus = "pending" | "submitted" | "graded" | "missed";
+export type SubmissionStatus =
+  | "pending"
+  | "completed"
+  | "graded"
+  | "missed"
+  | "submitted";
 
 export type AssignmentSortOption = "dueDate" | "points" | "title" | "status";
 
@@ -44,9 +49,12 @@ export interface StudentSubmission {
   id: string;
   submittedAt?: Date;
   status: SubmissionStatus;
-  grade?: number;
+  submitAt?: Date;
+  score?: number;
   feedback?: string;
   attachments?: AssignmentAttachment[];
+  files?: { name: string; url: string }[]; // From API attempt response
+  note?: string;
 }
 
 export interface BaseAssignment {
@@ -57,21 +65,53 @@ export interface BaseAssignment {
   createdAt: Date;
   dueDate: Date;
   endAt: Date;
+  isTurnInLateEnabled: boolean;
+  isClosed: boolean;
   points: number;
   totalScore: number;
-  attachments?: AssignmentAttachment[];
+  attachmentUrls?: string[];
+  assignmentFiles?: { name: string; url: string }[];
 }
 
-// For instructor view - includes attempt stats from API
+// Attempt from instructor view
+export interface InstructorAttempt {
+  id: string;
+  submitAt: string;
+  score: number | null;
+  files: { name: string; url: string }[];
+  note: string | null;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image: string | null;
+  };
+}
+
+// Paginated attempts response
+export interface AttemptsResponse {
+  data: InstructorAttempt[];
+  total: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+// For instructor view - includes attempt stats and attempts list from API
 export interface InstructorAssignment extends BaseAssignment {
+  status: "needs_grading" | "graded" | "no_attempts";
   totalAttempts: number;
   gradedAttempts: number;
   ungradedAttempts: number;
+  attempts: AttemptsResponse;
 }
 
 // For student view - includes flattened submission fields for convenience
 export interface StudentAssignment extends BaseAssignment {
   submissionStatus?: SubmissionStatus;
+  note?: string;
+
+  attempt?: StudentSubmission;
 }
 
 // Union type for general use

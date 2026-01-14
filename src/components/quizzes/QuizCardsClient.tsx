@@ -97,6 +97,10 @@ export default function QuizCardsClient({
     router.push(`/rooms/${roomId}/quizzes/${id}/attempt`);
   };
 
+  const handleReviewQuiz = (id: string) => {
+    router.push(`/rooms/${roomId}/quizzes/${id}/review`);
+  };
+
   const handleCreateQuiz = () => {
     router.push(`/rooms/${roomId}/quizzes/create`);
   };
@@ -146,6 +150,7 @@ export default function QuizCardsClient({
           onEdit={handleEdit}
           onDelete={handleDelete}
           onStartQuiz={handleStartQuiz}
+          onReviewQuiz={handleReviewQuiz}
         />
       ))}
     </div>

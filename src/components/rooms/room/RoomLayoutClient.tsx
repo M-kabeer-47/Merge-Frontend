@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 import ProfessionalTabs from "@/components/rooms/room/Tabs";
 import InviteModal from "@/components/rooms/modals/InviteModal";
+import { JoinRequestsModal } from "@/components/rooms/join-requests";
 import RoomHeader from "@/components/rooms/RoomHeader";
 import RoomHeaderSkeleton from "@/components/rooms/RoomHeaderSkeleton";
 import { useRoom } from "@/providers/RoomProvider";
 import RoomError from "@/components/rooms/Error";
+import useFetchJoinRequests from "@/hooks/rooms/use-fetch-join-requests";
 
 const TABS = [
   {
@@ -85,11 +87,21 @@ export default function RoomLayoutClient({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(ACTIVE_TAB);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isJoinRequestsModalOpen, setIsJoinRequestsModalOpen] = useState(false);
   const params = useParams();
   const id = (params?.id as string) ?? "";
 
   // Get room data from context
-  const { room } = useRoom();
+  const { room, userRole } = useRoom();
+  const isInstructor = userRole === "instructor";
+
+  // Fetch join requests for instructors
+  const { data: joinRequests } = useFetchJoinRequests({
+    roomId: id,
+    enabled: isInstructor,
+  });
+  const pendingRequestsCount =
+    joinRequests?.filter((r) => r.status === "pending").length ?? 0;
 
   // Update active tab based on current route
   useEffect(() => {
@@ -129,7 +141,11 @@ export default function RoomLayoutClient({
     <div className="flex flex-col h-full bg-main-background">
       {/* Room Header */}
 
-      <RoomHeader onInviteClick={() => setIsInviteModalOpen(true)} />
+      <RoomHeader
+        onInviteClick={() => setIsInviteModalOpen(true)}
+        onJoinRequestsClick={() => setIsJoinRequestsModalOpen(true)}
+        pendingRequestsCount={pendingRequestsCount}
+      />
 
       {/* Tab Bar */}
       <div className="bg-background">
@@ -158,6 +174,15 @@ export default function RoomLayoutClient({
         <InviteModal
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
+          roomName={room.title}
+        />
+      )}
+
+      {/* Join Requests Modal - Instructor Only */}
+      {room && isInstructor && (
+        <JoinRequestsModal
+          isOpen={isJoinRequestsModalOpen}
+          onClose={() => setIsJoinRequestsModalOpen(false)}
           roomId={id}
           roomName={room.title}
         />

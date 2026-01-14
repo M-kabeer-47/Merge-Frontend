@@ -1,43 +1,73 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import type { StudentAssignment } from "@/types/assignment";
-import { isStudentAssignment } from "@/types/assignment";
+import {
+  isStudentAssignment,
+  isInstructorAssignment,
+} from "@/types/assignment";
 import { Button } from "@/components/ui/Button";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import AssignmentDetailSkeleton from "@/components/ui/skeletons/AssignmentDetailSkeleton";
 import StudentAssignmentView from "@/components/assignments/StudentAssignmentView";
 import InstructorAssignmentView from "@/components/assignments/InstructorAssignmentView";
+import AssignmentHeader from "@/components/assignments/AssignmentHeader";
 import { useAuth } from "@/providers/AuthProvider";
 import useFetchAssignmentById from "@/hooks/assignments/use-fetch-assignment-by-id";
+import useSubmitAssignment from "@/hooks/assignments/use-submit-assignment";
+import useDeleteAssignmentAttempt from "@/hooks/assignments/use-delete-assignment-attempt";
 import { useRoom } from "@/providers/RoomProvider";
 
 export default function AssignmentDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, isLoading: isAuthLoading } = useAuth();
 
   const assignmentId = params ? (params.assignmentId as string) : "";
   const roomId = params ? (params.id as string) : "";
 
-  // Get role from authenticated user
+  // File selection state (lifted from sidebar)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [comment, setComment] = useState("");
+
+  // State for previously submitted files (can be edited after undo turn in)
+  const [submittedFiles, setSubmittedFiles] = useState<
+    { name: string; url: string }[]
+  >([]);
+
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { userRole } = useRoom();
   const isInstructor = userRole === "instructor" || userRole === "moderator";
-  console.log("userRole", userRole);
 
-  // Fetch assignment data from API
+  // Fetch assignment data from API based on role
   const { data: assignment, isLoading: isAssignmentLoading } =
-    useFetchAssignmentById(assignmentId, !!assignmentId);
-  console.log("submissionStatus", assignment?.submissionStatus);
+    useFetchAssignmentById({
+      assignmentId,
+      roomId,
+      isInstructor,
+      enabled: !!assignmentId,
+    });
+  const { submitAssignment, isSubmitting } = useSubmitAssignment();
+  const { deleteAttempt, isDeleting } = useDeleteAssignmentAttempt();
   const isLoading = isAuthLoading || isAssignmentLoading;
 
-  // Show loading state
+  // Sync submitted files and comment from loaded assignment data
+  useEffect(() => {
+    if (assignment && isStudentAssignment(assignment)) {
+      // Set comment from attempt note
+      if (assignment.attempt?.note) {
+        setComment(assignment.attempt.note);
+      }
+      // Set submitted files from attempt
+      if (assignment.attempt?.files) {
+        setSubmittedFiles(assignment.attempt.files);
+      } else {
+        setSubmittedFiles([]);
+      }
+    }
+  }, [assignment]);
+
   if (isLoading) {
-    return (
-      <div className="h-full flex items-center justify-center bg-main-background">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <AssignmentDetailSkeleton isInstructor={isInstructor} />;
   }
 
   // Redirect to login if not authenticated
@@ -45,7 +75,6 @@ export default function AssignmentDetailsPage() {
     router.push("/sign-in");
     return null;
   }
-
   if (!assignment) {
     return (
       <div className="h-full flex items-center justify-center bg-main-background">
@@ -67,106 +96,102 @@ export default function AssignmentDetailsPage() {
     );
   }
 
-  const isOverdue = new Date() > new Date(assignment.endAt);
-  const submission = isStudentAssignment(assignment)
-    ? assignment.submissionStatus
-    : null;
+  // Delete attempt hook (undo turn in)
 
-  // Format dates
-  const formatDueDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+  // Calculate submission-related states
+  const isPastDue = new Date() > new Date(assignment.endAt);
+  const isClosed = assignment.isClosed;
+
+  // canSubmit: not closed AND (not past due OR can turn in late)
+  const canSubmit =
+    !isClosed && (!isPastDue || (isPastDue && assignment.isTurnInLateEnabled));
+
+  const submissionStatus = isStudentAssignment(assignment)
+    ? assignment.submissionStatus
+    : undefined;
+
+  const attempt = isStudentAssignment(assignment) ? assignment.attempt : null;
+
+  const handleBack = () => {
+    router.push(`/rooms/${roomId}/assignments`);
+  };
+
+  // Submit with files from state (files are optional)
+  const handleTurnIn = async () => {
+    if (selectedFiles.length === 0 && assignment.attempt?.files.length === 0) {
+      document
+        .querySelector('[data-sidebar="your-work"]')
+        ?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    await submitAssignment({
+      assignmentId,
+      roomId,
+      files: selectedFiles,
+      filesAlreadyUploaded: assignment?.attempt.files,
+      note: comment,
     });
   };
 
-  const handleSubmit = (files: File[], comment: string) => {
-    console.log("Submitting files:", files, "with comment:", comment);
-    // TODO: Implement actual submission logic using upload utility
+  // Undo turn in (delete attempt)
+  const handleUndoTurnIn = async () => {
+    if (!attempt) return;
+
+    await deleteAttempt({
+      assignmentId,
+      attemptId: attempt.id,
+      roomId,
+    });
+  };
+
+  // File handlers for sidebar
+  const handleFilesSelected = (files: File[]) => {
+    setSelectedFiles((prev) => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Handler to remove previously submitted files (after undo turn in)
+  const handleRemoveSubmittedFile = (index: number) => {
+    setSubmittedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
     <div className="h-full flex flex-col bg-main-background">
       {/* Header */}
-      <div className="px-4 sm:px-6 py-4 border-b border-light-border">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(`/rooms/${roomId}/assignments`)}
-          className="flex items-center gap-2 text-para hover:text-heading -ml-2 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Assignments
-        </Button>
-
-        <div className="flex items-start justify-between gap-6">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-heading mb-2">
-              {assignment.title}
-            </h1>
-            <p className="text-para text-sm">
-              {assignment.author.firstName} {assignment.author.lastName} •{" "}
-              {assignment.totalScore} points
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="text-right">
-              <p className="text-xs text-para-muted mb-1">Due</p>
-              <p
-                className={`text-sm font-semibold ${
-                  isOverdue ? "text-destructive" : "text-heading"
-                }`}
-              >
-                {formatDueDate(assignment.endAt)}
-              </p>
-            </div>
-
-            {!isInstructor &&
-              assignment.submissionStatus === "graded" &&
-              assignment.grade !== undefined && (
-                <div className="text-right">
-                  <p className="text-xs text-para-muted mb-1">Your Grade</p>
-                  <p className="text-sm font-semibold text-heading">
-                    {assignment.grade}/{assignment.totalScore}
-                  </p>
-                </div>
-              )}
-
-            {/* Turn In Button for Students */}
-            {!isInstructor &&
-              (assignment.submissionStatus === "pending" ||
-                (assignment.submissionStatus === "missed" &&
-                  assignment.isTurnInLateEnabled)) && (
-                <Button
-                  className="w-[300px]"
-                  onClick={() => {
-                    // Scroll to submission area
-                    document
-                      .querySelector('[data-sidebar="your-work"]')
-                      ?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  Turn In
-                </Button>
-              )}
-          </div>
-        </div>
-      </div>
+      <AssignmentHeader
+        assignment={assignment}
+        isInstructor={isInstructor}
+        submissionStatus={submissionStatus}
+        canSubmit={canSubmit}
+        onBack={handleBack}
+        onTurnIn={isInstructor ? undefined : handleTurnIn}
+        onUndoTurnIn={isInstructor ? undefined : handleUndoTurnIn}
+        isSubmitting={isSubmitting}
+        isDeleting={isDeleting}
+        hasFiles={selectedFiles.length > 0 || submittedFiles.length > 0}
+        isPastDue={isPastDue}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto pb-6">
         <div className="flex flex-col lg:flex-row gap-6 px-4 sm:px-6 py-4">
-          {isInstructor ? (
+          {isInstructorAssignment(assignment) ? (
             <InstructorAssignmentView assignment={assignment} />
           ) : (
             <StudentAssignmentView
               assignment={assignment as StudentAssignment}
-              isOverdue={isOverdue}
-              onSubmit={handleSubmit}
+              canSubmit={canSubmit}
+              selectedFiles={selectedFiles}
+              comment={comment}
+              onFilesSelected={handleFilesSelected}
+              onRemoveFile={handleRemoveFile}
+              onCommentChange={setComment}
+              submittedFiles={submittedFiles}
+              onRemoveSubmittedFile={handleRemoveSubmittedFile}
             />
           )}
         </div>

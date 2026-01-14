@@ -27,58 +27,49 @@ export default function AttachmentsSection({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const formatFileSize = useCallback((bytes: number): string => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
-  }, []);
+  };
 
-  const handleFileSelect = useCallback(
-    (files: FileList | null) => {
-      if (!files) return;
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return;
 
-      const newFiles = Array.from(files);
-      const maxSizeBytes = maxFileSizeMB * 1024 * 1024;
+    const newFiles = Array.from(files);
+    const maxSizeBytes = maxFileSizeMB * 1024 * 1024;
 
-      const validFiles = newFiles.filter((file) => {
-        if (file.size > maxSizeBytes) {
-          console.warn(`File ${file.name} exceeds ${maxFileSizeMB}MB limit`);
-          return false;
-        }
-        return true;
-      });
+    const validFiles = newFiles.filter((file) => {
+      if (file.size > maxSizeBytes) {
+        console.warn(`File ${file.name} exceeds ${maxFileSizeMB}MB limit`);
+        return false;
+      }
+      return true;
+    });
 
-      onAttachmentsChange([...attachments, ...validFiles]);
-    },
-    [attachments, maxFileSizeMB, onAttachmentsChange]
-  );
+    onAttachmentsChange([...attachments, ...validFiles]);
+  };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      handleFileSelect(e.dataTransfer.files);
-    },
-    [handleFileSelect]
-  );
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFileSelect(e.dataTransfer.files);
+  };
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleDragLeave = useCallback(() => {
+  const handleDragLeave = () => {
     setIsDragging(false);
-  }, []);
+  };
 
-  const removeAttachment = useCallback(
-    (index: number) => {
-      onAttachmentsChange(attachments.filter((_, i) => i !== index));
-    },
-    [attachments, onAttachmentsChange]
-  );
+  const removeAttachment = (index: number) => {
+    onAttachmentsChange(attachments.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="bg-main-background border border-light-border rounded-xl p-6 space-y-6">

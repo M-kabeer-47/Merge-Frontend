@@ -50,8 +50,7 @@ export default function QuizzesList({
       router.push(`/rooms/${roomId}/quizzes/${id}/submissions`);
     } else {
       const studentQuiz = quiz as StudentQuiz;
-      const status =
-        studentQuiz.submissionStatus || studentQuiz.attempt?.status;
+      const status = studentQuiz.submissionStatus;
       if (status === "completed") {
         router.push(`/rooms/${roomId}/quizzes/${id}/review`);
       } else {
@@ -75,6 +74,10 @@ export default function QuizzesList({
     router.push(`/rooms/${roomId}/quizzes/${id}/attempt`);
   };
 
+  const handleReviewQuiz = (id: string) => {
+    router.push(`/rooms/${roomId}/quizzes/${id}/review`);
+  };
+
   const handleClearFilters = () => {
     router.push(`/rooms/${roomId}/quizzes`);
   };
@@ -83,14 +86,13 @@ export default function QuizzesList({
     router.push(`/rooms/${roomId}/quizzes/create`);
   };
 
+  const isEmpty = quizzes.length === 0;
+  const hasSearchTerm = search && search.trim().length > 0;
+  const hasActiveFilter = filter && filter !== "all";
   // Show skeleton while loading or role is not yet determined
   if (isLoading || !userRole) {
     return <QuizCardsSkeleton />;
   }
-
-  const isEmpty = quizzes.length === 0;
-  const hasSearchTerm = search && search.trim().length > 0;
-  const hasActiveFilter = filter && filter !== "all";
 
   // Empty state
   if (isEmpty) {
@@ -149,6 +151,7 @@ export default function QuizzesList({
             isInstructor={false}
             onViewDetails={handleViewDetails}
             onStartQuiz={handleStartQuiz}
+            onReviewQuiz={handleReviewQuiz}
           />
         ))}
       </div>

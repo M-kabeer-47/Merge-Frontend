@@ -30,7 +30,7 @@ export default function AssignmentCard({
   onEdit,
   onDelete,
 }: AssignmentCardProps) {
-  const isClosed = assignment.status === "closed";
+  const isClosed = assignment.isClosed;
   const cardBgColor = bgColor || "bg-background";
 
   // Type-safe access to student-specific fields
@@ -75,7 +75,7 @@ export default function AssignmentCard({
               endAt={assignment.endAt}
               isInstructor={isInstructor}
               submissionStatus={studentAssignment?.submissionStatus}
-              grade={studentAssignment?.grade}
+              grade={studentAssignment?.score}
             />
           </div>
         </div>
@@ -123,12 +123,6 @@ export default function AssignmentCard({
             </Button>
           </div>
         </div>
-
-        {/* Attachments */}
-        <AssignmentAttachments
-          attachments={assignment.attachments || []}
-          isInstructor={isInstructor}
-        />
       </div>
     </div>
   );

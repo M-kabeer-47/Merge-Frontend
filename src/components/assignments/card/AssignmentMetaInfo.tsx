@@ -23,11 +23,12 @@ export default function AssignmentMetaInfo({
         <Icon src="/icons/trophy.jpg" alt="Points" />
         {totalScore} points
       </span>
-
-      <span className="flex items-center gap-1">
-        <Icon src="/icons/timer.png" alt="Due date" />
-        {formatDueDate(endAt)}
-      </span>
+      {(submissionStatus === "pending" || submissionStatus === "missed") && (
+        <span className="flex items-center gap-1">
+          <Icon src="/icons/timer.png" alt="Due date" />
+          {formatDueDate(endAt)}
+        </span>
+      )}
 
       {/* Show grade for student if graded */}
       {!isInstructor &&

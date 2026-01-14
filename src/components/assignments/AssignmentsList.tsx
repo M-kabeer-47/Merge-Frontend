@@ -50,7 +50,7 @@ export default function AssignmentsList({
   };
 
   const handleViewResponses = (id: string) => {
-    router.push(`/rooms/${roomId}/assignments/${id}/submissions`);
+    router.push(`/rooms/${roomId}/assignments/${id}`);
   };
 
   const handleEdit = (id: string) => {

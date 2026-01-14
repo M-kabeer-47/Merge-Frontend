@@ -107,7 +107,7 @@ export default function QuizListClient({
   );
 
   // Client-side filtering for status (not sent to API)
-  const filteredQuizzes = React.useMemo(() => {
+  const filteredQuizzes = () => {
     if (activeFilter === "all") return quizzes;
 
     return quizzes.filter((item) => {
@@ -140,8 +140,7 @@ export default function QuizListClient({
         }
       }
     });
-  }, [quizzes, activeFilter, isInstructor]);
-
+  };
   // Handlers
   const handleViewDetails = (id: string) => {
     handleRouteChange(`/rooms/${roomId}/quizzes/${id}`);
@@ -159,6 +158,10 @@ export default function QuizListClient({
 
   const handleStartQuiz = (id: string) => {
     handleRouteChange(`/rooms/${roomId}/quizzes/${id}/attempt`);
+  };
+
+  const handleReviewQuiz = (id: string) => {
+    handleRouteChange(`/rooms/${roomId}/quizzes/${id}/review`);
   };
 
   const handleCreateQuiz = () => {
@@ -293,6 +296,7 @@ export default function QuizListClient({
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onStartQuiz={handleStartQuiz}
+                onReviewQuiz={handleReviewQuiz}
               />
             ))}
           </div>

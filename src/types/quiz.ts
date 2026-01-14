@@ -1,15 +1,13 @@
 // Quiz Types for Quiz Module
 
-export type QuizStatus = "published" | "draft" | "closed";
-
-export type QuizAttemptStatus = "pending" | "completed" | "missed";
+export type QuizAttemptStatus = "pending" | "graded" | "missed";
 
 export type QuizSortOption = "endAt" | "createdAt" | "totalScore";
 
 export type QuizFilterType =
   | "all"
   | "pending"
-  | "completed"
+  | "graded"
   | "missed"
   | "active"
   | "closed";
@@ -61,7 +59,7 @@ export interface BaseQuiz {
   createdAt: Date;
   deadline: Date;
   timeLimitMin: number; // Time limit in minutes
-  status: QuizStatus;
+  isClosed: boolean;
   questions: QuizQuestion[];
   totalPoints: number; // Sum of all question points
 }

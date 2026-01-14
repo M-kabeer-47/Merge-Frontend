@@ -1,44 +1,60 @@
 import type { StudentAssignment } from "@/types/assignment";
 import InstructionsSection from "./student-view/InstructionsSection";
-import ResourcesSection from "./student-view/ResourcesSection";
 import FeedbackSection from "./student-view/FeedbackSection";
 import YourWorkSidebar from "./student-view/YourWorkSidebar";
 
 interface StudentAssignmentViewProps {
   assignment: StudentAssignment;
-  isOverdue: boolean;
-  onSubmit: (files: File[], comment: string) => void;
-  isUploading?: boolean;
+  canSubmit: boolean;
+  selectedFiles: File[];
+  comment: string;
+  onFilesSelected: (files: File[]) => void;
+  onRemoveFile: (index: number) => void;
+  onCommentChange: (comment: string) => void;
+  // For managing submitted files after undo turn in
+  submittedFiles?: { name: string; url: string }[];
+  onRemoveSubmittedFile?: (index: number) => void;
 }
 
 export default function StudentAssignmentView({
   assignment,
-  isOverdue,
-  onSubmit,
-  isUploading = false,
+  canSubmit,
+  selectedFiles,
+  comment,
+  onFilesSelected,
+  onRemoveFile,
+  onCommentChange,
+  submittedFiles,
+  onRemoveSubmittedFile,
 }: StudentAssignmentViewProps) {
-  const submission = assignment.submission;
+  const attempt = assignment.attempt;
   const submissionStatus = assignment.submissionStatus;
-  const isGraded = submission?.status === "graded";
+  const isGraded = submissionStatus === "graded";
 
   return (
     <>
       {/* Left Column - Main Content */}
       <div className="flex-1 min-w-0 space-y-6">
-        <InstructionsSection description={assignment.description} />
+        <InstructionsSection
+          description={assignment.description}
+          assignmentFiles={assignment.assignmentFiles}
+        />
 
-        <ResourcesSection attachments={assignment.attachments} />
-
-        <FeedbackSection feedback={submission?.feedback} isGraded={isGraded} />
+        <FeedbackSection feedback={attempt?.feedback} isGraded={isGraded} />
       </div>
 
       {/* Right Column - Your Work Sidebar */}
       <YourWorkSidebar
-        submission={submission}
+        attempt={attempt}
         submissionStatus={submissionStatus}
-        isOverdue={isOverdue}
-        onSubmit={onSubmit}
-        isUploading={isUploading}
+        canSubmit={canSubmit}
+        selectedFiles={selectedFiles}
+        comment={comment}
+        onFilesSelected={onFilesSelected}
+        onRemoveFile={onRemoveFile}
+        onCommentChange={onCommentChange}
+        submittedFiles={submittedFiles}
+        onRemoveSubmittedFile={onRemoveSubmittedFile}
       />
     </>
   );

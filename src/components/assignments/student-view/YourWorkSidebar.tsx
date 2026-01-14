@@ -1,46 +1,45 @@
 "use client";
 
-import { useState } from "react";
 import type { StudentSubmission, SubmissionStatus } from "@/types/assignment";
-import SubmissionStatusBadge from "./SubmissionStatusBadge";
+
 import SubmittedFilesSection from "./SubmittedFilesSection";
 import FileUploadArea from "./FileUploadArea";
 
 interface YourWorkSidebarProps {
-  submission?: StudentSubmission;
-  submissionStatus: SubmissionStatus;
-  isOverdue: boolean;
-  onSubmit: (files: File[], comment: string) => void;
-  isUploading?: boolean;
+  attempt?: StudentSubmission;
+  submissionStatus?: SubmissionStatus;
+  canSubmit: boolean;
+  selectedFiles: File[];
+  comment: string;
+  onFilesSelected: (files: File[]) => void;
+  onRemoveFile: (index: number) => void;
+  onCommentChange: (comment: string) => void;
+  // For removing submitted files after undo turn in
+  submittedFiles?: { name: string; url: string }[];
+  onRemoveSubmittedFile?: (index: number) => void;
 }
 
 export default function YourWorkSidebar({
-  submission,
+  attempt,
   submissionStatus,
-  isOverdue,
-  onSubmit,
-  isUploading = false,
+  canSubmit,
+  selectedFiles,
+  comment,
+  onFilesSelected,
+  onRemoveFile,
+  onCommentChange,
+  submittedFiles,
+  onRemoveSubmittedFile,
 }: YourWorkSidebarProps) {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [comment, setComment] = useState("");
-
-  const canSubmit = submissionStatus !== "missed" && !isOverdue;
   const isSubmitted =
     submissionStatus === "submitted" || submissionStatus === "graded";
 
-  const handleFilesSelected = (files: File[]) => {
-    setSelectedFiles((prev) => [...prev, ...files]);
-  };
+  // Use submittedFiles prop if provided (for editable mode), otherwise use attempt files
+  const filesToShow = submittedFiles ?? attempt?.files;
 
-  const handleRemoveFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = () => {
-    onSubmit(selectedFiles, comment);
-    setSelectedFiles([]);
-    setComment("");
-  };
+  // Can remove submitted files only when canSubmit is true (undo mode)
+  const canRemoveSubmittedFiles =
+    canSubmit && !isSubmitted && !!onRemoveSubmittedFile;
 
   return (
     <div className="w-full lg:w-[380px] flex-shrink-0" data-sidebar="your-work">
@@ -48,16 +47,14 @@ export default function YourWorkSidebar({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-heading">Your Work</h3>
-          <SubmissionStatusBadge
-            status={submissionStatus}
-            isOverdue={isOverdue}
-          />
         </div>
 
         {/* Previously Submitted Files */}
         <SubmittedFilesSection
-          attachments={submission?.attachments}
-          submittedAt={submission?.submittedAt}
+          files={filesToShow}
+          submittedAt={isSubmitted ? attempt?.submitAt : undefined}
+          canRemove={canRemoveSubmittedFiles}
+          onRemoveFile={onRemoveSubmittedFile}
         />
 
         {/* Comment Section */}
@@ -68,9 +65,9 @@ export default function YourWorkSidebar({
             </label>
             <textarea
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={(e) => onCommentChange(e.target.value)}
               placeholder="Add any comments or notes about your submission..."
-              className="w-full px-3 py-2 bg-white/10 border border-light-border rounded-lg text-para placeholder-para-muted/50 placeholder:text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none text-sm"
+              className="w-full px-3 py-2 border border-light-border rounded-lg text-para placeholder-para-muted/50 placeholder:text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none text-sm"
               rows={3}
             />
           </div>
@@ -80,19 +77,32 @@ export default function YourWorkSidebar({
         {canSubmit && (
           <FileUploadArea
             selectedFiles={selectedFiles}
-            onFilesSelected={handleFilesSelected}
-            onRemoveFile={handleRemoveFile}
-            onSubmit={handleSubmit}
+            onFilesSelected={onFilesSelected}
+            onRemoveFile={onRemoveFile}
             isSubmitted={isSubmitted}
-            isUploading={isUploading}
           />
         )}
 
-        {/* Overdue Message */}
-        {isOverdue && submissionStatus === "pending" && (
+        {/* Selected Files Count */}
+        {selectedFiles.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-light-border">
+            <p className="text-sm text-para">
+              <span className="font-medium text-heading">
+                {selectedFiles.length}
+              </span>{" "}
+              new file{selectedFiles.length !== 1 ? "s" : ""} selected
+            </p>
+            <p className="text-xs text-para-muted mt-1">
+              Click "Turn In" in the header to submit
+            </p>
+          </div>
+        )}
+
+        {/* Cannot Submit Message */}
+        {!canSubmit && submissionStatus !== "missed" && (
           <div className="pt-4 border-t border-light-border">
             <p className="text-sm text-destructive">
-              Assignment overdue. Submissions no longer accepted.
+              Assignment closed. Submissions no longer accepted.
             </p>
           </div>
         )}
