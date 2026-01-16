@@ -4,7 +4,7 @@ import ToggleSwitch from "@/components/navbar/DarkModeToggle";
 import NotificationDropdown from "@/components/navbar/Notifications";
 import ProfileDropdown from "@/components/navbar/ProfileDropdown";
 import useLogout from "@/hooks/auth/use-logout";
-
+import Image from "next/image";
 interface NavbarProps {
   notificationCount?: number;
 }
@@ -62,7 +62,6 @@ export default function Navbar({ notificationCount = 3 }: NavbarProps) {
             onViewAll={handleViewAllNotifications}
             onMarkAllRead={handleMarkAllRead}
           />
-
           {/* User Profile Dropdown */}
           <ProfileDropdown
             onSignOut={logout}

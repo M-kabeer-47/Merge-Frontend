@@ -1,5 +1,6 @@
 "use client";
 
+import { Trophy } from "lucide-react";
 import type { StudentSubmission, SubmissionStatus } from "@/types/assignment";
 
 import SubmittedFilesSection from "./SubmittedFilesSection";
@@ -17,6 +18,8 @@ interface YourWorkSidebarProps {
   // For removing submitted files after undo turn in
   submittedFiles?: { name: string; url: string }[];
   onRemoveSubmittedFile?: (index: number) => void;
+  // For displaying grade
+  totalScore?: number;
 }
 
 export default function YourWorkSidebar({
@@ -30,9 +33,12 @@ export default function YourWorkSidebar({
   onCommentChange,
   submittedFiles,
   onRemoveSubmittedFile,
+  totalScore,
 }: YourWorkSidebarProps) {
   const isSubmitted =
     submissionStatus === "submitted" || submissionStatus === "graded";
+  const isGraded = submissionStatus === "graded";
+  const score = attempt?.score;
 
   // Use submittedFiles prop if provided (for editable mode), otherwise use attempt files
   const filesToShow = submittedFiles ?? attempt?.files;
@@ -41,13 +47,59 @@ export default function YourWorkSidebar({
   const canRemoveSubmittedFiles =
     canSubmit && !isSubmitted && !!onRemoveSubmittedFile;
 
+  // Calculate score percentage for visual feedback
+  const scorePercentage =
+    score !== undefined && score !== null && totalScore
+      ? Math.round((score / totalScore) * 100)
+      : null;
+
+  // Get color based on score percentage
+  const getScoreColor = (percentage: number) => {
+    if (percentage >= 80) return "text-success";
+    if (percentage >= 60) return "text-warning";
+    return "text-destructive";
+  };
+
   return (
     <div className="w-full lg:w-[380px] flex-shrink-0" data-sidebar="your-work">
-      <div className="bg-background border border-light-border rounded-lg p-4 sm:p-5">
+      <div className="bg-background border border-light-border rounded-xl p-4 sm:p-5 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <h3 className="font-semibold text-heading">Your Work</h3>
         </div>
+
+        {/* Grade Display - Show prominently when graded */}
+        {isGraded && score !== undefined && score !== null && totalScore && (
+          <div className="border border-primary/20 rounded-lg p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-para-muted mb-0.5">Your Grade</p>
+                <div className="flex items-baseline gap-1 sm:gap-2 flex-wrap">
+                  <span
+                    className={`text-xl sm:text-2xl font-bold ${
+                      scorePercentage !== null
+                        ? getScoreColor(scorePercentage)
+                        : "text-heading"
+                    }`}
+                  >
+                    {score}
+                  </span>
+                  <span className="text-sm sm:text-base text-para-muted">
+                    / {totalScore} points
+                  </span>
+                  {scorePercentage !== null && (
+                    <span className="text-xs text-para-muted">
+                      ({scorePercentage}%)
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Previously Submitted Files */}
         <SubmittedFilesSection
@@ -59,7 +111,7 @@ export default function YourWorkSidebar({
 
         {/* Comment Section */}
         {canSubmit && (
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-para mb-2">
               Add a comment (optional)
             </label>
@@ -85,7 +137,7 @@ export default function YourWorkSidebar({
 
         {/* Selected Files Count */}
         {selectedFiles.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-light-border">
+          <div className="pt-3 border-t border-light-border">
             <p className="text-sm text-para">
               <span className="font-medium text-heading">
                 {selectedFiles.length}

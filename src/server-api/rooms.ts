@@ -29,6 +29,7 @@ export interface Room {
   title: string;
   description: string;
   isPublic: boolean;
+  autoJoin: boolean;
   roomCode: string;
   tags: RoomTag[];
   admin: RoomAdmin;
@@ -96,4 +97,58 @@ export async function getRooms(
   }
 
   return data;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ROOM MEMBERS API
+// ═══════════════════════════════════════════════════════════════════
+
+import type { RoomMember as RoomMemberForTable } from "@/types/room-settings";
+
+interface RoomMemberApiUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  image: string | null;
+}
+
+interface RoomMemberApiResponse {
+  id: string;
+  role: "member" | "moderator" | "instructor";
+  joinedAt: string;
+  user: RoomMemberApiUser;
+}
+
+/**
+ * Server-side fetch for room members
+ */
+export async function getRoomMembers(
+  roomId: string
+): Promise<RoomMemberForTable[]> {
+  const { data, error } = await getWithAuth<RoomMemberApiResponse[]>(
+    `${API_BASE_URL}/room/${roomId}/members`,
+    {
+      next: {
+        revalidate: false,
+        tags: ["room-members", `room-members-${roomId}`],
+      },
+    }
+  );
+
+  if (error || !data) {
+    console.error("Error fetching room members:", error);
+    return [];
+  }
+
+  // Transform API response to match RoomMember type expected by MembersTable
+  return data.map((member) => ({
+    id: member.id,
+    name: `${member.user.firstName} ${member.user.lastName}`,
+    email: member.user.email,
+    avatar: member.user.image || undefined,
+    role: member.role,
+    joinedAt: new Date(member.joinedAt),
+    isMuted: false,
+  }));
 }

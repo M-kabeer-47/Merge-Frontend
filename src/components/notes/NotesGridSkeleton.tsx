@@ -1,27 +1,21 @@
-import { motion } from "motion/react";
-
 export default function NotesGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
       {[...Array(8)].map((_, index) => (
         <div
           key={index}
-          className="relative rounded-lg border border-light-border bg-main-background p-4 animate-pulse"
+          className="relative rounded-xl border border-light-border bg-main-background p-4 space-y-3"
         >
           {/* Icon */}
-          <div className="mb-3">
-            <div className="w-12 h-12 bg-gray-200 rounded"></div>
-          </div>
+          <div className="w-12 h-12 bg-secondary/10 rounded-lg" />
 
           {/* Title */}
-          <div className="mb-3">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-          </div>
+          <div className="h-4 bg-secondary/10 rounded w-3/4" />
 
           {/* Footer - Date and Menu */}
-          <div className="flex items-center justify-between">
-            <div className="h-3 bg-gray-200 rounded w-16"></div>
-            <div className="w-4 h-4 bg-gray-200 rounded"></div>
+          <div className="flex items-center justify-between pt-2">
+            <div className="h-3 bg-secondary/10 rounded w-16" />
+            <div className="w-4 h-4 bg-secondary/10 rounded" />
           </div>
         </div>
       ))}

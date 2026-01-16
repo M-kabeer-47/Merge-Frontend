@@ -2,6 +2,7 @@
 import React from "react";
 import { easeOut, motion } from "framer-motion";
 import { useTheme } from "next-themes";
+import Image from "next/image";
 
 interface AuthIllustrationProps {
   imageUrl: string;
@@ -76,7 +77,12 @@ export default function AuthIllustration({
       {/* Logo */}
       <motion.div className="mb-8" variants={logoVariants}>
         <div className="flex items-center space-x-2">
-          <img src={`${isDarkMode ? "/dark-mode-logo.svg" : "/logo.svg"}`} alt="Logo" className="h-10 w-10" />
+          <Image
+            src={`${isDarkMode ? "/dark-mode-logo.svg" : "/icons/logo.svg"}`}
+            alt="Logo"
+            width={50}
+            height={50}
+          />
           <span className="text-2xl font-raleway font-bold text-heading">
             Merge
           </span>

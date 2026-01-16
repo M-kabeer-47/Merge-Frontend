@@ -12,13 +12,13 @@ export type QuizFilterType =
   | "active"
   | "closed";
 
-// Quiz Author (same as Assignment)
+// Quiz Author from API
 export interface QuizAuthor {
   id: string;
-  name: string;
-  role: "instructor" | "student" | "ta";
-  avatarUrl?: string;
-  initials: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  image?: string | null;
 }
 
 // Single quiz question
@@ -38,10 +38,13 @@ export interface CreateQuizQuestion {
   points: number;
 }
 
-// Instructor-specific stats (matches API response)
-// Note: These fields are directly on InstructorQuiz, not nested
+// Room info in quiz response
+export interface QuizRoom {
+  id: string;
+  title: string;
+}
 
-// Student attempt data
+// Student attempt data (for student view)
 export interface StudentAttempt {
   id?: string;
   attemptedAt?: Date;
@@ -51,29 +54,63 @@ export interface StudentAttempt {
   answers?: Record<string, string>; // questionId -> selectedOption
 }
 
+// Attempt user info (for instructor view)
+export interface AttemptUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  image?: string | null;
+}
+
+// Single attempt in the attempts list (for instructor submissions view)
+export interface QuizAttemptDetail {
+  id: string;
+  submittedAt: string;
+  score: number;
+  answers: Record<string, string>; // questionId -> selected answer
+  user: AttemptUser;
+}
+
+// Paginated attempts response
+export interface AttemptsResponse {
+  data: QuizAttemptDetail[];
+  total: number;
+  totalPages: number;
+  currentPage: number;
+}
+
 // Base quiz structure
 export interface BaseQuiz {
   id: string;
   title: string;
   author: QuizAuthor;
-  createdAt: Date;
-  deadline: Date;
-  timeLimitMin: number; // Time limit in minutes
+  createdAt: Date | string;
+  deadline: Date | string;
+  timeLimitMin: number;
   isClosed: boolean;
   questions: QuizQuestion[];
-  totalPoints: number; // Sum of all question points
+  totalPoints: number;
 }
 
-// For instructor view - includes attempt counts
+// For instructor list view
 export interface InstructorQuiz extends BaseQuiz {
-  attempts: number; // Number of students who attempted
-  totalAttempts: number; // Total number of students in room
+  totalAttempts: number;
+  totalQuestions: number;
+  status: "open" | "closed";
+}
+
+// For instructor detail view (with attempts list)
+export interface InstructorQuizDetail extends InstructorQuiz {
+  room: QuizRoom;
+  averageScore: number;
+  attempts: AttemptsResponse;
 }
 
 // For student view
 export interface StudentQuiz extends BaseQuiz {
   attempt: StudentAttempt;
-  submissionStatus?: QuizAttemptStatus; // Same pattern as assignments
+  submissionStatus?: QuizAttemptStatus;
 }
 
 // Union type for general use
@@ -86,6 +123,12 @@ export function isInstructorQuiz(quiz: Quiz): quiz is InstructorQuiz {
 
 export function isStudentQuiz(quiz: Quiz): quiz is StudentQuiz {
   return "attempt" in quiz || "submissionStatus" in quiz;
+}
+
+export function isInstructorQuizDetail(
+  quiz: InstructorQuiz
+): quiz is InstructorQuizDetail {
+  return "attempts" in quiz && typeof quiz.attempts === "object";
 }
 
 // API Payloads
@@ -108,13 +151,7 @@ export interface AttemptQuizResponse {
   submittedAt: string;
   answers: Record<string, string>;
   score: number;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    image?: string;
-  };
+  user: AttemptUser;
   quiz: {
     id: string;
     title: string;

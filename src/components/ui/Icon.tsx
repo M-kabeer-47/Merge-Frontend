@@ -13,5 +13,7 @@ export default function Icon({
   width = 25,
   height = 25,
 }: IconProps) {
-  return <Image src={src} alt={alt} width={width} height={height} />;
+  return (
+    <Image src={src} alt={alt} width={width} height={height} unoptimized />
+  );
 }

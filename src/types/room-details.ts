@@ -5,6 +5,7 @@ export interface RoomDetails {
   title: string;
   description: string;
   isPublic: boolean;
+  autoJoin: boolean;
   roomCode: string;
   tags: Array<{ id: string; name: string }>;
   admin: User;

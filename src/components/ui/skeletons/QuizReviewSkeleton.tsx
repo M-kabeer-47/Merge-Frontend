@@ -6,23 +6,6 @@ export default function QuizReviewSkeleton() {
   return (
     <div className="min-h-screen bg-main-background flex flex-col animate-pulse">
       {/* Header Skeleton */}
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-light-border">
-        <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
-          {/* Left - Back button and title */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-secondary/20 rounded-lg" />
-            <div className="space-y-1">
-              <div className="h-5 w-48 bg-secondary/20 rounded" />
-              <div className="h-3 w-24 bg-secondary/10 rounded" />
-            </div>
-          </div>
-
-          {/* Right - Score badge */}
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-24 bg-success/20 rounded-full" />
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col lg:flex-row">

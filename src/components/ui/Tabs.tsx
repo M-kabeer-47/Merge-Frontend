@@ -47,8 +47,8 @@ export default function Tabs({
     >
       {/* Sliding Box Indicator */}
       <motion.div
-        className="absolute h-full bg-secondary/10 rounded-md pointer-events-none z-0 "
-        animate={{ left: indicator.left, width: indicator.width }}
+        className="absolute top-1/2 -translate-y-1/2 bg-secondary/10 rounded-md pointer-events-none z-0 h-[85%]"
+        animate={{ left: indicator.left + 4, width: indicator.width - 8 }}
         transition={{ type: "slide", stiffness: 400, damping: 30 }}
       />
 
@@ -65,7 +65,11 @@ export default function Tabs({
               isActive ? "text-primary" : "text-para hover:text-primary"
             }`}
           >
-            <span className="flex items-center justify-center gap-2 sm:text-sm text-xs font-bold font-raleway">
+            <span
+              className={`flex items-center justify-center gap-2 sm:text-sm text-xs  font-raleway ${
+                isActive ? "font-bold" : "font-semibold"
+              }`}
+            >
               {tab.label}
             </span>
           </button>

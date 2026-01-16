@@ -59,7 +59,7 @@ export async function getQuizzes(params: FetchQuizzesParams): Promise<Quiz[]> {
     `${API_BASE_URL}/quiz?${queryParams.toString()}`,
     {
       next: {
-        revalidate: 60, // Cache for 60 seconds
+        revalidate: false, // Cache for 60 seconds
         tags: ["quizzes", `quizzes-${roomId}`], // For manual invalidation
       },
     }
@@ -112,12 +112,11 @@ export async function getMyQuizAttempt(
     `${API_BASE_URL}/quiz/${quizId}/my-attempt?roomId=${roomId}`,
     {
       next: {
-        revalidate: 60,
+        revalidate: false,
         tags: ["quiz-attempt", `quiz-attempt-${quizId}`],
       },
     }
   );
-  console.log("Quiz attempt data:", JSON.stringifydata);
   if (error || !data) {
     console.error("Error fetching quiz attempt:", error);
     return null;

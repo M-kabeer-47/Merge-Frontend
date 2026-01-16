@@ -55,6 +55,7 @@ export default function StudentAssignmentView({
         onCommentChange={onCommentChange}
         submittedFiles={submittedFiles}
         onRemoveSubmittedFile={onRemoveSubmittedFile}
+        totalScore={assignment.totalScore}
       />
     </>
   );

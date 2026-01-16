@@ -9,6 +9,7 @@ interface UpdateRoomData {
   title?: string;
   description?: string;
   isPublic?: boolean;
+  autoJoin?: boolean;
   tags?: string[];
 }
 
