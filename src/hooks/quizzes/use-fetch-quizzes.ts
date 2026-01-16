@@ -42,6 +42,6 @@ export default function useFetchQuizzes({
       return Array.isArray(data) ? data : data.quizzes || [];
     },
     enabled: enabled && !!roomId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: Infinity, // 30 seconds
   });
 }

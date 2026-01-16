@@ -84,7 +84,7 @@ export async function getQuizById(
     `${API_BASE_URL}/quiz/${quizId}?roomId=${roomId}`,
     {
       next: {
-        revalidate: 60,
+        revalidate: false,
         tags: ["quizzes", `quiz-${quizId}`],
       },
     }

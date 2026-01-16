@@ -5,8 +5,6 @@
 export default function QuizReviewSkeleton() {
   return (
     <div className="min-h-screen bg-main-background flex flex-col animate-pulse">
-      {/* Header Skeleton */}
-
       {/* Main Content */}
       <main className="flex-1 flex flex-col lg:flex-row">
         {/* Question Display Area */}

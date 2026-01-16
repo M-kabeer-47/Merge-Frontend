@@ -12,7 +12,6 @@ export default function RoomsList() {
   const router = useRouter();
   const { onDeleteRoom } = useRoomActions();
   const { filter, search } = useRoomFilters();
-
   const { rooms, isFetching } = useGetUserRooms({ filter, search });
 
   const handleEditRoom = (roomId: string) => {

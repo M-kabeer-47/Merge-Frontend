@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
-
-import Tabs from "@/components/ui/Tabs";
-import SearchBar from "@/components/ui/SearchBar";
 import CreateRoomModal from "@/components/rooms/modals/CreateRoomModal";
 import JoinRoomModal from "@/components/rooms/modals/JoinRoomModal";
 import DeleteRoomModal from "@/components/rooms/modals/DeleteRoomModal";

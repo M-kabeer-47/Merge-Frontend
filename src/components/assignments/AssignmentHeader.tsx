@@ -89,6 +89,7 @@ export default function AssignmentHeader({
 
     // If already submitted - show Undo button
     if (isSubmitted && canSubmit && onUndoTurnIn) {
+      console.log("Inside isSubmitted and canSubmit and onUndoTurnIn");
       return {
         text: "Undo Turn In",
         action: onUndoTurnIn,
@@ -100,7 +101,7 @@ export default function AssignmentHeader({
     // If can submit - show Turn In button
     if (canSubmit && onTurnIn) {
       const text = isPastDue ? "Turn In Late" : "Turn in";
-
+      console.log("Inside canSubmit and onTurnIn");
       return {
         text,
         action: onTurnIn,

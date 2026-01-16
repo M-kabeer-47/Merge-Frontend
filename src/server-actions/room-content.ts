@@ -12,9 +12,7 @@ export async function refreshFolderCache(
   folderId?: string | null
 ) {
   const folderTag = `room-content-${roomId}-${folderId || "root"}`;
-  console.log(`[Cache] Refreshing folder: ${folderTag}`);
   revalidateTag(folderTag, { expire: 0 });
-  // Re-prefetch to warm cache (fire-and-forget)
   getRoomContent({ roomId, folderId });
 }
 
@@ -23,6 +21,5 @@ export async function refreshFolderCache(
  * Use sparingly - only for room-level changes
  */
 export async function revalidateRoomContentCache(roomId: string) {
-  console.log(`[Cache] Revalidating entire room: room-content-${roomId}`);
   revalidateTag(`room-content-${roomId}`, { expire: 0 });
 }

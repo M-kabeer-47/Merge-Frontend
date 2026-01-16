@@ -9,7 +9,6 @@ interface UpdateRoomData {
   title?: string;
   description?: string;
   isPublic?: boolean;
-  autoJoin?: boolean;
   tags?: string[];
 }
 
@@ -32,7 +31,7 @@ export default function useUpdateRoom(
   };
 
   // Helper to update room in a rooms list cache
-  const updateRoomsQueryData = (
+  const updateRoomInCache = (
     oldData: RoomsResponse | undefined,
     updatedData: UpdateRoomData
   ): RoomsResponse | undefined => {
@@ -53,6 +52,93 @@ export default function useUpdateRoom(
   } = useMutation({
     mutationFn: updateRoomFunction,
 
+    // Optimistic update - runs BEFORE API call
+    onMutate: async (newData: UpdateRoomData) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["room", roomId] });
+      await queryClient.cancelQueries({ queryKey: ["rooms"] });
+
+      // Snapshot previous values for rollback
+      const previousRoom = queryClient.getQueryData<RoomDetails>([
+        "room",
+        roomId,
+      ]);
+      const previousRoomsAll = queryClient.getQueryData<RoomsResponse>([
+        "rooms",
+        "all",
+        "",
+      ]);
+      const previousRoomsCreated = queryClient.getQueryData<RoomsResponse>([
+        "rooms",
+        "created",
+        "",
+      ]);
+      const previousRoomsJoined = queryClient.getQueryData<RoomsResponse>([
+        "rooms",
+        "joined",
+        "",
+      ]);
+
+      // Optimistically update room details (instant!)
+      queryClient.setQueryData<RoomDetails>(
+        ["room", roomId],
+        (old) => (old ? { ...old, ...newData } : old) as RoomDetails
+      );
+
+      // Optimistically update rooms lists
+      queryClient.setQueryData(
+        ["rooms", "all", ""],
+        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
+      );
+      queryClient.setQueryData(
+        ["rooms", "created", ""],
+        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
+      );
+      queryClient.setQueryData(
+        ["rooms", "joined", ""],
+        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
+      );
+
+      // Return context for rollback
+      return {
+        previousRoom,
+        previousRoomsAll,
+        previousRoomsCreated,
+        previousRoomsJoined,
+      };
+    },
+
+    // Rollback on error
+    onError: (error: any, _newData, context) => {
+      // Restore previous values
+      if (context?.previousRoom) {
+        queryClient.setQueryData(["room", roomId], context.previousRoom);
+      }
+      if (context?.previousRoomsAll) {
+        queryClient.setQueryData(
+          ["rooms", "all", ""],
+          context.previousRoomsAll
+        );
+      }
+      if (context?.previousRoomsCreated) {
+        queryClient.setQueryData(
+          ["rooms", "created", ""],
+          context.previousRoomsCreated
+        );
+      }
+      if (context?.previousRoomsJoined) {
+        queryClient.setQueryData(
+          ["rooms", "joined", ""],
+          context.previousRoomsJoined
+        );
+      }
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to update room. Please try again."
+      );
+    },
+
     // On success - sync with server response and revalidate Next.js cache
     onSuccess: async (serverRoom: Room) => {
       toast.success("Room updated successfully!");
@@ -62,22 +148,13 @@ export default function useUpdateRoom(
         old ? { ...old, ...serverRoom } : old
       );
 
-      queryClient.setQueryData<RoomsResponse>(["rooms", "all", ""], (oldData) =>
-        updateRoomsQueryData(oldData, serverRoom)
-      );
-      queryClient.setQueryData<RoomsResponse>(
-        ["rooms", "created", ""],
-        (oldData) => updateRoomsQueryData(oldData, serverRoom)
-      );
-      queryClient.setQueryData<RoomsResponse>(
-        ["rooms", "joined", ""],
-        (oldData) => updateRoomsQueryData(oldData, serverRoom)
-      );
-
       // Invalidate Next.js server cache for this specific room and rooms list
+      await Promise.all([
+        refreshRoomCache(roomId),
+        refreshRoomsCache(), // Uses default filter: "all"
+      ]);
 
-      refreshRoomsCache("all");
-      refreshRoomCache(roomId);
+      options?.onSuccess?.();
     },
   });
 

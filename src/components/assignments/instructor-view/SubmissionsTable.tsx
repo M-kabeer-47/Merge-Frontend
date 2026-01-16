@@ -16,6 +16,11 @@ import useBulkGradeAttempts from "@/hooks/assignments/use-bulk-grade-attempts";
 interface SubmissionsTableProps {
   attempts: InstructorAttempt[];
   totalScore: number;
+  // Server-side pagination props
+  currentPage?: number;
+  totalPages?: number;
+  totalItems?: number;
+  onPageChange?: (page: number) => void;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -27,13 +32,21 @@ const ITEMS_PER_PAGE = 10;
 export default function SubmissionsTable({
   attempts,
   totalScore,
+  currentPage: serverCurrentPage,
+  totalPages: serverTotalPages,
+  totalItems: serverTotalItems,
+  onPageChange,
 }: SubmissionsTableProps) {
   const params = useParams();
   const roomId = params?.id as string;
   const assignmentId = params?.assignmentId as string;
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  // Use server-side pagination if provided, otherwise fall back to client-side
+  const isServerPaginated = onPageChange !== undefined;
+
+  // Client-side pagination state (used only when not server-paginated)
+  const [clientCurrentPage, setClientCurrentPage] = useState(1);
+  const currentPage = isServerPaginated ? (serverCurrentPage ?? 1) : clientCurrentPage;
 
   // Drawer state
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(
@@ -52,22 +65,42 @@ export default function SubmissionsTable({
   });
 
   // Sort attempts by submit date (newest first)
+  // When server-paginated, data is already sorted and paginated by server
   const sortedAttempts = useMemo(
     () =>
-      [...attempts].sort(
-        (a, b) =>
-          new Date(b.submitAt).getTime() - new Date(a.submitAt).getTime()
-      ),
-    [attempts]
+      isServerPaginated
+        ? attempts
+        : [...attempts].sort(
+            (a, b) =>
+              new Date(b.submitAt).getTime() - new Date(a.submitAt).getTime()
+          ),
+    [attempts, isServerPaginated]
   );
 
-  // Paginate
+  // Client-side pagination (only used when not server-paginated)
   const paginatedAttempts = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    if (isServerPaginated) return sortedAttempts;
+    const startIndex = (clientCurrentPage - 1) * ITEMS_PER_PAGE;
     return sortedAttempts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [sortedAttempts, currentPage]);
+  }, [sortedAttempts, clientCurrentPage, isServerPaginated]);
 
-  const totalPages = Math.ceil(sortedAttempts.length / ITEMS_PER_PAGE);
+  // Total pages: use server value if available, otherwise calculate
+  const totalPages = isServerPaginated
+    ? (serverTotalPages ?? 1)
+    : Math.ceil(sortedAttempts.length / ITEMS_PER_PAGE);
+
+  const totalItems = isServerPaginated
+    ? (serverTotalItems ?? attempts.length)
+    : sortedAttempts.length;
+
+  // Handle page change - use server callback if available
+  const handlePageChange = (page: number) => {
+    if (isServerPaginated && onPageChange) {
+      onPageChange(page);
+    } else {
+      setClientCurrentPage(page);
+    }
+  };
 
   // Find selected attempt for drawer
   const selectedAttempt = useMemo(
@@ -307,9 +340,9 @@ export default function SubmissionsTable({
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalItems={sortedAttempts.length}
+            totalItems={totalItems}
             itemsPerPage={ITEMS_PER_PAGE}
-            onPageChange={setCurrentPage}
+            onPageChange={handlePageChange}
             itemName="submissions"
           />
         </div>

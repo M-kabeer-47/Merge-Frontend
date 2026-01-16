@@ -46,6 +46,7 @@ export default function useDeleteFolder() {
         }
       );
       // Invalidate server cache (fire and forget - don't block UI)
+      
       revalidateNotesCache();
 
       toast.success("Folder deleted successfully!");

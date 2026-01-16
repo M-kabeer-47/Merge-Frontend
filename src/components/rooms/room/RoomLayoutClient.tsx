@@ -15,7 +15,6 @@ import ProfessionalTabs from "@/components/rooms/room/Tabs";
 import InviteModal from "@/components/rooms/modals/InviteModal";
 import { JoinRequestsModal } from "@/components/rooms/join-requests";
 import RoomHeader from "@/components/rooms/RoomHeader";
-import RoomHeaderSkeleton from "@/components/rooms/RoomHeaderSkeleton";
 import { useRoom } from "@/providers/RoomProvider";
 import RoomError from "@/components/rooms/Error";
 import useFetchJoinRequests from "@/hooks/rooms/use-fetch-join-requests";
