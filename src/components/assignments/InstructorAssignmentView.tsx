@@ -26,13 +26,6 @@ const SUB_FILTER_OPTIONS = [
   { key: "onTime", label: "On Time" },
 ];
 
-/**
- * Main instructor view for an assignment.
- * Layout: Instructions -> Horizontal Stats -> Filter Tabs -> Submissions Table
- * 
- * Filter and pagination state is managed internally to ensure only the table reloads 
- * on filter/page change, not the entire page.
- */
 export default function InstructorAssignmentView({
   assignment,
 }: InstructorAssignmentViewProps) {
@@ -47,19 +40,23 @@ export default function InstructorAssignmentView({
   const { totalAttempts, gradedAttempts, ungradedAttempts } = assignment;
 
   // Check if we're on default filters (for using initialData)
-  const isDefaultFilters = filter === "all" && subFilter === "all" && page === 1;
+  const isDefaultFilters =
+    filter === "all" && subFilter === "all" && page === 1;
 
   // Fetch submissions separately with filters - only table reloads on filter change
   // Use server-fetched attempts as initialData for default filters to prevent double fetch
-  const { data: submissions, isLoading: isLoadingSubmissions, isFetching } =
-    useFetchSubmissions({
-      assignmentId: assignment.id,
-      roomId,
-      filter,
-      subFilter: filter === "ungraded" ? subFilter : undefined,
-      page,
-      initialData: isDefaultFilters ? assignment.attempts : undefined,
-    });
+  const {
+    data: submissions,
+    isLoading: isLoadingSubmissions,
+    isFetching,
+  } = useFetchSubmissions({
+    assignmentId: assignment.id,
+    roomId,
+    filter,
+    subFilter: filter === "ungraded" ? subFilter : undefined,
+    page,
+    initialData: isDefaultFilters ? assignment.attempts : undefined,
+  });
 
   const handleFilterChange = (newFilter: string) => {
     setFilter(newFilter);

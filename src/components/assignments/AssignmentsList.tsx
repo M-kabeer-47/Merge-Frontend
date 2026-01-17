@@ -109,7 +109,7 @@ export default function AssignmentsList({
   if (isInstructor) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="px-4 sm:px-6 py-4 grid grid-cols-1 sm:grid-cols-2 items-center gap-5">
+        <div className="px-4 sm:px-6 py-4 grid grid-cols-1 sm:grid-cols-2 items-stretch gap-5">
           {(assignments as InstructorAssignment[]).map((assignment) => (
             <AssignmentCard
               key={assignment.id}

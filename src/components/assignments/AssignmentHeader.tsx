@@ -83,7 +83,7 @@ export default function AssignmentHeader({
         text: "Removing...",
         action: undefined,
         variant: "outline" as const,
-        icon: <Loader2 className="w-4 h-4 mr-2 animate-spin" />,
+        icon: <LoadingSpinner text="" />,
       };
     }
 
@@ -193,10 +193,10 @@ export default function AssignmentHeader({
                     submissionStatus === "completed"
                       ? "bg-success/10 text-success"
                       : submissionStatus === "graded"
-                      ? "bg-primary/10 text-primary"
-                      : submissionStatus === "missed"
-                      ? "bg-destructive/10 text-destructive"
-                      : "bg-secondary/10 text-secondary"
+                        ? "bg-primary/10 text-primary"
+                        : submissionStatus === "missed"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-secondary/10 text-secondary"
                   }`}
                 >
                   {submissionStatus === "submitted" ||

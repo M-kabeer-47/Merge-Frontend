@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { ChevronRight, Save, Loader2, User } from "lucide-react";
+import { ChevronRight, Save, User } from "lucide-react";
 import { format } from "date-fns";
 import type { InstructorAttempt } from "@/types/assignment";
 import Avatar from "@/components/ui/Avatar";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import GradeInput from "./GradeInput";
 import SubmissionDrawer from "./SubmissionDrawer";
 import useBulkGradeAttempts from "@/hooks/assignments/use-bulk-grade-attempts";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface SubmissionsTableProps {
   attempts: InstructorAttempt[];
@@ -46,16 +47,18 @@ export default function SubmissionsTable({
 
   // Client-side pagination state (used only when not server-paginated)
   const [clientCurrentPage, setClientCurrentPage] = useState(1);
-  const currentPage = isServerPaginated ? (serverCurrentPage ?? 1) : clientCurrentPage;
+  const currentPage = isServerPaginated
+    ? (serverCurrentPage ?? 1)
+    : clientCurrentPage;
 
   // Drawer state
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(
-    null
+    null,
   );
 
   // Pending score changes: attemptId -> newScore
   const [pendingChanges, setPendingChanges] = useState<Map<string, number>>(
-    new Map()
+    new Map(),
   );
 
   const { bulkGradeAttempts, isGrading } = useBulkGradeAttempts({
@@ -72,9 +75,9 @@ export default function SubmissionsTable({
         ? attempts
         : [...attempts].sort(
             (a, b) =>
-              new Date(b.submitAt).getTime() - new Date(a.submitAt).getTime()
+              new Date(b.submitAt).getTime() - new Date(a.submitAt).getTime(),
           ),
-    [attempts, isServerPaginated]
+    [attempts, isServerPaginated],
   );
 
   // Client-side pagination (only used when not server-paginated)
@@ -105,20 +108,20 @@ export default function SubmissionsTable({
   // Find selected attempt for drawer
   const selectedAttempt = useMemo(
     () => sortedAttempts.find((a) => a.id === selectedAttemptId) || null,
-    [sortedAttempts, selectedAttemptId]
+    [sortedAttempts, selectedAttemptId],
   );
 
   // Navigation in drawer
   const selectedIndex = useMemo(
     () => sortedAttempts.findIndex((a) => a.id === selectedAttemptId),
-    [sortedAttempts, selectedAttemptId]
+    [sortedAttempts, selectedAttemptId],
   );
 
   const handleScoreChange = useCallback(
     (
       attemptId: string,
       originalScore: number | null,
-      newScore: number | null
+      newScore: number | null,
     ) => {
       setPendingChanges((prev) => {
         const updated = new Map(prev);
@@ -135,14 +138,14 @@ export default function SubmissionsTable({
         return updated;
       });
     },
-    []
+    [],
   );
 
   const handleSaveAll = async () => {
     if (pendingChanges.size === 0) return;
 
     const attemptsToSave = Array.from(pendingChanges.entries()).map(
-      ([attemptId, score]) => ({ attemptId, score })
+      ([attemptId, score]) => ({ attemptId, score }),
     );
 
     await bulkGradeAttempts({
@@ -166,7 +169,7 @@ export default function SubmissionsTable({
 
   const hasChanges = pendingChanges.size > 0;
   const hasInvalidScores = Array.from(pendingChanges.values()).some(
-    (score) => score > totalScore || score < 0
+    (score) => score > totalScore || score < 0,
   );
   const isDisabled = !hasChanges || isGrading || hasInvalidScores;
 
@@ -240,7 +243,7 @@ export default function SubmissionsTable({
       render: (attempt) => {
         // Show pending score if available, otherwise show original
         const displayScore = pendingChanges.has(attempt.id)
-          ? pendingChanges.get(attempt.id) ?? null
+          ? (pendingChanges.get(attempt.id) ?? null)
           : attempt.score;
 
         return (
@@ -308,8 +311,7 @@ export default function SubmissionsTable({
             >
               {isGrading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
+                  <LoadingSpinner text="Saving..." />
                 </>
               ) : (
                 <>
@@ -366,7 +368,7 @@ export default function SubmissionsTable({
             handleScoreChange(
               selectedAttempt.id,
               selectedAttempt.score,
-              newScore
+              newScore,
             );
           }
         }}
