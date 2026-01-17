@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import CreateRoomModal from "@/components/rooms/modals/CreateRoomModal";
 import JoinRoomModal from "@/components/rooms/modals/JoinRoomModal";
 import DeleteRoomModal from "@/components/rooms/modals/DeleteRoomModal";
-import { RoomsProvider } from "@/contexts/RoomsContext";
 import type { Room } from "@/server-api/rooms";
 import useUrlParams from "@/hooks/common/use-url-params";
 import RoomsHeader from "./RoomsHeader";
@@ -22,29 +20,28 @@ export default function RoomsPageClient({
   initialFilter = "all",
   initialSearch = "",
 }: RoomsPageClientProps) {
-  const router = useRouter();
-  const { updateParams } = useUrlParams({ basePath: "/rooms" });
+  const { updateParams } = useUrlParams({
+    basePath: "/rooms",
+    defaultValues: { filter: "all", search: "" },
+  });
+
   // Validate filter from server props
   const validFilter =
     initialFilter === "created" || initialFilter === "joined"
       ? initialFilter
       : "all";
 
-  // Local state for UI
+  // Local state for UI (tabs map to API filter values)
   const [activeTab, setActiveTab] = useState<"all" | "joined" | "my-rooms">(
     validFilter === "created"
       ? "my-rooms"
       : validFilter === "joined"
-      ? "joined"
-      : "all"
+        ? "joined"
+        : "all",
   );
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [roomToDelete, setRoomToDelete] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
 
   // Map tab to API filter
   const filterMap: Record<typeof activeTab, "all" | "created" | "joined"> = {
@@ -53,16 +50,12 @@ export default function RoomsPageClient({
     joined: "joined",
   };
 
-  const currentFilter = filterMap[activeTab];
-
   // Tab counts
   const tabOptions = [
     { key: "all", label: "All Rooms" },
     { key: "joined", label: "Joined" },
     { key: "my-rooms", label: "My Rooms" },
   ];
-
-  // Update URL params
 
   // Handle tab change
   const handleTabChange = (tab: string) => {
@@ -112,14 +105,8 @@ export default function RoomsPageClient({
         tabOptions={tabOptions}
       />
 
-      {/* Server Component passed as children */}
-      <RoomsProvider
-        filter={currentFilter}
-        search={searchTerm}
-        onDeleteRoom={setRoomToDelete}
-      >
-        {children}
-      </RoomsProvider>
+      {/* Room List - no context wrapper needed */}
+      {children}
 
       {/* Modals */}
       <CreateRoomModal
@@ -132,14 +119,8 @@ export default function RoomsPageClient({
         onClose={() => setIsJoinModalOpen(false)}
         onSuccess={handleJoinRequestSent}
       />
-      <DeleteRoomModal
-        isOpen={!!roomToDelete}
-        onClose={() => setRoomToDelete(null)}
-        roomId={roomToDelete?.id || null}
-        roomTitle={roomToDelete?.title || ""}
-        filter={currentFilter}
-        search={searchTerm}
-      />
+      {/* Delete modal reads state from URL - no props needed */}
+      <DeleteRoomModal />
     </div>
   );
 }

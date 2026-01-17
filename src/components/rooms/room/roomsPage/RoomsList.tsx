@@ -1,26 +1,22 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import RoomCard from "../../RoomCard";
 import RoomsSkeleton from "./RoomsSkeleton";
-import { useRoomActions, useRoomFilters } from "@/contexts/RoomsContext";
 import useGetUserRooms from "@/hooks/rooms/use-get-user-rooms";
 import RoomsEmptyState from "./RoomsEmptyState";
 
 export default function RoomsList() {
-  const router = useRouter();
-  const { onDeleteRoom } = useRoomActions();
-  const { filter, search } = useRoomFilters();
+  const searchParams = useSearchParams();
+
+  // Get filter and search from URL (source of truth)
+  const filterParam = searchParams.get("filter");
+  const filter =
+    filterParam === "created" || filterParam === "joined" ? filterParam : "all";
+  const search = searchParams.get("search") || "";
+
   const { rooms, isFetching } = useGetUserRooms({ filter, search });
-
-  const handleEditRoom = (roomId: string) => {
-    router.push(`/rooms/${roomId}/settings`);
-  };
-
-  const handleJoinRoom = (roomId: string) => {
-    console.log("Joining room:", roomId);
-  };
 
   if (isFetching) {
     return <RoomsSkeleton />;
@@ -45,12 +41,7 @@ export default function RoomsList() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.05 }}
         >
-          <RoomCard
-            room={room}
-            onJoin={handleJoinRoom}
-            onEdit={handleEditRoom}
-            onDelete={onDeleteRoom}
-          />
+          <RoomCard room={room} />
         </motion.div>
       ))}
     </motion.div>

@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ShieldAlert } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 export default function RoomSettingsError({ roomID }: { roomID: string }) {
-  const router = useRouter();
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full bg-main-background border border-light-border rounded-2xl p-8 text-center">
@@ -17,7 +16,7 @@ export default function RoomSettingsError({ roomID }: { roomID: string }) {
           and room owners can modify settings.
         </p>
         <Button
-          onClick={() => router.push(`/rooms/${roomID}`)}
+          onClick={() => redirect(`/rooms/${roomID}`)}
           variant="outline"
           className="w-full"
         >

@@ -109,7 +109,7 @@ export default function DangerZone({
                   Permanently delete this room and all its content. This action
                   cannot be undone.
                 </p>
-                <div className="flex flex-wrap gap-2 text-xs text-para-muted">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-para-muted">
                   <span className="flex items-center gap-1">
                     <FileText className="w-3 h-3" />
                     Assignments

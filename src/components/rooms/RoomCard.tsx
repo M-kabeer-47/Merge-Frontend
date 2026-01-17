@@ -5,27 +5,27 @@ import MemberAvatars from "./MembersAvatar";
 import { Room } from "@/hooks/rooms/use-get-user-rooms";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { Button } from "@/components/ui/Button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface RoomCardProps {
   room: Room;
-  onJoin?: (roomId: string) => void;
-  onView?: (roomId: string) => void;
-  onEdit?: (roomId: string) => void;
-  onDelete?: (room: { id: string; title: string }) => void;
 }
 
-export default function RoomCard({ room, onJoin, onDelete }: RoomCardProps) {
+export default function RoomCard({ room }: RoomCardProps) {
   const { width } = useWindowSize();
   const router = useRouter();
-
-  const handleJoinRoom = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onJoin) onJoin(room.id);
-  };
+  const searchParams = useSearchParams();
 
   const handleViewRoom = () => {
     router.push(`/rooms/${room.id}/general-chat`);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Add delete param to URL while preserving other params
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("delete", room.id);
+    router.push(`/rooms?${params.toString()}`);
   };
 
   const getStatusBadge = () => {
@@ -128,12 +128,7 @@ export default function RoomCard({ room, onJoin, onDelete }: RoomCardProps) {
           <Button
             className="px-4 rounded-lg font-medium transition-colors text-sm w-[40%]"
             variant="outline"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (room.userRole === "admin" && onDelete) {
-                onDelete({ id: room.id, title: room.title });
-              }
-            }}
+            onClick={handleDeleteClick}
           >
             {room.userRole === "admin" ? "Delete" : "Leave"}
           </Button>

@@ -1,135 +1,111 @@
 /**
  * ModeratorManager Component
  *
- * Displays current moderators with their permissions.
- * Allows adding, editing permissions, and removing moderators.
+ * Displays current moderators with option to add new ones or demote existing.
+ * Moderators come from room.moderators (User[]), available members from API (RoomMember[]).
  */
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import Avatar from "@/components/ui/Avatar";
 import Modal from "@/components/ui/Modal";
 import {
   Shield,
-  Plus,
-  Edit2,
   Trash2,
-  Check,
-  X as CloseIcon,
-  Megaphone,
   Users,
-  FileText,
-  GraduationCap,
-  Video,
-  FolderOpen,
+  Plus,
+  Check,
+  Search,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import type { Moderator, ModeratorPermissions } from "@/types/room-settings";
+import type { RoomMember } from "@/server-api/room-members";
+import type { User } from "@/types/user";
 
 interface ModeratorManagerProps {
-  moderators: Moderator[];
-  onAddModerator: (userId: string, permissions: ModeratorPermissions) => void;
-  onUpdatePermissions: (
-    moderatorId: string,
-    permissions: ModeratorPermissions
-  ) => void;
-  onRemoveModerator: (moderatorId: string) => void;
+  moderators: User[]; // From room.moderators
+  availableMembers: RoomMember[]; // From members API
+  onAddModerator: (memberId: string) => Promise<void>;
+  onRemoveModerator: (moderatorUserId: string) => Promise<void>;
+  isUpdating?: boolean;
 }
 
-const permissionLabels = [
-  {
-    key: "canPostAnnouncements" as keyof ModeratorPermissions,
-    label: "Post announcements",
-    icon: Megaphone,
-  },
-  {
-    key: "canManageMembers" as keyof ModeratorPermissions,
-    label: "Add/remove members",
-    icon: Users,
-  },
-  {
-    key: "canPostAssignments" as keyof ModeratorPermissions,
-    label: "Post assignments & quizzes",
-    icon: FileText,
-  },
-  {
-    key: "canGradeAssignments" as keyof ModeratorPermissions,
-    label: "Grade assignments & quizzes",
-    icon: GraduationCap,
-  },
-  {
-    key: "canStartSessions" as keyof ModeratorPermissions,
-    label: "Start live sessions",
-    icon: Video,
-  },
-  {
-    key: "canManageFiles" as keyof ModeratorPermissions,
-    label: "Add/remove files in content",
-    icon: FolderOpen,
-  },
-];
+const MEMBERS_PER_PAGE = 5;
 
 export default function ModeratorManager({
   moderators,
+  availableMembers,
   onAddModerator,
-  onUpdatePermissions,
   onRemoveModerator,
+  isUpdating,
 }: ModeratorManagerProps) {
-  const [editingModerator, setEditingModerator] = useState<Moderator | null>(
-    null
-  );
-  const [editPermissions, setEditPermissions] =
-    useState<ModeratorPermissions | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  const [moderatorToRemove, setModeratorToRemove] = useState<Moderator | null>(
-    null
-  );
+  const [moderatorToRemove, setModeratorToRemove] = useState<User | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
-  const handleEditClick = (moderator: Moderator) => {
-    setEditingModerator(moderator);
-    setEditPermissions({ ...moderator.permissions });
+  // Search and pagination state for Add Moderator modal
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Filter members by search query
+  const filteredMembers = useMemo(() => {
+    if (!searchQuery.trim()) return availableMembers;
+    const query = searchQuery.toLowerCase();
+    return availableMembers.filter(
+      (member) =>
+        `${member.user.firstName} ${member.user.lastName}`
+          .toLowerCase()
+          .includes(query) || member.user.email.toLowerCase().includes(query),
+    );
+  }, [availableMembers, searchQuery]);
+
+  // Paginate filtered members
+  const paginatedMembers = useMemo(() => {
+    const startIndex = (currentPage - 1) * MEMBERS_PER_PAGE;
+    return filteredMembers.slice(startIndex, startIndex + MEMBERS_PER_PAGE);
+  }, [filteredMembers, currentPage]);
+
+  const totalPages = Math.ceil(filteredMembers.length / MEMBERS_PER_PAGE);
+
+  // Reset pagination when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+    setSelectedMemberId(null); // Clear selection on search
   };
 
-  const handleSavePermissions = () => {
-    if (editingModerator && editPermissions) {
-      onUpdatePermissions(editingModerator.id, editPermissions);
-      // TODO: Integrate with backend API
-      // Example: await updateModeratorPermissions(editingModerator.id, editPermissions);
-      setEditingModerator(null);
-      setEditPermissions(null);
-    }
+  // Reset modal state when closing
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
+    setSelectedMemberId(null);
+    setSearchQuery("");
+    setCurrentPage(1);
   };
 
-  const handleRemoveClick = (moderator: Moderator) => {
+  const handleRemoveClick = (moderator: User) => {
     setModeratorToRemove(moderator);
     setShowRemoveConfirm(true);
   };
 
-  const confirmRemove = () => {
+  const confirmRemove = async () => {
     if (moderatorToRemove) {
-      onRemoveModerator(moderatorToRemove.id);
-      // TODO: Integrate with backend API and add audit logging
-      // Example: await removeModerator(moderatorToRemove.id);
-      // Example: logAuditEvent('moderator_removed', { moderatorId: moderatorToRemove.id });
-    }
-    setShowRemoveConfirm(false);
-    setModeratorToRemove(null);
-  };
-
-  const togglePermission = (key: keyof ModeratorPermissions) => {
-    if (editPermissions) {
-      setEditPermissions({
-        ...editPermissions,
-        [key]: !editPermissions[key],
-      });
+      await onRemoveModerator(moderatorToRemove.id);
+      // Only close modal after successful API call
+      setShowRemoveConfirm(false);
+      setModeratorToRemove(null);
     }
   };
 
-  const getPermissionSummary = (permissions: ModeratorPermissions): string => {
-    const enabled = Object.values(permissions).filter(Boolean).length;
-    const total = Object.keys(permissions).length;
-    return `${enabled}/${total} permissions`;
+  const handleAddModerator = async () => {
+    if (selectedMemberId) {
+      await onAddModerator(selectedMemberId);
+      // Only close modal after successful API call
+      handleCloseAddModal();
+    }
   };
 
   return (
@@ -139,18 +115,17 @@ export default function ModeratorManager({
           <div>
             <h3 className="text-xl font-raleway font-bold text-heading flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
-              Moderators & Permissions
+              Moderators
             </h3>
             <p className="text-sm text-para-muted mt-1">
-              Manage moderators and their granular permissions
+              Moderators help manage this room
             </p>
           </div>
           <Button
-            onClick={() => {
-              /* TODO: Open add moderator modal */
-            }}
+            onClick={() => setShowAddModal(true)}
             size="sm"
             className="w-[150px]"
+            disabled={availableMembers.length === 0}
             aria-label="Add new moderator"
           >
             <Plus className="w-4 h-4" />
@@ -160,7 +135,7 @@ export default function ModeratorManager({
 
         {moderators.length === 0 ? (
           <div className="text-center py-12">
-            <Shield className="w-12 h-12 text-para-muted mx-auto mb-3 opacity-50" />
+            <Users className="w-12 h-12 text-para-muted mx-auto mb-3 opacity-50" />
             <p className="text-sm text-para-muted">
               No moderators assigned yet
             </p>
@@ -175,62 +150,35 @@ export default function ModeratorManager({
                 key={moderator.id}
                 className="p-4 border border-light-border rounded-lg hover:border-secondary/30 transition-colors"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center justify-between gap-4">
                   {/* Moderator Info */}
-                  <div className="flex items-start gap-3 flex-1">
-                    <Avatar profileImage={moderator.avatar} size="md" />
+                  <div className="flex items-center gap-3 flex-1">
+                    <Avatar
+                      profileImage={moderator.image || undefined}
+                      size="md"
+                    />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-heading text-sm">
-                        {moderator.name}
+                        {moderator.firstName} {moderator.lastName}
                       </h4>
                       <p className="text-xs text-para-muted truncate">
                         {moderator.email}
-                      </p>
-                      <p className="text-xs text-secondary mt-1">
-                        {getPermissionSummary(moderator.permissions)}
                       </p>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => handleEditClick(moderator)}
-                      variant="outline"
-                      size="sm"
-                      className="w-[100px]"
-                      aria-label={`Edit permissions for ${moderator.name}`}
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      Edit
-                    </Button>
-                    <Button
-                      onClick={() => handleRemoveClick(moderator)}
-                      variant="destructive"
-                      size="sm"
-                      className="w-[100px]"
-                      aria-label={`Remove ${moderator.name} as moderator`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-white" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Permission Pills */}
-                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-light-border">
-                  {permissionLabels.map(({ key, label, icon: Icon }) => (
-                    <div
-                      key={key}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs ${
-                        moderator.permissions[key]
-                          ? "bg-secondary/10 text-primary"
-                          : "bg-background text-para-muted line-through"
-                      }`}
-                    >
-                      <Icon className="w-3 h-3" />
-                      <span>{label}</span>
-                    </div>
-                  ))}
+                  <Button
+                    onClick={() => handleRemoveClick(moderator)}
+                    variant="destructive"
+                    size="sm"
+                    className="w-[120px]"
+                    disabled={isUpdating}
+                    aria-label={`Remove ${moderator.firstName} as moderator`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-white" />
+                    Remove
+                  </Button>
                 </div>
               </div>
             ))}
@@ -238,85 +186,129 @@ export default function ModeratorManager({
         )}
       </div>
 
-      {/* Edit Permissions Modal */}
-      {editingModerator && editPermissions && (
-        <Modal
-          isOpen={!!editingModerator}
-          onClose={() => {
-            setEditingModerator(null);
-            setEditPermissions(null);
-          }}
-          title={`Edit Permissions: ${editingModerator.name}`}
-          maxWidth="lg"
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-para-muted">
-              Toggle individual permissions for this moderator. Changes are
-              saved immediately.
-            </p>
+      {/* Add Moderator Modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={handleCloseAddModal}
+        title="Add Moderator"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-para-muted" />
+            <Input
+              type="text"
+              placeholder="Search members by name or email..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10"
+            />
+          </div>
 
-            <div className="space-y-2">
-              {permissionLabels.map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => togglePermission(key)}
-                  className="w-full flex items-center justify-between p-3 border-2 border-light-border rounded-lg hover:border-secondary/30 transition-colors text-left"
-                  role="checkbox"
-                  aria-checked={editPermissions[key]}
-                  aria-label={`Toggle ${label} permission`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-lg ${
-                        editPermissions[key]
-                          ? "bg-secondary/10 text-primary"
-                          : "bg-main-background text-para-muted"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm text-para font-medium">
-                      {label}
-                    </span>
-                  </div>
-                  <div
-                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center ${
-                      editPermissions[key]
-                        ? "bg-primary border-main-background"
-                        : "border-light-border"
+          {/* Member Count */}
+          <p className="text-xs text-para-muted">
+            {filteredMembers.length} member
+            {filteredMembers.length !== 1 ? "s" : ""} available
+            {searchQuery && ` matching "${searchQuery}"`}
+          </p>
+
+          {/* Members List */}
+          {filteredMembers.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-10 h-10 text-para-muted mx-auto mb-2 opacity-50" />
+              <p className="text-sm text-para-muted">
+                {searchQuery
+                  ? "No members match your search"
+                  : "No members available to add as moderators"}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {paginatedMembers.map((member) => (
+                  <button
+                    key={member.id}
+                    onClick={() => setSelectedMemberId(member.id)}
+                    className={`w-full p-3 rounded-lg border-2 transition-colors text-left flex items-center gap-3 ${
+                      selectedMemberId === member.id
+                        ? "border-primary bg-primary/5"
+                        : "border-light-border hover:border-secondary/30"
                     }`}
                   >
-                    {editPermissions[key] && (
-                      <Check className="w-4 h-4 text-white" />
+                    <Avatar
+                      profileImage={member.user.image || undefined}
+                      size="sm"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-heading">
+                        {member.user.firstName} {member.user.lastName}
+                      </p>
+                      <p className="text-xs text-para-muted truncate">
+                        {member.user.email}
+                      </p>
+                    </div>
+                    {selectedMemberId === member.id && (
+                      <Check className="w-5 h-5 text-primary flex-shrink-0" />
                     )}
-                  </div>
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
 
-            <div className="flex items-center gap-3 pt-4">
-              <Button
-                onClick={() => {
-                  setEditingModerator(null);
-                  setEditPermissions(null);
-                }}
-                variant="outline"
-                className="flex-1"
-                aria-label="Cancel editing"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSavePermissions}
-                className="flex-1"
-                aria-label="Save permission changes"
-              >
-                Save Changes
-              </Button>
-            </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-xs text-para-muted">
+                    Page {currentPage} of {totalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-4 border-t border-light-border">
+            <Button
+              onClick={handleCloseAddModal}
+              variant="outline"
+              className="flex-1"
+              aria-label="Cancel"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddModerator}
+              className="flex-1"
+              disabled={!selectedMemberId || isUpdating}
+              aria-label="Confirm add moderator"
+            >
+              {isUpdating ? "Adding..." : "Add as Moderator"}
+            </Button>
           </div>
-        </Modal>
-      )}
+        </div>
+      </Modal>
 
       {/* Remove Moderator Confirmation */}
       <Modal
@@ -325,34 +317,26 @@ export default function ModeratorManager({
           setShowRemoveConfirm(false);
           setModeratorToRemove(null);
         }}
-        title="Remove Moderator"
+        title="Demote Moderator"
         maxWidth="md"
       >
         {moderatorToRemove && (
           <div className="space-y-4">
             <p className="text-sm text-para">
-              Are you sure you want to remove{" "}
+              Are you sure you want to demote{" "}
               <span className="font-semibold text-heading">
-                {moderatorToRemove.name}
+                {moderatorToRemove.firstName} {moderatorToRemove.lastName}
               </span>{" "}
-              as a moderator? They will lose all moderator permissions.
+              to a regular member? They will lose all moderator permissions.
             </p>
 
             <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
               <p className="text-xs text-para-muted">
-                This action can be reversed by re-adding them as a moderator.
+                This action can be reversed by promoting them again.
               </p>
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
-                onClick={confirmRemove}
-                variant="destructive"
-                className="flex-1"
-                aria-label="Confirm remove moderator"
-              >
-                Remove Moderator
-              </Button>
               <Button
                 onClick={() => {
                   setShowRemoveConfirm(false);
@@ -360,9 +344,18 @@ export default function ModeratorManager({
                 }}
                 variant="outline"
                 className="flex-1"
-                aria-label="Cancel removal"
+                aria-label="Cancel demotion"
               >
                 Cancel
+              </Button>
+              <Button
+                onClick={confirmRemove}
+                variant="destructive"
+                className="flex-1"
+                disabled={isUpdating}
+                aria-label="Confirm demote moderator"
+              >
+                {isUpdating ? "Demoting..." : "Demote to Member"}
               </Button>
             </div>
           </div>
