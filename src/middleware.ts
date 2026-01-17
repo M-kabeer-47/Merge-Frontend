@@ -54,11 +54,11 @@ export async function middleware(request: NextRequest) {
           "Content-Type": "application/json",
           Cookie: `refreshToken=${refreshToken}`,
         },
-      })
+      }),
     );
     if (refreshResponse?.ok) {
       const [data, parseError] = await tryIt(
-        refreshResponse.json() as Promise<RefreshTokenResponse>
+        refreshResponse.json() as Promise<RefreshTokenResponse>,
       );
       if (data && !parseError) {
         console.log("[Middleware] Token refreshed successfully");
@@ -67,10 +67,10 @@ export async function middleware(request: NextRequest) {
         response.cookies.delete("refreshToken");
         // response.cookies.delete("userId");
         const cookieOptions = {
-          domain: ".mergeedu.app",
+          domain: process.env.USE_AUTH_PROXY ? undefined : ".mergeedu.app",
           httpOnly: true,
-          secure: true,
-          sameSite: "none" as const,
+          secure: process.env.USE_AUTH_PROXY ? false : true,
+          sameSite: "lax" as const,
           path: "/",
         };
         response.cookies.set("accessToken", data.token, {

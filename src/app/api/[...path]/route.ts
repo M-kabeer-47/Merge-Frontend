@@ -8,7 +8,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
  */
 async function handler(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
   const pathString = path.join("/");
@@ -52,7 +52,7 @@ async function handler(
       method: request.method,
       headers,
       body,
-    }
+    },
   );
 
   // Get response data

@@ -1,4 +1,4 @@
-import { Download, FileText, File, Loader2 } from "lucide-react";
+import { Download, FileText, File } from "lucide-react";
 import { ChatMessage } from "@/lib/constants/mock-chat-data";
 import { useState } from "react";
 import ImageCarouselModal from "./ImageCarouselModal";
@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/Popover";
 import { downloadFile } from "@/utils/download-file";
+import LoadingSpinner from "../ui/LoadingSpinner";
 
 const formatFileSize = (bytes: number) => {
   if (bytes === 0) return "0 Bytes";
@@ -37,7 +38,7 @@ export default function MessageAttachments({
       {hasImages && (
         <ImageAttachmentGrid
           attachments={message.attachments.filter(
-            (att) => att.type === "image"
+            (att) => att.type === "image",
           )}
           isOwnMessage={isOwnMessage}
         />
@@ -68,7 +69,7 @@ const ImageAttachmentGrid: React.FC<{
   const overallProgress = isUploading
     ? Math.round(
         attachments.reduce((sum, att) => sum + (att.uploadProgress || 0), 0) /
-          attachments.length
+          attachments.length,
       )
     : 100;
 
@@ -128,10 +129,7 @@ const ImageAttachmentGrid: React.FC<{
             {attachment.isUploading && count === 1 && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                 <div className="text-center">
-                  <Loader2 className="h-8 w-8 text-background animate-spin mx-auto mb-2" />
-                  <div className="text-background text-sm font-medium">
-                    {attachment.uploadProgress || 0}%
-                  </div>
+                  <LoadingSpinner text={`${attachment.uploadProgress || 0}%`} />
                 </div>
               </div>
             )}
@@ -156,10 +154,7 @@ const ImageAttachmentGrid: React.FC<{
         {isUploading && count > 1 && (
           <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
             <div className="text-center">
-              <Loader2 className="h-10 w-10 text-background animate-spin mx-auto mb-2" />
-              <div className="text-background text-base font-medium">
-                Uploading {overallProgress}%
-              </div>
+              <LoadingSpinner text={`Uploading ${overallProgress}%`} />
             </div>
           </div>
         )}
@@ -210,12 +205,7 @@ const FileAttachmentList: React.FC<{
             <div className="flex-shrink-0">
               {attachment.isUploading ? (
                 <div className="relative">
-                  <Loader2 className="h-5 w-5 text-background animate-spin" />
-                  {attachment.uploadProgress !== undefined && (
-                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-para-muted whitespace-nowrap">
-                      {attachment.uploadProgress}%
-                    </div>
-                  )}
+                  <LoadingSpinner text={`${attachment.uploadProgress || 0}%`} />
                 </div>
               ) : (
                 getFileIcon(attachment.name)
