@@ -1,8 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
-import { refreshRoomCache } from "@/server-actions/rooms";
+import {
+  refreshRoomCache,
+  refreshRoomMembersCache,
+} from "@/server-actions/rooms";
 import type { RoomDetails } from "@/types/room-details";
+import type { RoomMember } from "@/server-api/room-members";
 
 type MemberRole = "moderator" | "member";
 
@@ -20,9 +24,10 @@ export default function useUpdateMemberRole() {
     memberId,
     role,
   }: UpdateMemberRoleParams) => {
+    // Use relative path - api utility already has baseURL configured
     const response = await api.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/room/${roomId}/members/${memberId}/role`,
-      { role }
+      `/room/${roomId}/members/${memberId}/role`,
+      { role },
     );
     return response.data;
   };
@@ -37,36 +42,45 @@ export default function useUpdateMemberRole() {
       toast.success(
         isPromoting
           ? "Member promoted to moderator!"
-          : "Moderator demoted to member."
+          : "Moderator demoted to member.",
       );
 
       // Optimistically update the room cache
       queryClient.setQueryData<RoomDetails>(["room", roomId], (old) => {
         if (!old) return old;
 
-        // Find the member in the members list
-        const member = old.members.find((m) => m.id === memberId);
-        if (!member) return old;
-
         if (isPromoting) {
-          // Add to moderators, keep in members
-          const newModerators = [...(old.moderators || []), member];
-          return { ...old, moderators: newModerators };
+          // For promotions, we'll just invalidate and let the server refetch
+          // The moderators will be updated from the server response
+          return old;
         } else {
-          // Remove from moderators
+          // Remove from moderators by user ID
           const newModerators = (old.moderators || []).filter(
-            (m) => m.id !== memberId
+            (m) => m.id !== memberId,
           );
           return { ...old, moderators: newModerators };
         }
       });
 
+      // Optimistically update the members list cache
+      queryClient.setQueryData<RoomMember[]>(
+        ["room", roomId, "members"],
+        (old) => {
+          if (!old) return old;
+          return old.map((member) =>
+            member.id === memberId ? { ...member, role } : member,
+          );
+        },
+      );
+
       // Refresh server cache
       refreshRoomCache(roomId);
+      refreshRoomMembersCache(roomId);
     },
 
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update member role");
+      console.log("Message", error.message);
     },
   });
 

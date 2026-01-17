@@ -1,7 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
-import type { InstructorAssignment } from "@/types/assignment";
+import type {
+  InstructorAssignment,
+  AttemptsResponse,
+} from "@/types/assignment";
 
 interface AttemptScore {
   attemptId: string;
@@ -40,7 +43,7 @@ export default function useBulkGradeAttempts({
     onSuccess: (_, variables) => {
       // Create a map of attemptId -> newScore for quick lookup
       const scoreMap = new Map(
-        variables.attempts.map((a) => [a.attemptId, a.score])
+        variables.attempts.map((a) => [a.attemptId, a.score]),
       );
 
       // Update single assignment detail cache
@@ -68,14 +71,34 @@ export default function useBulkGradeAttempts({
             gradedAttempts: old.gradedAttempts + newlyGradedCount,
             ungradedAttempts: Math.max(
               0,
-              old.ungradedAttempts - newlyGradedCount
+              old.ungradedAttempts - newlyGradedCount,
             ),
             attempts: {
               ...old.attempts,
               data: updatedAttemptsData,
             },
           };
-        }
+        },
+      );
+
+      // Update the submissions cache - this is what the UI actually reads from
+      // The query key uses ["submissions", assignmentId, filter, subFilter, page]
+      // We update all queries that start with ["submissions", assignmentId]
+      queryClient.setQueriesData<AttemptsResponse>(
+        { queryKey: ["submissions", variables.assignmentId], exact: false },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: old.data.map((attempt) => {
+              const newScore = scoreMap.get(attempt.id);
+              if (newScore !== undefined) {
+                return { ...attempt, score: newScore };
+              }
+              return attempt;
+            }),
+          };
+        },
       );
 
       // Also update assignments list cache for the room
@@ -90,13 +113,13 @@ export default function useBulkGradeAttempts({
                 gradedAttempts: assignment.gradedAttempts + newlyGradedCount,
                 ungradedAttempts: Math.max(
                   0,
-                  assignment.ungradedAttempts - newlyGradedCount
+                  assignment.ungradedAttempts - newlyGradedCount,
                 ),
               };
             }
             return assignment;
           });
-        }
+        },
       );
 
       toast.success("All grades saved successfully");

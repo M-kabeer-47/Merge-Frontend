@@ -9,6 +9,7 @@ interface UpdateRoomData {
   title?: string;
   description?: string;
   isPublic?: boolean;
+  autoJoin?: boolean;
   tags?: string[];
 }
 
@@ -18,14 +19,14 @@ interface UseUpdateRoomOptions {
 
 export default function useUpdateRoom(
   roomId: string,
-  options?: UseUpdateRoomOptions
+  options?: UseUpdateRoomOptions,
 ) {
   const queryClient = useQueryClient();
 
   const updateRoomFunction = async (data: UpdateRoomData) => {
     const response = await api.patch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/room/${roomId}`,
-      data
+      data,
     );
     return response.data;
   };
@@ -33,13 +34,13 @@ export default function useUpdateRoom(
   // Helper to update room in a rooms list cache
   const updateRoomInCache = (
     oldData: RoomsResponse | undefined,
-    updatedData: UpdateRoomData
+    updatedData: UpdateRoomData,
   ): RoomsResponse | undefined => {
     if (!oldData) return oldData;
     return {
       ...oldData,
       rooms: oldData.rooms.map((room) =>
-        room.id === roomId ? { ...room, ...updatedData } : room
+        room.id === roomId ? { ...room, ...updatedData } : room,
       ),
     };
   };
@@ -82,21 +83,21 @@ export default function useUpdateRoom(
       // Optimistically update room details (instant!)
       queryClient.setQueryData<RoomDetails>(
         ["room", roomId],
-        (old) => (old ? { ...old, ...newData } : old) as RoomDetails
+        (old) => (old ? { ...old, ...newData } : old) as RoomDetails,
       );
 
       // Optimistically update rooms lists
       queryClient.setQueryData(
         ["rooms", "all", ""],
-        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
+        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData),
       );
       queryClient.setQueryData(
         ["rooms", "created", ""],
-        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
+        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData),
       );
       queryClient.setQueryData(
         ["rooms", "joined", ""],
-        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
+        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData),
       );
 
       // Return context for rollback
@@ -117,25 +118,25 @@ export default function useUpdateRoom(
       if (context?.previousRoomsAll) {
         queryClient.setQueryData(
           ["rooms", "all", ""],
-          context.previousRoomsAll
+          context.previousRoomsAll,
         );
       }
       if (context?.previousRoomsCreated) {
         queryClient.setQueryData(
           ["rooms", "created", ""],
-          context.previousRoomsCreated
+          context.previousRoomsCreated,
         );
       }
       if (context?.previousRoomsJoined) {
         queryClient.setQueryData(
           ["rooms", "joined", ""],
-          context.previousRoomsJoined
+          context.previousRoomsJoined,
         );
       }
 
       toast.error(
         error?.response?.data?.message ||
-          "Failed to update room. Please try again."
+          "Failed to update room. Please try again.",
       );
     },
 
@@ -145,7 +146,7 @@ export default function useUpdateRoom(
 
       // Update with actual server response (in case server modified data)
       queryClient.setQueryData<RoomDetails>(["room", roomId], (old) =>
-        old ? { ...old, ...serverRoom } : old
+        old ? { ...old, ...serverRoom } : old,
       );
 
       // Invalidate Next.js server cache for this specific room and rooms list

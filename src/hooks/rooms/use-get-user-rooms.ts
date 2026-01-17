@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/utils/api";
 import { toast } from "sonner";
+import { tryIt } from "@/utils/try-it";
 
 interface RoomAdmin {
   id: string;
@@ -39,7 +40,7 @@ export interface Room {
   memberCount: number;
 }
 
-interface RoomsResponse {
+export interface RoomsResponse {
   rooms: Room[];
   total: number;
   totalPages: number;
@@ -60,16 +61,16 @@ export default function useGetUserRooms({
   search?: string;
 }) {
   const fetchUserRooms = async (): Promise<RoomsResponse | null> => {
-    try {
-      const searchParam = search ? `&search=${search}` : "";
-      const response = await api.get(
-        `/user/rooms?filter=${filter}${searchParam}`
-      );
-      return response.data;
-    } catch (error: any) {
+    // utilzie tryIt
+    const searchParam = search ? `&search=${search}` : "";
+    const [response, error] = await tryIt(
+      api.get(`/user/rooms?filter=${filter}${searchParam}`),
+    );
+    if (error) {
       toast.error("Failed to fetch rooms, please try again later");
-      throw error;
+      return null;
     }
+    return response.data;
   };
 
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
