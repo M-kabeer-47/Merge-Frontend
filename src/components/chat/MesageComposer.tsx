@@ -33,6 +33,9 @@ interface MessageComposerProps {
   replyingTo?: ChatMessage;
   replyingToUser?: User;
   onCancelReply: () => void;
+  editingMessage?: ChatMessage;
+  onCancelEdit?: () => void;
+  onUpdateMessage?: (messageId: string, content: string) => void;
 }
 
 export type MessageComposerHandle = {
@@ -45,12 +48,24 @@ const MessageComposer = forwardRef(function MessageComposer(
     replyingTo,
     replyingToUser,
     onCancelReply,
+    editingMessage,
+    onCancelEdit,
+    onUpdateMessage,
   }: MessageComposerProps,
   ref: ForwardedRef<MessageComposerHandle>
 ) {
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Set message content when editing
+  useEffect(() => {
+    if (editingMessage) {
+      setMessage(editingMessage.content);
+      // Focus the textarea
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    }
+  }, [editingMessage]);
 
   // emoji picker state & ref
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
@@ -181,15 +196,24 @@ const MessageComposer = forwardRef(function MessageComposer(
 
   const handleSend = () => {
     if (message.trim() || attachments.length > 0) {
-      onSendMessage(
-        message.trim(),
-        replyingTo?.id,
-        attachments.length > 0 ? attachments : undefined
-      );
-      setMessage("");
-      handleRemoveAllAttachments();
-      if (replyingTo) {
-        onCancelReply();
+      // Check if we're editing
+      if (editingMessage && onUpdateMessage) {
+        // Update message
+        onUpdateMessage(editingMessage.id, message.trim());
+        setMessage("");
+        onCancelEdit?.();
+      } else {
+        // Send new message
+        onSendMessage(
+          message.trim(),
+          replyingTo?.id,
+          attachments.length > 0 ? attachments : undefined
+        );
+        setMessage("");
+        handleRemoveAllAttachments();
+        if (replyingTo) {
+          onCancelReply();
+        }
       }
       if (textareaRef.current) textareaRef.current.style.height = "auto";
     }
@@ -226,6 +250,28 @@ const MessageComposer = forwardRef(function MessageComposer(
         onRemove={handleRemoveAttachment}
         onRemoveAll={handleRemoveAllAttachments}
       />
+
+      {/* Editing Banner */}
+      {editingMessage && (
+        <div className="px-6 py-3 relative bg-primary/10 rounded-lg mx-4 mt-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs text-primary mb-1 font-medium">
+                Editing message
+              </div>
+              <div className="text-sm text-para line-clamp-2">
+                {editingMessage.content}
+              </div>
+            </div>
+            <button
+              onClick={onCancelEdit}
+              className="p-1 rounded transition-colors ml-2 hover:bg-primary/10"
+            >
+              <X className="h-4 w-4 text-para" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {replyingTo && replyingToUser && (
         <div className="px-6 py-3 relative ">
@@ -339,13 +385,18 @@ const MessageComposer = forwardRef(function MessageComposer(
           <button
             onClick={handleSend}
             disabled={!message.trim() && attachments.length === 0}
-            className={`px-3.5 py-3 flex-shrink-0 h-[42px] rounded-lg relative top-[-5px] transition-all duration-200 disabled:bg-primary/20 ${
+            className={`px-3.5 flex-shrink-0 h-[42px] rounded-lg relative top-[-5px] transition-all duration-200 disabled:bg-primary/20 ${
               message.trim() || attachments.length > 0
                 ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
                 : "bg-primary/50 text-white cursor-not-allowed"
             }`}
+            title={editingMessage ? "Update message" : "Send message"}
           >
-            <Send className="h-4 w-4" />
+            {editingMessage ? (
+              <span className="text-sm font-medium">Update</span>
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </button>
         </div>
       </div>
