@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRoom } from "@/providers/RoomProvider";
 import useFetchRoleBasedAssignments from "@/hooks/assignments/use-fetch-role-based-assignments";
+import useDeleteAssignment from "@/hooks/assignments/use-delete-assignment";
 import AssignmentCard from "./AssignmentCard";
 import AssignmentCardsSkeleton from "./AssignmentCardsSkeleton";
 import {
@@ -45,6 +46,9 @@ export default function AssignmentsList({
     sortOrder,
   });
 
+  // Delete assignment hook
+  const { deleteAssignment } = useDeleteAssignment();
+
   const handleViewDetails = (id: string) => {
     router.push(`/rooms/${roomId}/assignments/${id}`);
   };
@@ -58,10 +62,13 @@ export default function AssignmentsList({
     // TODO: Implement edit assignment functionality
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this assignment?")) {
-      console.log("Delete assignment:", id);
-      // TODO: Implement delete assignment functionality
+  const handleDelete = async (id: string) => {
+    if (
+      confirm(
+        "Are you sure you want to delete this assignment? This action cannot be undone.",
+      )
+    ) {
+      await deleteAssignment({ assignmentId: id, roomId });
     }
   };
 

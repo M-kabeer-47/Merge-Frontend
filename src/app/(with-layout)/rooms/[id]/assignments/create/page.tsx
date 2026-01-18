@@ -72,7 +72,7 @@ export default function CreateAssignmentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-main-background pb-15">
+    <div className="min-h-screen bg-main-background pb-20">
       {/* Header */}
       <AssignmentFormHeader onBack={handleBack} isDisabled={isCreating} />
 

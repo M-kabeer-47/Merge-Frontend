@@ -10,6 +10,7 @@ export type User = {
   googleAccount: boolean;
   hashedRefreshToken: string;
   twoFactorEnabled: boolean;
+  notificationStatus: "default" | "allowed" | "denied";
   createdAt: string;
   updatedAt: string;
 };

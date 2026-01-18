@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { easeOut, motion } from "framer-motion";
 import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -39,6 +39,7 @@ const itemVariants = {
 export default function SignUpForm() {
   const { signUpUser, isError, isPending } = useSignUp();
   const {
+    register,
     control,
     handleSubmit,
     formState: { errors },
@@ -50,7 +51,7 @@ export default function SignUpForm() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: undefined,
+      role: "student",
     },
   });
 
@@ -111,106 +112,76 @@ export default function SignUpForm() {
             className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             variants={itemVariants}
           >
-            <Controller
-              name="firstName"
-              control={control}
-              render={({ field }) => (
-                <FormField
-                  label="First Name"
-                  htmlFor="firstName"
-                  error={errors.firstName?.message}
-                >
-                  <Input
-                    {...field}
-                    id="firstName"
-                    placeholder="John"
-                    error={errors.firstName?.message}
-                    ref={firstNameRef}
-                  />
-                </FormField>
-              )}
-            />
+            <FormField
+              label="First Name"
+              htmlFor="firstName"
+              error={errors.firstName?.message}
+            >
+              <Input
+                {...register("firstName")}
+                id="firstName"
+                placeholder="John"
+                error={errors.firstName?.message}
+                ref={firstNameRef}
+              />
+            </FormField>
 
-            <Controller
-              name="lastName"
-              control={control}
-              render={({ field }) => (
-                <FormField
-                  label="Last Name"
-                  htmlFor="lastName"
-                  error={errors.lastName?.message}
-                >
-                  <Input
-                    {...field}
-                    id="lastName"
-                    placeholder="Doe"
-                    error={errors.lastName?.message}
-                  />
-                </FormField>
-              )}
-            />
+            <FormField
+              label="Last Name"
+              htmlFor="lastName"
+              error={errors.lastName?.message}
+            >
+              <Input
+                {...register("lastName")}
+                id="lastName"
+                placeholder="Doe"
+                error={errors.lastName?.message}
+              />
+            </FormField>
           </motion.div>
 
           {/* Email */}
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-              <FormField
-                label="Email"
-                htmlFor="email"
-                error={errors.email?.message}
-              >
-                <Input
-                  {...field}
-                  id="email"
-                  type="email"
-                  placeholder="john@example.com"
-                  error={errors.email?.message}
-                />
-              </FormField>
-            )}
-          />
+          <FormField
+            label="Email"
+            htmlFor="email"
+            error={errors.email?.message}
+          >
+            <Input
+              {...register("email")}
+              id="email"
+              type="email"
+              placeholder="john@example.com"
+              error={errors.email?.message}
+            />
+          </FormField>
 
           {/* Password */}
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <FormField
-                label="Password"
-                htmlFor="password"
-                error={errors.password?.message}
-              >
-                <PasswordInput
-                  {...field}
-                  id="password"
-                  placeholder="Create a strong password"
-                  error={errors.password?.message}
-                />
-              </FormField>
-            )}
-          />
+          <FormField
+            label="Password"
+            htmlFor="password"
+            error={errors.password?.message}
+          >
+            <PasswordInput
+              {...register("password")}
+              id="password"
+              placeholder="Create a strong password"
+              error={errors.password?.message}
+            />
+          </FormField>
 
           {/* Confirm Password */}
-          <Controller
-            name="confirmPassword"
-            control={control}
-            render={({ field }) => (
-              <FormField
-                label="Confirm Password"
-                htmlFor="confirmPassword"
-                error={errors.confirmPassword?.message}
-              >
-                <PasswordInput
-                  {...field}
-                  id="confirmPassword"
-                  placeholder="Confirm your password"
-                  error={errors.confirmPassword?.message}
-                />
-              </FormField>
-            )}
-          />
+          <FormField
+            label="Confirm Password"
+            htmlFor="confirmPassword"
+            error={errors.confirmPassword?.message}
+          >
+            <PasswordInput
+              {...register("confirmPassword")}
+              id="confirmPassword"
+              placeholder="Confirm your password"
+              error={errors.confirmPassword?.message}
+            />
+          </FormField>
 
           {/* Submit Button */}
           <motion.div variants={itemVariants}>

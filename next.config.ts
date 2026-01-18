@@ -29,6 +29,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    optimizePackageImports: ["lucide-react", "date-fns"],
     serverActions: {
       bodySizeLimit: "10mb",
     },

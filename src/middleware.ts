@@ -9,6 +9,7 @@ const publicRoutes = [
   "/sign-up",
   "/forgot-password",
   "/reset-password",
+  "/verify",
 ];
 
 // Routes that should skip middleware entirely (API routes, static files, etc.)
@@ -18,6 +19,7 @@ const skipRoutes = [
   "/favicon.ico",
   "/illustrations",
   "/images",
+  "/firebase-messaging-sw.js",
 ];
 
 interface RefreshTokenResponse {
@@ -107,8 +109,9 @@ export const config = {
      * - api routes (they handle their own auth)
      * - _next/static (static files)
      * - _next/image (image optimization)
-     * - favicon.ico, images, etc.
+     * - favicon.ico, images, illustrations, icons
+     * - Static files (svg, png, jpg, jpeg, gif, webp, ico)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|illustrations|images).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|illustrations|images|icons|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

@@ -1,5 +1,6 @@
-import React from "react";
+"use client";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface RoleSelectionCardsProps {
   value?: string;
@@ -28,9 +29,11 @@ export default function RoleSelectionCards({
             }`}
           >
             <div className="flex items-center space-x-8">
-              <img
+              <Image
                 src="/illustrations/student.png"
                 alt="Student"
+                width={50}
+                height={50}
                 className="w-15 h-15 mt-1 flex-shrink-0 scale-160  "
               />
               <h3 className="font-raleway text-center font-semibold text-heading text-base sm:text-lg mb-1">
@@ -53,9 +56,11 @@ export default function RoleSelectionCards({
             }`}
           >
             <div className="flex items-center space-x-10">
-              <img
+              <Image
                 src="/illustrations/instructor.png"
                 alt="Instructor"
+                width={50}
+                height={50}
                 className="w-15 h-15 mt-1 flex-shrink-0 scale-160"
               />
               <h3 className="font-raleway font-semibold text-heading text-base  sm:text-lg mb-1">

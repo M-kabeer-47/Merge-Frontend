@@ -1,98 +1,66 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { IoNotificationsOutline } from "react-icons/io5";
+import { useRouter } from "next/navigation";
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { useFetchNotifications } from "@/hooks/notifications/use-fetch-notifications";
+import { useMarkNotificationRead } from "@/hooks/notifications/use-mark-notification-read";
+import { useMarkAllNotificationsRead } from "@/hooks/notifications/use-mark-all-notifications-read";
+import {
+  getNotificationType,
+  getNotificationIcon,
+  type NotificationPayload,
+} from "@/types/notification";
 
-interface Notification {
-  id: number;
-  title: string;
-  time: string;
-  unread: boolean;
-  type?: "message" | "system" | "reminder";
-}
-
-interface NotificationDropdownProps {
-  notifications?: Notification[];
-  notificationCount?: number;
-  onNotificationClick?: (notification: Notification) => void;
-  onViewAll?: () => void;
-  onMarkAllRead?: () => void;
-}
-
-const defaultNotifications: Notification[] = [
-  {
-    id: 1,
-    title: "New message in Math Study Group",
-    time: "2 min ago",
-    unread: true,
-    type: "message",
-  },
-  {
-    id: 2,
-    title: "Canvas shared with you",
-    time: "1 hour ago",
-    unread: true,
-    type: "system",
-  },
-  {
-    id: 3,
-    title: "Live session starting soon",
-    time: "2 hours ago",
-    unread: false,
-    type: "reminder",
-  },
-  {
-    id: 4,
-    title: "Assignment deadline approaching",
-    time: "1 day ago",
-    unread: true,
-    type: "reminder",
-  },
-];
-
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case "message":
-      return "💬";
-    case "system":
-      return "📋";
-    case "reminder":
-      return "⏰";
-    default:
-      return "🔔";
-  }
-};
-
-export default function NotificationDropdown({
-  notifications = defaultNotifications,
-  notificationCount,
-  onNotificationClick,
-  onViewAll,
-  onMarkAllRead,
-}: NotificationDropdownProps) {
+export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const unreadCount =
-    notificationCount ?? notifications.filter((n) => n.unread).length;
+  // React Query hooks with infinite scroll
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useFetchNotifications();
 
-  const handleNotificationClick = (notification: Notification) => {
-    if (onNotificationClick) {
-      onNotificationClick(notification);
+  const { mutate: markAsRead } = useMarkNotificationRead();
+  const { mutate: markAllAsRead } = useMarkAllNotificationsRead();
+
+  const handleNotificationClick = (notification: NotificationPayload) => {
+    // Mark as read if unread
+    if (!notification.isRead) {
+      markAsRead(notification.id);
     }
-    // Auto close dropdown after clicking a notification
+
+    // Navigate to actionUrl
+    if (notification.metadata.actionUrl) {
+      router.push(notification.metadata.actionUrl);
+    }
+
+    // Close dropdown
     setIsOpen(false);
   };
 
   const handleViewAll = () => {
-    if (onViewAll) {
-      onViewAll();
-    }
+    // TODO: Navigate to full notifications page if exists
     setIsOpen(false);
   };
 
   const handleMarkAllRead = () => {
-    if (onMarkAllRead) {
-      onMarkAllRead();
+    markAllAsRead();
+  };
+
+  const formatTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch {
+      return "";
     }
   };
 
@@ -140,52 +108,88 @@ export default function NotificationDropdown({
               )}
             </div>
 
-            {/* Notifications List */}
-            <div className="max-h-80 overflow-y-auto">
-              {notifications.length === 0 ? (
+            {/* Notifications List with Infinite Scroll */}
+            <div
+              id="notificationsScrollContainer"
+              ref={scrollContainerRef}
+              className="max-h-80 overflow-y-auto"
+            >
+              {isLoading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                  <p className="text-para-muted mt-2">Loading...</p>
+                </div>
+              ) : notifications.length === 0 ? (
                 <div className="p-8 text-center">
                   <div className="text-4xl mb-2">🔔</div>
                   <p className="text-para-muted">No notifications yet</p>
                 </div>
               ) : (
-                notifications.map((notification, index) => (
-                  <motion.div
-                    key={notification.id}
-                    className={`p-4 border-b border-primary/5 hover:bg-background cursor-pointer transition-colors  ${
-                      notification.unread ? "bg-primary/5" : ""
-                    }`}
-                    onClick={() => handleNotificationClick(notification)}
-                    whileHover={{ backgroundColor: "#f9fafb" }}
-                  >
-                    <div className="flex items-start gap-3">
-                      {/* Notification Icon */}
-                      <div className="text-lg flex-shrink-0 mt-0.5">
-                        {getNotificationIcon(notification.type || "default")}
+                <InfiniteScroll
+                  dataLength={notifications.length}
+                  next={fetchNextPage}
+                  hasMore={!!hasNextPage}
+                  scrollThreshold={0.9}
+                  loader={
+                    isFetchingNextPage ? (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       </div>
+                    ) : null
+                  }
+                  scrollableTarget="notificationsScrollContainer"
+                  endMessage={
+                    notifications.length > 5 ? (
+                      <p className="text-center text-para-muted text-xs py-3">
+                        No more notifications
+                      </p>
+                    ) : null
+                  }
+                >
+                  {notifications.map((notification) => {
+                    const type = getNotificationType(notification.metadata);
+                    const icon = getNotificationIcon(type);
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-sm ${
-                            notification.unread
-                              ? "font-medium text-heading"
-                              : "text-para"
-                          }`}
-                        >
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-para-muted mt-1">
-                          {notification.time}
-                        </p>
-                      </div>
+                    return (
+                      <motion.div
+                        key={notification.id}
+                        className={`p-4 border-b border-primary/5 hover:bg-primary/5 cursor-pointer transition-colors ${
+                          !notification.isRead ? "bg-primary/5" : ""
+                        }`}
+                        onClick={() => handleNotificationClick(notification)}
+                        whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* Notification Icon */}
+                          <div className="text-lg flex-shrink-0 mt-0.5">
+                            {icon}
+                          </div>
 
-                      {/* Unread Indicator */}
-                      {notification.unread && (
-                        <div className="w-2 h-2 bg-primary/80 rounded-full mt-2 flex-shrink-0"></div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={`text-sm ${
+                                !notification.isRead
+                                  ? "font-medium text-heading"
+                                  : "text-para"
+                              }`}
+                            >
+                              {notification.content}
+                            </p>
+                            <p className="text-xs text-para-muted mt-1">
+                              {formatTime(notification.createdAt)}
+                            </p>
+                          </div>
+
+                          {/* Unread Indicator */}
+                          {!notification.isRead && (
+                            <div className="w-2 h-2 bg-primary/80 rounded-full mt-2 flex-shrink-0"></div>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </InfiniteScroll>
               )}
             </div>
 

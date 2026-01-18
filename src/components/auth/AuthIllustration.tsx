@@ -78,10 +78,11 @@ export default function AuthIllustration({
       <motion.div className="mb-8" variants={logoVariants}>
         <div className="flex items-center space-x-2">
           <Image
-            src={`${isDarkMode ? "/dark-mode-logo.svg" : "/icons/logo.svg"}`}
+            src={`${isDarkMode ? "/dark-mode-logo.svg" : "/logo.svg"}`}
             alt="Logo"
             width={50}
             height={50}
+            unoptimized
           />
           <span className="text-2xl font-raleway font-bold text-heading">
             Merge
