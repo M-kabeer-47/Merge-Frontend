@@ -10,6 +10,7 @@ import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
 import type { ChatMessage, MessageAttachment, ApiChatMessage } from "@/types/general-chat";
 import { useAuth } from "@/providers/AuthProvider";
 import { toast } from "sonner";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface GeneralChatClientProps {
   roomId: string;
@@ -62,6 +63,7 @@ interface MockChatMessage {
   content: string;
   timestamp: Date;
   edited?: boolean;
+  deletedForEveryone?: boolean;
   editedAt?: Date;
   replyTo?: string;
   reactions: {
@@ -92,6 +94,10 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | undefined>();
   const [editingMessage, setEditingMessage] = useState<ChatMessage | undefined>();
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<{
+    isOpen: boolean;
+    messageId: string | null;
+  }>({ isOpen: false, messageId: null });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -564,19 +570,25 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
   };
 
-  const handleDeleteForEveryone = async (messageId: string) => {
-    const confirmed = confirm("Are you sure you want to delete this message for everyone?");
-    if (confirmed) {
-      try {
-        await wsDeleteForEveryone({
-          messageId,
-          roomId,
-        });
-        toast.success("Message deleted for everyone");
-      } catch (error) {
-        console.error("Failed to delete message:", error);
-        toast.error("Failed to delete message");
-      }
+  const handleDeleteForEveryone = (messageId: string) => {
+    setConfirmDeleteDialog({ isOpen: true, messageId });
+  };
+
+  const confirmDeleteForEveryone = async () => {
+    const messageId = confirmDeleteDialog.messageId;
+    if (!messageId) return;
+
+    try {
+      await wsDeleteForEveryone({
+        messageId,
+        roomId,
+      });
+      setConfirmDeleteDialog({ isOpen: false, messageId: null });
+      // Message will update via WebSocket messageUpdated event
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      toast.error("Failed to delete message");
+      setConfirmDeleteDialog({ isOpen: false, messageId: null });
     }
   };
 
@@ -607,6 +619,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     content: message.content,
     timestamp: new Date(message.createdAt),
     edited: message.isEdited,
+    deletedForEveryone: message.deletedForEveryone,
     replyTo: message.replyToId || undefined,
     reactions: [],
     attachments: message.attachments.map((att) => ({
@@ -702,6 +715,19 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           onUpdateMessage={handleUpdateMessage}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDeleteDialog.isOpen}
+        onClose={() => setConfirmDeleteDialog({ isOpen: false, messageId: null })}
+        onConfirm={confirmDeleteForEveryone}
+        title="Delete Message"
+        message="This message will be permanently deleted for everyone."
+        itemName="Are you sure you want to delete this message"
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 };
