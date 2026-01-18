@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   ChatMessage,
   User,
-  currentUserId,
 } from "@/lib/constants/mock-chat-data";
 import MessageHeader from "./MessageHeader";
 import MessageAvatar from "./MessageAvatar";
@@ -20,7 +19,11 @@ interface MessageItemProps {
   replyToMessage?: ChatMessage;
   replyToUser?: User;
   onReply: (messageId: string) => void;
+  onEdit: (messageId: string) => void;
+  onDeleteForMe: (messageId: string) => void;
+  onDeleteForEveryone: (messageId: string) => void;
   onScrollToMessage: (messageId: string) => void;
+  currentUserId: string;
   ref: React.Ref<HTMLDivElement> | null;
 }
 
@@ -30,7 +33,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
   replyToMessage,
   replyToUser,
   onReply,
+  onEdit,
+  onDeleteForMe,
+  onDeleteForEveryone,
   onScrollToMessage,
+  currentUserId,
   ref,
 }) => {
   const isOwnMessage = message.userId === currentUserId;
@@ -54,10 +61,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
       onScrollToMessage(replyToMessage.id);
     }
   };
-
-  function handleDelete(messageId: string): void {
-    throw new Error("Function not implemented.");
-  }
 
   return (
     <div
@@ -118,16 +121,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
           {/* Status - Only show for own messages */}
           {isOwnMessage && (
             <span className="ml-1">
-              {message.status === "sending" || message.isUploading ? (
+              {message.status === "sending" || message.isUploading === true ? (
                 <Loader2 className="h-3.5 w-3.5 text-background animate-spin" />
-              ) : message.status === "seen" ? (
-                <CheckCheck className="h-3.5 w-3.5 text-blue-400" />
-              ) : message.status === "delivered" ? (
-                <CheckCheck className="h-3.5 w-3.5 text-white/60" />
-              ) : message.status === "sent" ? (
-                <Check className="h-3.5 w-3.5 text-white/60" />
               ) : (
-                <Loader2 className="h-3.5 w-3.5 text-white/60 animate-spin" />
+                <Check className="h-3.5 w-3.5 text-white/60" />
               )}
             </span>
           )}
@@ -139,8 +136,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
         <MessageOptions
           isOwnMessage={isOwnMessage}
           onReply={onReply}
+          onEdit={onEdit}
+          onDeleteForMe={onDeleteForMe}
+          onDeleteForEveryone={onDeleteForEveryone}
           message={message}
-          onDelete={handleDelete}
         />
       </div>
     </div>

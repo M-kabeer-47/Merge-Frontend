@@ -1,5 +1,13 @@
-import GeneralChat from "@/components/rooms/room/GeneralChat";
+import GeneralChatDataWrapper from "@/components/chat/GeneralChatDataWrapper";
 
-export default function RoomPage() {
-  return <GeneralChat />;
+interface GeneralChatPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function GeneralChatPage({
+  params,
+}: GeneralChatPageProps) {
+  const { id: roomId } = await params;
+
+  return <GeneralChatDataWrapper roomId={roomId} />;
 }

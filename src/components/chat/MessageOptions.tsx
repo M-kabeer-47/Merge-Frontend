@@ -1,19 +1,23 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ChatMessage } from "@/lib/constants/mock-chat-data";
-import { MoreHorizontal, Reply, Trash2 } from "lucide-react";
+import { MoreHorizontal, Reply, Trash2, Edit, User } from "lucide-react";
 import DropdownMenu from "../ui/Dropdown";
 
 interface MessageOptionsProps {
   isOwnMessage: boolean;
   onReply: (messageId: string) => void;
-  onDelete: (messageId: string) => void; // added prop
+  onEdit: (messageId: string) => void;
+  onDeleteForMe: (messageId: string) => void;
+  onDeleteForEveryone: (messageId: string) => void;
   message: ChatMessage;
 }
 
 export default function MessageOptions({
   isOwnMessage,
   onReply,
-  onDelete,
+  onEdit,
+  onDeleteForMe,
+  onDeleteForEveryone,
   message,
 }: MessageOptionsProps) {
   const [open, setOpen] = useState(false);
@@ -75,10 +79,29 @@ export default function MessageOptions({
             size="small"
               options={[
                 {
-                  title: "Delete",
+                  title: "Edit",
+                  icon: <Edit className="h-[15px] w-[15px]" />,
+                  action: () => {
+                    onEdit(message.id);
+                    setOpen(false);
+                  },
+                },
+                {
+                  title: "Delete for me",
+                  icon: <User className="h-[15px] w-[15px]" />,
+                  action: () => {
+                    onDeleteForMe(message.id);
+                    setOpen(false);
+                  },
+                },
+                {
+                  title: "Delete for everyone",
                   destructive: true,
                   icon: <Trash2 className="h-[15px] w-[15px] text-destructive" />,
-                  action: () => onDelete(message.id),
+                  action: () => {
+                    onDeleteForEveryone(message.id);
+                    setOpen(false);
+                  },
                 },
               ]}
             />

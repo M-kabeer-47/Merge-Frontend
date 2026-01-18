@@ -36,7 +36,7 @@ export default function DropdownMenu({
         align === "right" ? "right-0" : "left-0"
       } ${
         size === "small"
-          ? "mt-2 w-24 h-[35px] text-xs px-2 "
+          ? "mt-2 w-40 text-xs px-2 "
           : size === "large"
           ? "mt-4 w-full justify-center"
           : "mt-2 w-44"
