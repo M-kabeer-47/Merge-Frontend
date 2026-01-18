@@ -4,7 +4,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { getGeneralChatMessages } from "@/server-api/general-chat";
-import GeneralChatClient from "./GeneralChatClient";
+import GeneralChatClientWrapper from "./GeneralChatClientWrapper";
 
 interface GeneralChatDataWrapperProps {
   roomId: string;
@@ -35,7 +35,7 @@ export default async function GeneralChatDataWrapper({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <GeneralChatClient roomId={roomId} />
+      <GeneralChatClientWrapper roomId={roomId} />
     </HydrationBoundary>
   );
 }

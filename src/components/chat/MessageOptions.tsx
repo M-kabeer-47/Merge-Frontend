@@ -55,59 +55,71 @@ export default function MessageOptions({
         Reply
       </button>
 
-      {isOwnMessage && (
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen((s) => !s);
-            }}
-            aria-expanded={open}
-            aria-haspopup="true"
-            className={`p-1 rounded transition-colors ${
-              isOwnMessage
-                ? "text-white/80 hover:text-white hover:bg-white/10"
-                : "text-para-muted hover:text-heading hover:bg-primary/5"
-            }`}
-          >
-            <MoreHorizontal className="h-3 w-3" />
-          </button>
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen((s) => !s);
+          }}
+          aria-expanded={open}
+          aria-haspopup="true"
+          className={`p-1 rounded transition-colors ${
+            isOwnMessage
+              ? "text-white/80 hover:text-white hover:bg-white/10"
+              : "text-para-muted hover:text-heading hover:bg-primary/5"
+          }`}
+        >
+          <MoreHorizontal className="h-3 w-3" />
+        </button>
 
-          {open && (
-            <DropdownMenu
-            size="small"
-              options={[
-                {
-                  title: "Edit",
-                  icon: <Edit className="h-[15px] w-[15px]" />,
-                  action: () => {
-                    onEdit(message.id);
-                    setOpen(false);
-                  },
-                },
-                {
-                  title: "Delete for me",
-                  icon: <User className="h-[15px] w-[15px]" />,
-                  action: () => {
-                    onDeleteForMe(message.id);
-                    setOpen(false);
-                  },
-                },
-                {
-                  title: "Delete for everyone",
-                  destructive: true,
-                  icon: <Trash2 className="h-[15px] w-[15px] text-destructive" />,
-                  action: () => {
-                    onDeleteForEveryone(message.id);
-                    setOpen(false);
-                  },
-                },
-              ]}
-            />
-          )}
-        </div>
-      )}
+        {open && (
+          <DropdownMenu
+          size="small"
+            options={
+              isOwnMessage
+                ? [
+                    {
+                      title: "Edit",
+                      icon: <Edit className="h-[15px] w-[15px]" />,
+                      action: () => {
+                        onEdit(message.id);
+                        setOpen(false);
+                      },
+                    },
+                    {
+                      title: "Delete for me",
+                      icon: <User className="h-[15px] w-[15px]" />,
+                      action: () => {
+                        onDeleteForMe(message.id);
+                        setOpen(false);
+                      },
+                    },
+                    {
+                      title: "Delete for everyone",
+                      destructive: true,
+                      icon: <Trash2 className="h-[15px] w-[15px] text-destructive" />,
+                      action: () => {
+                        onDeleteForEveryone(message.id);
+                        setOpen(false);
+                      },
+                    },
+                  ]
+                : [
+                    {
+                      title: "Delete",
+                      destructive: true,
+                      icon: <Trash2 className="h-[15px] w-[15px] text-destructive" />,
+                      action: () => {
+                        onDeleteForMe(message.id);
+                        setOpen(false);
+                      },
+                    },
+                  ]
+            }
+          />
+        )}
+      </div>
     </div>
   );
 }

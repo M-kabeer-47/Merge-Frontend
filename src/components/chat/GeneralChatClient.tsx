@@ -559,11 +559,14 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
 
   const handleDeleteForMe = async (messageId: string) => {
     try {
+      // Optimistically remove the message from UI
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      
       await wsDeleteForMe({
         messageId,
         roomId,
       });
-      toast.success("Message deleted for you");
+      // Message deleted - no toast needed
     } catch (error) {
       console.error("Failed to delete message:", error);
       toast.error("Failed to delete message");
