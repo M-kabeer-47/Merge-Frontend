@@ -112,12 +112,7 @@ export interface SendMessagePayload {
   roomId: string;
   content: string;
   replyToId?: string;
-  attachments?: Array<{
-    name: string;
-    url: string;
-    type: "image" | "file";
-    size: number;
-  }>;
+  attachmentURL?: string;
 }
 
 export interface UpdateMessagePayload {

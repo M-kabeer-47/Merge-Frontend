@@ -394,13 +394,18 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
             })
           );
 
-          // Send message with uploaded attachments
-          const response = await sendMessage({
+          // Send message with uploaded attachments (use first image URL)
+          const payload: any = {
             roomId,
-            content,
-            replyToId,
-            attachments: uploadedAttachments,
-          });
+            attachmentURL: uploadedAttachments[0]?.url,
+          };
+          if (content && content.trim()) {
+            payload.content = content;
+          }
+          if (replyToId) {
+            payload.replyToId = replyToId;
+          }
+          const response = await sendMessage(payload);
 
           // The real message will come via WebSocket and replace the temp message
           if (response.message) {
@@ -471,19 +476,17 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
             });
 
             // Send message with uploaded file
-            const response = await sendMessage({
+            const payload: any = {
               roomId,
-              content: index === 0 ? content : "",
-              replyToId,
-              attachments: [
-                {
-                  name: att.file.name,
-                  type: "file" as const,
-                  url: uploadedUrl,
-                  size: att.file.size,
-                },
-              ],
-            });
+              attachmentURL: uploadedUrl,
+            };
+            if (index === 0 && content && content.trim()) {
+              payload.content = content;
+            }
+            if (replyToId) {
+              payload.replyToId = replyToId;
+            }
+            const response = await sendMessage(payload);
 
             // The real message will come via WebSocket and replace the temp message
             if (response.message) {
