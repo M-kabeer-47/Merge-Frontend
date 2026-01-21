@@ -75,17 +75,6 @@ export default function useDeleteAssignment({
             removeAssignmentFromList(old, assignmentId),
         );
       });
-
-      // Also invalidate to ensure fresh data
-      queryClient.invalidateQueries({
-        queryKey: ["assignments", roomId],
-      });
-
-      // Remove the individual assignment detail cache
-      queryClient.removeQueries({
-        queryKey: ["assignment", assignmentId],
-      });
-
       toast.success("Assignment deleted successfully");
       onSuccess?.();
     },

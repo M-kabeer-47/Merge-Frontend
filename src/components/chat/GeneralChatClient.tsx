@@ -1,14 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useWebSocketChat } from "@/hooks/general-chat/use-websocket-chat";
 import { useFetchMessages } from "@/hooks/general-chat/use-fetch-messages";
 import MessageItem from "@/components/chat/MessageItem";
 import MessageComposer from "@/components/chat/MesageComposer";
 import { AttachmentFile } from "@/components/chat/AttachmentPreview";
 import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
-import type { ChatMessage, MessageAttachment, ApiChatMessage } from "@/types/general-chat";
+import type {
+  ChatMessage,
+  MessageAttachment,
+  ApiChatMessage,
+} from "@/types/general-chat";
 import { useAuth } from "@/providers/AuthProvider";
+import { Button } from "@/components/ui/Button";
 import { toast } from "sonner";
 
 interface GeneralChatClientProps {
@@ -91,12 +96,16 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   const { user: currentUser } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | undefined>();
-  const [editingMessage, setEditingMessage] = useState<ChatMessage | undefined>();
+  const [editingMessage, setEditingMessage] = useState<
+    ChatMessage | undefined
+  >();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const previousScrollHeight = useRef(0);
+  const hasInitiallyScrolled = useRef(false);
 
   // Don't render until we have user info
   if (!currentUser) {
@@ -137,21 +146,26 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           console.log("Message already exists, skipping");
           return prev;
         }
-        
+
         // Check if this is replacing a temp message (for own messages)
         // Find the most recent temp message from the same user
         const tempMessageIndex = prev.findIndex(
-          (m) => m.id.startsWith('temp-') && m.userId === message.userId
+          (m) => m.id.startsWith("temp-") && m.userId === message.userId,
         );
-        
+
         if (tempMessageIndex !== -1) {
-          console.log("Replacing temp message at index:", tempMessageIndex, "with real message:", message);
+          console.log(
+            "Replacing temp message at index:",
+            tempMessageIndex,
+            "with real message:",
+            message,
+          );
           // Replace the temp message with the real one
           const newMessages = [...prev];
           newMessages[tempMessageIndex] = message;
           return newMessages;
         }
-        
+
         console.log("Adding new message from others:", message);
         return [...prev, message];
       });
@@ -159,7 +173,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     onMessageUpdated: (message) => {
       console.log("✏️ Message updated from WebSocket:", message);
       setMessages((prev) =>
-        prev.map((m) => (m.id === message.id ? message : m))
+        prev.map((m) => (m.id === message.id ? message : m)),
       );
     },
     onMessageDeleted: ({ messageId }) => {
@@ -186,10 +200,20 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
   }, [fetchedMessages.length]);
 
-  // Auto-scroll to bottom when new messages arrive (only for new messages, not initial load)
+  // Scroll to bottom on initial load and when new messages arrive
   useEffect(() => {
     const container = messagesContainerRef.current;
-    if (!container) return;
+    if (!container || messages.length === 0) return;
+
+    // On initial load, scroll to bottom
+    if (!hasInitiallyScrolled.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      // Delay setting the flag to prevent immediate observer trigger
+      setTimeout(() => {
+        hasInitiallyScrolled.current = true;
+      }, 500);
+      return;
+    }
 
     // Check if user was at the bottom before new message
     const isAtBottom =
@@ -201,62 +225,54 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
   }, [messages]);
 
-  // Handle infinite scroll - load more messages when scrolling up
-  const handleScroll = useCallback(async () => {
-    const container = messagesContainerRef.current;
-    if (!container) {
-      console.log("No container ref");
-      return;
-    }
-    
-    console.log("Scroll event:", {
-      scrollTop: container.scrollTop,
-      hasMore,
-      isFetchingNextPage,
-      isLoadingMore,
-    });
-
-    if (!hasMore) {
-      console.log("No more messages to load");
-      return;
-    }
-    
-    if (isFetchingNextPage || isLoadingMore) {
-      console.log("Already fetching");
-      return;
-    }
-
-    // Check if user scrolled to top (within 100px)
-    if (container.scrollTop < 100) {
-      console.log("At top, fetching next page...");
-      setIsLoadingMore(true);
-      previousScrollHeight.current = container.scrollHeight;
-
-      await fetchNextPage();
-
-      // Maintain scroll position after loading more messages
-      setTimeout(() => {
-        if (container) {
-          const newScrollHeight = container.scrollHeight;
-          container.scrollTop = newScrollHeight - previousScrollHeight.current;
-        }
-        setIsLoadingMore(false);
-      }, 100);
-    }
-  }, [hasMore, isFetchingNextPage, isLoadingMore, fetchNextPage]);
-
+  // Handle infinite scroll with IntersectionObserver - load when sentinel is visible
   useEffect(() => {
     const container = messagesContainerRef.current;
-    if (!container) return;
+    const sentinel = loadMoreRef.current;
+    if (!container || !sentinel) return;
 
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        const [entry] = entries;
+        if (
+          entry.isIntersecting &&
+          hasMore &&
+          !isFetchingNextPage &&
+          !isLoadingMore &&
+          hasInitiallyScrolled.current
+        ) {
+          console.log("Sentinel visible, fetching next page...");
+          setIsLoadingMore(true);
+          previousScrollHeight.current = container.scrollHeight;
+
+          await fetchNextPage();
+
+          // Maintain scroll position after loading more messages
+          setTimeout(() => {
+            if (container) {
+              const newScrollHeight = container.scrollHeight;
+              container.scrollTop =
+                newScrollHeight - previousScrollHeight.current;
+            }
+            setIsLoadingMore(false);
+          }, 100);
+        }
+      },
+      {
+        root: container,
+        rootMargin: "100px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isFetchingNextPage, isLoadingMore, fetchNextPage]);
 
   const handleSendMessage = async (
     content: string,
     replyToId?: string,
-    attachments?: AttachmentFile[]
+    attachments?: AttachmentFile[],
   ) => {
     if (!currentUser) {
       toast.error("You must be logged in to send messages");
@@ -363,8 +379,8 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
                         const overallProgress = Math.round(
                           updatedAttachments.reduce(
                             (sum, a) => sum + (a.uploadProgress || 0),
-                            0
-                          ) / updatedAttachments.length
+                            0,
+                          ) / updatedAttachments.length,
                         );
                         return {
                           ...msg,
@@ -373,7 +389,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
                         };
                       }
                       return msg;
-                    })
+                    }),
                   );
                 },
               });
@@ -385,7 +401,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
                 url: uploadedUrl,
                 size: att.file.size,
               };
-            })
+            }),
           );
 
           // Send message with uploaded attachments
@@ -459,7 +475,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
                       };
                     }
                     return msg;
-                  })
+                  }),
                 );
               },
             });
@@ -526,10 +542,10 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
         prev.map((m) =>
           m.id === messageId
             ? { ...m, status: "sending" as const, isEditing: true }
-            : m
-        )
+            : m,
+        ),
       );
-      
+
       await wsUpdateMessage({
         messageId,
         roomId,
@@ -545,8 +561,8 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
         prev.map((m) =>
           m.id === messageId
             ? { ...m, status: "sent" as const, isEditing: false }
-            : m
-        )
+            : m,
+        ),
       );
     }
   };
@@ -565,7 +581,9 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   };
 
   const handleDeleteForEveryone = async (messageId: string) => {
-    const confirmed = confirm("Are you sure you want to delete this message for everyone?");
+    const confirmed = confirm(
+      "Are you sure you want to delete this message for everyone?",
+    );
     if (confirmed) {
       try {
         await wsDeleteForEveryone({
@@ -635,23 +653,30 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
         </div>
       )}
 
-      {/* Messages Area */}
+      {/* Scrollable Chat Container */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto pb-[120px]"
+        className="h-[500px] overflow-y-auto relative"
       >
-        {/* Loading More Indicator */}
-        {(isLoadingMore || isFetchingNextPage) && (
-          <div className="py-4 text-center">
-            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Loading more messages...
-            </p>
-          </div>
-        )}
+        {/* Sentinel div for auto-loading */}
+        <div ref={loadMoreRef} className="h-1" />
+
+        {/* Load More Section - loading indicator only */}
+        <div className="py-4 flex justify-center">
+          {isFetchingNextPage || isLoadingMore ? (
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <p className="text-sm text-para-muted mt-2">
+                Loading older messages...
+              </p>
+            </div>
+          ) : !hasMore && messages.length > 0 ? (
+            <p className="text-sm text-para-muted">Beginning of conversation</p>
+          ) : null}
+        </div>
 
         {/* Messages List */}
-        <div className="space-y-0 py-5 px-4">
+        <div className="space-y-0 py-5 px-4 pb-[100px]">
           {messages.map((message) => {
             const user = convertToMockUser(message.user);
             const mockMessage = convertToMockMessage(message);
@@ -686,21 +711,25 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           })}
           <div ref={messagesEndRef} />
         </div>
-      </div>
 
-      {/* Message Composer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-main-background border-t border-light-border z-10">
-        <MessageComposer
-          onSendMessage={handleSendMessage}
-          replyingTo={replyingTo ? convertToMockMessage(replyingTo) : undefined}
-          replyingToUser={
-            replyingTo ? convertToMockUser(replyingTo.user) : undefined
-          }
-          onCancelReply={handleCancelReply}
-          editingMessage={editingMessage ? convertToMockMessage(editingMessage) : undefined}
-          onCancelEdit={handleCancelEdit}
-          onUpdateMessage={handleUpdateMessage}
-        />
+        {/* Message Composer - sticky at bottom of scroll container */}
+        <div className="sticky bottom-0 bg-main-background border-t border-light-border">
+          <MessageComposer
+            onSendMessage={handleSendMessage}
+            replyingTo={
+              replyingTo ? convertToMockMessage(replyingTo) : undefined
+            }
+            replyingToUser={
+              replyingTo ? convertToMockUser(replyingTo.user) : undefined
+            }
+            onCancelReply={handleCancelReply}
+            editingMessage={
+              editingMessage ? convertToMockMessage(editingMessage) : undefined
+            }
+            onCancelEdit={handleCancelEdit}
+            onUpdateMessage={handleUpdateMessage}
+          />
+        </div>
       </div>
     </div>
   );

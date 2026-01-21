@@ -58,7 +58,11 @@ interface UseWebSocketChatOptions {
     deletedAt: string;
     authorId: string;
   }) => void;
-  onError?: (error: { action: string; error: string; messageId?: string }) => void;
+  onError?: (error: {
+    action: string;
+    error: string;
+    messageId?: string;
+  }) => void;
 }
 
 export function useWebSocketChat({
@@ -164,32 +168,26 @@ export function useWebSocketChat({
   }, [roomId]);
 
   // Join a room
-  const joinRoom = useCallback(
-    (targetRoomId: string) => {
-      if (!socketRef.current?.connected) {
-        console.error("Socket not connected");
-        return;
-      }
+  const joinRoom = useCallback((targetRoomId: string) => {
+    if (!socketRef.current?.connected) {
+      console.error("Socket not connected");
+      return;
+    }
 
-      socketRef.current.emit("joinRoom", { roomId: targetRoomId });
-      console.log("🚪 Joined room:", targetRoomId);
-    },
-    []
-  );
+    socketRef.current.emit("joinRoom", { roomId: targetRoomId });
+    console.log("🚪 Joined room:", targetRoomId);
+  }, []);
 
   // Leave a room
-  const leaveRoom = useCallback(
-    (targetRoomId: string) => {
-      if (!socketRef.current?.connected) {
-        console.error("Socket not connected");
-        return;
-      }
+  const leaveRoom = useCallback((targetRoomId: string) => {
+    if (!socketRef.current?.connected) {
+      console.error("Socket not connected");
+      return;
+    }
 
-      socketRef.current.emit("leaveRoom", { roomId: targetRoomId });
-      console.log("👋 Left room:", targetRoomId);
-    },
-    []
-  );
+    socketRef.current.emit("leaveRoom", { roomId: targetRoomId });
+    console.log("👋 Left room:", targetRoomId);
+  }, []);
 
   // Send a message
   const sendMessage = useCallback(
@@ -212,11 +210,11 @@ export function useWebSocketChat({
               console.error("❌ Failed to send message:", response.error);
               reject(response);
             }
-          }
+          },
         );
       });
     },
-    []
+    [],
   );
 
   // Update a message
@@ -240,11 +238,11 @@ export function useWebSocketChat({
               console.error("❌ Failed to update message:", response.error);
               reject(response);
             }
-          }
+          },
         );
       });
     },
-    []
+    [],
   );
 
   // Delete message for me
@@ -265,14 +263,17 @@ export function useWebSocketChat({
               console.log("✅ Message deleted for me:", payload.messageId);
               resolve(response);
             } else {
-              console.error("❌ Failed to delete message for me:", response.error);
+              console.error(
+                "❌ Failed to delete message for me:",
+                response.error,
+              );
               reject(response);
             }
-          }
+          },
         );
       });
     },
-    []
+    [],
   );
 
   // Delete message for everyone
@@ -290,20 +291,23 @@ export function useWebSocketChat({
           payload,
           (response: WebSocketResponse) => {
             if (response.success) {
-              console.log("✅ Message deleted for everyone:", payload.messageId);
+              console.log(
+                "✅ Message deleted for everyone:",
+                payload.messageId,
+              );
               resolve(response);
             } else {
               console.error(
                 "❌ Failed to delete message for everyone:",
-                response.error
+                response.error,
               );
               reject(response);
             }
-          }
+          },
         );
       });
     },
-    []
+    [],
   );
 
   return {

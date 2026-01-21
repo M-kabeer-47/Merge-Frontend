@@ -16,14 +16,22 @@ export default function AuthCallbackContent() {
     // We just need to redirect after OAuth callback
     const token = searchParams?.get("token");
     const refreshToken = searchParams?.get("refreshToken");
+    const notificationStatus = searchParams?.get("notificationStatus");
     const redirect = searchParams?.get("redirect") || "/rooms";
 
     if (token && refreshToken) {
       // Invalidate the user query so it refetches with the new token
       queryClient.invalidateQueries({ queryKey: ["user"] });
 
+      // If notification status is "default", ask for permission after redirect
+      let finalRedirect = redirect;
+      if (notificationStatus === "default") {
+        const separator = redirect.includes("?") ? "&" : "?";
+        finalRedirect = `${redirect}${separator}askNotifications=true`;
+      }
+
       // Redirect to the intended destination
-      router.replace(redirect);
+      router.replace(finalRedirect);
     } else {
       setError("Missing authentication tokens. Please try logging in again.");
     }

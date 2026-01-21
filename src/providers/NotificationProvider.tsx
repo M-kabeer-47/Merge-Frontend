@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "./AuthProvider";
-import { requestFCMToken, onForegroundMessage } from "@/lib/firebase";
+import { requestFCMToken } from "@/lib/firebase";
 import {
   connectNotificationSocket,
   disconnectNotificationSocket,
@@ -24,7 +24,6 @@ import type {
   NotificationPayload,
   NotificationContextValue,
 } from "@/types/notification";
-import { getNotificationType, getNotificationIcon } from "@/types/notification";
 
 // Context
 const NotificationContext = createContext<NotificationContextValue | null>(
@@ -52,34 +51,22 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const { mutate: registerToken } = useRegisterFCMToken();
   const queryClient = useQueryClient();
 
-  // State
+  // State - simplified since FCM init is handled by NotificationTrigger
   const [status, setStatus] = useState<NotificationStatus>("default");
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [notifications, setNotifications] = useState<NotificationPayload[]>([]);
-  const [showPrompt, setShowPrompt] = useState(false);
 
   // Sync status from user data OR browser permission
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // If browser already has permission but backend says default, auto-sync
-    if (
-      user?.notificationStatus === "default" ||
-      user?.notificationStatus === undefined
-    ) {
-      // Browser API uses "granted", we map it to our "allowed" status
-      if (Notification.permission === "granted") {
-        console.log(
-          "[Notifications] Browser has permission, syncing to 'allowed'",
-        );
-        setStatus("allowed");
-        return;
-      } else if (Notification.permission === "denied") {
-        setStatus("denied");
-        return;
-      }
+    // Check browser permission first
+    if (Notification.permission === "granted") {
+      setStatus("allowed");
+      return;
+    } else if (Notification.permission === "denied") {
+      setStatus("denied");
+      return;
     }
 
     // Otherwise use backend status
@@ -88,45 +75,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     }
   }, [user?.notificationStatus]);
 
-  // Initialize FCM when status is "allowed"
-  useEffect(() => {
-    console.log("[FCM Init] Check:", {
-      isAuthenticated,
-      status,
-      isInitialized,
-    });
-
-    if (!isAuthenticated || status !== "allowed" || isInitialized) {
-      console.log("[FCM Init] Skipping - conditions not met");
-      return;
-    }
-
-    const initializeFCM = async () => {
-      try {
-        console.log("[FCM Init] Starting FCM initialization...");
-        const token = await requestFCMToken();
-        if (token) {
-          console.log("[FCM Init] Got token, registering with backend...");
-          setFcmToken(token);
-
-          // Register token with backend
-          registerToken({
-            notificationStatus: "allowed",
-            token,
-            deviceType: "web",
-            deviceId: getDeviceId(),
-          });
-        } else {
-          console.log("[FCM Init] No token returned");
-        }
-        setIsInitialized(true);
-      } catch (error) {
-        console.error("[FCM Init] FCM initialization failed:", error);
-      }
-    };
-
-    initializeFCM();
-  }, [isAuthenticated, status, isInitialized, registerToken]);
+  // NOTE: FCM token registration is now handled by NotificationTrigger component
+  // which only runs once after login with ?askNotifications=true param
 
   // Connect Socket.IO ALWAYS when authenticated (for real-time updates)
   // Track shown notification IDs to prevent duplicates
@@ -263,21 +213,19 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   // 2. FCM foreground + Socket.IO would cause duplicate notifications
   // FCM is only used for background/closed app notifications via service worker
 
-  // Request permission handler
+  // Request permission handler (used by settings page)
   const requestPermission = useCallback(async () => {
     if (typeof window === "undefined") return;
 
     try {
       const permission = await Notification.requestPermission();
 
-      // Browser API returns "granted", we use "allowed" for our status
       if (permission === "granted") {
         setStatus("allowed");
 
-        // Get FCM token
+        // Get FCM token and register
         const token = await requestFCMToken();
         if (token) {
-          setFcmToken(token);
           registerToken({
             notificationStatus: "allowed",
             token,
@@ -285,7 +233,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             deviceId: getDeviceId(),
           });
         }
-        setIsInitialized(true);
       } else {
         setStatus("denied");
         registerToken({
@@ -294,8 +241,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           deviceId: getDeviceId(),
         });
       }
-
-      setShowPrompt(false);
     } catch (error) {
       console.error("[Notifications] Permission request failed:", error);
     }
@@ -321,8 +266,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   const value: NotificationContextValue = {
     status,
-    isInitialized,
-    fcmToken,
     isSocketConnected: socketConnected,
     notifications,
     unreadCount,
@@ -352,22 +295,5 @@ export function useNotifications(): NotificationContextValue {
   return context;
 }
 
-/**
- * Check if we should show the notification prompt
- * Shows when: status is "default", undefined, or not set yet
- */
-export function useShouldShowNotificationPrompt(): boolean {
-  const { user, isAuthenticated } = useAuth();
-
-  // Don't show if not authenticated
-  if (!isAuthenticated || !user) return false;
-
-  // Don't show if browser already has permission (browser uses "granted")
-  if (typeof window !== "undefined" && Notification.permission === "granted") {
-    return false;
-  }
-
-  // Show if user's DB status is "default" or undefined
-  const status = user.notificationStatus;
-  return status === "default" || status === undefined;
-}
+// NOTE: useShouldShowNotificationPrompt removed - we now use NotificationTrigger
+// component with URL param approach instead of custom prompt

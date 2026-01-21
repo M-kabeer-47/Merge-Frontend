@@ -16,10 +16,11 @@ import InviteModal from "@/components/rooms/modals/InviteModal";
 import { JoinRequestsModal } from "@/components/rooms/join-requests";
 import RoomHeader from "@/components/rooms/RoomHeader";
 import { useRoom } from "@/providers/RoomProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import RoomError from "@/components/rooms/Error";
 import useFetchJoinRequests from "@/hooks/rooms/use-fetch-join-requests";
 
-const TABS = [
+const ALL_TABS = [
   {
     id: "general-chat",
     label: "General Chat",
@@ -90,11 +91,18 @@ export default function RoomLayoutClient({
   const params = useParams();
   const id = (params?.id as string) ?? "";
 
-  // Get room data from context
+  // Get auth and room data
+  const { user } = useAuth();
   const { room, userRole } = useRoom();
   const isInstructor = userRole === "instructor";
 
-  // Fetch join requests for instructors
+  // Check if current user is the room owner (only owner can see settings)
+  const isOwner = Boolean(user?.id) && user?.id === room?.admin?.id;
+
+  // Filter tabs: only show Settings tab to the room owner
+  const TABS = isOwner
+    ? ALL_TABS
+    : ALL_TABS.filter((tab) => tab.id !== "settings"); // Fetch join requests for instructors
   const { data: joinRequests } = useFetchJoinRequests({
     roomId: id,
     enabled: isInstructor,

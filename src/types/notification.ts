@@ -83,54 +83,28 @@ export function getNotificationIcon(type: NotificationType): string {
 }
 
 export interface NotificationContextValue {
-  /**
-   * User's notification permission status
-   */
+  /** User's notification permission status */
   status: NotificationStatus;
 
-  /**
-   * Whether FCM is initialized and ready
-   */
-  isInitialized: boolean;
-
-  /**
-   * Current FCM token (null if not available)
-   */
-  fcmToken: string | null;
-
-  /**
-   * Whether Socket.IO is connected
-   */
+  /** Whether Socket.IO is connected */
   isSocketConnected: boolean;
 
-  /**
-   * List of recent notifications
-   */
+  /** List of recent notifications */
   notifications: NotificationPayload[];
 
-  /**
-   * Count of unread notifications
-   */
+  /** Count of unread notifications */
   unreadCount: number;
 
-  /**
-   * Request notification permission from user
-   */
+  /** Request notification permission from user */
   requestPermission: () => Promise<void>;
 
-  /**
-   * Mark notification as read
-   */
+  /** Mark notification as read */
   markAsRead: (id: string) => void;
 
-  /**
-   * Mark all notifications as read
-   */
+  /** Mark all notifications as read */
   markAllAsRead: () => void;
 
-  /**
-   * Clear all notifications
-   */
+  /** Clear all notifications */
   clearAll: () => void;
 }
 

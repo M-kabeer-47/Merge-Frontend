@@ -1,6 +1,6 @@
 /**
  * Firebase Messaging Service Worker
- * VERSION: 2.2.0 - Custom push handler to force icon usage
+ * VERSION: 2.3.0 - Debug logging
  *
  * This runs in the background to receive push notifications
  * when the app is not open or not in focus.
@@ -9,7 +9,7 @@
  * This service worker handles FCM push when app is in background/closed.
  */
 
-const DEFAULT_ICON_PATH = "/icons/average.png";
+const DEFAULT_ICON_PATH = "/dark-mode-logo.svg";
 
 const resolveUrl = (value) => {
   if (!value) return null;
@@ -73,7 +73,7 @@ const buildActionUrl = (payload, data) => {
   return actionUrl || self.location.origin;
 };
 
-const showNotificationFromPayload = (payload) => {
+const showNotificationFromPayload = async (payload) => {
   console.log("[SW] Push payload received:", payload);
   console.log("[SW] Raw Data:", payload?.data);
   console.log("[SW] Notification Object:", payload?.notification);
@@ -119,7 +119,7 @@ const showNotificationFromPayload = (payload) => {
     icon: iconUrl,
     badge: badgeUrl || iconUrl,
     ...(imageUrl ? { image: imageUrl } : {}),
-    tag: data.id || "default-tag",
+    tag: data.id || `notification-${Date.now()}`, // Unique tag per notification
     data: {
       actionUrl, // Store resolved absolute URL
       ...data,
@@ -128,10 +128,14 @@ const showNotificationFromPayload = (payload) => {
     requireInteraction: true,
   };
 
-  return self.registration.showNotification(
-    notificationTitle,
-    notificationOptions,
-  );
+  console.log("[SW] Calling showNotification with:", notificationTitle, notificationOptions);
+
+  try {
+    await self.registration.showNotification(notificationTitle, notificationOptions);
+    console.log("[SW] ✅ showNotification succeeded!");
+  } catch (error) {
+    console.error("[SW] ❌ showNotification FAILED:", error);
+  }
 };
 
 // Push listener to handle all FCM pushes (data-only and notification payloads)

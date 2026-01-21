@@ -26,10 +26,6 @@ interface SubmissionsTableProps {
 
 const ITEMS_PER_PAGE = 10;
 
-/**
- * Table view for instructor to grade student submissions.
- * Features inline score editing, pagination, and a slide-out drawer for details.
- */
 export default function SubmissionsTable({
   attempts,
   totalScore,

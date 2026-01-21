@@ -9,8 +9,8 @@ interface NotificationsPage {
   notifications: NotificationPayload[];
   total: number;
   unreadCount: number;
-  page: number;
-  hasMore: boolean;
+  totalPages: number;
+  currentPage: number;
 }
 
 export const notificationsQueryKey = ["notifications"] as const;
@@ -37,8 +37,10 @@ export function useFetchNotifications() {
     queryKey: notificationsQueryKey,
     queryFn: ({ pageParam }) => fetchNotifications({ pageParam }),
     getNextPageParam: (lastPage: NotificationsPage) => {
-      // If last page has notifications and hasMore is true, return next page
-      return lastPage.hasMore ? lastPage.page + 1 : undefined;
+      // If currentPage < totalPages, there are more pages
+      return lastPage.currentPage < lastPage.totalPages
+        ? lastPage.currentPage + 1
+        : undefined;
     },
     initialPageParam: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -64,8 +66,8 @@ export function useFetchNotifications() {
                 notifications: [notification],
                 total: 1,
                 unreadCount: 1,
-                page: 1,
-                hasMore: false,
+                totalPages: 1,
+                currentPage: 1,
               },
             ],
             pageParams: [1],

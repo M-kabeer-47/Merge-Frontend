@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   format,
   isSameDay,
@@ -60,7 +57,8 @@ export const sampleTasks: Task[] = [
     date: new Date(2025, 9, 12), // Oct 12, 2025
     time: "3:00 PM - 4:30 PM",
     room: "Design Fundamentals",
-    description: "Live session covering modern design principles and Figma workflows.",
+    description:
+      "Live session covering modern design principles and Figma workflows.",
     completed: true,
   },
   {
@@ -110,8 +108,7 @@ export const sampleTasks: Task[] = [
     type: "personal",
     date: new Date(2025, 9, 17), // Oct 17, 2025
     time: "10:00 AM - 12:00 PM",
-    description:
-      "Finish advanced hooks tutorial and build practice project.",
+    description: "Finish advanced hooks tutorial and build practice project.",
     completed: false,
   },
   {
@@ -160,7 +157,8 @@ export const sampleTasks: Task[] = [
     date: new Date(2025, 9, 24), // Oct 24, 2025
     time: "1:00 PM - 3:00 PM",
     room: "Cloud Architecture & DevOps",
-    description: "Hands-on session with AWS services and deployment strategies.",
+    description:
+      "Hands-on session with AWS services and deployment strategies.",
     completed: false,
   },
   {
@@ -189,7 +187,8 @@ export const sampleTasks: Task[] = [
     date: new Date(2025, 9, 29), // Oct 29, 2025
     time: "3:00 PM - 4:30 PM",
     room: "Professional Development",
-    description: "Resume review and mock interviews with industry professionals.",
+    description:
+      "Resume review and mock interviews with industry professionals.",
     completed: false,
   },
   {
@@ -198,7 +197,8 @@ export const sampleTasks: Task[] = [
     type: "personal",
     date: new Date(2025, 9, 30), // Oct 30, 2025
     time: "5:00 PM - 7:00 PM",
-    description: "Outline architecture and create development timeline for capstone project.",
+    description:
+      "Outline architecture and create development timeline for capstone project.",
     completed: false,
   },
   // November 2025 - Upcoming Tasks
@@ -209,7 +209,8 @@ export const sampleTasks: Task[] = [
     date: new Date(2025, 10, 5), // Nov 5, 2025
     time: "Due by 11:59 PM",
     room: "Software Architecture",
-    description: "Design scalable distributed systems with proper trade-off analysis.",
+    description:
+      "Design scalable distributed systems with proper trade-off analysis.",
     completed: false,
   },
   {
@@ -348,8 +349,7 @@ export default function TaskCalendar({ onDateSelect }: TaskCalendarProps) {
       <div className="grid grid-cols-7 gap-2">
         {calendarDays.map((day, index) => {
           const hasTasks = day.tasks.length > 0;
-          const isSelected =
-            selectedDate && isSameDay(day.date, selectedDate);
+          const isSelected = selectedDate && isSameDay(day.date, selectedDate);
 
           // Determine cell styling
           let cellClasses =
@@ -372,11 +372,14 @@ export default function TaskCalendar({ onDateSelect }: TaskCalendarProps) {
               "bg-secondary/20 text-para font-semibold hover:bg-secondary/10 cursor-pointer";
           } else {
             // Regular dates
-            cellClasses += "text-para font-medium hover:bg-secondary/5 cursor-pointer";
+            cellClasses +=
+              "text-para font-medium hover:bg-secondary/5 cursor-pointer";
           }
 
           const ariaLabel = `${format(day.date, "MMMM d, yyyy")}${
-            hasTasks ? `, ${day.tasks.length} task${day.tasks.length > 1 ? "s" : ""}` : ""
+            hasTasks
+              ? `, ${day.tasks.length} task${day.tasks.length > 1 ? "s" : ""}`
+              : ""
           }`;
 
           return (

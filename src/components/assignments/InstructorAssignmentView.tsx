@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import type { InstructorAssignment } from "@/types/assignment";
 import InstructionsSection from "./student-view/InstructionsSection";
 import HorizontalStats from "./instructor-view/HorizontalStats";
@@ -12,6 +11,7 @@ import SubmissionsTableSkeleton from "@/components/ui/skeletons/SubmissionsTable
 
 interface InstructorAssignmentViewProps {
   assignment: InstructorAssignment;
+  roomId: string;
 }
 
 const FILTER_OPTIONS = [
@@ -28,11 +28,10 @@ const SUB_FILTER_OPTIONS = [
 
 export default function InstructorAssignmentView({
   assignment,
+  roomId
 }: InstructorAssignmentViewProps) {
-  const params = useParams();
-  const roomId = params?.id as string;
-
-  // Filter state managed internally for isolated re-renders
+  
+// Filter state managed internally for isolated re-renders
   const [filter, setFilter] = useState("all");
   const [subFilter, setSubFilter] = useState("all");
   const [page, setPage] = useState(1);

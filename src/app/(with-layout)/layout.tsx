@@ -1,9 +1,9 @@
-import React from "react";
+import React, { Suspense } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
 import Navbar from "@/components/layout/Navbar";
 import AuthProviderServer from "@/providers/AuthProviderServer";
 import { NotificationProvider } from "@/providers/NotificationProvider";
-import NotificationPrompt from "@/components/notifications/NotificationPrompt";
+import NotificationTrigger from "@/components/notifications/NotificationTrigger";
 
 export default function WithLayoutLayout({
   children,
@@ -13,8 +13,10 @@ export default function WithLayoutLayout({
   return (
     <AuthProviderServer>
       <NotificationProvider>
-        {/* Notification Permission Prompt */}
-        <NotificationPrompt />
+        {/* Trigger notification permission if ?askNotifications=true */}
+        <Suspense fallback={null}>
+          <NotificationTrigger />
+        </Suspense>
 
         <div className=" flex md:flex-row flex-col h-screen w-full bg-gray-50">
           {/* Sidebar */}

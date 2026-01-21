@@ -17,7 +17,7 @@ export async function getAssignmentForInstructor(
     );
     return null;
   }
-
+  
   const { data, error } = await getWithAuth<InstructorAssignment>(
     `${API_BASE_URL}/assignments/instructor/${assignmentId}?roomId=${roomId}`,
     {

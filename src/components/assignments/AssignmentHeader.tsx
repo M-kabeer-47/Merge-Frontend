@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Loader2, Undo2 } from "lucide-react";
+import { ArrowLeft, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { Assignment, SubmissionStatus } from "@/types/assignment";
 import { isStudentAssignment } from "@/types/assignment";

@@ -8,10 +8,6 @@ interface AssignmentSubmissionsPageProps {
   params: Promise<{ id: string; assignmentId: string }>;
 }
 
-/**
- * Instructor submissions page (Server Component).
- * Fetches assignment data server-side and renders the instructor view.
- */
 export default async function AssignmentSubmissionsPage({
   params,
 }: AssignmentSubmissionsPageProps) {
@@ -48,7 +44,7 @@ export default async function AssignmentSubmissionsPage({
       {/* Main Content */}
       <main className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto">
-          <InstructorAssignmentView assignment={assignment} />
+          <InstructorAssignmentView assignment={assignment} roomId={roomId} />
         </div>
       </main>
     </div>
