@@ -15,6 +15,7 @@ import type {
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { toast } from "sonner";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface GeneralChatClientProps {
   roomId: string;
@@ -67,6 +68,7 @@ interface MockChatMessage {
   content: string;
   timestamp: Date;
   edited?: boolean;
+  deletedForEveryone?: boolean;
   editedAt?: Date;
   replyTo?: string;
   reactions: {
@@ -404,13 +406,18 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
             }),
           );
 
-          // Send message with uploaded attachments
-          const response = await sendMessage({
+          // Send message with uploaded attachments (use first image URL)
+          const payload: any = {
             roomId,
-            content,
-            replyToId,
-            attachments: uploadedAttachments,
-          });
+            attachmentURL: uploadedAttachments[0]?.url,
+          };
+          if (content && content.trim()) {
+            payload.content = content;
+          }
+          if (replyToId) {
+            payload.replyToId = replyToId;
+          }
+          const response = await sendMessage(payload);
 
           // The real message will come via WebSocket and replace the temp message
           if (response.message) {
@@ -481,19 +488,17 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
             });
 
             // Send message with uploaded file
-            const response = await sendMessage({
+            const payload: any = {
               roomId,
-              content: index === 0 ? content : "",
-              replyToId,
-              attachments: [
-                {
-                  name: att.file.name,
-                  type: "file" as const,
-                  url: uploadedUrl,
-                  size: att.file.size,
-                },
-              ],
-            });
+              attachmentURL: uploadedUrl,
+            };
+            if (index === 0 && content && content.trim()) {
+              payload.content = content;
+            }
+            if (replyToId) {
+              payload.replyToId = replyToId;
+            }
+            const response = await sendMessage(payload);
 
             // The real message will come via WebSocket and replace the temp message
             if (response.message) {
@@ -569,11 +574,14 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
 
   const handleDeleteForMe = async (messageId: string) => {
     try {
+      // Optimistically remove the message from UI
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+
       await wsDeleteForMe({
         messageId,
         roomId,
       });
-      toast.success("Message deleted for you");
+      // Message deleted - no toast needed
     } catch (error) {
       console.error("Failed to delete message:", error);
       toast.error("Failed to delete message");
@@ -625,6 +633,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     content: message.content,
     timestamp: new Date(message.createdAt),
     edited: message.isEdited,
+    deletedForEveryone: message.deletedForEveryone,
     replyTo: message.replyToId || undefined,
     reactions: [],
     attachments: message.attachments.map((att) => ({

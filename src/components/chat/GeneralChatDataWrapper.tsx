@@ -1,41 +1,15 @@
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
-import { getGeneralChatMessages } from "@/server-api/general-chat";
-import GeneralChatClient from "./GeneralChatClient";
+import GeneralChatClientWrapper from "./GeneralChatClientWrapper";
 
 interface GeneralChatDataWrapperProps {
   roomId: string;
 }
 
 /**
- * Server component that prefetches initial chat messages for the room.
- * Uses React Query hydration for optimistic updates on the client.
+ * Server component wrapper for general chat.
+ * Delegates to client component to avoid SSR/hydration issues.
  */
-export default async function GeneralChatDataWrapper({
+export default function GeneralChatDataWrapper({
   roomId,
 }: GeneralChatDataWrapperProps) {
-  const queryClient = new QueryClient();
-
-  // Prefetch first page of messages (20 messages) for initial hydration
-  await queryClient.prefetchInfiniteQuery({
-    queryKey: ["general-chat", roomId],
-    queryFn: async () => {
-      return await getGeneralChatMessages({
-        roomId,
-        page: 1,
-        limit: 20,
-        sortOrder: "DESC",
-      });
-    },
-    initialPageParam: 1,
-  });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <GeneralChatClient roomId={roomId} />
-    </HydrationBoundary>
-  );
+  return <GeneralChatClientWrapper roomId={roomId} />;
 }

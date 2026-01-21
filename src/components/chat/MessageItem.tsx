@@ -97,7 +97,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
         <div
           className={`text-sm leading-relaxed mb-2 whitespace-pre-wrap ${
             isOwnMessage ? "text-white/95" : "text-para"
-          }`}
+          } ${message.content === "This message was deleted" ? "italic opacity-70" : ""}`}
         >
           {message.content}
         </div>
