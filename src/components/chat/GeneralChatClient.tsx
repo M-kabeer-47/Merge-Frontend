@@ -180,7 +180,13 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     },
     onMessageDeleted: ({ messageId }) => {
       console.log("🗑️ Message deleted from WebSocket:", messageId);
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, deletedForEveryone: true, content: "This message was deleted" }
+            : m
+        )
+      );
     },
     onError: (error) => {
       console.error("❌ WebSocket error:", error);
@@ -588,21 +594,38 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
   };
 
-  const handleDeleteForEveryone = async (messageId: string) => {
-    const confirmed = confirm(
-      "Are you sure you want to delete this message for everyone?",
+  // ConfirmDialog state for delete for everyone
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<{
+    isOpen: boolean;
+    messageId: string | null;
+  }>({ isOpen: false, messageId: null });
+
+  // Handler to open confirm dialog
+  const handleDeleteForEveryone = (messageId: string) => {
+    setConfirmDeleteDialog({ isOpen: true, messageId });
+  };
+
+  // Handler to actually delete after confirmation
+  const confirmDeleteForEveryone = async () => {
+    if (!confirmDeleteDialog.messageId) return;
+    // Optimistically mark as deleted immediately
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === confirmDeleteDialog.messageId
+          ? { ...m, deletedForEveryone: true, content: "This message was deleted" }
+          : m
+      )
     );
-    if (confirmed) {
-      try {
-        await wsDeleteForEveryone({
-          messageId,
-          roomId,
-        });
-        toast.success("Message deleted for everyone");
-      } catch (error) {
-        console.error("Failed to delete message:", error);
-        toast.error("Failed to delete message");
-      }
+    try {
+      await wsDeleteForEveryone({
+        roomId,
+        messageId: confirmDeleteDialog.messageId,
+      });
+      // Do NOT remove the message or change it again here; let the WebSocket update handle any further changes
+    } catch (error) {
+      // Optionally handle error (e.g., revert optimistic update)
+    } finally {
+      setConfirmDeleteDialog({ isOpen: false, messageId: null });
     }
   };
 
@@ -685,41 +708,47 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
         </div>
 
         {/* Messages List */}
-        <div className="space-y-0 py-5 px-4 pb-[100px]">
-          {messages.map((message) => {
-            const user = convertToMockUser(message.user);
-            const mockMessage = convertToMockMessage(message);
-            const replyToMessage = message.replyToId
-              ? messages.find((m) => m.id === message.replyToId)
-              : undefined;
-            const replyToUser = replyToMessage
-              ? convertToMockUser(replyToMessage.user)
-              : undefined;
-            const mockReplyToMessage = replyToMessage
-              ? convertToMockMessage(replyToMessage)
-              : undefined;
+        {messages.length === 0 ? (
+          <div className="text-center text-para-muted italic py-10">
+            No messages yet. Start the conversation!
+          </div>
+        ) : (
+          <div className="space-y-0 py-5 px-4 pb-[100px]">
+            {messages.map((message) => {
+              const user = convertToMockUser(message.user);
+              const mockMessage = convertToMockMessage(message);
+              const replyToMessage = message.replyToId
+                ? messages.find((m) => m.id === message.replyToId)
+                : undefined;
+              const replyToUser = replyToMessage
+                ? convertToMockUser(replyToMessage.user)
+                : undefined;
+              const mockReplyToMessage = replyToMessage
+                ? convertToMockMessage(replyToMessage)
+                : undefined;
 
-            return (
-              <MessageItem
-                key={message.id}
-                ref={(el) => {
-                  messageRefs.current[message.id] = el;
-                }}
-                message={mockMessage}
-                user={user}
-                replyToMessage={mockReplyToMessage}
-                replyToUser={replyToUser}
-                onReply={handleReply}
-                onEdit={handleEdit}
-                onDeleteForMe={handleDeleteForMe}
-                onDeleteForEveryone={handleDeleteForEveryone}
-                onScrollToMessage={scrollToMessage}
-                currentUserId={currentUser?.id || ""}
-              />
-            );
-          })}
-          <div ref={messagesEndRef} />
-        </div>
+              return (
+                <MessageItem
+                  key={message.id}
+                  ref={(el) => {
+                    messageRefs.current[message.id] = el;
+                  }}
+                  message={mockMessage}
+                  user={user}
+                  replyToMessage={mockReplyToMessage}
+                  replyToUser={replyToUser}
+                  onReply={handleReply}
+                  onEdit={handleEdit}
+                  onDeleteForMe={handleDeleteForMe}
+                  onDeleteForEveryone={handleDeleteForEveryone}
+                  onScrollToMessage={scrollToMessage}
+                  currentUserId={currentUser?.id || ""}
+                />
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
 
         {/* Message Composer - sticky at bottom of scroll container */}
         <div className="sticky bottom-0 bg-main-background border-t border-light-border">
@@ -740,6 +769,19 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           />
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDeleteDialog.isOpen}
+        onClose={() => setConfirmDeleteDialog({ isOpen: false, messageId: null })}
+        onConfirm={confirmDeleteForEveryone}
+        title="Delete Message"
+        message="This message will be permanently deleted for everyone."
+        itemName="Are you sure you want to delete this message"
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 };
