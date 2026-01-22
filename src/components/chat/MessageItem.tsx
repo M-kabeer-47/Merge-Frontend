@@ -1,9 +1,7 @@
 // File: src/components/chat/MessageItem.tsx
 import React, { useState, useRef, useEffect } from "react";
-import {
-  ChatMessage,
-  User,
-} from "@/lib/constants/mock-chat-data";
+import { ChatMessage } from "@/types/general-chat";
+import { MessageUserUI } from "@/types/general-chat";
 import MessageHeader from "./MessageHeader";
 import MessageAvatar from "./MessageAvatar";
 import RepliedMessage from "./RepliedMessage";
@@ -15,9 +13,9 @@ import { Check, CheckCheck, Loader2 } from "lucide-react";
 
 interface MessageItemProps {
   message: ChatMessage;
-  user: User;
+  user: MessageUserUI;
   replyToMessage?: ChatMessage;
-  replyToUser?: User;
+  replyToUser?: MessageUserUI;
   onReply: (messageId: string) => void;
   onEdit: (messageId: string) => void;
   onDeleteForMe: (messageId: string) => void;
@@ -79,7 +77,13 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* Message Header */}
         <MessageHeader
           user={user}
-          message={message}
+          message={{
+            id: message.id,
+            content: message.content,
+            createdAt: message.createdAt,
+            edited: message.isEdited,
+            isDeletedForEveryone: message.isDeletedForEveryone,
+          }}
           isOwnMessage={isOwnMessage}
         />
 
@@ -97,7 +101,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
         <div
           className={`text-sm leading-relaxed mb-2 whitespace-pre-wrap ${
             isOwnMessage ? "text-white/95" : "text-para"
-          } ${(message.deletedForEveryone || message.content === "This message was deleted") ? "italic opacity-70" : ""}`}
+          } ${(message.isDeletedForEveryone || message.content === "This message was deleted") ? "italic opacity-70" : ""}`}
         >
           {message.content}
         </div>
@@ -115,7 +119,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
               isOwnMessage ? "text-white/60" : "text-para-muted"
             }`}
           >
-            {formatTime(message.timestamp)}
+            {formatTime(new Date(message.createdAt))}
           </span>
 
           {/* Status - Only show for own messages */}

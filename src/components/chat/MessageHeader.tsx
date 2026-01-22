@@ -7,9 +7,9 @@ interface MessageHeaderProps {
   message: {
     id: string;
     content: string;
-    timestamp: Date;
+    createdAt: string;
     edited?: boolean;
-    deletedForEveryone?: boolean;
+    isDeletedForEveryone?: boolean;
   };
   isOwnMessage: boolean;
 }
@@ -64,7 +64,7 @@ export default function MessageHeader({
       >
         {/* {format(message.timestamp, { addSuffix: true })} */}
       </span>
-      {message.edited && !message.deletedForEveryone && (
+      {message.edited && !message.isDeletedForEveryone && (
         <span
           className={`text-xs ${
             isOwnMessage ? "text-white/70" : "text-para-muted"

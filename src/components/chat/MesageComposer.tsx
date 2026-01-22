@@ -15,7 +15,7 @@ import {
   AtSign,
   Image as ImageIcon,
 } from "lucide-react";
-import { ChatMessage, User } from "@/lib/constants/mock-chat-data";
+import { ChatMessage, MessageUserUI } from "@/types/general-chat";
 import {
   EmojiPicker,
   EmojiPickerSearch,
@@ -31,7 +31,7 @@ interface MessageComposerProps {
     attachments?: AttachmentFile[]
   ) => void;
   replyingTo?: ChatMessage;
-  replyingToUser?: User;
+  replyingToUser?: MessageUserUI;
   onCancelReply: () => void;
   editingMessage?: ChatMessage;
   onCancelEdit?: () => void;

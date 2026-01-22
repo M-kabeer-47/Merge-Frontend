@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChatMessage } from "@/lib/constants/mock-chat-data";
+import { ChatMessage } from "@/types/general-chat";
 import { MoreHorizontal, Reply, Trash2, Edit, User } from "lucide-react";
 import DropdownMenu from "../ui/Dropdown";
 
@@ -95,15 +95,19 @@ export default function MessageOptions({
                         setOpen(false);
                       },
                     },
-                    {
-                      title: "Delete for everyone",
-                      destructive: true,
-                      icon: <Trash2 className="h-[15px] w-[15px] text-destructive" />,
-                      action: () => {
-                        onDeleteForEveryone(message.id);
-                        setOpen(false);
-                      },
-                    },
+                    ...(!message.isDeletedForEveryone
+                      ? [
+                          {
+                            title: "Delete for everyone",
+                            destructive: true,
+                            icon: <Trash2 className="h-[15px] w-[15px] text-destructive" />,
+                            action: () => {
+                              onDeleteForEveryone(message.id);
+                              setOpen(false);
+                            },
+                          },
+                        ]
+                      : []),
                   ]
                 : [
                     {

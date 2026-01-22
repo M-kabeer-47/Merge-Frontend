@@ -39,7 +39,7 @@ function transformMessage(apiMessage: ApiChatMessage): ChatMessage {
     createdAt: apiMessage.createdAt,
     updatedAt: apiMessage.updatedAt,
     isEdited: apiMessage.isEdited,
-    deletedForEveryone: apiMessage.isDeletedForEveryone,
+    isDeletedForEveryone: apiMessage.isDeletedForEveryone,
     user: apiMessage.author,
   };
 }

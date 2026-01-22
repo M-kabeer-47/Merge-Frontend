@@ -1,3 +1,12 @@
+// UI User type for chat components
+export interface MessageUserUI {
+  id: string;
+  name: string;
+  initials: string;
+  role: "student" | "instructor" | "admin";
+  isOnline: boolean;
+  avatar?: string;
+}
 // General Chat Types for WebSocket and REST API
 
 // ═══════════════════════════════════════════════════════════════════
@@ -16,7 +25,7 @@ export interface MessageAttachment {
   isUploading?: boolean;
   uploadProgress?: number;
 }
-
+  // deletedForEveryone has been removed in favor of isDeletedForEveryone
 export interface MessageUser {
   id: string;
   firstName: string;
@@ -56,10 +65,9 @@ export interface ChatMessage {
   createdAt: string;
   updatedAt: string;
   isEdited: boolean;
-  deletedForEveryone: boolean;
+  isDeletedForEveryone: boolean;
   user: MessageUser;
   replyTo?: ChatMessage | null;
-  
   // Client-side only properties
   status?: MessageStatus;
   isUploading?: boolean;

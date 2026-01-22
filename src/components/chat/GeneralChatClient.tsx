@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useWebSocketChat } from "@/hooks/general-chat/use-websocket-chat";
 import { useFetchMessages } from "@/hooks/general-chat/use-fetch-messages";
 import MessageItem from "@/components/chat/MessageItem";
+import MessageSkeleton from "@/components/chat/MessageSkeleton";
 import MessageComposer from "@/components/chat/MesageComposer";
 import { AttachmentFile } from "@/components/chat/AttachmentPreview";
 import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
@@ -45,7 +46,7 @@ function transformMessage(apiMessage: ApiChatMessage): ChatMessage {
     createdAt: apiMessage.createdAt,
     updatedAt: apiMessage.updatedAt,
     isEdited: apiMessage.isEdited,
-    deletedForEveryone: apiMessage.isDeletedForEveryone,
+    isDeletedForEveryone: apiMessage.isDeletedForEveryone,
     user: apiMessage.author,
     status: "sent", // Explicitly set status as sent
     isUploading: false, // Explicitly set uploading as false
@@ -61,38 +62,7 @@ interface MessageUser {
   image: string | null;
 }
 
-// Mock ChatMessage interface from UI components
-interface MockChatMessage {
-  id: string;
-  userId: string;
-  content: string;
-  timestamp: Date;
-  edited?: boolean;
-  deletedForEveryone?: boolean;
-  editedAt?: Date;
-  replyTo?: string;
-  reactions: {
-    emoji: string;
-    users: string[];
-    count: number;
-  }[];
-  attachments?: {
-    id: string;
-    name: string;
-    file: File;
-    type: "image" | "file" | "link";
-    url: string;
-    size?: number;
-    preview?: string;
-    uploadProgress?: number;
-    isUploading?: boolean;
-  }[];
-  seen?: boolean;
-  seenBy?: string[];
-  status?: "sending" | "sent" | "delivered" | "seen";
-  uploadProgress?: number;
-  isUploading?: boolean;
-}
+
 
 const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   const { user: currentUser } = useAuth();
@@ -123,6 +93,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     messages: fetchedMessages,
     hasMore,
     isFetchingNextPage,
+    isLoading,
     fetchNextPage,
   } = useFetchMessages({
     roomId,
@@ -183,7 +154,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === messageId
-            ? { ...m, deletedForEveryone: true, content: "This message was deleted" }
+            ? { ...m, isDeletedForEveryone: true, content: "This message was deleted" }
             : m
         )
       );
@@ -301,7 +272,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           isEdited: false,
-          deletedForEveryone: false,
+          isDeletedForEveryone: false,
           user: {
             id: currentUser.id,
             firstName: currentUser.firstName,
@@ -352,7 +323,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             isEdited: false,
-            deletedForEveryone: false,
+            isDeletedForEveryone: false,
             user: {
               id: currentUser.id,
               firstName: currentUser.firstName,
@@ -455,7 +426,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               isEdited: false,
-              deletedForEveryone: false,
+              isDeletedForEveryone: false,
               user: {
                 id: currentUser.id,
                 firstName: currentUser.firstName,
@@ -650,31 +621,6 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   });
 
   // Convert API ChatMessage to Mock ChatMessage format for UI components
-  const convertToMockMessage = (message: ChatMessage): MockChatMessage => ({
-    id: message.id,
-    userId: message.userId,
-    content: message.content,
-    timestamp: new Date(message.createdAt),
-    edited: message.isEdited,
-    deletedForEveryone: message.deletedForEveryone,
-    replyTo: message.replyToId || undefined,
-    reactions: [],
-    attachments: message.attachments.map((att) => ({
-      id: att.id,
-      name: att.name,
-      type: att.type,
-      url: att.url,
-      size: att.size,
-      preview: att.preview,
-      uploadProgress: att.uploadProgress,
-      isUploading: att.isUploading,
-      file: new File([], att.name, { type: "application/octet-stream" }),
-    })),
-    seen: message.seen,
-    status: message.status === "failed" ? "sent" : message.status,
-    uploadProgress: message.uploadProgress,
-    isUploading: message.isUploading,
-  });
 
   return (
     <div className="flex flex-col h-full bg-main-background">
@@ -707,8 +653,15 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           ) : null}
         </div>
 
-        {/* Messages List */}
-        {messages.length === 0 ? (
+
+        {/* Messages List or Skeletons */}
+        {messages.length === 0 && isLoading ? (
+          <div className="space-y-0 py-5 px-4 pb-[100px]">
+            {[...Array(6)].map((_, i) => (
+              <MessageSkeleton key={i} isOwn={i % 2 === 0} />
+            ))}
+          </div>
+        ) : messages.length === 0 ? (
           <div className="text-center text-para-muted italic py-10">
             No messages yet. Start the conversation!
           </div>
@@ -716,15 +669,11 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           <div className="space-y-0 py-5 px-4 pb-[100px]">
             {messages.map((message) => {
               const user = convertToMockUser(message.user);
-              const mockMessage = convertToMockMessage(message);
               const replyToMessage = message.replyToId
                 ? messages.find((m) => m.id === message.replyToId)
                 : undefined;
               const replyToUser = replyToMessage
                 ? convertToMockUser(replyToMessage.user)
-                : undefined;
-              const mockReplyToMessage = replyToMessage
-                ? convertToMockMessage(replyToMessage)
                 : undefined;
 
               return (
@@ -733,9 +682,9 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
                   ref={(el) => {
                     messageRefs.current[message.id] = el;
                   }}
-                  message={mockMessage}
+                  message={message}
                   user={user}
-                  replyToMessage={mockReplyToMessage}
+                  replyToMessage={replyToMessage}
                   replyToUser={replyToUser}
                   onReply={handleReply}
                   onEdit={handleEdit}
@@ -754,16 +703,10 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
         <div className="sticky bottom-0 bg-main-background border-t border-light-border">
           <MessageComposer
             onSendMessage={handleSendMessage}
-            replyingTo={
-              replyingTo ? convertToMockMessage(replyingTo) : undefined
-            }
-            replyingToUser={
-              replyingTo ? convertToMockUser(replyingTo.user) : undefined
-            }
+            replyingTo={replyingTo}
+            replyingToUser={replyingTo ? convertToMockUser(replyingTo.user) : undefined}
             onCancelReply={handleCancelReply}
-            editingMessage={
-              editingMessage ? convertToMockMessage(editingMessage) : undefined
-            }
+            editingMessage={editingMessage}
             onCancelEdit={handleCancelEdit}
             onUpdateMessage={handleUpdateMessage}
           />

@@ -8,7 +8,7 @@ export interface User {
   isOnline: boolean;
 }
 
-export interface ChatMessage {
+export interface MockChatMessage {
   id: string;
   userId: string;
   content: string;
@@ -78,7 +78,7 @@ export const mockUsers: User[] = [
   }
 ];
 
-export const mockMessages: ChatMessage[] = [
+export const mockMessages: MockChatMessage[] = [
   {
     id: '1',
     userId: '1',

@@ -1,5 +1,5 @@
 import { Download, FileText, File } from "lucide-react";
-import { ChatMessage } from "@/lib/constants/mock-chat-data";
+import { ChatMessage } from "@/types/general-chat";
 import { useState } from "react";
 import ImageCarouselModal from "./ImageCarouselModal";
 import {
