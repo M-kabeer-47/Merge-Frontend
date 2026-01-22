@@ -8,6 +8,13 @@ const PdfViewer = dynamic(() => import("@/components/content/PDFViewer"), {
 
 export default function Page() {
   const params = useParams();
-  const url = decodeURIComponent(params.url as string);
+  let url = decodeURIComponent(params.url as string);
+
+  // Defensive: Remove any &name= parameter that might exist in old cached URLs
+  const nameParamIndex = url.indexOf("&name=");
+  if (nameParamIndex !== -1) {
+    url = url.substring(0, nameParamIndex);
+  }
+
   return <PdfViewer url={url} />;
 }

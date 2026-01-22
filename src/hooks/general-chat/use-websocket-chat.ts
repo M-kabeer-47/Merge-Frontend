@@ -1,20 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import type {
   ChatMessage,
   ApiChatMessage,
-  SendMessagePayload,
-  UpdateMessagePayload,
-  DeleteForMePayload,
-  DeleteForEveryonePayload,
-  WebSocketResponse,
+  MessageAttachment,
   NewMessageEvent,
   MessageUpdatedEvent,
   MessageDeletedEvent,
   ErrorEvent,
-  MessageAttachment,
 } from "@/types/general-chat";
 
 const COMMUNICATION_URL = process.env.NEXT_PUBLIC_COMMUNICATION_URL || "";
@@ -65,6 +60,10 @@ interface UseWebSocketChatOptions {
   }) => void;
 }
 
+/**
+ * WebSocket connection hook - handles connection lifecycle only
+ * Action functions (send, update, delete) are in use-socket-chat-events.ts
+ */
 export function useWebSocketChat({
   roomId,
   onNewMessage,
@@ -98,8 +97,6 @@ export function useWebSocketChat({
       return;
     }
 
-    // Create socket connection with credentials (cookies will be sent automatically)
-    // Connect to the /general-chat namespace
     const socket = io(`${COMMUNICATION_URL}/general-chat`, {
       withCredentials: true,
       transports: ["websocket", "polling"],
@@ -116,7 +113,6 @@ export function useWebSocketChat({
       setIsConnected(true);
       setError(null);
 
-      // Auto-join room on connection
       if (roomId) {
         socket.emit("joinRoom", { roomId });
         console.log("🚪 Auto-joined room:", roomId);
@@ -167,157 +163,30 @@ export function useWebSocketChat({
     };
   }, [roomId]);
 
-  // Join a room
-  const joinRoom = useCallback((targetRoomId: string) => {
+  // Simple room functions (no useCallback needed - these don't change)
+  const joinRoom = (targetRoomId: string) => {
     if (!socketRef.current?.connected) {
       console.error("Socket not connected");
       return;
     }
-
     socketRef.current.emit("joinRoom", { roomId: targetRoomId });
     console.log("🚪 Joined room:", targetRoomId);
-  }, []);
+  };
 
-  // Leave a room
-  const leaveRoom = useCallback((targetRoomId: string) => {
+  const leaveRoom = (targetRoomId: string) => {
     if (!socketRef.current?.connected) {
       console.error("Socket not connected");
       return;
     }
-
     socketRef.current.emit("leaveRoom", { roomId: targetRoomId });
     console.log("👋 Left room:", targetRoomId);
-  }, []);
-
-  // Send a message
-  const sendMessage = useCallback(
-    async (payload: SendMessagePayload): Promise<WebSocketResponse> => {
-      return new Promise((resolve, reject) => {
-        if (!socketRef.current?.connected) {
-          const error = { success: false, error: "Socket not connected" };
-          reject(error);
-          return;
-        }
-
-        socketRef.current.emit(
-          "sendMessage",
-          payload,
-          (response: WebSocketResponse) => {
-            if (response.success) {
-              console.log("✅ Message sent:", response.message);
-              resolve(response);
-            } else {
-              console.error("❌ Failed to send message:", response.error);
-              reject(response);
-            }
-          },
-        );
-      });
-    },
-    [],
-  );
-
-  // Update a message
-  const updateMessage = useCallback(
-    async (payload: UpdateMessagePayload): Promise<WebSocketResponse> => {
-      return new Promise((resolve, reject) => {
-        if (!socketRef.current?.connected) {
-          const error = { success: false, error: "Socket not connected" };
-          reject(error);
-          return;
-        }
-
-        socketRef.current.emit(
-          "updateMessage",
-          payload,
-          (response: WebSocketResponse) => {
-            if (response.success) {
-              console.log("✅ Message updated:", response.message);
-              resolve(response);
-            } else {
-              console.error("❌ Failed to update message:", response.error);
-              reject(response);
-            }
-          },
-        );
-      });
-    },
-    [],
-  );
-
-  // Delete message for me
-  const deleteForMe = useCallback(
-    async (payload: DeleteForMePayload): Promise<WebSocketResponse> => {
-      return new Promise((resolve, reject) => {
-        if (!socketRef.current?.connected) {
-          const error = { success: false, error: "Socket not connected" };
-          reject(error);
-          return;
-        }
-
-        socketRef.current.emit(
-          "deleteForMe",
-          payload,
-          (response: WebSocketResponse) => {
-            if (response.success) {
-              console.log("✅ Message deleted for me:", payload.messageId);
-              resolve(response);
-            } else {
-              console.error(
-                "❌ Failed to delete message for me:",
-                response.error,
-              );
-              reject(response);
-            }
-          },
-        );
-      });
-    },
-    [],
-  );
-
-  // Delete message for everyone
-  const deleteForEveryone = useCallback(
-    async (payload: DeleteForEveryonePayload): Promise<WebSocketResponse> => {
-      return new Promise((resolve, reject) => {
-        if (!socketRef.current?.connected) {
-          const error = { success: false, error: "Socket not connected" };
-          reject(error);
-          return;
-        }
-
-        socketRef.current.emit(
-          "deleteForEveryone",
-          payload,
-          (response: WebSocketResponse) => {
-            if (response.success) {
-              console.log(
-                "✅ Message deleted for everyone:",
-                payload.messageId,
-              );
-              resolve(response);
-            } else {
-              console.error(
-                "❌ Failed to delete message for everyone:",
-                response.error,
-              );
-              reject(response);
-            }
-          },
-        );
-      });
-    },
-    [],
-  );
+  };
 
   return {
+    socket: socketRef.current,
     isConnected,
     error,
     joinRoom,
     leaveRoom,
-    sendMessage,
-    updateMessage,
-    deleteForMe,
-    deleteForEveryone,
   };
 }

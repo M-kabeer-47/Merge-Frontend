@@ -66,7 +66,7 @@ export default function AppSidebar() {
   const links = sidebarLinks;
   return (
     <Sidebar open={open} setOpen={setOpen}>
-      <SidebarBody className="justify-between gap-10 min-h-screen">
+      <SidebarBody className="justify-between gap-10 h-full">
         <div className="flex flex-1 flex-col overflow-x-hidden ">
           <div className="text-2xl font-raleway font-bold text-heading flex items-center gap-2 justify-start ml-2">
             {isDarkMode ? (

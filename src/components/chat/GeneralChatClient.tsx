@@ -1,58 +1,28 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { useQueryClient } from "@tanstack/react-query";
 import { useWebSocketChat } from "@/hooks/general-chat/use-websocket-chat";
 import { useFetchMessages } from "@/hooks/general-chat/use-fetch-messages";
+import useSendChatMessage from "@/hooks/general-chat/use-send-chat-message";
+import {
+  updateMessage as emitUpdateMessage,
+  deleteForMe as emitDeleteForMe,
+  deleteForEveryone as emitDeleteForEveryone,
+} from "@/hooks/general-chat/use-socket-chat-events";
 import MessageItem from "@/components/chat/MessageItem";
 import MessageComposer from "@/components/chat/MesageComposer";
 import { AttachmentFile } from "@/components/chat/AttachmentPreview";
-import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
-import type {
-  ChatMessage,
-  MessageAttachment,
-  ApiChatMessage,
-} from "@/types/general-chat";
-import { useAuth } from "@/providers/AuthProvider";
-import { Button } from "@/components/ui/Button";
+import type { ChatMessage, FetchMessagesResponse } from "@/types/general-chat";
 import { toast } from "sonner";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface GeneralChatClientProps {
   roomId: string;
 }
 
-// Transform API message to frontend ChatMessage
-function transformMessage(apiMessage: ApiChatMessage): ChatMessage {
-  const attachments: MessageAttachment[] = apiMessage.attachmentURL
-    ? [
-        {
-          id: `att-${apiMessage.id}`,
-          name: apiMessage.attachmentURL.split("/").pop() || "file",
-          type: "file",
-          url: apiMessage.attachmentURL,
-          size: 0,
-        },
-      ]
-    : [];
-
-  return {
-    id: apiMessage.id,
-    content: apiMessage.content,
-    userId: apiMessage.author.id,
-    roomId: apiMessage.room.id,
-    replyToId: apiMessage.replyToId,
-    attachments,
-    createdAt: apiMessage.createdAt,
-    updatedAt: apiMessage.updatedAt,
-    isEdited: apiMessage.isEdited,
-    deletedForEveryone: apiMessage.isDeletedForEveryone,
-    user: apiMessage.author,
-    status: "sent", // Explicitly set status as sent
-    isUploading: false, // Explicitly set uploading as false
-  };
-}
-
-// Convert mock User interface to MessageUser for compatibility
+// Convert ChatMessage user to mock User format for existing UI components
 interface MessageUser {
   id: string;
   firstName: string;
@@ -96,18 +66,19 @@ interface MockChatMessage {
 
 const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   const { user: currentUser } = useAuth();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const queryClient = useQueryClient();
   const [replyingTo, setReplyingTo] = useState<ChatMessage | undefined>();
   const [editingMessage, setEditingMessage] = useState<
     ChatMessage | undefined
   >();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const previousScrollHeight = useRef(0);
-  const hasInitiallyScrolled = useRef(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const prevMessagesLength = useRef(0);
+
+  // Use send message hook
+  const { sendMessage: sendMessageWithUpload, isUploading } =
+    useSendChatMessage();
 
   // Don't render until we have user info
   if (!currentUser) {
@@ -118,7 +89,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     );
   }
 
-  // Fetch messages with infinite scroll
+  // Fetch messages with infinite scroll (React Query manages the data)
   const {
     messages: fetchedMessages,
     hasMore,
@@ -129,58 +100,132 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     limit: 20,
   });
 
-  // WebSocket connection
+  // Messages from React Query - reversed for display (oldest first)
+  const messages = [...fetchedMessages].reverse();
+
+  // Helper to update React Query cache
+  const updateMessagesCache = (
+    updater: (messages: ChatMessage[]) => ChatMessage[],
+  ) => {
+    queryClient.setQueryData<{
+      pages: FetchMessagesResponse[];
+      pageParams: number[];
+    }>(["general-chat", roomId], (oldData) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page, index) => {
+          if (index === 0) {
+            // Update messages in first page (most recent)
+            const allMessages = oldData.pages.flatMap((p) =>
+              p.messages.map((m) => ({
+                ...m,
+                id: m.id,
+                content: m.content,
+              })),
+            );
+            // This is simplified - full implementation would properly update the cache
+            return page;
+          }
+          return page;
+        }),
+      };
+    });
+  };
+
+  // WebSocket connection (connection-only, events use cache)
   const {
+    socket,
     isConnected,
-    sendMessage,
-    updateMessage: wsUpdateMessage,
-    deleteForMe: wsDeleteForMe,
-    deleteForEveryone: wsDeleteForEveryone,
     error: wsError,
   } = useWebSocketChat({
     roomId,
     onNewMessage: (message) => {
       console.log("📨 New message from WebSocket:", message);
-      setMessages((prev) => {
-        // Check if message already exists (avoid duplicates)
-        const exists = prev.some((m) => m.id === message.id);
-        if (exists) {
-          console.log("Message already exists, skipping");
-          return prev;
-        }
-
-        // Check if this is replacing a temp message (for own messages)
-        // Find the most recent temp message from the same user
-        const tempMessageIndex = prev.findIndex(
-          (m) => m.id.startsWith("temp-") && m.userId === message.userId,
+      // Add to React Query cache
+      queryClient.setQueryData<{
+        pages: FetchMessagesResponse[];
+        pageParams: number[];
+      }>(["general-chat", roomId], (oldData) => {
+        if (!oldData) return oldData;
+        // Check if message already exists
+        const allExistingIds = oldData.pages.flatMap((p) =>
+          p.messages.map((m) => m.id),
         );
-
-        if (tempMessageIndex !== -1) {
-          console.log(
-            "Replacing temp message at index:",
-            tempMessageIndex,
-            "with real message:",
-            message,
-          );
-          // Replace the temp message with the real one
-          const newMessages = [...prev];
-          newMessages[tempMessageIndex] = message;
-          return newMessages;
+        if (allExistingIds.includes(message.id)) {
+          return oldData;
         }
-
-        console.log("Adding new message from others:", message);
-        return [...prev, message];
+        // Add to first page (most recent messages)
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page, index) => {
+            if (index === 0) {
+              return {
+                ...page,
+                messages: [
+                  {
+                    id: message.id,
+                    content: message.content,
+                    attachmentURL: message.attachments?.[0]?.url || null,
+                    replyToId: message.replyToId,
+                    isEdited: message.isEdited,
+                    isDeletedForEveryone: message.deletedForEveryone,
+                    createdAt: message.createdAt,
+                    updatedAt: message.updatedAt,
+                    author: message.user,
+                    room: { id: roomId },
+                  },
+                  ...page.messages,
+                ],
+                total: page.total + 1,
+              };
+            }
+            return page;
+          }),
+        };
       });
     },
     onMessageUpdated: (message) => {
       console.log("✏️ Message updated from WebSocket:", message);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === message.id ? message : m)),
-      );
+      queryClient.setQueryData<{
+        pages: FetchMessagesResponse[];
+        pageParams: number[];
+      }>(["general-chat", roomId], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            messages: page.messages.map((m) =>
+              m.id === message.id
+                ? {
+                    ...m,
+                    content: message.content,
+                    isEdited: true,
+                    updatedAt: message.updatedAt,
+                  }
+                : m,
+            ),
+          })),
+        };
+      });
     },
     onMessageDeleted: ({ messageId }) => {
       console.log("🗑️ Message deleted from WebSocket:", messageId);
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      queryClient.setQueryData<{
+        pages: FetchMessagesResponse[];
+        pageParams: number[];
+      }>(["general-chat", roomId], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            messages: page.messages.filter((m) => m.id !== messageId),
+            total: page.total - 1,
+          })),
+        };
+      });
     },
     onError: (error) => {
       console.error("❌ WebSocket error:", error);
@@ -195,81 +240,22 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
   }, [wsError]);
 
-  // Initialize messages from fetched data (reverse to show oldest first)
+  // Auto-scroll to bottom only on initial load or new message (not pagination)
   useEffect(() => {
-    if (fetchedMessages.length > 0) {
-      setMessages([...fetchedMessages].reverse());
+    const prevLen = prevMessagesLength.current;
+    const currLen = messages.length;
+    prevMessagesLength.current = currLen;
+
+    if (currLen > 0) {
+      if (prevLen === 0) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+        return;
+      }
+      if (currLen - prevLen === 1) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
     }
-  }, [fetchedMessages.length]);
-
-  // Scroll to bottom on initial load and when new messages arrive
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container || messages.length === 0) return;
-
-    // On initial load, scroll to bottom
-    if (!hasInitiallyScrolled.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
-      // Delay setting the flag to prevent immediate observer trigger
-      setTimeout(() => {
-        hasInitiallyScrolled.current = true;
-      }, 500);
-      return;
-    }
-
-    // Check if user was at the bottom before new message
-    const isAtBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight <
-      100;
-
-    if (isAtBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
-
-  // Handle infinite scroll with IntersectionObserver - load when sentinel is visible
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    const sentinel = loadMoreRef.current;
-    if (!container || !sentinel) return;
-
-    const observer = new IntersectionObserver(
-      async (entries) => {
-        const [entry] = entries;
-        if (
-          entry.isIntersecting &&
-          hasMore &&
-          !isFetchingNextPage &&
-          !isLoadingMore &&
-          hasInitiallyScrolled.current
-        ) {
-          console.log("Sentinel visible, fetching next page...");
-          setIsLoadingMore(true);
-          previousScrollHeight.current = container.scrollHeight;
-
-          await fetchNextPage();
-
-          // Maintain scroll position after loading more messages
-          setTimeout(() => {
-            if (container) {
-              const newScrollHeight = container.scrollHeight;
-              container.scrollTop =
-                newScrollHeight - previousScrollHeight.current;
-            }
-            setIsLoadingMore(false);
-          }, 100);
-        }
-      },
-      {
-        root: container,
-        rootMargin: "100px",
-        threshold: 0,
-      },
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, isFetchingNextPage, isLoadingMore, fetchNextPage]);
+  }, [messages.length]);
 
   const handleSendMessage = async (
     content: string,
@@ -282,233 +268,13 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
 
     try {
-      if (!attachments || attachments.length === 0) {
-        // Send text-only message
-        const tempId = `temp-${Date.now()}`;
-        const tempMessage: ChatMessage = {
-          id: tempId,
-          userId: currentUser.id,
-          roomId,
-          content,
-          replyToId: replyToId || null,
-          attachments: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          isEdited: false,
-          deletedForEveryone: false,
-          user: {
-            id: currentUser.id,
-            firstName: currentUser.firstName,
-            lastName: currentUser.lastName,
-            email: currentUser.email,
-            image: currentUser.image,
-          },
-          status: "sending",
-        };
-
-        // Optimistically add message to UI
-        setMessages((prev) => [...prev, tempMessage]);
-
-        // Send via WebSocket
-        const response = await sendMessage({
-          roomId,
-          content,
-          replyToId,
-        });
-
-        // The real message will come via WebSocket onNewMessage and replace the temp message
-        if (response.message) {
-          console.log("✅ Message sent:", response.message);
-        }
-      } else {
-        // Handle attachments - upload first, then send
-        const attachmentType = attachments[0].type;
-        const tempId = `temp-${Date.now()}`;
-
-        if (attachmentType === "image") {
-          // For images, create one message with all images
-          const tempMessage: ChatMessage = {
-            id: tempId,
-            userId: currentUser.id,
-            roomId,
-            content: content || "",
-            replyToId: replyToId || null,
-            attachments: attachments.map((att, index) => ({
-              id: `att-${tempId}-${index}`,
-              name: att.file.name,
-              type: "image" as const,
-              url: att.preview || "",
-              size: att.file.size,
-              preview: att.preview,
-              isUploading: true,
-              uploadProgress: 0,
-            })),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isEdited: false,
-            deletedForEveryone: false,
-            user: {
-              id: currentUser.id,
-              firstName: currentUser.firstName,
-              lastName: currentUser.lastName,
-              email: currentUser.email,
-              image: currentUser.image,
-            },
-            status: "sending",
-            isUploading: true,
-            uploadProgress: 0,
-          };
-
-          setMessages((prev) => [...prev, tempMessage]);
-
-          // Upload images with progress tracking
-          const uploadedAttachments: MessageAttachment[] = await Promise.all(
-            attachments.map(async (att: AttachmentFile, index: number) => {
-              const uploadedUrl = await uploadToCloudinary({
-                file: att.file,
-                attachmentType,
-                onProgress: (progress) => {
-                  setMessages((prev) =>
-                    prev.map((msg) => {
-                      if (msg.id === tempId && msg.attachments) {
-                        const updatedAttachments = [...msg.attachments];
-                        if (updatedAttachments[index]) {
-                          updatedAttachments[index] = {
-                            ...updatedAttachments[index],
-                            uploadProgress: progress,
-                          };
-                        }
-                        const overallProgress = Math.round(
-                          updatedAttachments.reduce(
-                            (sum, a) => sum + (a.uploadProgress || 0),
-                            0,
-                          ) / updatedAttachments.length,
-                        );
-                        return {
-                          ...msg,
-                          attachments: updatedAttachments,
-                          uploadProgress: overallProgress,
-                        };
-                      }
-                      return msg;
-                    }),
-                  );
-                },
-              });
-
-              return {
-                id: `att-${tempId}-${index}`,
-                name: att.file.name,
-                type: "image" as const,
-                url: uploadedUrl,
-                size: att.file.size,
-              };
-            }),
-          );
-
-          // Send message with uploaded attachments (use first image URL)
-          const payload: any = {
-            roomId,
-            attachmentURL: uploadedAttachments[0]?.url,
-          };
-          if (content && content.trim()) {
-            payload.content = content;
-          }
-          if (replyToId) {
-            payload.replyToId = replyToId;
-          }
-          const response = await sendMessage(payload);
-
-          // The real message will come via WebSocket and replace the temp message
-          if (response.message) {
-            console.log("✅ Image message sent:", response.message);
-          }
-        } else {
-          // For files, send separate messages for each file
-          for (let index = 0; index < attachments.length; index++) {
-            const att = attachments[index];
-            const fileTempId = `${tempId}-${index}`;
-
-            const tempMessage: ChatMessage = {
-              id: fileTempId,
-              userId: currentUser.id,
-              roomId,
-              content: index === 0 ? content : "",
-              replyToId: replyToId || null,
-              attachments: [
-                {
-                  id: `att-${fileTempId}`,
-                  name: att.file.name,
-                  type: "file" as const,
-                  url: "",
-                  size: att.file.size,
-                  isUploading: true,
-                  uploadProgress: 0,
-                },
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              isEdited: false,
-              deletedForEveryone: false,
-              user: {
-                id: currentUser.id,
-                firstName: currentUser.firstName,
-                lastName: currentUser.lastName,
-                email: currentUser.email,
-                image: currentUser.image,
-              },
-              status: "sending",
-              isUploading: true,
-            };
-
-            setMessages((prev) => [...prev, tempMessage]);
-
-            // Upload file
-            const uploadedUrl = await uploadToCloudinary({
-              file: att.file,
-              attachmentType,
-              onProgress: (progress) => {
-                setMessages((prev) =>
-                  prev.map((msg) => {
-                    if (msg.id === fileTempId && msg.attachments?.[0]) {
-                      return {
-                        ...msg,
-                        attachments: [
-                          {
-                            ...msg.attachments[0],
-                            uploadProgress: progress,
-                          },
-                        ],
-                      };
-                    }
-                    return msg;
-                  }),
-                );
-              },
-            });
-
-            // Send message with uploaded file
-            const payload: any = {
-              roomId,
-              attachmentURL: uploadedUrl,
-            };
-            if (index === 0 && content && content.trim()) {
-              payload.content = content;
-            }
-            if (replyToId) {
-              payload.replyToId = replyToId;
-            }
-            const response = await sendMessage(payload);
-
-            // The real message will come via WebSocket and replace the temp message
-            if (response.message) {
-              console.log("✅ File message sent:", response.message);
-            }
-          }
-        }
-      }
-
-      // Clear reply state
+      await sendMessageWithUpload({
+        roomId,
+        content,
+        replyToId,
+        attachments,
+        socket,
+      });
       setReplyingTo(undefined);
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -531,7 +297,6 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     const messageToEdit = messages.find((m) => m.id === messageId);
     if (messageToEdit) {
       setEditingMessage(messageToEdit);
-      // Clear reply if any
       setReplyingTo(undefined);
     }
   };
@@ -542,49 +307,40 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
 
   const handleUpdateMessage = async (messageId: string, content: string) => {
     try {
-      // Set the message as updating (loading state)
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? { ...m, status: "sending" as const, isEditing: true }
-            : m,
-        ),
-      );
-
-      await wsUpdateMessage({
+      await emitUpdateMessage(socket, {
         messageId,
         roomId,
         content: content.trim(),
       });
       setEditingMessage(undefined);
-      // No toast - the message will update via WebSocket
     } catch (error) {
       console.error("Failed to update message:", error);
       toast.error("Failed to update message");
-      // Revert the loading state on error
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? { ...m, status: "sent" as const, isEditing: false }
-            : m,
-        ),
-      );
     }
   };
 
   const handleDeleteForMe = async (messageId: string) => {
     try {
-      // Optimistically remove the message from UI
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
-
-      await wsDeleteForMe({
-        messageId,
-        roomId,
+      // Optimistically remove from cache
+      queryClient.setQueryData<{
+        pages: FetchMessagesResponse[];
+        pageParams: number[];
+      }>(["general-chat", roomId], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            messages: page.messages.filter((m) => m.id !== messageId),
+          })),
+        };
       });
-      // Message deleted - no toast needed
+      await emitDeleteForMe(socket, { messageId, roomId });
     } catch (error) {
       console.error("Failed to delete message:", error);
       toast.error("Failed to delete message");
+      // Refetch to restore state
+      queryClient.invalidateQueries({ queryKey: ["general-chat", roomId] });
     }
   };
 
@@ -594,10 +350,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     );
     if (confirmed) {
       try {
-        await wsDeleteForEveryone({
-          messageId,
-          roomId,
-        });
+        await emitDeleteForEveryone(socket, { messageId, roomId });
         toast.success("Message deleted for everyone");
       } catch (error) {
         console.error("Failed to delete message:", error);
@@ -616,7 +369,6 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
   };
 
-  // Convert ChatMessage user to mock User format for existing UI components
   const convertToMockUser = (messageUser: MessageUser) => ({
     id: messageUser.id,
     name: `${messageUser.firstName} ${messageUser.lastName}`,
@@ -626,7 +378,6 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     avatar: messageUser.image || undefined,
   });
 
-  // Convert API ChatMessage to Mock ChatMessage format for UI components
   const convertToMockMessage = (message: ChatMessage): MockChatMessage => ({
     id: message.id,
     userId: message.userId,
@@ -662,83 +413,93 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
         </div>
       )}
 
-      {/* Scrollable Chat Container */}
+      {/* Scrollable Chat Container with InfiniteScroll */}
       <div
-        ref={messagesContainerRef}
-        className="h-[500px] overflow-y-auto relative"
+        id="scrollableDiv"
+        ref={scrollContainerRef}
+        className="h-[500px] overflow-y-auto relative flex flex-col-reverse"
       >
-        {/* Sentinel div for auto-loading */}
-        <div ref={loadMoreRef} className="h-1" />
-
-        {/* Load More Section - loading indicator only */}
-        <div className="py-4 flex justify-center">
-          {isFetchingNextPage || isLoadingMore ? (
-            <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              <p className="text-sm text-para-muted mt-2">
-                Loading older messages...
-              </p>
+        <InfiniteScroll
+          dataLength={messages.length}
+          next={fetchNextPage}
+          hasMore={!!hasMore}
+          loader={
+            <div className="py-4 flex justify-center">
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <p className="text-sm text-para-muted mt-2">
+                  Loading older messages...
+                </p>
+              </div>
             </div>
-          ) : !hasMore && messages.length > 0 ? (
-            <p className="text-sm text-para-muted">Beginning of conversation</p>
-          ) : null}
-        </div>
+          }
+          endMessage={
+            messages.length > 0 ? (
+              <div className="py-4 flex justify-center">
+                <p className="text-sm text-para-muted">
+                  Beginning of conversation
+                </p>
+              </div>
+            ) : null
+          }
+          scrollableTarget="scrollableDiv"
+          inverse={true}
+          style={{ display: "flex", flexDirection: "column-reverse" }}
+        >
+          {/* Messages List */}
+          <div className="space-y-0 py-5 px-4 pb-[20px]">
+            {messages.map((message) => {
+              const user = convertToMockUser(message.user);
+              const mockMessage = convertToMockMessage(message);
+              const replyToMessage = message.replyToId
+                ? messages.find((m) => m.id === message.replyToId)
+                : undefined;
+              const replyToUser = replyToMessage
+                ? convertToMockUser(replyToMessage.user)
+                : undefined;
+              const mockReplyToMessage = replyToMessage
+                ? convertToMockMessage(replyToMessage)
+                : undefined;
 
-        {/* Messages List */}
-        <div className="space-y-0 py-5 px-4 pb-[100px]">
-          {messages.map((message) => {
-            const user = convertToMockUser(message.user);
-            const mockMessage = convertToMockMessage(message);
-            const replyToMessage = message.replyToId
-              ? messages.find((m) => m.id === message.replyToId)
-              : undefined;
-            const replyToUser = replyToMessage
-              ? convertToMockUser(replyToMessage.user)
-              : undefined;
-            const mockReplyToMessage = replyToMessage
-              ? convertToMockMessage(replyToMessage)
-              : undefined;
+              return (
+                <MessageItem
+                  key={message.id}
+                  ref={(el) => {
+                    messageRefs.current[message.id] = el;
+                  }}
+                  message={mockMessage}
+                  user={user}
+                  replyToMessage={mockReplyToMessage}
+                  replyToUser={replyToUser}
+                  onReply={handleReply}
+                  onEdit={handleEdit}
+                  onDeleteForMe={handleDeleteForMe}
+                  onDeleteForEveryone={handleDeleteForEveryone}
+                  onScrollToMessage={scrollToMessage}
+                  currentUserId={currentUser?.id || ""}
+                />
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        </InfiniteScroll>
+      </div>
 
-            return (
-              <MessageItem
-                key={message.id}
-                ref={(el) => {
-                  messageRefs.current[message.id] = el;
-                }}
-                message={mockMessage}
-                user={user}
-                replyToMessage={mockReplyToMessage}
-                replyToUser={replyToUser}
-                onReply={handleReply}
-                onEdit={handleEdit}
-                onDeleteForMe={handleDeleteForMe}
-                onDeleteForEveryone={handleDeleteForEveryone}
-                onScrollToMessage={scrollToMessage}
-                currentUserId={currentUser?.id || ""}
-              />
-            );
-          })}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Message Composer - sticky at bottom of scroll container */}
-        <div className="sticky bottom-0 bg-main-background border-t border-light-border">
-          <MessageComposer
-            onSendMessage={handleSendMessage}
-            replyingTo={
-              replyingTo ? convertToMockMessage(replyingTo) : undefined
-            }
-            replyingToUser={
-              replyingTo ? convertToMockUser(replyingTo.user) : undefined
-            }
-            onCancelReply={handleCancelReply}
-            editingMessage={
-              editingMessage ? convertToMockMessage(editingMessage) : undefined
-            }
-            onCancelEdit={handleCancelEdit}
-            onUpdateMessage={handleUpdateMessage}
-          />
-        </div>
+      {/* Message Composer - outside scroll container */}
+      <div className="bg-main-background border-t border-light-border">
+        <MessageComposer
+          onSendMessage={handleSendMessage}
+          replyingTo={replyingTo ? convertToMockMessage(replyingTo) : undefined}
+          replyingToUser={
+            replyingTo ? convertToMockUser(replyingTo.user) : undefined
+          }
+          onCancelReply={handleCancelReply}
+          editingMessage={
+            editingMessage ? convertToMockMessage(editingMessage) : undefined
+          }
+          onCancelEdit={handleCancelEdit}
+          onUpdateMessage={handleUpdateMessage}
+        />
       </div>
     </div>
   );

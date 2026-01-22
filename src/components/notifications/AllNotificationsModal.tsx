@@ -129,7 +129,7 @@ function NotificationsList({
         {isFetchingNextPage ? (
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         ) : hasNextPage ? (
-          <Button variant="ghost" onClick={onLoadMore}>
+          <Button variant="link" onClick={onLoadMore}>
             Load more notifications
           </Button>
         ) : notifications.length > 5 ? (

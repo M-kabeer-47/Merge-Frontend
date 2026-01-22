@@ -136,8 +136,7 @@ export default function ContentList() {
         downloadFile(file.filePath, file.originalName);
       } else if (file.mimeType === "application/pdf") {
         const encodedUrl = encodeURIComponent(file.filePath);
-        const encodedName = encodeURIComponent(file.originalName);
-        router.push(`/view-document/${encodedUrl}&name=${encodedName}`);
+        router.push(`/view-document/${encodedUrl}`);
       } else {
         downloadFile(file.filePath, file.originalName);
       }

@@ -18,19 +18,19 @@ export default function WithLayoutLayout({
           <NotificationTrigger />
         </Suspense>
 
-        <div className=" flex md:flex-row flex-col h-screen w-full bg-gray-50">
+        <div className=" flex md:flex-row flex-col h-screen w-full bg-gray-50 overflow-hidden">
           {/* Sidebar */}
           <AppSidebar />
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col ">
+          <div className="flex-1 flex flex-col h-full">
             {/* Navbar */}
             <div className="hidden md:block">
               <Navbar />
             </div>
 
             {/* Page Content */}
-            <main className="flex-1 bg-main-background">
+            <main className="flex-1 bg-main-background overflow-y-auto">
               <div className="max-w-full mx-auto">{children}</div>
             </main>
           </div>
