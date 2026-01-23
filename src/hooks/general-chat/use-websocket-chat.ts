@@ -2,92 +2,77 @@
 
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { toast } from "sonner";
+import { useChatStore } from "./use-chat-store";
 import type {
   ChatMessage,
-  ApiChatMessage,
-  MessageAttachment,
-  NewMessageEvent,
-  MessageUpdatedEvent,
-  MessageDeletedEvent,
-  ErrorEvent,
+  MessageDeletedEventData,
+  SocketErrorData,
 } from "@/types/general-chat";
+import { isOptimisticId } from "@/types/general-chat";
 
 const COMMUNICATION_URL = process.env.NEXT_PUBLIC_COMMUNICATION_URL || "";
 
-// Transform API message to frontend ChatMessage
-function transformMessage(apiMessage: ApiChatMessage): ChatMessage {
-  const attachments: MessageAttachment[] = apiMessage.attachmentURL
-    ? [
-        {
-          id: `att-${apiMessage.id}`,
-          name: apiMessage.attachmentURL.split("/").pop() || "file",
-          type: "file",
-          url: apiMessage.attachmentURL,
-          size: 0,
-        },
-      ]
-    : [];
+/**
+ * Get access token from API route for WebSocket authentication
+ */
+async function getAccessToken(): Promise<string | null> {
+  try {
+    const response = await fetch("/api/auth/token");
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.token || null;
+  } catch (error) {
+    console.error("[WebSocket] Failed to get access token:", error);
+    return null;
+  }
+}
 
-  return {
-    id: apiMessage.id,
-    content: apiMessage.content,
-    userId: apiMessage.author.id,
-    roomId: apiMessage.room.id,
-    replyToId: apiMessage.replyToId,
-    attachments,
-    createdAt: apiMessage.createdAt,
-    updatedAt: apiMessage.updatedAt,
-    isEdited: apiMessage.isEdited,
-    deletedForEveryone: apiMessage.isDeletedForEveryone,
-    user: apiMessage.author,
+// WebSocket may send "author" instead of "user" (like REST API)
+interface WebSocketMessage extends Omit<ChatMessage, 'user'> {
+  user?: ChatMessage['user'];
+  author?: ChatMessage['user'];
+}
+
+/**
+ * Normalize WebSocket message: ensure user field exists
+ */
+function normalizeMessage(msg: WebSocketMessage): ChatMessage {
+  const user = msg.user || msg.author || {
+    id: msg.userId || "",
+    firstName: "Unknown",
+    lastName: "User",
+    email: "",
+    image: null,
   };
+  
+  return {
+    ...msg,
+    user,
+  } as ChatMessage;
 }
 
 interface UseWebSocketChatOptions {
   roomId: string;
-  onNewMessage?: (message: ChatMessage) => void;
-  onMessageUpdated?: (message: ChatMessage) => void;
-  onMessageDeleted?: (data: {
-    messageId: string;
-    roomId: string;
-    deletedAt: string;
-    authorId: string;
-  }) => void;
-  onError?: (error: {
-    action: string;
-    error: string;
-    messageId?: string;
-  }) => void;
 }
 
 /**
- * WebSocket connection hook - handles connection lifecycle only
- * Action functions (send, update, delete) are in use-socket-chat-events.ts
+ * WebSocket connection hook - handles connection lifecycle and cache updates
+ * Uses useChatStore for all cache operations
  */
-export function useWebSocketChat({
-  roomId,
-  onNewMessage,
-  onMessageUpdated,
-  onMessageDeleted,
-  onError,
-}: UseWebSocketChatOptions) {
+export function useWebSocketChat({ roomId }: UseWebSocketChatOptions) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Use refs for callbacks to avoid reconnection loops
-  const onNewMessageRef = useRef(onNewMessage);
-  const onMessageUpdatedRef = useRef(onMessageUpdated);
-  const onMessageDeletedRef = useRef(onMessageDeleted);
-  const onErrorRef = useRef(onError);
+  // Use chat store for cache operations
+  const store = useChatStore(roomId);
 
-  // Update refs when callbacks change
+  // Use refs to avoid reconnection loops when store functions change
+  const storeRef = useRef(store);
   useEffect(() => {
-    onNewMessageRef.current = onNewMessage;
-    onMessageUpdatedRef.current = onMessageUpdated;
-    onMessageDeletedRef.current = onMessageDeleted;
-    onErrorRef.current = onError;
-  });
+    storeRef.current = store;
+  }, [store]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -97,89 +82,110 @@ export function useWebSocketChat({
       return;
     }
 
-    const socket = io(`${COMMUNICATION_URL}/general-chat`, {
-      withCredentials: true,
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-    });
+    let socket: Socket | null = null;
+    let isMounted = true;
 
-    socketRef.current = socket;
-
-    // Connection event handlers
-    socket.on("connect", () => {
-      console.log("✅ WebSocket connected:", socket.id);
-      setIsConnected(true);
-      setError(null);
-
-      if (roomId) {
-        socket.emit("joinRoom", { roomId });
-        console.log("🚪 Auto-joined room:", roomId);
+    const initSocket = async () => {
+      const token = await getAccessToken();
+      if (!token) {
+        console.error("[WebSocket] No access token available");
+        if (isMounted) setError("Authentication token not found");
+        return;
       }
-    });
 
-    socket.on("disconnect", (reason) => {
-      console.log("❌ WebSocket disconnected:", reason);
-      setIsConnected(false);
-    });
+      if (!isMounted) return;
 
-    socket.on("connect_error", (err) => {
-      console.error("🔌 Connection error:", err.message);
-      setError(`Connection error: ${err.message}`);
-      setIsConnected(false);
-    });
+      socket = io(`${COMMUNICATION_URL}/general-chat`, {
+        auth: { token },
+        transports: ["websocket", "polling"],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5,
+      });
 
-    // Message event listeners
-    socket.on("newMessage", (data: NewMessageEvent["data"]) => {
-      console.log("📨 New message received:", data);
-      onNewMessageRef.current?.(transformMessage(data));
-    });
+      socketRef.current = socket;
 
-    socket.on("messageUpdated", (data: MessageUpdatedEvent["data"]) => {
-      console.log("✏️ Message updated:", data);
-      onMessageUpdatedRef.current?.(transformMessage(data));
-    });
+      // Connection handlers
+      socket.on("connect", () => {
+        console.log("✅ WebSocket connected:", socket?.id);
+        if (isMounted) {
+          setIsConnected(true);
+          setError(null);
+        }
+        if (roomId && socket) {
+          socket.emit("joinRoom", { roomId });
+        }
+      });
 
-    socket.on("messageDeleted", (data: MessageDeletedEvent["data"]) => {
-      console.log("🗑️ Message deleted:", data);
-      onMessageDeletedRef.current?.(data);
-    });
+      socket.on("disconnect", (reason) => {
+        console.log("❌ WebSocket disconnected:", reason);
+        if (isMounted) setIsConnected(false);
+      });
 
-    socket.on("error", (data: ErrorEvent["data"]) => {
-      console.error("❌ WebSocket error:", data);
-      setError(data.error);
-      onErrorRef.current?.(data);
-    });
+      socket.on("connect_error", (err) => {
+        console.error("🔌 Connection error:", err.message);
+        if (isMounted) {
+          setError(`Connection error: ${err.message}`);
+          setIsConnected(false);
+        }
+      });
 
-    // Cleanup on unmount
+      // Message event listeners - normalize incoming messages
+      socket.on("newMessage", (rawMessage: WebSocketMessage) => {
+        const message = normalizeMessage(rawMessage);
+        console.log("📩 WebSocket newMessage:", { 
+          id: message.id, 
+          userId: message.userId, 
+          content: message.content?.substring(0, 50),
+          isOptimistic: isOptimisticId(message.id)
+        });
+        // Skip if this is our own optimistic message being echoed back
+        // The real message from server will have a different (non-temp) ID
+        if (!isOptimisticId(message.id)) {
+          storeRef.current.addMessage(message);
+        }
+      });
+
+      socket.on("messageUpdated", (rawMessage: WebSocketMessage) => {
+        const message = normalizeMessage(rawMessage);
+        storeRef.current.updateMessage(message.id, {
+          content: message.content,
+          isEdited: true,
+          updatedAt: message.updatedAt,
+        });
+      });
+
+      socket.on("messageDeleted", (data: MessageDeletedEventData) => {
+        storeRef.current.markAsDeleted(data.messageId);
+      });
+
+      socket.on("error", (data: SocketErrorData) => {
+        console.error("❌ WebSocket error:", data);
+        if (isMounted) setError(data.error);
+        toast.error(data.error || "An error occurred");
+      });
+    };
+
+    initSocket();
+
     return () => {
-      if (socket.connected) {
+      isMounted = false;
+      if (socket?.connected) {
         socket.emit("leaveRoom", { roomId });
-        console.log("👋 Left room:", roomId);
       }
-      socket.disconnect();
+      socket?.disconnect();
       socketRef.current = null;
     };
   }, [roomId]);
 
-  // Simple room functions (no useCallback needed - these don't change)
   const joinRoom = (targetRoomId: string) => {
-    if (!socketRef.current?.connected) {
-      console.error("Socket not connected");
-      return;
-    }
+    if (!socketRef.current?.connected) return;
     socketRef.current.emit("joinRoom", { roomId: targetRoomId });
-    console.log("🚪 Joined room:", targetRoomId);
   };
 
   const leaveRoom = (targetRoomId: string) => {
-    if (!socketRef.current?.connected) {
-      console.error("Socket not connected");
-      return;
-    }
+    if (!socketRef.current?.connected) return;
     socketRef.current.emit("leaveRoom", { roomId: targetRoomId });
-    console.log("👋 Left room:", targetRoomId);
   };
 
   return {

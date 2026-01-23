@@ -1,0 +1,22 @@
+{
+  "id": "1f4d38da-7b16-4169-a77c-181c0ef8d670",
+  "content": "Hello Cap",
+  "userId": "54a077d4-27b0-4a5e-ade0-cc81aec6e739",
+  "roomId": "fbcedc55-ebfa-4f70-a6a6-3574b37dce96",
+  "replyToId": null,
+  "attachments": [],
+  "createdAt": "2026-01-23T04:23:02.179Z",
+  "updatedAt": "2026-01-23T04:23:02.179Z",
+  "isEdited": false,
+  "isDeleted": false,
+  "user": {
+    "id": "54a077d4-27b0-4a5e-ade0-cc81aec6e739",
+    "firstName": "Muhammad",
+    "lastName": "Kabeer",
+    "email": "muhammadkabeer2003@gmail.com",
+    "image": "https://lh3.googleusercontent.com/a/ACg8ocIeGgk3vOVqsZQF2EreQ6-Bft2Z3R_mMkksJAWdTU3hqKxrd8P1mg=s96-c"
+  },
+  "status": "sent",
+  "isUploading": false,
+  "uploadProgress": 100
+}

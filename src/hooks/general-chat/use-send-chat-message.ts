@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { uploadToCloudinary } from "@/utils/upload-to-cloudinary";
+import { useChatStore } from "./use-chat-store";
+import { sendMessage as emitSendMessage } from "./use-socket-chat-events";
+import { useAuth } from "@/providers/AuthProvider";
+import { createOptimisticMessage } from "@/types/general-chat";
 import type { AttachmentFile } from "@/components/chat/AttachmentPreview";
 import type { SendMessagePayload } from "@/types/general-chat";
 import type { Socket } from "socket.io-client";
-import { sendMessage as emitSendMessage } from "./use-socket-chat-events";
 
 interface SendMessageParams {
   roomId: string;
@@ -15,82 +18,138 @@ interface SendMessageParams {
   socket: Socket | null;
 }
 
+function generateTempId(): string {
+  return `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
 /**
- * Hook for sending chat messages with file upload support
- * Simplified: only handles upload + emit, no optimistic update logic
- * React Query cache updates are handled by the component via socket events
+ * Hook for sending chat messages with optimistic updates and file upload support
  */
-export default function useSendChatMessage() {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+export default function useSendChatMessage(roomId: string) {
+  const { user } = useAuth();
+  const store = useChatStore(roomId);
+  const [pendingMessages, setPendingMessages] = useState<Set<string>>(
+    new Set()
+  );
 
-  const sendMessage = async ({
-    roomId,
-    content,
-    replyToId,
-    attachments,
-    socket,
-  }: SendMessageParams) => {
-    // Text-only message
-    if (!attachments || attachments.length === 0) {
-      const payload: SendMessagePayload = { roomId, content, replyToId };
-      await emitSendMessage(socket, payload);
-      return;
-    }
+  const sendMessage = useCallback(
+    async ({ content, replyToId, attachments, socket }: Omit<SendMessageParams, 'roomId'>) => {
+      if (!user) throw new Error("Not authenticated");
 
-    // Handle attachments - upload first, then send
-    setIsUploading(true);
-    setUploadProgress(0);
+      const tempId = generateTempId();
+      const hasAttachments = attachments && attachments.length > 0;
+      const attachment = hasAttachments ? attachments[0] : undefined;
 
-    try {
-      const attachmentType = attachments[0].type;
+      // Create optimistic message using helper from types
+      const optimisticMessage = createOptimisticMessage({
+        tempId,
+        roomId,
+        content: content || "",
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          image: user.image || null,
+        },
+        replyToId,
+        attachment: attachment
+          ? {
+              file: attachment.file,
+              preview: attachment.preview,
+              type: attachment.type,
+            }
+          : undefined,
+      });
 
-      if (attachmentType === "image") {
-        // Upload first image (API currently supports single attachment)
-        const uploadedUrl = await uploadToCloudinary({
-          file: attachments[0].file,
-          attachmentType,
-          onProgress: setUploadProgress,
-        });
+      // Add to cache immediately
+      store.addMessage(optimisticMessage);
+      setPendingMessages((prev) => new Set(prev).add(tempId));
 
+      try {
+        let attachmentURL: string | undefined;
+
+        if (hasAttachments && attachment) {
+          // Upload with progress tracking
+          attachmentURL = await uploadToCloudinary({
+            file: attachment.file,
+            attachmentType: attachment.type,
+            onProgress: (progress) => {
+              store.updateUploadProgress(tempId, progress);
+            },
+          });
+
+          // Update with final URL
+          store.updateMessage(tempId, {
+            attachments: [
+              {
+                ...optimisticMessage.attachments[0],
+                url: attachmentURL,
+                isUploading: false,
+              },
+            ],
+            isUploading: false,
+            uploadProgress: 100,
+          });
+        }
+
+        // Prepare and send payload
         const payload: SendMessagePayload = {
           roomId,
           content: content?.trim() || undefined,
           replyToId,
-          attachmentURL: uploadedUrl,
+          attachmentURL,
         };
-        await emitSendMessage(socket, payload);
-      } else {
-        // For files, send separate messages for each
-        for (let i = 0; i < attachments.length; i++) {
-          const att = attachments[i];
-          const uploadedUrl = await uploadToCloudinary({
-            file: att.file,
-            attachmentType,
-            onProgress: (p) =>
-              setUploadProgress(
-                Math.round(((i + p / 100) / attachments.length) * 100),
-              ),
-          });
 
-          const payload: SendMessagePayload = {
-            roomId,
-            content: i === 0 ? content?.trim() || undefined : undefined,
-            replyToId: i === 0 ? replyToId : undefined,
-            attachmentURL: uploadedUrl,
-          };
-          await emitSendMessage(socket, payload);
-        }
+        await emitSendMessage(socket, payload);
+
+        // Mark as sent immediately
+        store.markAsSent(tempId);
+
+        // Clean up pending state
+        setPendingMessages((prev) => {
+          const next = new Set(prev);
+          next.delete(tempId);
+          return next;
+        });
+      } catch (error) {
+        console.error("Failed to send message:", error);
+        store.markAsFailed(tempId);
+        throw error;
       }
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  };
+    },
+    [user, roomId, store]
+  );
+
+  const sendMessageWithFiles = useCallback(
+    async ({ content, replyToId, attachments, socket }: Omit<SendMessageParams, 'roomId'>) => {
+      if (!attachments || attachments.length === 0) {
+        return sendMessage({ content, replyToId, socket });
+      }
+
+      // Single image with content
+      if (attachments.length === 1 && attachments[0].type === "image") {
+        return sendMessage({ content, replyToId, attachments, socket });
+      }
+
+      // Multiple files: send content first, then files separately
+      if (content?.trim()) {
+        await sendMessage({ content, replyToId, socket });
+      }
+
+      for (const att of attachments) {
+        await sendMessage({
+          content: "",
+        attachments: [att],
+          socket,
+        });
+      }
+    },
+    [sendMessage]
+  );
 
   return {
-    sendMessage,
-    isUploading,
-    uploadProgress,
+    sendMessage: sendMessageWithFiles,
+    isMessagePending: (tempId: string) => pendingMessages.has(tempId),
   };
 }

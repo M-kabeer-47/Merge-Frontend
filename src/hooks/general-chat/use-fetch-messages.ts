@@ -5,8 +5,8 @@ import api from "@/utils/api";
 import type {
   FetchMessagesResponse,
   ChatMessage,
-  ApiChatMessage,
-  MessageAttachment,
+  ChatCacheData,
+  ChatCachePage,
 } from "@/types/general-chat";
 
 interface UseFetchMessagesOptions {
@@ -15,60 +15,64 @@ interface UseFetchMessagesOptions {
   enabled?: boolean;
 }
 
-// Transform API message to frontend ChatMessage
-function transformMessage(apiMessage: ApiChatMessage): ChatMessage {
-  const attachments: MessageAttachment[] = apiMessage.attachmentURL
-    ? [
-        {
-          id: `att-${apiMessage.id}`,
-          name: apiMessage.attachmentURL.split("/").pop() || "file",
-          type: "file",
-          url: apiMessage.attachmentURL,
-          size: 0,
-        },
-      ]
-    : [];
+export const CHAT_QUERY_KEY = "chat-messages";
 
-  return {
-    id: apiMessage.id,
-    content: apiMessage.content,
-    userId: apiMessage.author.id,
-    roomId: apiMessage.room.id,
-    replyToId: apiMessage.replyToId,
-    attachments,
-    createdAt: apiMessage.createdAt,
-    updatedAt: apiMessage.updatedAt,
-    isEdited: apiMessage.isEdited,
-    deletedForEveryone: apiMessage.isDeletedForEveryone,
-    user: apiMessage.author,
-  };
+// API response may have "author" instead of "user"
+interface ApiMessageResponse extends Omit<ChatMessage, 'user'> {
+  user?: ChatMessage['user'];
+  author?: ChatMessage['user'];
 }
 
 /**
- * Hook for fetching general chat messages with infinite scrolling
- * Loads messages as user scrolls up (older messages)
+ * Normalize message: API returns "author", socket returns "user"
+ */
+function normalizeMessage(msg: ApiMessageResponse): ChatMessage {
+  const user = msg.user || msg.author || {
+    id: msg.userId || "",
+    firstName: "Unknown",
+    lastName: "User",
+    email: "",
+    image: null,
+  };
+  
+  return {
+    ...msg,
+    user,
+  } as ChatMessage;
+}
+
+/**
+ * Hook for fetching chat messages with infinite scroll support
+ * Server sends ChatMessage[] directly - just normalize author→user
  */
 export function useFetchMessages({
   roomId,
   limit = 20,
   enabled = true,
 }: UseFetchMessagesOptions) {
-  const query = useInfiniteQuery({
-    queryKey: ["general-chat", roomId],
-    queryFn: async ({ pageParam = 1 }) => {
+  const queryKey = [CHAT_QUERY_KEY, roomId];
+
+  const query = useInfiniteQuery<ChatCachePage, Error, ChatCacheData>({
+    queryKey,
+    queryFn: async ({ pageParam = 1 }): Promise<ChatCachePage> => {
       const response = await api.get<FetchMessagesResponse>("/general-chat", {
         params: {
           roomId,
           page: pageParam,
           limit,
-          sortOrder: "DESC", // Most recent first
+          sortOrder: "DESC",
         },
       });
 
-      return response.data;
+      // Normalize: API may return "author" instead of "user"
+      const messages = response.data.messages.map(normalizeMessage);
+      
+      return {
+        ...response.data,
+        messages,
+      };
     },
     getNextPageParam: (lastPage) => {
-      // Return next page number if there are more messages
       if (lastPage.currentPage < lastPage.totalPages) {
         return lastPage.currentPage + 1;
       }
@@ -76,31 +80,24 @@ export function useFetchMessages({
     },
     initialPageParam: 1,
     enabled: enabled && !!roomId,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
   });
 
-  // Flatten all messages from all pages and transform them
+  // Flatten messages from all pages (already transformed)
   const messages: ChatMessage[] =
-    query.data?.pages.flatMap((page) =>
-      page.messages.map(transformMessage)
-    ) || [];
-
-  // Check if we have more messages to load (user can scroll up)
-  const hasMore = query.hasNextPage;
-
-  // Total count from the first page
-  const totalMessages = query.data?.pages[0]?.total || 0;
+    query.data?.pages.flatMap((page) => page.messages) ?? [];
 
   return {
     messages,
-    hasMore,
-    totalMessages,
+    hasMore: query.hasNextPage,
+    totalMessages: query.data?.pages[0]?.total ?? 0,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
     error: query.error,
     refetch: query.refetch,
+    queryKey,
   };
 }
