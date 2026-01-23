@@ -1,14 +1,7 @@
-/**
- * Socket.IO Client for Real-time Notifications
- *
- * Connects to the notification WebSocket server for
- * real-time notification delivery when the app is open.
- */
-
 import { io, Socket } from "socket.io-client";
 import type { NotificationPayload } from "@/types/notification";
 
-const NOTIFICATION_SOCKET_URL = "https://communication.mergeedu.app";
+const NOTIFICATION_SOCKET_URL = process.env.NEXT_PUBLIC_COMMUNICATION_URL;
 
 let socket: Socket | null = null;
 
@@ -92,6 +85,7 @@ export async function connectNotificationSocket(
 
   // Notification event with deduplication
   socket.on("notification", (data: NotificationPayload) => {
+    console.log("[Socket] Received notification:", JSON.stringify(data));
     // Deduplicate at socket level
     if (processedNotificationIds.has(data.id)) {
       console.log("[Socket] Skipping duplicate notification:", data.id);

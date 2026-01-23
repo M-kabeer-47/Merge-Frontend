@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import type { CreateQuizPayload } from "@/types/quiz";
+import { addQuizToCache } from "@/lib/cache";
 
 interface UseCreateQuizOptions {
   onSuccess?: () => void;
@@ -17,11 +18,9 @@ export default function useCreateQuiz({
       const response = await api.post("/quiz/create", payload);
       return response.data;
     },
-    onSuccess: (_data, variables) => {
-      // Invalidate quizzes query to refresh the list
-      queryClient.invalidateQueries({
-        queryKey: ["quizzes", variables.roomId],
-      });
+    onSuccess: (newQuiz, variables) => {
+      // Optimistically add quiz to cache + invalidate for background sync
+      addQuizToCache(queryClient, variables.roomId, newQuiz);
 
       toast.success("Quiz created successfully!");
       onSuccess?.();
@@ -29,7 +28,7 @@ export default function useCreateQuiz({
     onError: (error: any) => {
       toast.error(
         error?.response?.data?.message ||
-          "Failed to create quiz. Please try again."
+          "Failed to create quiz. Please try again.",
       );
     },
   });

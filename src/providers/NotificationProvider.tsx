@@ -17,8 +17,12 @@ import {
 } from "@/lib/notification-socket";
 import { useRegisterFCMToken } from "@/hooks/notifications/use-register-fcm-token";
 import { useQueryClient } from "@tanstack/react-query";
-import { notificationsQueryKey } from "@/hooks/notifications/use-fetch-notifications";
 import { toast } from "sonner";
+import {
+  addNotificationToCache,
+  invalidateStudentAssignmentsCache,
+  invalidateStudentQuizzesCache,
+} from "@/lib/cache";
 import type {
   NotificationStatus,
   NotificationPayload,
@@ -107,62 +111,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           }
           shownNotificationIds.current.add(notification.id);
 
-          // Add to React Query cache for persistence (InfiniteData structure)
-          queryClient.setQueryData(
-            notificationsQueryKey,
-            (
-              old:
-                | {
-                    pages: Array<{
-                      notifications: NotificationPayload[];
-                      total: number;
-                      unreadCount: number;
-                      page: number;
-                      hasMore: boolean;
-                    }>;
-                    pageParams: number[];
-                  }
-                | undefined,
-            ) => {
-              if (!old) {
-                return {
-                  pages: [
-                    {
-                      notifications: [notification],
-                      total: 1,
-                      unreadCount: 1,
-                      page: 1,
-                      hasMore: false,
-                    },
-                  ],
-                  pageParams: [1],
-                };
-              }
-
-              const firstPage = old.pages[0];
-
-              // Skip if already exists
-              if (
-                firstPage?.notifications.some((n) => n.id === notification.id)
-              ) {
-                return old;
-              }
-
-              // Add to first page (most recent)
-              return {
-                ...old,
-                pages: [
-                  {
-                    ...firstPage,
-                    notifications: [notification, ...firstPage.notifications],
-                    total: firstPage.total + 1,
-                    unreadCount: firstPage.unreadCount + 1,
-                  },
-                  ...old.pages.slice(1),
-                ],
-              };
-            },
-          );
+          // Add to React Query cache for persistence
+          addNotificationToCache(queryClient, notification);
 
           // Also update local state for context consumers
           setNotifications((prev) => {
@@ -171,6 +121,17 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             }
             return [notification, ...prev];
           });
+
+          // Invalidate assignment/quiz cache for students (triggers background refetch)
+          const { roomId, assignmentId, quizId } = notification.metadata;
+          if (roomId) {
+            if (assignmentId) {
+              invalidateStudentAssignmentsCache(queryClient, roomId);
+            }
+            if (quizId) {
+              invalidateStudentQuizzesCache(queryClient, roomId);
+            }
+          }
 
           // Only show in-app toast when app is focused
           // Background push notifications are handled by FCM service worker
@@ -208,10 +169,138 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     };
   }, [isAuthenticated]);
 
-  // NOTE: We don't listen for FCM foreground messages here because:
-  // 1. Socket.IO already handles real-time notifications when app is open
-  // 2. FCM foreground + Socket.IO would cause duplicate notifications
-  // FCM is only used for background/closed app notifications via service worker
+  // Listen for messages from service worker (when app is focused)
+  // SW sends notification data via postMessage instead of showing native push
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    console.log(
+      "[Notifications] Setting up service worker message listener...",
+    );
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "FCM_NOTIFICATION") {
+        console.log(
+          "[Notifications] Received notification from SW:",
+          event.data.payload,
+        );
+
+        const payload = event.data.payload;
+        const data = payload?.data || {};
+        const notificationId = data.id || `sw-${Date.now()}`;
+
+        // Deduplicate
+        if (shownNotificationIds.current.has(notificationId)) {
+          console.log("[Notifications] Skipping duplicate");
+          return;
+        }
+        shownNotificationIds.current.add(notificationId);
+
+        // Build notification payload
+        const notification: NotificationPayload = {
+          id: notificationId,
+          content:
+            data.content || payload?.notification?.title || "New Notification",
+          isRead: false,
+          metadata: {
+            actionUrl: data.actionUrl,
+            roomId: data.roomId,
+            roomTitle: data.roomTitle || payload?.notification?.body,
+            assignmentId: data.assignmentId,
+            quizId: data.quizId,
+          },
+          expiresAt: null,
+          createdAt: new Date().toISOString(),
+        };
+
+        // Add to cache
+        addNotificationToCache(queryClient, notification);
+
+        // Update local state
+        setNotifications((prev) => {
+          if (prev.some((n) => n.id === notification.id)) return prev;
+          return [notification, ...prev];
+        });
+
+        // Invalidate assignment/quiz cache
+        const { roomId, assignmentId, quizId } = notification.metadata;
+        if (roomId) {
+          if (assignmentId)
+            invalidateStudentAssignmentsCache(queryClient, roomId);
+          if (quizId) invalidateStudentQuizzesCache(queryClient, roomId);
+        }
+
+        // Only show toast if tab is visible
+        if (!document.hidden) {
+          toast(notification.content, {
+            id: notification.id,
+            description: notification.metadata.roomTitle || undefined,
+            duration: 8000,
+            action: notification.metadata.actionUrl
+              ? {
+                  label: "View →",
+                  onClick: () => {
+                    console.log(
+                      "[Notifications] Toast clicked:",
+                      notification.metadata.actionUrl,
+                    );
+                  },
+                }
+              : undefined,
+          });
+        } else {
+          console.log(
+            "[Notifications] Tab not visible, cache updated but toast skipped",
+          );
+        }
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener("message", handleMessage);
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener("message", handleMessage);
+    };
+  }, [isAuthenticated, queryClient]);
+
+  // Refresh caches when user returns to app (after being in background)
+  // This ensures they see latest data after receiving background notifications
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("[Notifications] App became visible, refreshing caches...");
+
+        // Get current room ID from URL if available
+        const path = window.location.pathname;
+        const roomMatch = path.match(/\/rooms\/([^/]+)/);
+        const roomId = roomMatch?.[1];
+
+        if (roomId) {
+          // Invalidate assignment and quiz caches for this room
+          queryClient.invalidateQueries({
+            queryKey: ["assignments", roomId, "student"],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["quizzes", roomId, "student"],
+          });
+          console.log("[Notifications] Invalidated caches for room:", roomId);
+        }
+
+        // Always refresh notifications
+        queryClient.invalidateQueries({
+          queryKey: ["notifications"],
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isAuthenticated, queryClient]);
 
   // Request permission handler (used by settings page)
   const requestPermission = useCallback(async () => {

@@ -1,13 +1,13 @@
+import type { ChatMessage, ChatUser } from "@/types/general-chat";
+import { getUserDisplayName } from "@/types/general-chat";
+
 interface RepliedMessageProps {
-  replyToUser: {
-    name: string;
-  };
+  replyToUser?: ChatUser | null;
   handleReplyClick: (e: React.MouseEvent) => void;
   isOwnMessage: boolean;
-  replyToMessage: {
-    content: string;
-  };
+  replyToMessage: ChatMessage;
 }
+
 export default function RepliedMessage({
   replyToUser,
   handleReplyClick,
@@ -33,7 +33,7 @@ export default function RepliedMessage({
             isOwnMessage ? "text-white" : "text-heading"
           }`}
         >
-          {replyToUser.name}
+          {getUserDisplayName(replyToUser)}
         </span>
       </div>
       <div

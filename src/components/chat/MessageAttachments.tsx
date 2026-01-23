@@ -1,5 +1,5 @@
 import { Download, FileText, File } from "lucide-react";
-import { ChatMessage } from "@/lib/constants/mock-chat-data";
+import type { ChatMessage, MessageAttachment } from "@/types/general-chat";
 import { useState } from "react";
 import ImageCarouselModal from "./ImageCarouselModal";
 import {
@@ -56,7 +56,7 @@ export default function MessageAttachments({
 }
 
 const ImageAttachmentGrid: React.FC<{
-  attachments: ChatMessage["attachments"];
+  attachments: MessageAttachment[];
   isOwnMessage: boolean;
 }> = ({ attachments, isOwnMessage }) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -172,7 +172,7 @@ const ImageAttachmentGrid: React.FC<{
 };
 
 const FileAttachmentList: React.FC<{
-  attachments: ChatMessage["attachments"];
+  attachments: MessageAttachment[];
   isOwnMessage: boolean;
 }> = ({ attachments, isOwnMessage }) => {
   const [isHovering, setIsHovering] = useState(false);

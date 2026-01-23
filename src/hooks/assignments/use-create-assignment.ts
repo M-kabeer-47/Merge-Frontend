@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import { uploadToS3 } from "@/utils/s3-upload";
+import { addAssignmentToCache } from "@/lib/cache";
 
 export interface CreateAssignmentData {
   roomId: string;
@@ -37,10 +38,10 @@ export default function useCreateAssignment({
   // Helper to update attachment progress
   const updateProgress = (
     id: string,
-    updates: Partial<AttachmentUploadProgress>
+    updates: Partial<AttachmentUploadProgress>,
   ) => {
     setAttachmentProgress((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+      prev.map((item) => (item.id === id ? { ...item, ...updates } : item)),
     );
   };
 
@@ -48,7 +49,7 @@ export default function useCreateAssignment({
   const uploadAttachment = async (
     file: File,
     roomId: string,
-    progressId: string
+    progressId: string,
   ): Promise<string> => {
     const contentType = file.type || "application/octet-stream";
 
@@ -59,7 +60,7 @@ export default function useCreateAssignment({
         originalName: file.name,
         contentType,
         size: file.size,
-      }
+      },
     );
 
     const { uploadUrl, fileUrl } = presignedResponse.data;
@@ -88,7 +89,7 @@ export default function useCreateAssignment({
           fileName: file.name,
           progress: 0,
           status: "pending" as const,
-        })
+        }),
       );
       setAttachmentProgress(progressItems);
 
@@ -123,21 +124,8 @@ export default function useCreateAssignment({
       return response.data;
     },
     onSuccess: (newAssignment, { data: assignmentData }) => {
-      // Optimistically update all assignment list caches for this room
-      // Match all queries starting with ["assignments", roomId, "instructor"]
-      queryClient.setQueriesData<any[]>(
-        { queryKey: ["assignments", assignmentData.roomId, "instructor"] },
-        (old) => {
-          if (!old) return old;
-          // Add new assignment at the beginning of the list
-          return [newAssignment, ...old];
-        }
-      );
-
-      // Invalidate to ensure data is in sync
-      queryClient.invalidateQueries({
-        queryKey: ["assignments", assignmentData.roomId],
-      });
+      // Optimistically add assignment to cache + invalidate for background sync
+      addAssignmentToCache(queryClient, assignmentData.roomId, newAssignment);
 
       toast.success("Assignment created successfully!");
       setAttachmentProgress([]);
@@ -146,7 +134,7 @@ export default function useCreateAssignment({
     onError: (error: any) => {
       toast.error(
         error?.response?.data?.message ||
-          "Failed to create assignment. Please try again."
+          "Failed to create assignment. Please try again.",
       );
       setAttachmentProgress([]);
     },

@@ -1,25 +1,24 @@
+import type { ChatUser } from "@/types/general-chat";
+import { getUserInitials, getUserDisplayName } from "@/types/general-chat";
 
-interface ChatUser {
-  id: string;
-  name: string;
-  initials: string;
-  avatar?: string;
-  isOnline: boolean;
-}
 interface MessageAvatarProps {
-  user: ChatUser;
+  user?: ChatUser | null;
   isOwnMessage: boolean;
 }
+
 export default function MessageAvatar({
   user,
   isOwnMessage,
 }: MessageAvatarProps) {
+  const initials = user?.initials || getUserInitials(user);
+  const displayName = getUserDisplayName(user);
+  
   return (
     <div className="flex-shrink-0">
-      {user.avatar ? (
+      {user?.image ? (
         <img
-          src={user.avatar}
-          alt={user.name}
+          src={user.image}
+          alt={displayName}
           className="w-8 h-8 rounded-full object-cover"
         />
       ) : (
@@ -33,11 +32,11 @@ export default function MessageAvatar({
               isOwnMessage ? "text-white" : "text-secondary"
             }`}
           >
-            {user.initials}
+            {initials}
           </span>
         </div>
       )}
-      {user.isOnline && (
+      {user?.isOnline && (
         <div
           className={`w-3 h-3 bg-green-500 rounded-full border-2 border-background -mt-2 ml-6`}
         ></div>

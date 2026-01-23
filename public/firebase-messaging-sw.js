@@ -1,12 +1,12 @@
 /**
  * Firebase Messaging Service Worker
- * VERSION: 2.3.0 - Debug logging
+ * VERSION: 2.4.0 - Added focus check to prevent duplicate notifications
  *
  * This runs in the background to receive push notifications
  * when the app is not open or not in focus.
  * 
- * Note: Socket.IO handles real-time notifications when app is open.
- * This service worker handles FCM push when app is in background/closed.
+ * When app is focused: FCM foreground handler in React shows toast
+ * When app is NOT focused: This service worker shows native push
  */
 
 const DEFAULT_ICON_PATH = "/dark-mode-logo.svg";
@@ -146,6 +146,55 @@ self.addEventListener("push", (event) => {
 
   event.waitUntil(
     (async () => {
+      // Check if any app window is focused - if so, FCM foreground handler handles it
+      const windowClients = await clients.matchAll({ 
+        type: "window", 
+        includeUncontrolled: true 
+      });
+      
+      console.log("[SW] Found window clients:", windowClients.length);
+      windowClients.forEach((client, index) => {
+        console.log(`[SW] Client ${index}:`, {
+          focused: client.focused,
+          visibilityState: client.visibilityState,
+          url: client.url
+        });
+      });
+      
+      // If ANY client exists (browser tab is open, even if not focused)
+      // Send to React instead of showing native notification
+      if (windowClients.length > 0) {
+        console.log("[SW] App is open (focused or not), sending to React for cache update");
+        
+        // Parse payload first
+        let payload;
+        try {
+          payload = event.data.json();
+        } catch (e) {
+          try {
+            const text = await event.data.text();
+            payload = JSON.parse(text);
+          } catch (err) {
+            console.log("[SW] Failed to parse push payload:", err);
+            return;
+          }
+        }
+        
+        // Send to the first available client (or focused one if available)
+        const targetClient = windowClients.find(client => client.focused) || windowClients[0];
+        if (targetClient) {
+          targetClient.postMessage({
+            type: 'FCM_NOTIFICATION',
+            payload: payload
+          });
+          console.log("[SW] Sent notification to React client");
+        }
+        return;
+      }
+
+      // No clients - browser is completely closed
+      console.log("[SW] No app clients found, showing native notification");
+
       let payload;
       try {
         payload = event.data.json();
