@@ -12,6 +12,7 @@ import {
   deleteForEveryone as emitDeleteForEveryone,
 } from "@/hooks/general-chat/use-socket-chat-events";
 import MessageItem from "@/components/chat/MessageItem";
+import MessageSkeleton from "@/components/chat/MessageSkeleton";
 import MessageComposer from "@/components/chat/MesageComposer";
 import { AttachmentFile } from "@/components/chat/AttachmentPreview";
 import type { ChatMessage } from "@/types/general-chat";
@@ -56,11 +57,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   const messages = [...fetchedMessages].reverse();
 
   // WebSocket connection - handles cache updates internally via useChatStore
-  const {
-    socket,
-    isConnected,
-    error: wsError,
-  } = useWebSocketChat({ roomId });
+  const { socket, isConnected, error: wsError } = useWebSocketChat({ roomId });
 
   // Show WebSocket connection error
   useEffect(() => {
@@ -105,12 +102,14 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
       return;
     }
 
-    const [, error] = await tryIt(sendMessageWithUpload({
-      content,
-      replyToId,
-      attachments,
-      socket,
-    }));
+    const [, error] = await tryIt(
+      sendMessageWithUpload({
+        content,
+        replyToId,
+        attachments,
+        socket,
+      }),
+    );
 
     if (error) {
       console.error("Failed to send message:", error);
@@ -118,7 +117,8 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     } else {
       setReplyingTo(undefined);
     }
-  };  const handleReply = (messageId: string) => {
+  };
+  const handleReply = (messageId: string) => {
     const messageToReply = messages.find((m) => m.id === messageId);
     if (messageToReply) {
       setReplyingTo(messageToReply);
@@ -147,7 +147,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
         messageId,
         roomId,
         content: content.trim(),
-      })
+      }),
     );
 
     if (error) {
@@ -163,7 +163,9 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     // Optimistically remove from cache
     removeMessage(messageId);
 
-    const [, error] = await tryIt(emitDeleteForMe(socket, { messageId, roomId }));
+    const [, error] = await tryIt(
+      emitDeleteForMe(socket, { messageId, roomId }),
+    );
 
     if (error) {
       console.error("Failed to delete message:", error);
@@ -177,7 +179,9 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     );
     if (!confirmed) return;
 
-    const [, error] = await tryIt(emitDeleteForEveryone(socket, { messageId, roomId }));
+    const [, error] = await tryIt(
+      emitDeleteForEveryone(socket, { messageId, roomId }),
+    );
 
     if (error) {
       console.error("Failed to delete message:", error);
@@ -287,6 +291,21 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           onUpdateMessage={handleUpdateMessage}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDeleteDialog.isOpen}
+        onClose={() =>
+          setConfirmDeleteDialog({ isOpen: false, messageId: null })
+        }
+        onConfirm={confirmDeleteForEveryone}
+        title="Delete Message"
+        message="This message will be permanently deleted for everyone."
+        itemName="Are you sure you want to delete this message"
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 };

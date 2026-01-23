@@ -29,7 +29,7 @@ interface MessageComposerProps {
   onSendMessage: (
     content: string,
     replyToId?: string,
-    attachments?: AttachmentFile[]
+    attachments?: AttachmentFile[],
   ) => void;
   replyingTo?: ChatMessage;
   replyingToUser?: ChatUser | null;
@@ -53,7 +53,7 @@ const MessageComposer = forwardRef(function MessageComposer(
     onCancelEdit,
     onUpdateMessage,
   }: MessageComposerProps,
-  ref: ForwardedRef<MessageComposerHandle>
+  ref: ForwardedRef<MessageComposerHandle>,
 ) {
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
@@ -208,7 +208,7 @@ const MessageComposer = forwardRef(function MessageComposer(
         onSendMessage(
           message.trim(),
           replyingTo?.id,
-          attachments.length > 0 ? attachments : undefined
+          attachments.length > 0 ? attachments : undefined,
         );
         setMessage("");
         handleRemoveAllAttachments();
@@ -238,7 +238,7 @@ const MessageComposer = forwardRef(function MessageComposer(
     const emoji =
       typeof emojiData === "string"
         ? emojiData
-        : emojiData?.emoji ?? emojiData?.native ?? "";
+        : (emojiData?.emoji ?? emojiData?.native ?? "");
     if (!emoji) return;
     insertEmojiLocal(emoji);
   };
