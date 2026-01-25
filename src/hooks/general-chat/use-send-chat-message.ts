@@ -29,16 +29,20 @@ export default function useSendChatMessage(roomId: string) {
   const { user } = useAuth();
   const store = useChatStore(roomId);
   const [pendingMessages, setPendingMessages] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const sendMessage = useCallback(
-    async ({ content, replyToId, attachments, socket }: Omit<SendMessageParams, 'roomId'>) => {
+    async ({
+      content,
+      replyToId,
+      attachments,
+      socket,
+    }: Omit<SendMessageParams, "roomId">) => {
       if (!user) throw new Error("Not authenticated");
 
       const tempId = generateTempId();
       const hasAttachments = attachments && attachments.length > 0;
-      const attachment = hasAttachments ? attachments[0] : undefined;
 
       // Create optimistic message using helper from types
       const optimisticMessage = createOptimisticMessage({
@@ -53,13 +57,7 @@ export default function useSendChatMessage(roomId: string) {
           image: user.image || null,
         },
         replyToId,
-        attachment: attachment
-          ? {
-              file: attachment.file,
-              preview: attachment.preview,
-              type: attachment.type,
-            }
-          : undefined,
+        attachments: attachments, // Pass raw attachments array
       });
 
       // Add to cache immediately
@@ -67,27 +65,38 @@ export default function useSendChatMessage(roomId: string) {
       setPendingMessages((prev) => new Set(prev).add(tempId));
 
       try {
-        let attachmentURL: string | undefined;
+        let uploadedAttachments: { name: string; url: string }[] = [];
 
-        if (hasAttachments && attachment) {
-          // Upload with progress tracking
-          attachmentURL = await uploadToCloudinary({
-            file: attachment.file,
-            attachmentType: attachment.type,
-            onProgress: (progress) => {
-              store.updateUploadProgress(tempId, progress);
-            },
-          });
+        if (hasAttachments) {
+          // Upload all files in parallel
+          uploadedAttachments = await Promise.all(
+            (attachments || []).map(async (att, index) => {
+              const url = await uploadToCloudinary({
+                file: att.file,
+                attachmentType: att.type,
+                onProgress: (progress) => {
+                  // Update progress for this specific attachment
+                  store.updateAttachmentProgress(tempId, index, progress);
+                },
+              });
 
-          // Update with final URL
+              return {
+                name: att.file.name,
+                url: url,
+              };
+            }),
+          );
+
+          // Update store with final URLs (optimistic message update)
+          // We map the uploaded results back to the message attachments structure
+          const finalAttachments = uploadedAttachments.map((ua, i) => ({
+            ...optimisticMessage.attachments[i],
+            url: ua.url,
+            isUploading: false,
+          }));
+
           store.updateMessage(tempId, {
-            attachments: [
-              {
-                ...optimisticMessage.attachments[0],
-                url: attachmentURL,
-                isUploading: false,
-              },
-            ],
+            attachments: finalAttachments,
             isUploading: false,
             uploadProgress: 100,
           });
@@ -98,7 +107,8 @@ export default function useSendChatMessage(roomId: string) {
           roomId,
           content: content?.trim() || undefined,
           replyToId,
-          attachmentURL,
+          attachments:
+            uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
         };
 
         await emitSendMessage(socket, payload);
@@ -118,35 +128,18 @@ export default function useSendChatMessage(roomId: string) {
         throw error;
       }
     },
-    [user, roomId, store]
+    [user, roomId, store],
   );
 
-  const sendMessageWithFiles = useCallback(
-    async ({ content, replyToId, attachments, socket }: Omit<SendMessageParams, 'roomId'>) => {
-      if (!attachments || attachments.length === 0) {
-        return sendMessage({ content, replyToId, socket });
-      }
-
-      // Single image with content
-      if (attachments.length === 1 && attachments[0].type === "image") {
-        return sendMessage({ content, replyToId, attachments, socket });
-      }
-
-      // Multiple files: send content first, then files separately
-      if (content?.trim()) {
-        await sendMessage({ content, replyToId, socket });
-      }
-
-      for (const att of attachments) {
-        await sendMessage({
-          content: "",
-        attachments: [att],
-          socket,
-        });
-      }
-    },
-    [sendMessage]
-  );
+  const sendMessageWithFiles = async ({
+    content,
+    replyToId,
+    attachments,
+    socket,
+  }: Omit<SendMessageParams, "roomId">) => {
+    // Send logic completely unified now
+    return sendMessage({ content, replyToId, attachments, socket });
+  };
 
   return {
     sendMessage: sendMessageWithFiles,

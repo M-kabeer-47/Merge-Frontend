@@ -61,8 +61,6 @@ export interface ChatMessage {
   isDeleted: boolean;
   user: MessageUser;
 
-  // Ownership (from backend API)
-  isMine?: boolean;
 
   // Client-side state (server also sends these with defaults)
   status: MessageStatus;
@@ -90,7 +88,9 @@ export function getUserInitials(user?: MessageUser | null): string {
  */
 export function getUserDisplayName(user?: MessageUser | null): string {
   if (!user) return "Unknown User";
-  return `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Unknown User";
+  return (
+    `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Unknown User"
+  );
 }
 
 /**
@@ -123,28 +123,34 @@ export function createOptimisticMessage(params: {
   content: string;
   user: MessageUser;
   replyToId?: string;
-  attachment?: {
+  attachments?: {
     file: File;
     preview?: string;
     type: "image" | "file";
-  };
+  }[];
 }): ChatMessage {
-  const { tempId, roomId, content, user, replyToId, attachment } = params;
+  const {
+    tempId,
+    roomId,
+    content,
+    user,
+    replyToId,
+    attachments: rawAttachments,
+  } = params;
   const now = new Date().toISOString();
 
-  const attachments: MessageAttachment[] = [];
-  if (attachment) {
-    attachments.push({
-      id: `att-${tempId}`,
-      name: attachment.file.name,
-      type: attachment.type,
-      url: attachment.preview || "",
-      size: attachment.file.size,
-      preview: attachment.preview,
+  const attachments: MessageAttachment[] = (rawAttachments || []).map(
+    (att, index) => ({
+      id: `att-${tempId}-${index}`,
+      name: att.file.name,
+      type: att.type,
+      url: att.preview || "",
+      size: att.file.size,
+      preview: att.preview,
       isUploading: true,
       uploadProgress: 0,
-    });
-  }
+    }),
+  );
 
   return {
     id: tempId,
@@ -191,7 +197,7 @@ export interface SendMessagePayload {
   roomId: string;
   content?: string;
   replyToId?: string;
-  attachmentURL?: string;
+  attachments?: { name: string; url: string }[];
 }
 
 export interface UpdateMessagePayload {

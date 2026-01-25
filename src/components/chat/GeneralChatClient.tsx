@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useWebSocketChat } from "@/hooks/general-chat/use-websocket-chat";
 import { useFetchMessages } from "@/hooks/general-chat/use-fetch-messages";
@@ -53,8 +53,11 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     limit: 20,
   });
 
-  // Messages reversed for display (oldest first)
-  const messages = [...fetchedMessages].reverse();
+  // Messages reversed for display (oldest first) - memoized
+  const messages = useMemo(
+    () => [...fetchedMessages].reverse(),
+    [fetchedMessages],
+  );
 
   // WebSocket connection - handles cache updates internally via useChatStore
   const { socket, isConnected, error: wsError } = useWebSocketChat({ roomId });
@@ -202,50 +205,66 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
   };
 
+  // Show skeleton when socket is connecting or messages are loading
+  const showSkeleton = !isConnected || isLoading;
+
   return (
     <div className="flex flex-col h-full bg-main-background">
-      {/* Connection Status */}
-      {!isConnected && (
+      {/* Connection Status Banner - only show after initial load */}
+      {!isConnected && !isLoading && messages.length > 0 && (
         <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2 text-sm text-yellow-800">
-          ⚠️ Connecting to chat server...
+          ⚠️ Reconnecting to chat server...
         </div>
       )}
 
-      {/* Scrollable Chat Container with InfiniteScroll */}
-      <div
-        id="scrollableDiv"
-        ref={scrollContainerRef}
-        className="h-[500px] overflow-y-auto relative flex flex-col-reverse"
-      >
-        <InfiniteScroll
-          dataLength={messages.length}
-          next={fetchNextPage}
-          hasMore={!!hasMore}
-          loader={
-            <div className="py-4 flex justify-center">
-              <div className="flex flex-col items-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                <p className="text-sm text-para-muted mt-2">
-                  Loading older messages...
-                </p>
-              </div>
-            </div>
-          }
-          endMessage={
-            messages.length > 0 ? (
-              <div className="py-4 flex justify-center">
-                <p className="text-sm text-para-muted">
-                  Beginning of conversation
-                </p>
-              </div>
-            ) : null
-          }
-          scrollableTarget="scrollableDiv"
-          inverse={true}
-          style={{ display: "flex", flexDirection: "column-reverse" }}
+      {/* Skeleton Loading State */}
+      {showSkeleton && messages.length === 0 ? (
+        <div className="h-[500px] overflow-y-auto relative flex flex-col">
+          <div className="space-y-0 py-5 px-4">
+            <MessageSkeleton />
+            <MessageSkeleton isOwn />
+            <MessageSkeleton />
+            <MessageSkeleton />
+            <MessageSkeleton isOwn />
+            <MessageSkeleton />
+          </div>
+        </div>
+      ) : (
+        /* Scrollable Chat Container with InfiniteScroll */
+        <div
+          id="scrollableDiv"
+          ref={scrollContainerRef}
+          className="h-[500px] overflow-y-auto relative flex flex-col-reverse"
         >
-          {/* Messages List */}
-          <div className="space-y-0 py-5 px-4 pb-[20px]">
+          <InfiniteScroll
+            dataLength={messages.length}
+            next={fetchNextPage}
+            hasMore={!!hasMore}
+            loader={
+              <div className="py-4 flex justify-center">
+                <div className="flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  <p className="text-sm text-para-muted mt-2">
+                    Loading older messages...
+                  </p>
+                </div>
+              </div>
+            }
+            endMessage={
+              messages.length > 0 ? (
+                <div className="py-4 flex justify-center">
+                  <p className="text-sm text-para-muted">
+                    Beginning of conversation
+                  </p>
+                </div>
+              ) : null
+            }
+            scrollableTarget="scrollableDiv"
+            inverse={true}
+            style={{ display: "flex", flexDirection: "column-reverse" }}
+          >
+            {/* Messages List */}
+            <div className="space-y-0 py-5 px-4 pb-[20px]">
             {messages.map((message) => {
               const user = enhanceUser(message.user);
               const replyToMessage = message.replyToId
@@ -274,10 +293,11 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
                 />
               );
             })}
-            <div ref={messagesEndRef} />
-          </div>
-        </InfiniteScroll>
-      </div>
+              <div ref={messagesEndRef} />
+            </div>
+          </InfiniteScroll>
+        </div>
+      )}
 
       {/* Message Composer - outside scroll container */}
       <div className="bg-main-background border-t border-light-border">
@@ -291,21 +311,6 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           onUpdateMessage={handleUpdateMessage}
         />
       </div>
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={confirmDeleteDialog.isOpen}
-        onClose={() =>
-          setConfirmDeleteDialog({ isOpen: false, messageId: null })
-        }
-        onConfirm={confirmDeleteForEveryone}
-        title="Delete Message"
-        message="This message will be permanently deleted for everyone."
-        itemName="Are you sure you want to delete this message"
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="danger"
-      />
     </div>
   );
 };

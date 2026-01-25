@@ -29,17 +29,27 @@ export default function MessageAttachments({
 }: MessageAttachmentsProps) {
   if (!message.attachments || message.attachments.length === 0) return null;
 
-  const hasImages = message.attachments.some((att) => att.type === "image");
-  const hasFiles = message.attachments.some((att) => att.type === "file");
+  const isImage = (att: MessageAttachment) => {
+    if (att.type === "image") return true;
+    const ext = att.name.split(".").pop()?.toLowerCase();
+    return ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "");
+  };
+
+  const hasImages = message.attachments.some((att) => isImage(att));
+  const hasFiles = message.attachments.some((att) => !isImage(att));
 
   return (
     <div className="mb-2">
       {/* Image Attachments - WhatsApp-like grid */}
       {hasImages && (
         <ImageAttachmentGrid
-          attachments={message.attachments.filter(
-            (att) => att.type === "image",
-          )}
+          attachments={message.attachments.filter((att) => {
+            if (att.type === "image") return true;
+            const ext = att.name.split(".").pop()?.toLowerCase();
+            return ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(
+              ext || "",
+            );
+          })}
           isOwnMessage={isOwnMessage}
         />
       )}
@@ -47,13 +57,66 @@ export default function MessageAttachments({
       {/* File Attachments */}
       {hasFiles && (
         <FileAttachmentList
-          attachments={message.attachments.filter((att) => att.type === "file")}
+          attachments={message.attachments.filter((att) => {
+            const isImg =
+              att.type === "image" ||
+              ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(
+                att.name.split(".").pop()?.toLowerCase() || "",
+              );
+            return !isImg;
+          })}
           isOwnMessage={isOwnMessage}
         />
       )}
     </div>
   );
 }
+
+const CircularProgress = ({
+  progress,
+  size = 48,
+  strokeWidth = 4,
+}: {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+}) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div
+      className="relative flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <svg className="transform -rotate-90 w-full h-full">
+        <circle
+          className="text-white/20"
+          strokeWidth={strokeWidth}
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+        <circle
+          className="text-white drop-shadow-md transition-all duration-300 ease-out"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+      </svg>
+      {/* Optional: Add X icon for cancel here if needed */}
+    </div>
+  );
+};
 
 const ImageAttachmentGrid: React.FC<{
   attachments: MessageAttachment[];
@@ -65,13 +128,6 @@ const ImageAttachmentGrid: React.FC<{
   if (!attachments) return null;
 
   const count = attachments.length;
-  const isUploading = attachments.some((att) => att.isUploading);
-  const overallProgress = isUploading
-    ? Math.round(
-        attachments.reduce((sum, att) => sum + (att.uploadProgress || 0), 0) /
-          attachments.length,
-      )
-    : 100;
 
   const getGridLayout = () => {
     if (count === 1) return "grid-cols-1";
@@ -88,7 +144,7 @@ const ImageAttachmentGrid: React.FC<{
   };
 
   const handleImageClick = (index: number) => {
-    if (!isUploading) {
+    if (!attachments[index].isUploading) {
       setSelectedImageIndex(index);
       setModalOpen(true);
     }
@@ -105,7 +161,7 @@ const ImageAttachmentGrid: React.FC<{
       <div className={`grid ${getGridLayout()} gap-1 mb-2 max-w-lg relative`}>
         {attachments.map((attachment, index) => (
           <div
-            key={attachment.id}
+            key={attachment.url}
             className={`relative ${getImageHeight()} rounded-lg overflow-hidden group ${
               !attachment.isUploading ? "cursor-pointer" : ""
             }`}
@@ -116,7 +172,7 @@ const ImageAttachmentGrid: React.FC<{
               src={attachment.url || attachment.preview}
               alt={attachment.name}
               className={`w-full h-full object-cover transition-all ${
-                attachment.isUploading ? "blur-sm" : ""
+                attachment.isUploading ? "blur-sm scale-105" : ""
               }`}
             />
 
@@ -125,12 +181,10 @@ const ImageAttachmentGrid: React.FC<{
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
             )}
 
-            {/* Upload Progress Overlay for Single Image */}
-            {attachment.isUploading && count === 1 && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="text-center">
-                  <LoadingSpinner text={`${attachment.uploadProgress || 0}%`} />
-                </div>
+            {/* Upload Progress Overlay - Individual */}
+            {attachment.isUploading && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                <CircularProgress progress={attachment.uploadProgress || 0} />
               </div>
             )}
 
@@ -149,15 +203,6 @@ const ImageAttachmentGrid: React.FC<{
             )}
           </div>
         ))}
-
-        {/* Combined Progress Loader for Multiple Images */}
-        {isUploading && count > 1 && (
-          <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
-            <div className="text-center">
-              <LoadingSpinner text={`Uploading ${overallProgress}%`} />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Image Carousel Modal */}
@@ -196,7 +241,7 @@ const FileAttachmentList: React.FC<{
 
         return (
           <div
-            key={attachment.id}
+            key={attachment.url}
             className={`flex items-center gap-3 p-3 rounded-lg w-80 ${
               isOwnMessage ? "bg-white/10 border-white/20" : "bg-secondary/10"
             }`}
@@ -204,8 +249,12 @@ const FileAttachmentList: React.FC<{
             {/* File Icon or Loader */}
             <div className="flex-shrink-0">
               {attachment.isUploading ? (
-                <div className="relative">
-                  <LoadingSpinner text={`${attachment.uploadProgress || 0}%`} />
+                <div className="relative w-10 h-10 flex items-center justify-center">
+                  <CircularProgress
+                    progress={attachment.uploadProgress || 0}
+                    size={28}
+                    strokeWidth={3}
+                  />
                 </div>
               ) : (
                 getFileIcon(attachment.name)
@@ -238,13 +287,18 @@ const FileAttachmentList: React.FC<{
                   {attachment.name}
                 </div>
               )}
-              {attachment.size && (
+              {attachment.size && !attachment.isUploading && (
                 <div
                   className={`text-xs ${
                     isOwnMessage ? "text-white/70" : "text-para-muted"
                   }`}
                 >
                   {formatFileSize(attachment.size)}
+                </div>
+              )}
+              {attachment.isUploading && (
+                <div className="text-xs text-white/70 animate-pulse">
+                  Uploading...
                 </div>
               )}
             </div>

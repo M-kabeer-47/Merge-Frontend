@@ -28,30 +28,6 @@ async function getAccessToken(): Promise<string | null> {
   }
 }
 
-// WebSocket may send "author" instead of "user" (like REST API)
-interface WebSocketMessage extends Omit<ChatMessage, 'user'> {
-  user?: ChatMessage['user'];
-  author?: ChatMessage['user'];
-}
-
-/**
- * Normalize WebSocket message: ensure user field exists
- */
-function normalizeMessage(msg: WebSocketMessage): ChatMessage {
-  const user = msg.user || msg.author || {
-    id: msg.userId || "",
-    firstName: "Unknown",
-    lastName: "User",
-    email: "",
-    image: null,
-  };
-  
-  return {
-    ...msg,
-    user,
-  } as ChatMessage;
-}
-
 interface UseWebSocketChatOptions {
   roomId: string;
 }
@@ -107,47 +83,39 @@ export function useWebSocketChat({ roomId }: UseWebSocketChatOptions) {
 
       // Connection handlers
       socket.on("connect", () => {
-        console.log("✅ WebSocket connected:", socket?.id);
         if (isMounted) {
+          console.log("COnnected")
           setIsConnected(true);
           setError(null);
         }
         if (roomId && socket) {
+          console.log("Joining Room")
           socket.emit("joinRoom", { roomId });
         }
       });
 
       socket.on("disconnect", (reason) => {
-        console.log("❌ WebSocket disconnected:", reason);
         if (isMounted) setIsConnected(false);
       });
-
+      
       socket.on("connect_error", (err) => {
-        console.error("🔌 Connection error:", err.message);
+        console.error("WebSocket connection error:", err.message);
         if (isMounted) {
           setError(`Connection error: ${err.message}`);
           setIsConnected(false);
         }
       });
 
-      // Message event listeners - normalize incoming messages
-      socket.on("newMessage", (rawMessage: WebSocketMessage) => {
-        const message = normalizeMessage(rawMessage);
-        console.log("📩 WebSocket newMessage:", { 
-          id: message.id, 
-          userId: message.userId, 
-          content: message.content?.substring(0, 50),
-          isOptimistic: isOptimisticId(message.id)
-        });
+      // Message event listeners
+      socket.on("newMessage", (message: ChatMessage) => {
+        console.log("📩 WebSocket newMessage:", JSON.stringify(message));
         // Skip if this is our own optimistic message being echoed back
-        // The real message from server will have a different (non-temp) ID
         if (!isOptimisticId(message.id)) {
           storeRef.current.addMessage(message);
         }
       });
 
-      socket.on("messageUpdated", (rawMessage: WebSocketMessage) => {
-        const message = normalizeMessage(rawMessage);
+      socket.on("messageUpdated", (message: ChatMessage) => {
         storeRef.current.updateMessage(message.id, {
           content: message.content,
           isEdited: true,
@@ -160,7 +128,7 @@ export function useWebSocketChat({ roomId }: UseWebSocketChatOptions) {
       });
 
       socket.on("error", (data: SocketErrorData) => {
-        console.error("❌ WebSocket error:", data);
+        console.error("WebSocket error:", data);
         if (isMounted) setError(data.error);
         toast.error(data.error || "An error occurred");
       });

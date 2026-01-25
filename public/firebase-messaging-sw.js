@@ -74,10 +74,6 @@ const buildActionUrl = (payload, data) => {
 };
 
 const showNotificationFromPayload = async (payload) => {
-  console.log("[SW] Push payload received:", payload);
-  console.log("[SW] Raw Data:", payload?.data);
-  console.log("[SW] Notification Object:", payload?.notification);
-
   const data = payload?.data || {};
 
   const actionUrl = payload.actionUrl || buildActionUrl(payload, data);
@@ -109,10 +105,6 @@ const showNotificationFromPayload = async (payload) => {
   const iconUrl = resolveUrl(iconCandidate);
   const badgeUrl = resolveUrl(badgeCandidate);
   const imageUrl = resolveUrl(imageCandidate);
-
-  console.log("[SW] Using icon URL:", iconUrl);
-  if (badgeUrl) console.log("[SW] Using badge URL:", badgeUrl);
-  if (imageUrl) console.log("[SW] Using image URL:", imageUrl);
   
   const notificationOptions = {
     body: roomTitle,
@@ -128,20 +120,15 @@ const showNotificationFromPayload = async (payload) => {
     requireInteraction: true,
   };
 
-  console.log("[SW] Calling showNotification with:", notificationTitle, notificationOptions);
-
   try {
     await self.registration.showNotification(notificationTitle, notificationOptions);
-    console.log("[SW] ✅ showNotification succeeded!");
   } catch (error) {
-    console.error("[SW] ❌ showNotification FAILED:", error);
+    console.error("[SW] showNotification failed:", error);
   }
 };
 
-// Push listener to handle all FCM pushes (data-only and notification payloads)
+// Push listener to handle all FCM pushes
 self.addEventListener("push", (event) => {
-  console.log("[SW] Push event received:", event);
-
   if (!event.data) return;
 
   event.waitUntil(
@@ -152,20 +139,9 @@ self.addEventListener("push", (event) => {
         includeUncontrolled: true 
       });
       
-      console.log("[SW] Found window clients:", windowClients.length);
-      windowClients.forEach((client, index) => {
-        console.log(`[SW] Client ${index}:`, {
-          focused: client.focused,
-          visibilityState: client.visibilityState,
-          url: client.url
-        });
-      });
-      
       // If ANY client exists (browser tab is open, even if not focused)
       // Send to React instead of showing native notification
       if (windowClients.length > 0) {
-        console.log("[SW] App is open (focused or not), sending to React for cache update");
-        
         // Parse payload first
         let payload;
         try {
@@ -175,7 +151,6 @@ self.addEventListener("push", (event) => {
             const text = await event.data.text();
             payload = JSON.parse(text);
           } catch (err) {
-            console.log("[SW] Failed to parse push payload:", err);
             return;
           }
         }
@@ -187,13 +162,11 @@ self.addEventListener("push", (event) => {
             type: 'FCM_NOTIFICATION',
             payload: payload
           });
-          console.log("[SW] Sent notification to React client");
         }
         return;
       }
 
       // No clients - browser is completely closed
-      console.log("[SW] No app clients found, showing native notification");
 
       let payload;
       try {
@@ -203,7 +176,6 @@ self.addEventListener("push", (event) => {
           const text = await event.data.text();
           payload = JSON.parse(text);
         } catch (err) {
-          console.log("[SW] Failed to parse push payload:", err);
           return;
         }
       }

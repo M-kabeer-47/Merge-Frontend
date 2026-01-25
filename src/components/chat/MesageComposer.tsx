@@ -244,7 +244,7 @@ const MessageComposer = forwardRef(function MessageComposer(
   };
 
   return (
-    <div className="border-t border-light-border w-full md:w-[92%] lg:w-[93%] xl:w-[94%] 2xl:w-[95.1%]  relative">
+    <div className="border-t border-light-border lg:w-full w-[90%]  relative">
       {/* Attachment Preview */}
       <AttachmentPreview
         attachments={attachments}

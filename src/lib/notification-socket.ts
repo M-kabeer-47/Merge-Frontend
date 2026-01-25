@@ -39,7 +39,6 @@ export async function connectNotificationSocket(
 ): Promise<Socket | null> {
   // Disconnect existing socket first
   if (socket?.connected) {
-    console.log("[Socket] Disconnecting existing socket...");
     socket.disconnect();
   }
 
@@ -49,12 +48,9 @@ export async function connectNotificationSocket(
   // Get token from API route
   const token = await getAccessToken();
   if (!token) {
-    console.error("[Socket] No access token available, cannot connect");
     callbacks.onError?.(new Error("No access token"));
     return null;
   }
-
-  console.log("[Socket] Connecting with token...");
 
   socket = io(`${NOTIFICATION_SOCKET_URL}/notifications`, {
     auth: {
@@ -69,12 +65,10 @@ export async function connectNotificationSocket(
 
   // Connection events
   socket.on("connect", () => {
-    console.log("[Socket] Connected to notification server");
     callbacks.onConnect?.();
   });
 
   socket.on("disconnect", (reason) => {
-    console.log("[Socket] Disconnected:", reason);
     callbacks.onDisconnect?.();
   });
 
@@ -85,15 +79,11 @@ export async function connectNotificationSocket(
 
   // Notification event with deduplication
   socket.on("notification", (data: NotificationPayload) => {
-    console.log("[Socket] Received notification:", JSON.stringify(data));
     // Deduplicate at socket level
     if (processedNotificationIds.has(data.id)) {
-      console.log("[Socket] Skipping duplicate notification:", data.id);
       return;
     }
     processedNotificationIds.add(data.id);
-
-    console.log("[Socket] Processing notification:", data.id);
     callbacks.onNotification?.(data);
   });
 
@@ -108,7 +98,6 @@ export function disconnectNotificationSocket(): void {
     socket.disconnect();
     socket = null;
     processedNotificationIds.clear();
-    console.log("[Socket] Disconnected");
   }
 }
 

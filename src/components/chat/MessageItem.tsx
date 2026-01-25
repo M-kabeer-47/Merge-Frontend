@@ -1,5 +1,6 @@
 // File: src/components/chat/MessageItem.tsx
 import React from "react";
+import { cn } from "@/lib/shadcn/utils";
 import type { ChatMessage, ChatUser } from "@/types/general-chat";
 import MessageHeader from "./MessageHeader";
 import MessageAvatar from "./MessageAvatar";
@@ -38,7 +39,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   ref,
 }) => {
   // Use isMine from API if available, otherwise compare userId (for WebSocket messages)
-  const isOwnMessage = message.isMine ?? message.userId === currentUserId;
+  const isOwnMessage = message.user.id === currentUserId;
   const isFailed = message.status === "failed";
   const isSending = message.status === "sending" || message.isUploading;
 
@@ -65,9 +66,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
   return (
     <div
-      className={`group flex gap-3 py-4 px-4 min-h-fit rounded-xl sm:max-w-5xl max-w-sm mb-6 transition-colors duration-200 relative ${
-        isOwnMessage ? "bg-primary/90 ml-auto " : "bg-secondary/5"
-      } ${isFailed ? "opacity-70 border border-red-500/50" : ""}`}
+      className={cn(
+        "group flex gap-3 py-4 px-4 min-h-fit rounded-xl sm:max-w-5xl max-w-sm mb-6 transition-colors duration-200 relative",
+        isOwnMessage ? "bg-primary/90 ml-auto" : "bg-secondary/5",
+        isFailed && "opacity-70 border border-red-500/50",
+      )}
       ref={ref}
     >
       {/* Edited label in top right */}
@@ -106,9 +109,12 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
         {/* Message Text */}
         <div
-          className={`text-sm leading-relaxed mb-2 whitespace-pre-wrap ${
-            isOwnMessage ? "text-white/95" : "text-para"
-          } ${message.content === "This message was deleted" ? "italic opacity-70" : ""}`}
+          className={cn(
+            "text-sm leading-relaxed mb-2 whitespace-pre-wrap",
+            isOwnMessage ? "text-white/95" : "text-para",
+            message.content === "This message was deleted" &&
+              "italic opacity-70",
+          )}
         >
           {message.content}
         </div>

@@ -15,7 +15,7 @@ interface UseFetchMessagesOptions {
   enabled?: boolean;
 }
 
-export const CHAT_QUERY_KEY = "chat-messages";
+export const CHAT_QUERY_KEY = "general-chat";
 
 // API response may have "author" instead of "user"
 interface ApiMessageResponse extends Omit<ChatMessage, 'user'> {

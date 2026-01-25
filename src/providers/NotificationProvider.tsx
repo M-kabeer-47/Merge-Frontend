@@ -99,14 +99,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         onConnect: () => setSocketConnected(true),
         onDisconnect: () => setSocketConnected(false),
         onNotification: (notification) => {
-          console.log("[Socket.IO] Received notification:", notification);
-
           // Deduplicate: skip if we've already shown this notification
           if (shownNotificationIds.current.has(notification.id)) {
-            console.log(
-              "[Socket.IO] Skipping duplicate notification:",
-              notification.id,
-            );
             return;
           }
           shownNotificationIds.current.add(notification.id);
@@ -137,7 +131,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           // Background push notifications are handled by FCM service worker
           if (!document.hidden) {
             const actionUrl = notification.metadata.actionUrl;
-            console.log("[Socket.IO] Showing toast, actionUrl:", actionUrl);
 
             toast(notification.content, {
               id: notification.id, // Use notification ID to prevent duplicate toasts
@@ -146,12 +139,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
               action: actionUrl
                 ? {
                     label: "View →",
-                    onClick: () => {
-                      console.log(
-                        "[Socket.IO] Toast action clicked:",
-                        actionUrl,
-                      );
-                    },
+                    onClick: () => {},
                   }
                 : undefined,
             });
@@ -174,24 +162,14 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    console.log(
-      "[Notifications] Setting up service worker message listener...",
-    );
-
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === "FCM_NOTIFICATION") {
-        console.log(
-          "[Notifications] Received notification from SW:",
-          event.data.payload,
-        );
-
         const payload = event.data.payload;
         const data = payload?.data || {};
         const notificationId = data.id || `sw-${Date.now()}`;
 
         // Deduplicate
         if (shownNotificationIds.current.has(notificationId)) {
-          console.log("[Notifications] Skipping duplicate");
           return;
         }
         shownNotificationIds.current.add(notificationId);
@@ -239,19 +217,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             action: notification.metadata.actionUrl
               ? {
                   label: "View →",
-                  onClick: () => {
-                    console.log(
-                      "[Notifications] Toast clicked:",
-                      notification.metadata.actionUrl,
-                    );
-                  },
+                  onClick: () => {},
                 }
               : undefined,
           });
         } else {
-          console.log(
-            "[Notifications] Tab not visible, cache updated but toast skipped",
-          );
+          // Tab not visible, cache updated but toast skipped
         }
       }
     };
@@ -270,8 +241,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log("[Notifications] App became visible, refreshing caches...");
-
         // Get current room ID from URL if available
         const path = window.location.pathname;
         const roomMatch = path.match(/\/rooms\/([^/]+)/);
@@ -285,7 +254,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           queryClient.invalidateQueries({
             queryKey: ["quizzes", roomId, "student"],
           });
-          console.log("[Notifications] Invalidated caches for room:", roomId);
         }
 
         // Always refresh notifications

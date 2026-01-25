@@ -6,12 +6,7 @@
  */
 
 import { initializeApp, getApps } from "firebase/app";
-import {
-  getMessaging,
-  getToken,
-  onMessage,
-  Messaging,
-} from "firebase/messaging";
+import { getMessaging, getToken, Messaging } from "firebase/messaging";
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -85,24 +80,6 @@ export async function requestFCMToken(): Promise<string | null> {
     console.error("[FCM] Error getting token:", error);
     return null;
   }
-}
-
-/**
- * Subscribe to foreground messages
- * @param callback Function to call when a message is received while app is in focus
- */
-export function onForegroundMessage(
-  callback: (payload: any) => void,
-): () => void {
-  const messaging = getFirebaseMessaging();
-  if (!messaging) return () => {};
-
-  const unsubscribe = onMessage(messaging, (payload) => {
-    console.log("[FCM] Foreground message received:", payload);
-    callback(payload);
-  });
-
-  return unsubscribe;
 }
 
 export { app };
