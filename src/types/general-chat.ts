@@ -58,7 +58,7 @@ export interface ChatMessage {
   createdAt: string;
   updatedAt: string;
   isEdited: boolean;
-  isDeleted: boolean;
+  isDeletedForEveryone: boolean;
   user: MessageUser;
 
 
@@ -162,7 +162,7 @@ export function createOptimisticMessage(params: {
     createdAt: now,
     updatedAt: now,
     isEdited: false,
-    isDeleted: false,
+    isDeletedForEveryone: false,
     user: enhanceUser(user),
     status: "sending",
     isUploading: attachments.length > 0,
@@ -222,7 +222,7 @@ export type DeleteForEveryonePayload = DeleteMessagePayload;
 export interface MessageDeletedEventData {
   messageId: string;
   roomId: string;
-  deletedAt: string;
+  deletedFor: "everyone" | "me";
   authorId: string;
 }
 

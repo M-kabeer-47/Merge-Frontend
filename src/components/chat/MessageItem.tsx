@@ -7,7 +7,7 @@ import MessageAvatar from "./MessageAvatar";
 import RepliedMessage from "./RepliedMessage";
 import MessageAttachments from "./MessageAttachments";
 import MessageOptions from "./MessageOptions";
-import { Check, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { Check, Loader2, AlertCircle, RotateCcw, Ban } from "lucide-react";
 
 interface MessageItemProps {
   message: ChatMessage;
@@ -74,9 +74,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
       ref={ref}
     >
       {/* Edited label in top right */}
-      {message.isEdited && !message.isDeleted && (
+      {message.isEdited && (
         <span
-          className="absolute top-2 right-4 text-xs text-white/80 select-none pointer-events-none"
+          className={`absolute top-2 right-4 text-xs  select-none pointer-events-none ${isOwnMessage ? "text-white/80" : "text-para-muted"}`}
           style={{ zIndex: 2 }}
         >
           (Edited)
@@ -116,7 +116,16 @@ const MessageItem: React.FC<MessageItemProps> = ({
               "italic opacity-70",
           )}
         >
-          {message.content}
+          {message.content === "This message was deleted" ? (
+            <div className="flex items-center gap-2">
+              <Ban className="h-4 w-4" />
+              {message.content && isOwnMessage
+                ? "You deleted this message"
+                : "This message was deleted"}
+            </div>
+          ) : (
+            message.content
+          )}
         </div>
 
         {/* Attachments */}
@@ -170,14 +179,16 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* Reactions */}
 
         {/* Message Actions */}
-        <MessageOptions
-          isOwnMessage={isOwnMessage}
-          onReply={onReply}
-          onEdit={onEdit}
-          onDeleteForMe={onDeleteForMe}
-          onDeleteForEveryone={onDeleteForEveryone}
-          message={message}
-        />
+        <div className="relative z-10">
+          <MessageOptions
+            isOwnMessage={isOwnMessage}
+            onReply={onReply}
+            onEdit={onEdit}
+            onDeleteForMe={onDeleteForMe}
+            onDeleteForEveryone={onDeleteForEveryone}
+            message={message}
+          />
+        </div>
       </div>
     </div>
   );

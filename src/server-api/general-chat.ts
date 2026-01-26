@@ -17,7 +17,7 @@ export interface FetchGeneralChatMessagesParams {
  * Supports pagination and infinite scrolling
  */
 export async function getGeneralChatMessages(
-  params: FetchGeneralChatMessagesParams
+  params: FetchGeneralChatMessagesParams,
 ): Promise<FetchMessagesResponse> {
   const {
     roomId,
@@ -47,10 +47,10 @@ export async function getGeneralChatMessages(
     `${API_BASE_URL}/general-chat?${queryParams.toString()}`,
     {
       next: {
-        revalidate: 0, // Don't cache chat messages
+        revalidate: false, // Don't cache chat messages
         tags: ["general-chat", `general-chat-${roomId}`],
       },
-    }
+    },
   );
 
   if (error || !data) {

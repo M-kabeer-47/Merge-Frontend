@@ -15,6 +15,7 @@ import MessageItem from "@/components/chat/MessageItem";
 import MessageSkeleton from "@/components/chat/MessageSkeleton";
 import MessageComposer from "@/components/chat/MesageComposer";
 import { AttachmentFile } from "@/components/chat/AttachmentPreview";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { ChatMessage } from "@/types/general-chat";
 import { enhanceUser } from "@/types/general-chat";
 import { toast } from "sonner";
@@ -31,6 +32,11 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   const [editingMessage, setEditingMessage] = useState<
     ChatMessage | undefined
   >();
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
+    isOpen: boolean;
+    messageId: string;
+    type: "forMe" | "forEveryone";
+  }>({ isOpen: false, messageId: "", type: "forMe" });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -60,14 +66,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   );
 
   // WebSocket connection - handles cache updates internally via useChatStore
-  const { socket, isConnected, error: wsError } = useWebSocketChat({ roomId });
-
-  // Show WebSocket connection error
-  useEffect(() => {
-    if (wsError) {
-      toast.error(wsError);
-    }
-  }, [wsError]);
+  const { socket, isConnected } = useWebSocketChat({ roomId });
 
   // Auto-scroll to bottom only on initial load or new message (not pagination)
   useEffect(() => {
@@ -162,7 +161,18 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     setEditingMessage(undefined);
   };
 
-  const handleDeleteForMe = async (messageId: string) => {
+  const handleDeleteForMe = (messageId: string) => {
+    setDeleteConfirmDialog({
+      isOpen: true,
+      messageId,
+      type: "forMe",
+    });
+  };
+
+  const confirmDeleteForMe = async () => {
+    const { messageId } = deleteConfirmDialog;
+    setDeleteConfirmDialog({ isOpen: false, messageId: "", type: "forMe" });
+
     // Optimistically remove from cache
     removeMessage(messageId);
 
@@ -176,11 +186,21 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     }
   };
 
-  const handleDeleteForEveryone = async (messageId: string) => {
-    const confirmed = confirm(
-      "Are you sure you want to delete this message for everyone?",
-    );
-    if (!confirmed) return;
+  const handleDeleteForEveryone = (messageId: string) => {
+    setDeleteConfirmDialog({
+      isOpen: true,
+      messageId,
+      type: "forEveryone",
+    });
+  };
+
+  const confirmDeleteForEveryone = async () => {
+    const { messageId } = deleteConfirmDialog;
+    setDeleteConfirmDialog({
+      isOpen: false,
+      messageId: "",
+      type: "forEveryone",
+    });
 
     const [, error] = await tryIt(
       emitDeleteForEveryone(socket, { messageId, roomId }),
@@ -189,10 +209,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
     if (error) {
       console.error("Failed to delete message:", error);
       toast.error("Failed to delete message");
-      return;
     }
-
-    toast.success("Message deleted for everyone");
   };
 
   const scrollToMessage = (messageId: string) => {
@@ -206,19 +223,18 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
   };
 
   // Show skeleton when socket is connecting or messages are loading
-  const showSkeleton = !isConnected || isLoading;
 
   return (
     <div className="flex flex-col h-full bg-main-background">
       {/* Connection Status Banner - only show after initial load */}
-      {!isConnected && !isLoading && messages.length > 0 && (
+      {/* {!isConnected && !isLoading && messages.length > 0 && (
         <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2 text-sm text-yellow-800">
           ⚠️ Reconnecting to chat server...
         </div>
-      )}
+      )} */}
 
       {/* Skeleton Loading State */}
-      {showSkeleton && messages.length === 0 ? (
+      {isLoading ? (
         <div className="h-[500px] overflow-y-auto relative flex flex-col">
           <div className="space-y-0 py-5 px-4">
             <MessageSkeleton />
@@ -265,34 +281,34 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           >
             {/* Messages List */}
             <div className="space-y-0 py-5 px-4 pb-[20px]">
-            {messages.map((message) => {
-              const user = enhanceUser(message.user);
-              const replyToMessage = message.replyToId
-                ? messages.find((m) => m.id === message.replyToId)
-                : undefined;
-              const replyToUser = replyToMessage
-                ? enhanceUser(replyToMessage.user)
-                : undefined;
+              {messages.map((message, index) => {
+                const user = enhanceUser(message.user);
+                const replyToMessage = message.replyToId
+                  ? messages.find((m) => m.id === message.replyToId)
+                  : undefined;
+                const replyToUser = replyToMessage
+                  ? enhanceUser(replyToMessage.user)
+                  : undefined;
 
-              return (
-                <MessageItem
-                  key={message.id}
-                  ref={(el) => {
-                    messageRefs.current[message.id] = el;
-                  }}
-                  message={message}
-                  user={user}
-                  replyToMessage={replyToMessage}
-                  replyToUser={replyToUser}
-                  onReply={handleReply}
-                  onEdit={handleEdit}
-                  onDeleteForMe={handleDeleteForMe}
-                  onDeleteForEveryone={handleDeleteForEveryone}
-                  onScrollToMessage={scrollToMessage}
-                  currentUserId={currentUser?.id || ""}
-                />
-              );
-            })}
+                return (
+                  <MessageItem
+                    key={message.id}
+                    ref={(el) => {
+                      messageRefs.current[message.id] = el;
+                    }}
+                    message={message}
+                    user={user}
+                    replyToMessage={replyToMessage}
+                    replyToUser={replyToUser}
+                    onReply={handleReply}
+                    onEdit={handleEdit}
+                    onDeleteForMe={handleDeleteForMe}
+                    onDeleteForEveryone={handleDeleteForEveryone}
+                    onScrollToMessage={scrollToMessage}
+                    currentUserId={currentUser?.id || ""}
+                  />
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
           </InfiniteScroll>
@@ -311,6 +327,31 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
           onUpdateMessage={handleUpdateMessage}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirmDialog.isOpen}
+        onClose={() =>
+          setDeleteConfirmDialog({
+            isOpen: false,
+            messageId: "",
+            type: "forMe",
+          })
+        }
+        onConfirm={
+          deleteConfirmDialog.type === "forMe"
+            ? confirmDeleteForMe
+            : confirmDeleteForEveryone
+        }
+        title={
+          deleteConfirmDialog.type === "forMe"
+            ? "Delete Message"
+            : "Delete Message for Everyone"
+        }
+        message={`Are you sure you want to delete this message${deleteConfirmDialog.type === "forEveryone" ? " for everyone" : ""}?`}
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 };

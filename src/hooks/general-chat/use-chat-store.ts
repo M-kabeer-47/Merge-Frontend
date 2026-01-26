@@ -64,7 +64,10 @@ export function useChatStore(roomId: string) {
       const messageExists = old.pages.some((page) =>
         page.messages.some((m) => m.id === message.id),
       );
-      if (messageExists) return old;
+      if (messageExists) {
+        console.warn("⚠️ Duplicate message ID detected:", message.id);
+        return old;
+      }
 
       // For real messages (non-optimistic), check if there's a matching optimistic message
       // to replace (same userId, similar content after trimming)
@@ -184,13 +187,20 @@ export function useChatStore(roomId: string) {
 
   /**
    * Mark a message as deleted (soft delete)
+   * Backend will update content and isDeleted, we just mark isDeleted for UI
    */
-  const markAsDeleted = (messageId: string) => {
-    updateMessage(messageId, {
-      isDeleted: true,
-      content: "",
-      attachments: [],
-    });
+  const markAsDeleted = ({messageId,type}: {messageId: string,type: "everyone" | "me"}) => {
+    console.log("Type: ",type)
+    if (type === "me") {
+      // Remove message completely from cache when user deletes for themselves
+      removeMessage(messageId);
+    } else {
+      // Show deleted message text when deleted for everyone
+      updateMessage(messageId, {
+        content: "This message was deleted",
+        isDeletedForEveryone: true
+      });
+    }
   };
 
   /**

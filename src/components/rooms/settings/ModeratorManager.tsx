@@ -1,10 +1,3 @@
-/**
- * ModeratorManager Component
- *
- * Displays current moderators with option to add new ones or demote existing.
- * Moderators come from room.moderators (User[]), available members from API (RoomMember[]).
- */
-
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -53,6 +46,7 @@ export default function ModeratorManager({
 
   // Filter members by search query
   const filteredMembers = useMemo(() => {
+    if (!availableMembers) return [];
     if (!searchQuery.trim()) return availableMembers;
     const query = searchQuery.toLowerCase();
     return availableMembers.filter(

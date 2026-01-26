@@ -37,6 +37,7 @@ export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
       },
     },
   );
+  console.log("Room members:", data);
 
   if (error || !data) {
     console.error("Error fetching room members:", error);

@@ -1,37 +1,44 @@
-// Announcement Types for Announcements Tab
+// Announcement Types
 
-export type AnnouncementStatus = "published" | "scheduled";
+export type AnnouncementStatus = "published" | "scheduled" | "draft";
 
 export type AnnouncementSortOption = "newest" | "oldest";
-
-export type UserRole = "instructor" | "student" | "moderator" | "ta";
-
-export interface AnnouncementAuthor {
-  id: string;
-  name: string;
-  role: UserRole;
-  avatarUrl?: string;
-  initials: string;
-}
 
 export interface AnnouncementAttachment {
   id: string;
   name: string;
-  type: "file" | "image";
+  type: string;
   url: string;
   size?: number;
-  thumbnailUrl?: string;
+}
+
+export interface AnnouncementAuthor {
+  id: string;
+  name: string;
+  role: string;
+  initials: string;
+  avatarUrl?: string; // Optional if not always available
 }
 
 export interface Announcement {
   id: string;
+  roomId: string;
   title: string;
   content: string;
-  author: AnnouncementAuthor;
-  createdAt: Date;
-  scheduledFor?: Date;
-  publishedAt?: Date;
   status: AnnouncementStatus;
   isPinned: boolean;
+  createdAt: string | Date; // API might return string
+  publishedAt?: string | Date;
+  scheduledFor?: string | Date; // API might return "scheduledAt"
+  author: AnnouncementAuthor;
   attachments?: AnnouncementAttachment[];
+}
+
+export interface CreateAnnouncementPayload {
+  roomId: string;
+  title: string;
+  content: string;
+  isPublished?: boolean;
+  scheduledAt?: string; // ISO string
+  attachments?: File[]; // For client-side handling before upload
 }

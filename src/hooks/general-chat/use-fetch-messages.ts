@@ -1,6 +1,7 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import api from "@/utils/api";
 import type {
   FetchMessagesResponse,
@@ -84,9 +85,11 @@ export function useFetchMessages({
     gcTime: 5 * 60 * 1000,
   });
 
-  // Flatten messages from all pages (already transformed)
-  const messages: ChatMessage[] =
-    query.data?.pages.flatMap((page) => page.messages) ?? [];
+  // Flatten messages from all pages (already transformed) - memoized for performance
+  const messages: ChatMessage[] = useMemo(
+    () => query.data?.pages.flatMap((page) => page.messages) ?? [],
+    [query.data?.pages]
+  );
 
   return {
     messages,

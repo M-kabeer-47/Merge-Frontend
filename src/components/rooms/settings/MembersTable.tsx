@@ -43,6 +43,7 @@ export default function MembersTable({
 
   // Filter and paginate members
   const filteredMembers = useMemo(() => {
+    if (!members) return [];
     return members.filter(
       (member) =>
         `${member.user.firstName} ${member.user.lastName}`
@@ -83,7 +84,7 @@ export default function MembersTable({
               Members
             </h3>
             <p className="text-sm text-para-muted mt-1">
-              {members.length} member{members.length !== 1 ? "s" : ""}
+              {members?.length || 0} member{members?.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
@@ -126,6 +127,9 @@ export default function MembersTable({
                       Member
                     </th>
                     <th className="p-3 text-left text-xs font-semibold text-para uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="p-3 text-left text-xs font-semibold text-para uppercase tracking-wider">
                       Joined
                     </th>
                     <th className="p-3 text-right text-xs font-semibold text-para uppercase tracking-wider">
@@ -154,6 +158,18 @@ export default function MembersTable({
                             </p>
                           </div>
                         </div>
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            member.role === "moderator"
+                              ? "bg-primary/10 text-primary"
+                              : "bg-secondary/10 text-para"
+                          }`}
+                        >
+                          {member.role.charAt(0).toUpperCase() +
+                            member.role.slice(1)}
+                        </span>
                       </td>
                       <td className="p-3">
                         <p className="text-sm text-para">

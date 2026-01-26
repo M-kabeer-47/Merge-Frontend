@@ -1,5 +1,15 @@
 "use client";
 
+import { useRoom } from "@/providers/RoomProvider";
+// import { useQueryClient } from "@tanstack/react-query";
+import useFetchRoomMembers from "@/hooks/rooms/use-fetch-room-members";
+import useUpdateRoom from "@/hooks/rooms/use-update-room";
+import useRemoveMember from "@/hooks/rooms/use-remove-member";
+import useUpdateMemberRole from "@/hooks/rooms/use-update-member-role";
+// import { useRouter } from "next/navigation";
+// import { useState } from "react";
+import { toast } from "sonner";
+
 // Import all setting components
 import GeneralSettingsForm from "@/components/rooms/settings/GeneralSettingsForm";
 import VisibilitySettings from "@/components/rooms/settings/VisibilitySettings";
@@ -16,226 +26,159 @@ import type {
   RoomVisibility,
   JoinPolicy,
   ChatPermissionLevel,
+  ModeratorPermissions,
 } from "@/types/room-settings";
+import { tryIt } from "@/utils/try-it";
 
-// Import hooks and providers
-import { useRoom } from "@/providers/RoomProvider";
-import useUpdateRoom from "@/hooks/rooms/use-update-room";
-import useUpdateMemberRole from "@/hooks/rooms/use-update-member-role";
-import useRemoveMember from "@/hooks/rooms/use-remove-member";
-import useFetchRoomMembers from "@/hooks/rooms/use-fetch-room-members";
-
-interface RoomSettingsClientProps {
-  roomId: string;
-}
-
-export default function RoomSettingsClient({
-  roomId,
-}: RoomSettingsClientProps) {
+export default function RoomSettingsClient() {
   const { room, userRole } = useRoom();
-
-  // Check if user has admin access
-  const isAdmin = userRole === "instructor" || userRole === "moderator";
-
-  // Hooks for mutations
-  const { updateRoom, isUpdating: isUpdatingRoom } = useUpdateRoom(roomId);
-  const { updateMemberRole, isUpdating: isUpdatingRole } =
-    useUpdateMemberRole();
-  const { removeMember, isRemoving } = useRemoveMember();
-
-  // Fetch members with React Query (hydrated from server prefetch)
+  const isAdmin = userRole === "instructor";
   const { data: members = [] } = useFetchRoomMembers({
-    roomId,
-    enabled: isAdmin,
+    roomId: room?.id || "",
   });
 
-  // Wait for room data
-  if (!room) {
-    return (
-      <div className="min-h-screen bg-main-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const { updateRoom, isUpdating: isUpdatingRoom } = useUpdateRoom({
+    roomId: room?.id,
+  });
+  const { removeMember, isRemoving: isRemovingMember } = useRemoveMember({
+    roomId: room?.id,
+  });
+  const { updateMemberRole, isUpdating: isUpdatingRole } = useUpdateMemberRole({
+    roomId: room?.id,
+  });
 
-  // Check admin access
   if (!isAdmin) {
-    return <RoomSettingsError roomID={roomId} />;
+    return <RoomSettingsError roomID={room?.id as string} />;
   }
 
-  // Map room data to UI types
-  const currentVisibility: RoomVisibility = room.isPublic
-    ? "public"
-    : "private";
-  const currentJoinPolicy: JoinPolicy = room.autoJoin ? "auto" : "request";
+  // Derive moderators from members list
+  const moderators = members
+    .filter((m) => m.role === "moderator" || m.role === "instructor")
+    .map((m) => m.user);
 
-  // Filter members by role - only get regular members from API
-  const regularMembers = members.filter((m) => m.role === "member");
+  // Available members for moderation (everyone who is NOT already a moderator/instructor)
+  const availableMembers = members.filter((m) => m.role === "member");
 
-  // Get moderators from room.moderators (User[] from RoomProvider)
-  const moderators = room.moderators || [];
-
-  // Transform members for components that need different format
-  const allMembersForChat = members.map((m) => ({
-    id: m.user.id,
-    name: `${m.user.firstName} ${m.user.lastName}`,
-    avatar: m.user.image || undefined,
-  }));
-
-  // Handler functions
   const handleSaveGeneral = async (payload: UpdateGeneralSettingsPayload) => {
-    await updateRoom({
+    updateRoom({
       title: payload.title,
       description: payload.description,
-      tags: payload.tags,
+      tagNames: payload.tags,
     });
   };
 
   const handleVisibilityChange = async (newVisibility: RoomVisibility) => {
-    await updateRoom({
+    updateRoom({
       isPublic: newVisibility === "public",
     });
   };
 
   const handleJoinPolicyChange = async (newPolicy: JoinPolicy) => {
-    await updateRoom({
+    updateRoom({
       autoJoin: newPolicy === "auto",
     });
   };
 
-  const handlePromoteToModerator = async (userId: string) => {
-    await updateMemberRole({
-      roomId,
-      memberId: userId,
+  const handleAddModerator = async (userId: string) => {
+    const member = members.find((m) => m.id === userId);
+    updateMemberRole({
+      memberId: member.id,
       role: "moderator",
     });
   };
 
-  const handleDemoteToMember = async (moderatorMemberId: string) => {
-    const memberRecord = members.find((m) => m.id === moderatorMemberId);
+  const handleRemoveModerator = async (userId: string) => {
+    const member = members.find((m) => m.user.id === userId);
 
-    if (!memberRecord) {
-      console.error(
-        "Could not find member record for moderator:",
-        moderatorMemberId,
-      );
-      return;
-    }
-
-    await updateMemberRole({
-      roomId,
-      memberId: memberRecord.id,
+    updateMemberRole({
+      memberId: member.id,
       role: "member",
     });
   };
 
   const handleRemoveMember = async (memberId: string) => {
-    await removeMember({
-      roomId,
-      memberId,
-    });
+    removeMember({ memberId });
   };
 
-  const handleUpdateChatPermissions = (
-    level: ChatPermissionLevel,
-    memberIds?: string[],
-  ) => {
-    // TODO: Integrate with backend when API is available
-    console.log("Chat permissions updated:", level, memberIds);
-  };
-
-  const handleTransferOwnership = (newOwnerId: string) => {
-    // TODO: Integrate with backend when API is available
-    console.log("Transfer ownership to:", newOwnerId);
-  };
-
-  const handleArchiveRoom = () => {
-    // TODO: Integrate with backend when API is available
-    console.log("Archive room");
-  };
-
-  const handleDeleteRoom = () => {
-    // TODO: Integrate with backend when API is available
-    console.log("Delete room");
-  };
+  // Placeholder for chat permissions
 
   return (
-    <div className="space-y-8">
-      {/* General Settings */}
-      <section aria-labelledby="general-settings-heading">
-        <GeneralSettingsForm
-          room={room}
-          onSave={handleSaveGeneral}
-          isSubmitting={isUpdatingRoom}
-        />
-      </section>
+    <div className="min-h-screen bg-main-background">
+      <div className="px-4 sm:px-6 py-4 sm:py-6">
+        <div className="space-y-8">
+          {/* General Settings */}
+          <section aria-labelledby="general-settings-heading">
+            <GeneralSettingsForm
+              room={room}
+              onSave={handleSaveGeneral}
+              isSubmitting={isUpdatingRoom}
+            />
+          </section>
 
-      {/* Visibility & Join Policy */}
-      <section aria-labelledby="visibility-settings-heading">
-        <VisibilitySettings
-          currentVisibility={currentVisibility}
-          currentJoinPolicy={currentJoinPolicy}
-          onVisibilityChange={handleVisibilityChange}
-          onJoinPolicyChange={handleJoinPolicyChange}
-        />
-      </section>
+          {/* Visibility & Join Policy */}
+          <section aria-labelledby="visibility-settings-heading">
+            <VisibilitySettings
+              currentVisibility={room?.isPublic ? "public" : "private"}
+              currentJoinPolicy={room?.autoJoin ? "auto" : "request"}
+              onVisibilityChange={handleVisibilityChange}
+              onJoinPolicyChange={handleJoinPolicyChange}
+            />
+          </section>
 
-      {/* Moderators */}
-      <section aria-labelledby="moderator-settings-heading">
-        <ModeratorManager
-          moderators={moderators}
-          availableMembers={regularMembers}
-          onAddModerator={handlePromoteToModerator}
-          onRemoveModerator={handleDemoteToMember}
-          isUpdating={isUpdatingRole}
-        />
-      </section>
+          {/* Moderators */}
+          <section aria-labelledby="moderator-settings-heading">
+            <ModeratorManager
+              moderators={moderators}
+              availableMembers={availableMembers}
+              onAddModerator={handleAddModerator}
+              onRemoveModerator={handleRemoveModerator}
+              isUpdating={isUpdatingRole}
+            />
+          </section>
 
-      {/* Members */}
-      <section aria-labelledby="members-settings-heading">
-        <MembersTable
-          members={regularMembers}
-          onRemoveMember={handleRemoveMember}
-          isRemoving={isRemoving}
-        />
-      </section>
+          {/* Members */}
+          <section aria-labelledby="members-settings-heading">
+            <MembersTable
+              members={members}
+              onRemoveMember={handleRemoveMember}
+              isRemoving={isRemovingMember}
+              //   onMuteMember={handleMuteMember}
+              //   onPromoteToModerator={handlePromoteToModerator}
+            />
+          </section>
 
-      {/* Chat Permissions */}
-      <section aria-labelledby="chat-settings-heading">
-        <ChatPermissions
-          currentLevel="everyone"
-          selectedMemberIds={[]}
-          allMembers={allMembersForChat}
-          onUpdatePermissions={handleUpdateChatPermissions}
-        />
-      </section>
+          {/* Chat Permissions */}
+          <section aria-labelledby="chat-settings-heading">
+            {/* <ChatPermissions
+              currentLevel={chatPermissions.level}
+              selectedMemberIds={chatPermissions.selectedMemberIds}
+              allMembers={members}
+              onUpdatePermissions={handleUpdateChatPermissions}
+            /> */}
+          </section>
 
-      {/* Transfer Ownership */}
-      <section aria-labelledby="transfer-settings-heading">
-        <TransferOwnership
-          currentOwnerId={room.admin?.id || ""}
-          currentOwnerName={
-            room.admin
-              ? `${room.admin.firstName} ${room.admin.lastName}`
-              : "Unknown"
-          }
-          members={allMembersForChat}
-          onTransferOwnership={handleTransferOwnership}
-        />
-      </section>
+          {/* Transfer Ownership */}
+          <section aria-labelledby="transfer-settings-heading">
+            {/* <TransferOwnership
+              currentOwnerId={room.admin?.id}
+              currentOwnerName={`${room.admin?.firstName} ${room.admin?.lastName}`}
+              members={members}
+              onTransferOwnership={handleTransferOwnership}
+            /> */}
+          </section>
 
-      {/* Danger Zone */}
-      <section aria-labelledby="danger-zone-heading">
-        <DangerZone
-          roomTitle={room.title}
-          roomId={room.id}
-          onArchiveRoom={handleArchiveRoom}
-          onDeleteRoom={handleDeleteRoom}
-        />
-      </section>
-
-      {/* Bottom Spacing */}
-      <div className="h-16" />
+          {/* Danger Zone */}
+          <section aria-labelledby="danger-zone-heading">
+            {/* <DangerZone
+              roomTitle={room.title}
+              roomId={room.id}
+              onArchiveRoom={handleArchiveRoom}
+              onDeleteRoom={handleDeleteRoom}
+            /> */}
+          </section>
+        </div>
+        <div className="h-16" />
+      </div>
     </div>
   );
 }

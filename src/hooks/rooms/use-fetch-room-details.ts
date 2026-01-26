@@ -1,35 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/utils/api";
 import { toast } from "sonner";
-import { User } from "@/types/user";
 
-interface RoomMember {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  image: string;
-}
-
-interface RoomTag {
-  id: string;
-  name: string;
-}
-
-export interface RoomDetails {
-  id: string;
-  title: string;
-  description: string;
-  isPublic: boolean;
-  roomCode: string;
-  tags: RoomTag[];
-  admin: User;
-  members: RoomMember[];
-  createdAt: string;
-  updatedAt: string;
-  userRole: string;
-  memberCount: number;
-}
+import { RoomDetails } from "@/types/room-details";
 
 export default function useFetchRoomDetails(roomId: string) {
   const fetchRoomDetails = async (): Promise<RoomDetails | null> => {

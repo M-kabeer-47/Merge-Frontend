@@ -11,16 +11,14 @@ import type { RoomMember } from "@/server-api/room-members";
 type MemberRole = "moderator" | "member";
 
 interface UpdateMemberRoleParams {
-  roomId: string;
   memberId: string;
   role: MemberRole;
 }
 
-export default function useUpdateMemberRole() {
+export default function useUpdateMemberRole({ roomId }: { roomId: string }) {
   const queryClient = useQueryClient();
 
   const updateRoleFunction = async ({
-    roomId,
     memberId,
     role,
   }: UpdateMemberRoleParams) => {
@@ -36,7 +34,7 @@ export default function useUpdateMemberRole() {
     mutationFn: updateRoleFunction,
 
     onSuccess: async (_, variables) => {
-      const { roomId, memberId, role } = variables;
+      const { memberId, role } = variables;
       const isPromoting = role === "moderator";
 
       toast.success(

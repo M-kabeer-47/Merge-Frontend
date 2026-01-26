@@ -49,6 +49,11 @@ export function useWebSocketChat({ roomId }: UseWebSocketChatOptions) {
   useEffect(() => {
     storeRef.current = store;
   }, [store]);
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -84,12 +89,12 @@ export function useWebSocketChat({ roomId }: UseWebSocketChatOptions) {
       // Connection handlers
       socket.on("connect", () => {
         if (isMounted) {
-          console.log("COnnected")
+          console.log("Connected to WebSocket");
           setIsConnected(true);
           setError(null);
         }
         if (roomId && socket) {
-          console.log("Joining Room")
+          console.log("Joining room:", roomId);
           socket.emit("joinRoom", { roomId });
         }
       });
@@ -97,7 +102,7 @@ export function useWebSocketChat({ roomId }: UseWebSocketChatOptions) {
       socket.on("disconnect", (reason) => {
         if (isMounted) setIsConnected(false);
       });
-      
+
       socket.on("connect_error", (err) => {
         console.error("WebSocket connection error:", err.message);
         if (isMounted) {
@@ -124,7 +129,14 @@ export function useWebSocketChat({ roomId }: UseWebSocketChatOptions) {
       });
 
       socket.on("messageDeleted", (data: MessageDeletedEventData) => {
-        storeRef.current.markAsDeleted(data.messageId);
+        console.log("Message to delete", JSON.stringify(data));
+        console.log("data.deletedFor:", data.deletedFor);
+        console.log("typeof data.deletedFor:", typeof data.deletedFor);
+        console.log("data keys:", Object.keys(data));
+        storeRef.current.markAsDeleted({
+          messageId: data.messageId,
+          type: data.deletedFor,
+        });
       });
 
       socket.on("error", (data: SocketErrorData) => {

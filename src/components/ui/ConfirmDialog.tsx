@@ -84,7 +84,7 @@ export default function ConfirmDialog({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-background transition-colors"
+            className="p-2 rounded-lg hover:bg-secondary/5 transition-colors"
             disabled={isLoading}
           >
             <X className="w-5 h-5 text-para-muted" />
@@ -96,7 +96,9 @@ export default function ConfirmDialog({
           <p className="text-para text-sm leading-relaxed">
             {message}
 
-            <span className="font-bold">{" " + itemName + "?"}</span>
+            <span className="font-bold">
+              {itemName ? " " + itemName + "?" : ""}
+            </span>
             {isDeleteFolder &&
               " All content inside this folder will also be deleted."}
           </p>

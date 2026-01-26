@@ -41,11 +41,6 @@ export default function RoomHeader({
 
         {/* Header Actions */}
         <div className="flex items-center gap-2">
-          <Button className="px-3 md:px-4">
-            <Video className="h-4 w-4" />
-            <span className="hidden md:inline ml-2">Start a live session</span>
-          </Button>
-
           {/* Join Requests - Instructor Only */}
           {isInstructor && onJoinRequestsClick && (
             <Button

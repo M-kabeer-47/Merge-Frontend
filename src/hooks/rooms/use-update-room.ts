@@ -9,37 +9,28 @@ interface UpdateRoomData {
   title?: string;
   description?: string;
   isPublic?: boolean;
-  tags?: string[];
+  autoJoin?: boolean;
+  tagNames?: string[];
 }
 
-interface UseUpdateRoomOptions {
-  onSuccess?: () => void;
-}
-
-export default function useUpdateRoom(
-  roomId: string,
-  options?: UseUpdateRoomOptions
-) {
+export default function useUpdateRoom({ roomId }: { roomId: string }) {
   const queryClient = useQueryClient();
 
   const updateRoomFunction = async (data: UpdateRoomData) => {
-    const response = await api.patch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/room/${roomId}`,
-      data
-    );
+    const response = await api.patch(`room/${roomId}`, data);
     return response.data;
   };
 
   // Helper to update room in a rooms list cache
   const updateRoomInCache = (
     oldData: RoomsResponse | undefined,
-    updatedData: UpdateRoomData
+    updatedData: UpdateRoomData,
   ): RoomsResponse | undefined => {
     if (!oldData) return oldData;
     return {
       ...oldData,
       rooms: oldData.rooms.map((room) =>
-        room.id === roomId ? { ...room, ...updatedData } : room
+        room.id === roomId ? { ...room, ...updatedData } : room,
       ),
     };
   };
@@ -63,48 +54,28 @@ export default function useUpdateRoom(
         "room",
         roomId,
       ]);
-      const previousRoomsAll = queryClient.getQueryData<RoomsResponse>([
-        "rooms",
-        "all",
-        "",
-      ]);
       const previousRoomsCreated = queryClient.getQueryData<RoomsResponse>([
         "rooms",
         "created",
-        "",
-      ]);
-      const previousRoomsJoined = queryClient.getQueryData<RoomsResponse>([
-        "rooms",
-        "joined",
         "",
       ]);
 
       // Optimistically update room details (instant!)
       queryClient.setQueryData<RoomDetails>(
         ["room", roomId],
-        (old) => (old ? { ...old, ...newData } : old) as RoomDetails
+        (old) => (old ? { ...old, ...newData } : old) as RoomDetails,
       );
 
       // Optimistically update rooms lists
       queryClient.setQueryData(
-        ["rooms", "all", ""],
-        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
-      );
-      queryClient.setQueryData(
         ["rooms", "created", ""],
-        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
-      );
-      queryClient.setQueryData(
-        ["rooms", "joined", ""],
-        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData)
+        (old: RoomsResponse | undefined) => updateRoomInCache(old, newData),
       );
 
       // Return context for rollback
       return {
         previousRoom,
-        previousRoomsAll,
         previousRoomsCreated,
-        previousRoomsJoined,
       };
     },
 
@@ -114,47 +85,23 @@ export default function useUpdateRoom(
       if (context?.previousRoom) {
         queryClient.setQueryData(["room", roomId], context.previousRoom);
       }
-      if (context?.previousRoomsAll) {
-        queryClient.setQueryData(
-          ["rooms", "all", ""],
-          context.previousRoomsAll
-        );
-      }
       if (context?.previousRoomsCreated) {
         queryClient.setQueryData(
           ["rooms", "created", ""],
-          context.previousRoomsCreated
-        );
-      }
-      if (context?.previousRoomsJoined) {
-        queryClient.setQueryData(
-          ["rooms", "joined", ""],
-          context.previousRoomsJoined
+          context.previousRoomsCreated,
         );
       }
 
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to update room. Please try again."
-      );
+      toast.error("Failed to update room. Please try again.");
     },
 
     // On success - sync with server response and revalidate Next.js cache
-    onSuccess: async (serverRoom: Room) => {
-      toast.success("Room updated successfully!");
-
-      // Update with actual server response (in case server modified data)
-      queryClient.setQueryData<RoomDetails>(["room", roomId], (old) =>
-        old ? { ...old, ...serverRoom } : old
-      );
-
+    onSuccess: async () => {
       // Invalidate Next.js server cache for this specific room and rooms list
       await Promise.all([
         refreshRoomCache(roomId),
         refreshRoomsCache(), // Uses default filter: "all"
       ]);
-
-      options?.onSuccess?.();
     },
   });
 

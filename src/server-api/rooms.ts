@@ -73,7 +73,7 @@ const EMPTY_RESPONSE: RoomsResponse = {
  * Server-side fetch for user rooms with Next.js Data Cache
  */
 export async function getRooms(
-  params: GetRoomsParams = {}
+  params: GetRoomsParams = {},
 ): Promise<RoomsResponse> {
   const { filter = "all", search = "" } = params;
 
@@ -88,7 +88,7 @@ export async function getRooms(
         revalidate: false, // Cache forever until manual invalidation
         tags: ["rooms", `rooms-${filter}`],
       },
-    }
+    },
   );
 
   if (error || !data) {
@@ -124,7 +124,7 @@ interface RoomMemberApiResponse {
  * Server-side fetch for room members
  */
 export async function getRoomMembers(
-  roomId: string
+  roomId: string,
 ): Promise<RoomMemberForTable[]> {
   const { data, error } = await getWithAuth<RoomMemberApiResponse[]>(
     `${API_BASE_URL}/room/${roomId}/members`,
@@ -133,7 +133,7 @@ export async function getRoomMembers(
         revalidate: false,
         tags: ["room-members", `room-members-${roomId}`],
       },
-    }
+    },
   );
 
   if (error || !data) {

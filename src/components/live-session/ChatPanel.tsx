@@ -1,6 +1,6 @@
 /**
  * ChatPanel Component
- * 
+ *
  * Displays chat messages with upvoting functionality and bot integration.
  * Includes tabs for Messages and Bot Answers.
  */
@@ -79,7 +79,8 @@ export default function ChatPanel({
   }, [messages]);
 
   // Use extracted replies if botReplies prop is empty
-  const displayBotReplies = botReplies.length > 0 ? botReplies : extractedBotReplies;
+  const displayBotReplies =
+    botReplies.length > 0 ? botReplies : extractedBotReplies;
 
   const handleSendMessage = () => {
     if (messageInput.trim()) {
@@ -116,7 +117,9 @@ export default function ChatPanel({
           >
             <MessageSquare className="w-4 h-4" />
             Messages
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === "messages" ? "bg-white/20" : "bg-secondary/10"}`}>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === "messages" ? "bg-white/20" : "bg-secondary/10"}`}
+            >
               {messages.length}
             </span>
           </button>
@@ -134,7 +137,9 @@ export default function ChatPanel({
           >
             <Bot className="w-4 h-4" />
             Bot Answers
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === "bot-answers" ? "bg-white/20" : "bg-secondary/10"}`}>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === "bot-answers" ? "bg-white/20" : "bg-secondary/10"}`}
+            >
               {displayBotReplies.length}
             </span>
           </button>
@@ -148,11 +153,13 @@ export default function ChatPanel({
             sortedMessages.map((message) => (
               <div key={message.id} className="space-y-2">
                 {/* User Message */}
-                <div className={`group relative ${
-                  message.id === topVotedMessageId 
-                    ? "p-3 bg-secondary/5 border-2 border-primary/30 rounded-xl" 
-                    : ""
-                }`}>
+                <div
+                  className={`group relative ${
+                    message.id === topVotedMessageId
+                      ? "p-3 bg-secondary/5 border-2 border-primary/30 rounded-xl"
+                      : ""
+                  }`}
+                >
                   <div className="flex items-start gap-3">
                     {/* Avatar */}
                     <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
@@ -212,7 +219,9 @@ export default function ChatPanel({
                     <div className="relative opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() =>
-                          setShowMenu(showMenu === message.id ? null : message.id)
+                          setShowMenu(
+                            showMenu === message.id ? null : message.id,
+                          )
                         }
                         className="p-1 hover:bg-secondary/10 rounded transition-colors"
                         aria-label="More actions"
@@ -274,59 +283,59 @@ export default function ChatPanel({
             <div className="flex flex-col items-center justify-center h-full text-center">
               <MessageSquare className="w-12 h-12 text-para-muted mb-3" />
               <p className="text-para font-medium">No messages yet</p>
-              <p className="text-sm text-para-muted mt-1">Start the conversation!</p>
-            </div>
-          )
-        ) : (
-          // Bot Answers Tab
-          displayBotReplies.length > 0 ? (
-            displayBotReplies.map((reply) => (
-              <div
-                key={reply.id}
-                className="p-4 bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/20 rounded-lg"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 bg-primary rounded-lg">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-sm font-semibold text-primary">
-                    AI Assistant
-                  </span>
-                  <span className="text-xs text-para-muted ml-auto">
-                    {formatDistanceToNow(reply.timestamp, { addSuffix: true })}
-                  </span>
-                </div>
-                <p className="text-sm text-para whitespace-pre-wrap mb-3">
-                  {reply.content}
-                </p>
-                {reply.sources && reply.sources.length > 0 && (
-                  <div className="pt-3 border-t border-primary/10">
-                    <p className="text-xs font-medium text-para-muted mb-2">
-                      Sources:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {reply.sources.map((source, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 bg-white/50 rounded text-xs text-para"
-                        >
-                          {source}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <Bot className="w-12 h-12 text-para-muted mb-3" />
-              <p className="text-para font-medium">No bot answers yet</p>
               <p className="text-sm text-para-muted mt-1">
-                Enable "Ask Bot" when sending a message
+                Start the conversation!
               </p>
             </div>
           )
+        ) : // Bot Answers Tab
+        displayBotReplies.length > 0 ? (
+          displayBotReplies.map((reply) => (
+            <div
+              key={reply.id}
+              className="p-4 bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/20 rounded-lg"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 bg-primary rounded-lg">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-primary">
+                  AI Assistant
+                </span>
+                <span className="text-xs text-para-muted ml-auto">
+                  {formatDistanceToNow(reply.timestamp, { addSuffix: true })}
+                </span>
+              </div>
+              <p className="text-sm text-para whitespace-pre-wrap mb-3">
+                {reply.content}
+              </p>
+              {reply.sources && reply.sources.length > 0 && (
+                <div className="pt-3 border-t border-primary/10">
+                  <p className="text-xs font-medium text-para-muted mb-2">
+                    Sources:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {reply.sources.map((source, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 bg-white/50 rounded text-xs text-para"
+                      >
+                        {source}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <Bot className="w-12 h-12 text-para-muted mb-3" />
+            <p className="text-para font-medium">No bot answers yet</p>
+            <p className="text-sm text-para-muted mt-1">
+              Enable "Ask Bot" when sending a message
+            </p>
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -347,8 +356,12 @@ export default function ChatPanel({
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
             </div>
             <div className="flex items-center gap-1.5">
-              <Sparkles className={`w-4 h-4 ${askBot ? "text-primary" : "text-para-muted"}`} />
-              <span className={`text-sm font-medium ${askBot ? "text-primary" : "text-para"}`}>
+              <Sparkles
+                className={`w-4 h-4 ${askBot ? "text-primary" : "text-para-muted"}`}
+              />
+              <span
+                className={`text-sm font-medium ${askBot ? "text-primary" : "text-para"}`}
+              >
                 Ask Bot to answer
               </span>
             </div>

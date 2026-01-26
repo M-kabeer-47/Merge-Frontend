@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Paperclip, Image, Calendar, Send } from "lucide-react";
+import { Paperclip, Image, Calendar, Send, X } from "lucide-react";
+import DateTimePicker from "@/components/ui/DateTimePicker";
 
 interface AnnouncementComposerProps {
   onPost: (data: {
@@ -38,6 +39,7 @@ export default function AnnouncementComposer({
     setContent("");
     setAttachments([]);
     setScheduledFor(undefined);
+    setShowSchedulePicker(false);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,29 +114,29 @@ export default function AnnouncementComposer({
         </div>
       )}
 
-      {/* Scheduled Badge */}
-      {scheduledFor && (
-        <div className="px-4 pb-2">
-          <div className="inline-flex items-center gap-2 text-xs bg-secondary/10 text-secondary px-3 py-1.5 rounded-full">
-            <Calendar className="h-3 w-3" />
-            <span>
-              Scheduled for:{" "}
-              {scheduledFor.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
+      {/* Scheduled Badge / Picker Area */}
+      {showSchedulePicker && (
+        <div className="px-4 pb-4 border-t border-light-border bg-gray-50/50 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium text-heading">
+              Schedule Post
+            </label>
             <button
-              onClick={() => setScheduledFor(undefined)}
-              className="hover:text-destructive transition-colors"
-              aria-label="Remove schedule"
+              onClick={() => {
+                setShowSchedulePicker(false);
+                setScheduledFor(undefined);
+              }}
+              className="text-para-muted hover:text-heading"
             >
-              ×
+              <X className="w-4 h-4" />
             </button>
           </div>
+          <DateTimePicker
+            value={scheduledFor}
+            onChange={setScheduledFor}
+            placeholder="Select date and time"
+            minDate={new Date()}
+          />
         </div>
       )}
 
@@ -178,14 +180,20 @@ export default function AnnouncementComposer({
             aria-hidden="true"
           />
 
-          {/* Schedule */}
+          {/* Schedule Toggle Button */}
           <button
             onClick={() => setShowSchedulePicker(!showSchedulePicker)}
-            className="p-2 rounded hover:bg-gray-100 transition-colors group"
+            className={`p-2 rounded transition-colors group ${
+              showSchedulePicker || scheduledFor
+                ? "bg-secondary/10 text-secondary"
+                : "hover:bg-gray-100 text-para-muted"
+            }`}
             aria-label="Schedule announcement"
             title="Schedule announcement"
           >
-            <Calendar className="h-[18px] w-[18px] text-para-muted group-hover:text-para" />
+            <Calendar
+              className={`h-[18px] w-[18px] ${showSchedulePicker || scheduledFor ? "text-secondary" : "group-hover:text-para"}`}
+            />
           </button>
         </div>
 
@@ -200,31 +208,6 @@ export default function AnnouncementComposer({
           {scheduledFor ? "Schedule" : "Post"}
         </button>
       </div>
-
-      {/* Simple Schedule Picker (Inline) */}
-      {showSchedulePicker && (
-        <div className="px-4 pb-4 border-t border-light-border bg-gray-50">
-          <div className="pt-3 space-y-2">
-            <label className="block text-sm font-medium text-heading">
-              Schedule for later
-            </label>
-            <input
-              type="datetime-local"
-              className="w-full px-3 py-2 border border-light-border rounded-lg text-sm text-para focus:outline-none focus:ring-2 focus:ring-secondary/20"
-              onChange={(e) => {
-                if (e.target.value) {
-                  setScheduledFor(new Date(e.target.value));
-                  setShowSchedulePicker(false);
-                }
-              }}
-              min={new Date().toISOString().slice(0, 16)}
-            />
-            <p className="text-xs text-para-muted">
-              Timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
