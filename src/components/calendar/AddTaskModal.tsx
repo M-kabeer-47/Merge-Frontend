@@ -1,38 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { CalendarTask, TaskCategory } from "@/app/(with-layout)/calendar/page";
-import { getCategoryIcon, getCategoryLabel } from "@/lib/utils/calendar-utils";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import DateTimePicker from "@/components/ui/DateTimePicker";
+import useCreateTask from "@/hooks/calendar/use-create-task";
+import useUpdateTask from "@/hooks/calendar/use-update-task";
+import { CalendarTask } from "@/types/calendar";
 import { format } from "date-fns";
 
 interface AddTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (task: Omit<CalendarTask, "id">) => void;
+  taskToEdit?: CalendarTask | null;
 }
-
-const categories: TaskCategory[] = [
-  "assignment",
-  "quiz",
-  "video-session",
-  "personal",
-];
 
 export default function AddTaskModal({
   isOpen,
   onClose,
-  onSubmit,
+  taskToEdit,
 }: AddTaskModalProps) {
+  const { createTask, isCreating } = useCreateTask();
+  const { updateTask, isUpdating } = useUpdateTask();
+
+  const isEditMode = !!taskToEdit;
+  const isLoading = isCreating || isUpdating;
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "personal" as TaskCategory,
-    date: format(new Date(), "yyyy-MM-dd"),
-    time: "",
+    deadline: "", // ISO string from DateTimePicker
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Reset or populate form when opening/changing mode
+  useEffect(() => {
+    if (isOpen) {
+      if (taskToEdit) {
+        // Pre-fill form for editing
+        let isoDeadline = "";
+        try {
+          // Construct ISO deadline from date and time
+          const timePart = taskToEdit.time || "23:59";
+          isoDeadline = `${taskToEdit.date}T${timePart}:00`;
+        } catch (e) {
+          console.error("Error constructing deadline", e);
+        }
+
+        setFormData({
+          title: taskToEdit.title,
+          description: taskToEdit.description || "",
+          deadline: isoDeadline,
+        });
+      } else {
+        // Reset for new task
+        setFormData({
+          title: "",
+          description: "",
+          deadline: "",
+        });
+      }
+      setErrors({});
+    }
+  }, [isOpen, taskToEdit]);
 
   if (!isOpen) return null;
 
@@ -45,258 +78,165 @@ export default function AddTaskModal({
       newErrors.title = "Title must be 120 characters or less";
     }
 
-    if (formData.description && formData.description.length > 500) {
-      newErrors.description = "Description must be 500 characters or less";
-    }
-
-    if (!formData.date) {
-      newErrors.date = "Date is required";
+    if (!formData.deadline) {
+      newErrors.deadline = "Deadline is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    onSubmit({
-      title: formData.title,
-      description: formData.description || undefined,
-      category: formData.category,
-      date: formData.date,
-      time: formData.time || undefined,
-      status: "pending",
-    });
+    try {
+      if (isEditMode && taskToEdit) {
+        await updateTask({
+          id: taskToEdit.id,
+          title: formData.title,
+          description: formData.description || undefined,
+          deadline: formData.deadline,
+        });
+      } else {
+        await createTask({
+          title: formData.title,
+          description: formData.description || undefined,
+          deadline: formData.deadline,
+        });
+      }
 
-    // Reset form
-    setFormData({
-      title: "",
-      description: "",
-      category: "personal",
-      date: format(new Date(), "yyyy-MM-dd"),
-      time: "",
-    });
-    setErrors({});
-  };
-
-  const handleClose = () => {
-    setFormData({
-      title: "",
-      description: "",
-      category: "personal",
-      date: format(new Date(), "yyyy-MM-dd"),
-      time: "",
-    });
-    setErrors({});
-    onClose();
-  };
-
-  // Trap focus inside modal
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      handleClose();
+      onClose();
+    } catch (error) {
+      // Error is handled by the hook
     }
   };
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-50"
-        onClick={handleClose}
-        aria-hidden="true"
-      />
+  const handleClose = () => {
+    if (isLoading) return;
+    onClose();
+  };
 
-      {/* Modal */}
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        onKeyDown={handleKeyDown}
-      >
-        <div className="bg-background rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-light-border">
-            <h2 id="modal-title" className="text-xl font-semibold text-heading">
-              Add New Task
-            </h2>
-            <button
-              onClick={handleClose}
-              className="p-1 rounded-lg hover:bg-secondary/10 transition-colors"
-              aria-label="Close modal"
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-main-background rounded-lg shadow-xl w-full max-w-md mx-4 border border-light-border">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-light-border">
+          <h2 className="text-xl font-bold text-heading font-raleway">
+            {isEditMode ? "Edit Task" : "Add New Task"}
+          </h2>
+          <button
+            onClick={handleClose}
+            className="p-1 rounded-lg hover:bg-background transition-colors"
+            disabled={isLoading}
+          >
+            <X className="w-5 h-5 text-para-muted" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Title */}
+          <div>
+            <label
+              htmlFor="task-title"
+              className="block text-sm font-medium text-heading mb-2"
             >
-              <X className="w-5 h-5 text-para" />
-            </button>
+              Title <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="task-title"
+              type="text"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              placeholder="Enter task title"
+              autoFocus
+              disabled={isLoading}
+              maxLength={120}
+              error={errors.title}
+            />
+            {errors.title && (
+              <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+            )}
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {/* Title */}
-            <div>
-              <label
-                htmlFor="task-title"
-                className="block text-sm font-medium text-heading mb-2"
-              >
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="task-title"
-                type="text"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className={`
-                  w-full px-4 py-2 rounded-lg border bg-background text-heading
-                  focus:outline-none focus:ring-2 focus:ring-primary
-                  ${errors.title ? "border-red-500" : "border-light-border"}
-                `}
-                placeholder="Enter task title"
-                maxLength={120}
-              />
-              {errors.title && (
-                <p className="text-xs text-red-500 mt-1">{errors.title}</p>
-              )}
-              <p className="text-xs text-para-muted mt-1">
-                {formData.title.length}/120 characters
-              </p>
-            </div>
+          {/* Description */}
+          <div>
+            <label
+              htmlFor="task-description"
+              className="block text-sm font-medium text-heading mb-2"
+            >
+              Description
+            </label>
+            <textarea
+              id="task-description"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              className="flex w-full font-roboto rounded-md border-2 bg-transparent px-3 py-2 text-sm text-para transition-colors placeholder:text-para-muted/60 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 border-light-border hover:border-secondary/30 focus:ring-[2px] focus:ring-secondary/70 resize-none"
+              placeholder="Add details about the task"
+              rows={3}
+              maxLength={500}
+              disabled={isLoading}
+            />
+          </div>
 
-            {/* Description */}
-            <div>
-              <label
-                htmlFor="task-description"
-                className="block text-sm font-medium text-heading mb-2"
-              >
-                Description
-              </label>
-              <textarea
-                id="task-description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className={`
-                  w-full px-4 py-2 rounded-lg border bg-background text-heading
-                  focus:outline-none focus:ring-2 focus:ring-primary
-                  resize-none
-                  ${errors.description ? "border-red-500" : "border-light-border"}
-                `}
-                placeholder="Add details about the task"
-                rows={3}
-                maxLength={500}
-              />
-              {errors.description && (
-                <p className="text-xs text-red-500 mt-1">{errors.description}</p>
-              )}
-              <p className="text-xs text-para-muted mt-1">
-                {formData.description.length}/500 characters
-              </p>
-            </div>
+          {/* Deadline - DateTimePicker */}
+          <div>
+            <label className="block text-sm font-medium text-heading mb-2">
+              Deadline <span className="text-red-500">*</span>
+            </label>
+            <DateTimePicker
+              value={formData.deadline}
+              onChange={(value) =>
+                setFormData({ ...formData, deadline: value })
+              }
+              placeholder="Select deadline"
+              disabled={isLoading}
+              showTime={true}
+              minDate={new Date()}
+              error={errors.deadline}
+              expandUp={true}
+            />
+            {errors.deadline && (
+              <p className="text-xs text-red-500 mt-1">{errors.deadline}</p>
+            )}
+          </div>
 
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-medium text-heading mb-2">
-                Category <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map((category) => {
-                  const Icon = getCategoryIcon(category);
-                  const isSelected = formData.category === category;
-
-                  return (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, category })}
-                      className={`
-                        flex items-center gap-2 px-4 py-3 rounded-lg border transition-colors
-                        ${
-                          isSelected
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-light-border bg-background text-para hover:bg-secondary/10"
-                        }
-                      `}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        {getCategoryLabel(category)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Date and Time */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="task-date"
-                  className="block text-sm font-medium text-heading mb-2"
-                >
-                  Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="task-date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
-                  className={`
-                    w-full px-4 py-2 rounded-lg border bg-background text-heading
-                    focus:outline-none focus:ring-2 focus:ring-primary
-                    ${errors.date ? "border-red-500" : "border-light-border"}
-                  `}
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                !formData.title.trim() || !formData.deadline || isLoading
+              }
+            >
+              {isLoading ? (
+                <LoadingSpinner
+                  size="sm"
+                  text={isEditMode ? "Updating..." : "Adding..."}
                 />
-                {errors.date && (
-                  <p className="text-xs text-red-500 mt-1">{errors.date}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="task-time"
-                  className="block text-sm font-medium text-heading mb-2"
-                >
-                  Time
-                </label>
-                <input
-                  id="task-time"
-                  type="time"
-                  value={formData.time}
-                  onChange={(e) =>
-                    setFormData({ ...formData, time: e.target.value })
-                  }
-                  className="w-full px-4 py-2 rounded-lg border border-light-border bg-background text-heading focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="flex-1 px-4 py-2 rounded-lg border border-light-border bg-background text-para hover:bg-secondary/10 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-              >
-                Add Task
-              </button>
-            </div>
-          </form>
-        </div>
+              ) : isEditMode ? (
+                "Update Task"
+              ) : (
+                "Add Task"
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
-    </>
+    </div>
   );
 }

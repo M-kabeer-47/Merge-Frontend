@@ -99,6 +99,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         onConnect: () => setSocketConnected(true),
         onDisconnect: () => setSocketConnected(false),
         onNotification: (notification) => {
+          console.log("Notificaion", notification);
           // Deduplicate: skip if we've already shown this notification
           if (shownNotificationIds.current.has(notification.id)) {
             return;
@@ -164,9 +165,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === "FCM_NOTIFICATION") {
-        const payload = event.data.payload;
-        const data = payload?.data || {};
-        const notificationId = data.id || `sw-${Date.now()}`;
+        const data = event.data.payload?.data || {};
+        const notificationId =
+          data.announcementId ||
+          data.assignmentId ||
+          data.quizId ||
+          `fcm-${Date.now()}`;
 
         // Deduplicate
         if (shownNotificationIds.current.has(notificationId)) {
@@ -178,12 +182,17 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         const notification: NotificationPayload = {
           id: notificationId,
           content:
-            data.content || payload?.notification?.title || "New Notification",
+            data.title ||
+            data.announcementTitle ||
+            data.assignmentTitle ||
+            data.quizTitle ||
+            "New Notification",
           isRead: false,
           metadata: {
             actionUrl: data.actionUrl,
             roomId: data.roomId,
-            roomTitle: data.roomTitle || payload?.notification?.body,
+            roomTitle: data.roomTitle || data.body,
+            announcementId: data.announcementId,
             assignmentId: data.assignmentId,
             quizId: data.quizId,
           },
@@ -208,22 +217,18 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           if (quizId) invalidateStudentQuizzesCache(queryClient, roomId);
         }
 
-        // Only show toast if tab is visible
-        if (!document.hidden) {
-          toast(notification.content, {
-            id: notification.id,
-            description: notification.metadata.roomTitle || undefined,
-            duration: 8000,
-            action: notification.metadata.actionUrl
-              ? {
-                  label: "View →",
-                  onClick: () => {},
-                }
-              : undefined,
-          });
-        } else {
-          // Tab not visible, cache updated but toast skipped
-        }
+        // Show toast
+        toast(notification.content, {
+          id: notification.id,
+          description: notification.metadata.roomTitle || undefined,
+          duration: 8000,
+          action: notification.metadata.actionUrl
+            ? {
+                label: "View →",
+                onClick: () => {},
+              }
+            : undefined,
+        });
       }
     };
 

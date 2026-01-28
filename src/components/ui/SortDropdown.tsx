@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, ArrowUp, ArrowDown, Check } from "lucide-react";
 import type { SortOption, SortField } from "@/types/content";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface SortOptionConfig {
   field: SortField;
@@ -28,22 +29,7 @@ export default function SortDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
+  useOnClickOutside(dropdownRef, () => setIsOpen(false), isOpen);
 
   // Find the currently selected option
   const selectedOption = value

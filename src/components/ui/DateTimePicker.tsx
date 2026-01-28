@@ -17,6 +17,7 @@ import {
   isBefore,
   startOfDay,
 } from "date-fns";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -30,6 +31,8 @@ interface DateTimePickerProps {
   minDate?: Date;
   showTime?: boolean;
   error?: string;
+
+  expandUp?: boolean;
 }
 
 interface CalendarDay {
@@ -236,17 +239,18 @@ export default function DateTimePicker({
   minDate,
   showTime = true,
   error,
+  expandUp = false,
 }: DateTimePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<View>("calendar");
   const [currentMonth, setCurrentMonth] = useState(
-    value ? new Date(value) : new Date()
+    value ? new Date(value) : new Date(),
   );
   const [selectedDate, setSelectedDate] = useState<Date | null>(
-    value ? new Date(value) : null
+    value ? new Date(value) : null,
   );
   const [time, setTime] = useState(
-    value ? format(new Date(value), "HH:mm") : "23:59"
+    value ? format(new Date(value), "HH:mm") : "23:59",
   );
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -256,18 +260,7 @@ export default function DateTimePicker({
   }, [isOpen]);
 
   // Close on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useOnClickOutside(containerRef, () => setIsOpen(false), isOpen);
 
   // Generate calendar days
   const generateCalendarDays = (): CalendarDay[] => {
@@ -317,7 +310,7 @@ export default function DateTimePicker({
   const displayValue = value
     ? format(
         new Date(value),
-        showTime ? "MMM d, yyyy 'at' h:mm a" : "MMM d, yyyy"
+        showTime ? "MMM d, yyyy 'at' h:mm a" : "MMM d, yyyy",
       )
     : "";
 
@@ -333,8 +326,8 @@ export default function DateTimePicker({
             error
               ? "border-red-500 bg-red-50/50"
               : isOpen
-              ? "border-secondary bg-secondary/5"
-              : "border-light-border bg-background hover:border-secondary/50"
+                ? "border-secondary bg-secondary/5"
+                : "border-light-border bg-background hover:border-secondary/50"
           }
           ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
         `}
@@ -352,7 +345,11 @@ export default function DateTimePicker({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 mt-2 min-w-[280px] bg-main-background border border-light-border rounded-xl shadow-lg overflow-hidden">
+        <div
+          className={`absolute z-50 ${
+            expandUp ? "bottom-full mb-1" : "mt-2"
+          } min-w-[280px] bg-main-background border border-light-border rounded-xl shadow-lg overflow-hidden`}
+        >
           {view === "calendar" ? (
             <>
               <CalendarHeader

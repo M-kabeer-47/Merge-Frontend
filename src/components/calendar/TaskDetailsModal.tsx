@@ -1,8 +1,12 @@
 "use client";
 
 import { X, Calendar, Clock, MapPin, FileText } from "lucide-react";
-import { CalendarTask } from "@/app/(with-layout)/calendar/page";
-import { getCategoryIcon, getCategoryLabel, getCategoryColor } from "@/lib/utils/calendar-utils";
+import { CalendarTask } from "@/types/calendar";
+import {
+  getCategoryIcon,
+  getCategoryLabel,
+  getCategoryColor,
+} from "@/lib/utils/calendar-utils";
 import { format } from "date-fns";
 import { parseISO } from "date-fns/parseISO";
 
@@ -52,11 +56,16 @@ export default function TaskDetailsModal({
           {/* Header */}
           <div className="flex items-start justify-between p-6 border-b border-light-border">
             <div className="flex items-start gap-4 flex-1">
-              <div className={`w-12 h-12 rounded-lg ${color.bg} flex items-center justify-center flex-shrink-0`}>
+              <div
+                className={`w-12 h-12 rounded-lg ${color.bg} flex items-center justify-center flex-shrink-0`}
+              >
                 <Icon className={`w-6 h-6 ${color.text}`} />
               </div>
               <div className="flex-1">
-                <h2 id="modal-title" className="text-xl font-semibold text-heading mb-1">
+                <h2
+                  id="modal-title"
+                  className="text-xl font-semibold text-heading mb-1"
+                >
                   {task.title}
                 </h2>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
@@ -113,7 +122,9 @@ export default function TaskDetailsModal({
               <div className="pt-4 border-t border-light-border">
                 <div className="flex items-center gap-2 mb-2">
                   <FileText className="w-5 h-5 text-para" />
-                  <h3 className="text-sm font-medium text-heading">Description</h3>
+                  <h3 className="text-sm font-medium text-heading">
+                    Description
+                  </h3>
                 </div>
                 <p className="text-sm text-para leading-relaxed">
                   {task.description}

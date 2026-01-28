@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface ModalProps {
   isOpen: boolean;
@@ -33,6 +34,9 @@ export default function Modal({
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
+  // Close on outside click
+  useOnClickOutside(modalRef, onClose, isOpen);
+
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -50,13 +54,6 @@ export default function Modal({
     };
   }, [isOpen, onClose]);
 
-  // Close on outside click
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
-    }
-  };
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -66,7 +63,6 @@ export default function Modal({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-          onClick={handleBackdropClick}
         >
           <motion.div
             ref={modalRef}

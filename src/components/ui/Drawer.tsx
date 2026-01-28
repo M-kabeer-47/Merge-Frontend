@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface DrawerProps {
   isOpen: boolean;
@@ -34,6 +35,9 @@ export default function Drawer({
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
 
+  // Close on outside click
+  useOnClickOutside(drawerRef, onClose, isOpen);
+
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -51,13 +55,6 @@ export default function Drawer({
     };
   }, [isOpen, onClose]);
 
-  // Close on outside click
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
-      onClose();
-    }
-  };
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -69,7 +66,6 @@ export default function Drawer({
           className={`fixed inset-0 z-50 flex justify-end ${
             showOverlay ? "bg-black/30 backdrop-blur-[2px]" : ""
           }`}
-          onClick={handleBackdropClick}
         >
           <motion.div
             ref={drawerRef}

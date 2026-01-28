@@ -1,14 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Folder,
-  FileText,
-  MoreVertical,
-  
-} from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Folder, FileText, MoreVertical } from "lucide-react";
 import type { NoteOrFolder, NoteItem, FolderItem } from "@/types/note";
 import DropdownMenu from "@/components/ui/Dropdown";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface NoteListRowProps {
   item: NoteOrFolder;
@@ -28,21 +24,7 @@ export default function NoteListRow({
   const noteItem = item as NoteItem;
   const folderItem = item as FolderItem;
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showMenu]);
+  useOnClickOutside(menuRef, () => setShowMenu(false), showMenu);
 
   // Format date
   const formatDate = (date: Date) => {
@@ -54,7 +36,6 @@ export default function NoteListRow({
   };
 
   // Get preview for notes
-  
 
   return (
     <tr
@@ -77,9 +58,7 @@ export default function NoteListRow({
               <p className="text-[15px] font-semibold text-heading truncate">
                 {item.name}
               </p>
-              
             </div>
-            
           </div>
         </div>
       </td>

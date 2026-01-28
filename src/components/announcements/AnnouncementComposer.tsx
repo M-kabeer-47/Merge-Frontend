@@ -3,24 +3,38 @@
 import React, { useState, useRef } from "react";
 import { Paperclip, Image, Calendar, Send, X } from "lucide-react";
 import DateTimePicker from "@/components/ui/DateTimePicker";
+import { Button } from "../ui/Button";
 
 interface AnnouncementComposerProps {
+  initialData?: {
+    title: string;
+    content: string;
+    scheduledFor?: Date;
+    attachments?: any[];
+  };
   onPost: (data: {
     title: string;
     content: string;
     scheduledFor?: Date;
     attachments: File[];
   }) => void;
+  actionLabel?: string;
 }
 
 export default function AnnouncementComposer({
+  initialData,
   onPost,
+  actionLabel = "Post",
 }: AnnouncementComposerProps) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [content, setContent] = useState(initialData?.content || "");
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [scheduledFor, setScheduledFor] = useState<Date | undefined>();
-  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState<Date | undefined>(
+    initialData?.scheduledFor,
+  );
+  const [showSchedulePicker, setShowSchedulePicker] = useState(
+    !!initialData?.scheduledFor,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,8 +146,8 @@ export default function AnnouncementComposer({
             </button>
           </div>
           <DateTimePicker
-            value={scheduledFor}
-            onChange={setScheduledFor}
+            value={scheduledFor ? scheduledFor.toISOString() : ""}
+            onChange={(val) => setScheduledFor(val ? new Date(val) : undefined)}
             placeholder="Select date and time"
             minDate={new Date()}
           />
@@ -198,15 +212,14 @@ export default function AnnouncementComposer({
         </div>
 
         {/* Post Button */}
-        <button
+        <Button
           onClick={handlePost}
           disabled={!title.trim() || !content.trim()}
-          className="flex items-center gap-2 px-6 h-[40px] bg-secondary text-white rounded-lg hover:bg-secondary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[15px] font-medium"
           aria-label="Post announcement"
         >
           <Send className="h-4 w-4" />
-          {scheduledFor ? "Schedule" : "Post"}
-        </button>
+          {scheduledFor ? "Schedule" : actionLabel}
+        </Button>
       </div>
     </div>
   );

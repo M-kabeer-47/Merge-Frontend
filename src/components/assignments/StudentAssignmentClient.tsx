@@ -8,18 +8,25 @@ import AssignmentHeader from "./AssignmentHeader";
 import StudentAssignmentView from "./StudentAssignmentView";
 import useSubmitAssignment from "@/hooks/assignments/use-submit-assignment";
 import useDeleteAssignmentAttempt from "@/hooks/assignments/use-delete-assignment-attempt";
+import { useStudentAssignment } from "@/hooks/assignments/use-student-assignment";
+import AssignmentDetailSkeleton from "@/components/ui/skeletons/AssignmentDetailSkeleton";
 
 interface StudentAssignmentClientProps {
-  assignment: StudentAssignment;
   roomId: string;
+  assignmentId: string;
 }
 
 export default function StudentAssignmentClient({
-  assignment,
   roomId,
+  assignmentId,
 }: StudentAssignmentClientProps) {
   const router = useRouter();
-  const assignmentId = assignment.id;
+
+  // Get assignment from React Query cache (hydrated from server)
+  const { data: assignment, isLoading } = useStudentAssignment({
+    roomId,
+    assignmentId,
+  });
 
   // File selection state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -49,6 +56,11 @@ export default function StudentAssignmentClient({
     }
   }, [assignment]);
 
+  // Show loading state while data is being hydrated
+  if (isLoading || !assignment) {
+    return <AssignmentDetailSkeleton isInstructor={false} />;
+  }
+
   // Calculate submission-related states
   const isPastDue = new Date() > new Date(assignment.endAt);
   const isClosed = assignment.isClosed;
@@ -57,11 +69,9 @@ export default function StudentAssignmentClient({
   const canSubmit =
     !isClosed && (!isPastDue || (isPastDue && assignment.isTurnInLateEnabled));
 
-  const submissionStatus = isStudentAssignment(assignment)
-    ? assignment.submissionStatus
-    : undefined;
+  const submissionStatus = assignment.submissionStatus;
 
-  const attempt = isStudentAssignment(assignment) ? assignment.attempt : null;
+  const attempt = assignment.attempt || null;
 
   const handleBack = () => {
     router.push(`/rooms/${roomId}/assignments`);
@@ -72,9 +82,10 @@ export default function StudentAssignmentClient({
     console.log("Inside handleTurnIn");
 
     if (
-      selectedFiles.length === 0 ||
+      (!attempt && selectedFiles.length === 0) ||
       (attempt && attempt.files?.length === 0)
     ) {
+      console.log("Inside if");
       document
         .querySelector('[data-sidebar="your-work"]')
         ?.scrollIntoView({ behavior: "smooth" });

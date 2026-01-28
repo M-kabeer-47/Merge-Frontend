@@ -13,11 +13,13 @@ interface AnnouncementsResponse {
 
 export async function getAnnouncements({
   roomId,
+  filter,
 }: {
   roomId: string;
+  filter: string;
 }): Promise<Announcement[]> {
   const { data, error } = await getWithAuth<AnnouncementsResponse>(
-    `${API_BASE_URL}/announcements?roomId=${roomId}`,
+    `${API_BASE_URL}/announcements?roomId=${roomId}&filter=${filter}`,
     {
       next: {
         revalidate: false,
@@ -25,7 +27,6 @@ export async function getAnnouncements({
       },
     },
   );
-  console.log("Announcements response:", data);
 
   if (error || !data) {
     console.error("Error fetching announcements:", error);

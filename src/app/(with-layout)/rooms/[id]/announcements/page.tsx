@@ -19,7 +19,7 @@ export default async function AnnouncementsDataWrapper({
 
   await queryClient.prefetchQuery({
     queryKey: ["announcements", roomId],
-    queryFn: () => getAnnouncements({ roomId }),
+    queryFn: () => getAnnouncements({ roomId, filter: "all" }),
   });
 
   return (

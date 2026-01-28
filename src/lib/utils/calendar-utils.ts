@@ -5,7 +5,7 @@ import {
   User,
   LucideIcon,
 } from "lucide-react";
-import { TaskCategory } from "@/app/(with-layout)/calendar/page";
+import { TaskCategory } from "@/types/calendar";
 
 export function getCategoryIcon(category: TaskCategory): LucideIcon {
   switch (category) {
@@ -25,15 +25,31 @@ export function getCategoryIcon(category: TaskCategory): LucideIcon {
 export function getCategoryColor(category: TaskCategory) {
   switch (category) {
     case "assignment":
-      return { bg: "bg-primary/10", text: "text-primary", border: "border-primary" };
+      return {
+        bg: "bg-primary/10",
+        text: "text-primary",
+        border: "border-primary",
+      };
     case "quiz":
-      return { bg: "bg-secondary/10", text: "text-secondary", border: "border-secondary" };
+      return {
+        bg: "bg-secondary/10",
+        text: "text-secondary",
+        border: "border-secondary",
+      };
     case "video-session":
-      return { bg: "bg-accent/10", text: "text-accent", border: "border-accent" };
+      return {
+        bg: "bg-accent/10",
+        text: "text-accent",
+        border: "border-accent",
+      };
     case "personal":
       return { bg: "bg-para/10", text: "text-para", border: "border-para" };
     default:
-      return { bg: "bg-primary/10", text: "text-primary", border: "border-primary" };
+      return {
+        bg: "bg-primary/10",
+        text: "text-primary",
+        border: "border-primary",
+      };
   }
 }
 

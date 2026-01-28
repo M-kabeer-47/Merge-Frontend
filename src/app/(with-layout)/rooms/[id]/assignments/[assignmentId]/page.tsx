@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useRoom } from "@/providers/RoomProvider";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import AssignmentDetailsPageSkeleton from "@/components/ui/skeletons/AssignmentDetailSkeleton";
 
 interface AssignmentDetailsPageProps {
   params: Promise<{ id: string; assignmentId: string }>;
@@ -21,18 +21,18 @@ export default function AssignmentDetailsPage({
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
   const { userRole } = useRoom();
-
+  const isInstructor = userRole === "instructor" || userRole === "moderator";
   useEffect(() => {
     async function redirect() {
       const { id: roomId, assignmentId } = await params;
 
       if (isAuthLoading || !user) return;
 
-      const isInstructor = userRole === "instructor" || userRole === "moderator";
-
       if (isInstructor) {
         // Instructor sees submissions
-        router.replace(`/rooms/${roomId}/assignments/${assignmentId}/submissions`);
+        router.replace(
+          `/rooms/${roomId}/assignments/${assignmentId}/submissions`,
+        );
       } else {
         // Student sees submit/work page
         router.replace(`/rooms/${roomId}/assignments/${assignmentId}/submit`);
@@ -42,9 +42,5 @@ export default function AssignmentDetailsPage({
     redirect();
   }, [params, user, isAuthLoading, userRole, router]);
 
-  return (
-    <div className="min-h-screen bg-main-background flex items-center justify-center">
-      <LoadingSpinner size="lg" />
-    </div>
-  );
+  return <AssignmentDetailsPageSkeleton isInstructor={isInstructor} />;
 }

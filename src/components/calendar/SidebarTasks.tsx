@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarTask, TaskCategory } from "@/app/(with-layout)/calendar/page";
+import { CalendarTask, TaskCategory } from "@/types/calendar";
 import { format } from "date-fns";
 import TaskList from "./TaskList";
 import EmptyState from "./EmptyState";
@@ -66,7 +66,9 @@ export default function SidebarTasks({
                     : "bg-secondary/10 text-secondary hover:bg-secondary/20"
                 }
               `}
-              title={showAllUpcoming ? "Show selected date" : "Show all upcoming"}
+              title={
+                showAllUpcoming ? "Show selected date" : "Show all upcoming"
+              }
             >
               <List className="w-3.5 h-3.5" />
               {showAllUpcoming ? "Selected Date" : "All Upcoming"}

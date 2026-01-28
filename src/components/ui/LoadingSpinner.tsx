@@ -20,13 +20,7 @@ export default function LoadingSpinner({
 
   return (
     <div className="flex items-center justify-center gap-2">
-      <Loader
-        className={cn(
-          "animate-spin",
-          sizeClasses[size],
-          className
-        )}
-      />
+      <Loader className={cn("animate-spin", sizeClasses[size], className)} />
       <span className="text-sm">{text}</span>
     </div>
   );

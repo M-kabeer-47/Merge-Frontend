@@ -4,6 +4,8 @@ import api from "@/utils/api";
 import { uploadToS3 } from "@/utils/s3-upload";
 import type { Assignment, SubmissionStatus } from "@/types/assignment";
 import { useRouter } from "next/navigation";
+import { refreshStudentAssignmentCache } from "@/server-actions/assignments";
+import { studentAssignmentQueryKey } from "./use-student-assignment";
 
 export interface SubmitAssignmentData {
   assignmentId: string;
@@ -38,7 +40,7 @@ export default function useSubmitAssignment() {
   const uploadFile = async (
     file: File,
     assignmentId: string,
-    onProgress?: (percent: number) => void
+    onProgress?: (percent: number) => void,
   ): Promise<{ name: string; url: string }> => {
     const contentType = file.type || "application/octet-stream";
 
@@ -49,7 +51,7 @@ export default function useSubmitAssignment() {
         originalName: file.name,
         contentType,
         size: file.size,
-      }
+      },
     );
 
     const { uploadUrl, fileUrl } = presignedResponse.data;
@@ -67,7 +69,7 @@ export default function useSubmitAssignment() {
   // Handles both array format and object format (with .assignments property)
   const updateAssignmentInList = (
     old: AssignmentsResponse | Assignment[] | undefined,
-    assignmentId: string
+    assignmentId: string,
   ): AssignmentsResponse | Assignment[] | undefined => {
     if (!old) return old;
 
@@ -76,7 +78,7 @@ export default function useSubmitAssignment() {
       return old.map((a) =>
         a.id === assignmentId
           ? { ...a, submissionStatus: "submitted" as SubmissionStatus }
-          : a
+          : a,
       );
     }
 
@@ -87,7 +89,7 @@ export default function useSubmitAssignment() {
         assignments: old.assignments.map((a) =>
           a.id === assignmentId
             ? { ...a, submissionStatus: "submitted" as SubmissionStatus }
-            : a
+            : a,
         ),
       };
     }
@@ -121,7 +123,7 @@ export default function useSubmitAssignment() {
       // Update assignment detail cache with new attempt data
       // Query key includes "student" for student view
       queryClient.setQueryData(
-        ["assignment", data.assignmentId, "student"],
+        studentAssignmentQueryKey(data.assignmentId),
         (old: Assignment | undefined) => {
           if (!old) return old;
           return {
@@ -135,7 +137,7 @@ export default function useSubmitAssignment() {
               note: data.note || null,
             },
           };
-        }
+        },
       );
 
       // Update all assignment list caches (different sort params)
@@ -150,16 +152,18 @@ export default function useSubmitAssignment() {
         queryClient.setQueryData(
           query.queryKey,
           (old: AssignmentsResponse | Assignment[] | undefined) =>
-            updateAssignmentInList(old, data.assignmentId)
+            updateAssignmentInList(old, data.assignmentId),
         );
       });
 
+      // Invalidate Next.js server cache for this assignment
+      refreshStudentAssignmentCache(data.roomId, data.assignmentId);
+
       toast.success("Assignment submitted successfully!");
-      router.push(`/rooms/${data.roomId}/assignments`);
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.message || "Failed to submit assignment"
+        error?.response?.data?.message || "Failed to submit assignment",
       );
     },
   });

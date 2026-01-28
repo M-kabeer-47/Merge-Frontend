@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { IconChevronDown, IconLogin, IconUser } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "motion/react";
 import Avatar from "../ui/Avatar";
 import DropdownMenu, { DropdownOption } from "@/components/ui/Dropdown";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface ProfileDropdownProps {
   onSignOut?: () => void;
@@ -27,24 +28,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setProfileOpen(false);
-      }
-    };
-
-    if (profileOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [profileOpen]);
+  useOnClickOutside(dropdownRef, () => setProfileOpen(false), profileOpen);
 
   // Show loading skeleton
   if (isLoading) {

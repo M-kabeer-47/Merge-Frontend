@@ -1,9 +1,10 @@
 "use client";
 
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import TagChip from "./TagChip";
 import type { SortOption } from "@/types/discover";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface FilterBarProps {
   availableTags: string[];
@@ -40,19 +41,11 @@ export default function FilterBar({
   const hasFilters = selectedTags.length > 0;
 
   // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowSortDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useOnClickOutside(
+    dropdownRef,
+    () => setShowSortDropdown(false),
+    showSortDropdown,
+  );
 
   const currentSortLabel =
     sortOptions.find((opt) => opt.value === sortBy)?.label || "Sort by";

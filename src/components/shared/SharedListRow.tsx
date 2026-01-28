@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { MoreVertical } from "lucide-react";
 import type { BaseDisplayItem, MenuOption } from "@/types/display-item";
 import DropdownMenu from "@/components/ui/Dropdown";
 import { ItemIcon } from "@/utils/get-file-icon";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
+
 interface SharedListRowProps {
   item: BaseDisplayItem;
   isSelected?: boolean;
@@ -26,21 +28,7 @@ export default function SharedListRow({
   const menuRef = useRef<HTMLDivElement>(null);
   const modifiedAt = item.updatedAt;
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showMenu]);
+  useOnClickOutside(menuRef, () => setShowMenu(false), showMenu);
 
   return (
     <tr

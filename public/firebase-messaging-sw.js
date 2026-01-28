@@ -1,213 +1,118 @@
 /**
  * Firebase Messaging Service Worker
- * VERSION: 2.4.0 - Added focus check to prevent duplicate notifications
+ * VERSION: 3.0.0 - Simplified using Firebase's standard onBackgroundMessage
  *
  * This runs in the background to receive push notifications
  * when the app is not open or not in focus.
- * 
- * When app is focused: FCM foreground handler in React shows toast
- * When app is NOT focused: This service worker shows native push
  */
 
-const DEFAULT_ICON_PATH = "/dark-mode-logo.svg";
+// Import Firebase scripts for Service Worker
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-const resolveUrl = (value) => {
-  if (!value) return null;
-  try {
-    return new URL(value, self.registration.scope).toString();
-  } catch (e) {
-    if (typeof value === "string" && value.startsWith("/")) {
-      return self.location.origin + value;
-    }
-    return value;
-  }
-};
+// Initialize Firebase in the service worker
+firebase.initializeApp({
+  apiKey: "AIzaSyAC6G0CNC1dGEkEy0-2QefRi_dfbzaeQ04",
+  authDomain: "merge-7b4bf.firebaseapp.com",
+  projectId: "merge-7b4bf",
+  storageBucket: "merge-7b4bf.firebasestorage.app",
+  messagingSenderId: "34731146067",
+  appId: "1:34731146067:web:74a2e74ac35740a9e1bfa6"
+});
 
-const buildActionUrl = (payload, data) => {
-  let actionUrl = data.actionUrl;
+// Get messaging instance
+const messaging = firebase.messaging();
 
-  // Check if metadata is nested or a stringified JSON
-  if (!actionUrl && data.metadata) {
-    if (typeof data.metadata === "object") {
-      actionUrl = data.metadata.actionUrl;
-    } else if (typeof data.metadata === "string") {
-      try {
-        const parsedMetadata = JSON.parse(data.metadata);
-        actionUrl = parsedMetadata.actionUrl;
-      } catch (e) {
-        console.log("[SW] Failed to parse metadata string:", e);
-      }
-    }
-  }
+const DEFAULT_ICON = "/dark-mode-logo.svg";
 
-  if (!actionUrl && payload?.fcmOptions?.link) {
-    actionUrl = payload.fcmOptions.link;
-  }
-
-  if (!actionUrl && payload?.notification?.click_action) {
-    actionUrl = payload.notification.click_action;
-  }
-
-  // FALLBACK: Construct URL from data fields if actionUrl is still missing
-  if (!actionUrl && data.roomId) {
-    if (data.type === "assignment" && data.assignmentId) {
-      actionUrl = `/rooms/${data.roomId}/assignments/${data.assignmentId}`;
-    } else if (data.type === "quiz" && data.quizId) {
-      // Assuming quiz URL structure matches assignments or uses a specific route
-      // Adjust this path if your quiz route is different
-      actionUrl = `/rooms/${data.roomId}/quizzes/${data.quizId}`;
-    } else if (data.type === "announcement" || data.type === "session") {
-      // Announcements usually in the room view or specific tab
-      actionUrl = `/rooms/${data.roomId}`;
-    } else {
-      // Default to room page
-      actionUrl = `/rooms/${data.roomId}`;
-    }
-  }
-
-  // Construct absolute URL if it is relative
-  if (actionUrl && actionUrl.startsWith("/")) {
-    actionUrl = self.location.origin + actionUrl;
-  }
-
-  return actionUrl || self.location.origin;
-};
-
-const showNotificationFromPayload = async (payload) => {
-  const data = payload?.data || {};
-
-  const actionUrl = payload.actionUrl || buildActionUrl(payload, data);
-
-  // Use data from payload
-  const notificationTitle =
-    data.content || payload?.notification?.title || "New Notification";
-  const roomTitle = data.roomTitle || payload?.notification?.body || "";
-
-  // Prefer icon provided by payload; otherwise fall back to app logo
-  const iconCandidate =
-    data.icon ||
-    data.iconUrl ||
-    payload?.notification?.icon ||
-    DEFAULT_ICON_PATH;
-
-  const badgeCandidate =
-    data.badge ||
-    data.badgeUrl ||
-    payload?.notification?.badge ||
-    DEFAULT_ICON_PATH;
-
-  const imageCandidate =
-    data.image ||
-    data.imageUrl ||
-    payload?.notification?.image ||
-    null;
-
-  const iconUrl = resolveUrl(iconCandidate);
-  const badgeUrl = resolveUrl(badgeCandidate);
-  const imageUrl = resolveUrl(imageCandidate);
-  
-  const notificationOptions = {
-    body: roomTitle,
-    icon: iconUrl,
-    badge: badgeUrl || iconUrl,
-    ...(imageUrl ? { image: imageUrl } : {}),
-    tag: data.id || `notification-${Date.now()}`, // Unique tag per notification
-    data: {
-      actionUrl, // Store resolved absolute URL
-      ...data,
-    },
-    vibrate: [200, 100, 200],
-    requireInteraction: true,
-  };
-
-  try {
-    await self.registration.showNotification(notificationTitle, notificationOptions);
-  } catch (error) {
-    console.error("[SW] showNotification failed:", error);
-  }
-};
-
-// Push listener to handle all FCM pushes
+/**
+ * Handle foreground messages - send to client for toast
+ * This runs BEFORE Firebase's internal handler
+ */
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
-
   event.waitUntil(
     (async () => {
-      // Check if any app window is focused - if so, FCM foreground handler handles it
-      const windowClients = await clients.matchAll({ 
-        type: "window", 
-        includeUncontrolled: true 
+      // Check if any client is focused
+      const windowClients = await clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
       });
-      
-      // If ANY client exists (browser tab is open, even if not focused)
-      // Send to React instead of showing native notification
-      if (windowClients.length > 0) {
-        // Parse payload first
+
+      const focusedClient = windowClients.find((client) => client.focused);
+
+      if (focusedClient && event.data) {
+        // App is FOCUSED - send to client for toast, skip native notification
         let payload;
         try {
           payload = event.data.json();
         } catch (e) {
-          try {
-            const text = await event.data.text();
-            payload = JSON.parse(text);
-          } catch (err) {
-            return;
-          }
-        }
-        
-        // Send to the first available client (or focused one if available)
-        const targetClient = windowClients.find(client => client.focused) || windowClients[0];
-        if (targetClient) {
-          targetClient.postMessage({
-            type: 'FCM_NOTIFICATION',
-            payload: payload
-          });
-        }
-        return;
-      }
-
-      // No clients - browser is completely closed
-
-      let payload;
-      try {
-        payload = event.data.json();
-      } catch (e) {
-        try {
-          const text = await event.data.text();
-          payload = JSON.parse(text);
-        } catch (err) {
           return;
         }
+        
+        console.log("[SW] App focused, sending to client for toast");
+        focusedClient.postMessage({
+          type: "FCM_NOTIFICATION",
+          payload: payload,
+        });
       }
-
-      await showNotificationFromPayload(payload);
-    })(),
+      // If no focused client, do nothing here - onBackgroundMessage will handle it
+    })()
   );
 });
 
-// Handle notification click
-self.addEventListener("notificationclick", (event) => {
-  console.log("[SW] Notification clicked:", event);
-  console.log("[SW] Notification data:", event.notification.data);
+/**
+ * Handle background messages using Firebase's official API
+ * This ONLY fires when the app is in the background/closed
+ */
+messaging.onBackgroundMessage((payload) => {
+  console.log("[SW] Background message received:", payload);
 
+  const data = payload.data || {};
+  
+  // Use the data from the payload directly
+  const title = data.announcementTitle || data.title || payload.notification?.title || "New Notification";
+  const body = data.roomTitle || payload.notification?.body || "";
+  
+  // Build the action URL from the payload data
+  const actionUrl = data.actionUrl || "/";
+
+  const notificationOptions = {
+    body: body,
+    icon: DEFAULT_ICON,
+    badge: DEFAULT_ICON,
+    tag: data.announcementId || data.id || `notification-${Date.now()}`,
+    data: {
+      actionUrl: actionUrl,
+      ...data
+    },
+    requireInteraction: true,
+  };
+
+  return self.registration.showNotification(title, notificationOptions);
+});
+
+/**
+ * Handle notification click - navigate to the action URL
+ */
+self.addEventListener("notificationclick", (event) => {
+  console.log("[SW] Notification clicked:", event.notification.data);
+  
   event.notification.close();
 
-  // Get the URL to open
-  const urlToOpen = event.notification.data?.actionUrl || self.location.origin;
-  
-  console.log("[SW] Opening URL:", urlToOpen);
+  const urlToOpen = event.notification.data?.actionUrl 
+    ? self.location.origin + event.notification.data.actionUrl
+    : self.location.origin;
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
-      // Check if there's already a window open
+      // Try to focus an existing window
       for (const client of windowClients) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
-          // Navigate existing window to the URL
           client.navigate(urlToOpen);
           return client.focus();
         }
       }
-      // If no window is open, open a new one
+      // Open a new window if none exists
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }

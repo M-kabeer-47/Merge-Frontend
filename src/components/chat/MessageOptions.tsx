@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import type { ChatMessage } from "@/types/general-chat";
 import { MoreHorizontal, Reply, Trash2, Edit, User } from "lucide-react";
 import DropdownMenu from "../ui/Dropdown";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface MessageOptionsProps {
   isOwnMessage: boolean;
@@ -23,15 +24,7 @@ export default function MessageOptions({
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    function handleOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [open]);
+  useOnClickOutside(menuRef, () => setOpen(false), open);
 
   return (
     <div
@@ -75,7 +68,7 @@ export default function MessageOptions({
 
         {open && (
           <DropdownMenu
-          size="small"
+            size="small"
             options={
               isOwnMessage
                 ? [
@@ -98,7 +91,9 @@ export default function MessageOptions({
                     {
                       title: "Delete for everyone",
                       destructive: true,
-                      icon: <Trash2 className="h-[15px] w-[15px] text-destructive" />,
+                      icon: (
+                        <Trash2 className="h-[15px] w-[15px] text-destructive" />
+                      ),
                       action: () => {
                         onDeleteForEveryone(message.id);
                         setOpen(false);
@@ -109,7 +104,9 @@ export default function MessageOptions({
                     {
                       title: "Delete",
                       destructive: true,
-                      icon: <Trash2 className="h-[15px] w-[15px] text-destructive" />,
+                      icon: (
+                        <Trash2 className="h-[15px] w-[15px] text-destructive" />
+                      ),
                       action: () => {
                         onDeleteForMe(message.id);
                         setOpen(false);

@@ -1,9 +1,8 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { CalendarTask } from "@/app/(with-layout)/calendar/page";
+import { CalendarTask } from "@/types/calendar";
 import { getCategoryIcon, getCategoryColor } from "@/lib/utils/calendar-utils";
-
 
 interface TodayTasksBarProps {
   tasks: CalendarTask[];

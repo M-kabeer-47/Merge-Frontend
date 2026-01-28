@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { FolderPlus, Upload, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import SearchBar from "@/components/ui/SearchBar";
@@ -9,7 +8,6 @@ import FilterChips from "@/components/ui/FilterChips";
 import ViewModeToggle from "@/components/ui/ViewModeToggle";
 import SortDropdown from "@/components/ui/SortDropdown";
 import BulkActionBar from "@/components/ui/BulkActionBar";
-import CreateFolderModal from "../notes/CreateFolderModal";
 import type {
   BreadcrumbItem,
   ViewMode,
@@ -18,6 +16,7 @@ import type {
 } from "@/types/content";
 import { useParams, useRouter } from "next/navigation";
 import { ContentSortBy } from "@/types/room-content";
+import { useRoom } from "@/providers/RoomProvider";
 
 interface ContentToolbarProps {
   breadcrumbs: BreadcrumbItem[];
@@ -34,6 +33,7 @@ interface ContentToolbarProps {
   selectedIds: Set<string>;
   contentItems: Array<{ id: string; type: "folder" | "file" }>;
   onUpload?: () => void;
+  onCreateFolder?: () => void;
   onBulkDownload?: () => void;
   onBulkMove?: () => void;
   onBulkTag?: () => void;
@@ -76,16 +76,19 @@ export default function ContentToolbar({
   selectedIds,
   contentItems,
   onUpload,
+  onCreateFolder,
   onBulkDownload,
   onBulkMove,
   onBulkTag,
   onClearSelection,
   onResetFilters,
 }: ContentToolbarProps) {
-  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const params = useParams();
   const router = useRouter();
   const roomId = params?.id as string;
+  const { userRole } = useRoom();
+
+  const canEdit = userRole === "instructor" || userRole === "moderator";
 
   // Map UI sort options to API sort params for the modal
   const apiSortBy: ContentSortBy =
@@ -131,24 +134,28 @@ export default function ContentToolbar({
 
           {/* Desktop: Right Actions */}
           <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-[130px] px-4 flex items-center gap-2"
-              onClick={() => setIsCreateFolderModalOpen(true)}
-              aria-label="Create new folder"
-            >
-              <FolderPlus className="h-4 w-4" />
-              <span>New Folder</span>
-            </Button>
-            <Button
-              className="px-4 w-[130px] flex items-center gap-2 bg-primary/90 text-white hover:bg-primary/90"
-              onClick={onUpload}
-              aria-label="Upload files"
-            >
-              <Upload className="h-4 w-4" />
-              <span>Upload</span>
-            </Button>
+            {canEdit && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-[130px] px-4 flex items-center gap-2"
+                  onClick={onCreateFolder}
+                  aria-label="Create new folder"
+                >
+                  <FolderPlus className="h-4 w-4" />
+                  <span>New Folder</span>
+                </Button>
+                <Button
+                  className="px-4 w-[130px] flex items-center gap-2 bg-primary/90 text-white hover:bg-primary/90"
+                  onClick={onUpload}
+                  aria-label="Upload files"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload</span>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile: View toggle at right */}
@@ -205,27 +212,29 @@ export default function ContentToolbar({
         </div>
 
         {/* Mobile: Action buttons row - right aligned */}
-        <div className="flex sm:hidden items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-[100px] flex items-center gap-2 "
-            onClick={() => setIsCreateFolderModalOpen(true)}
-            aria-label="Create new folder"
-          >
-            <FolderPlus className="h-4 w-4" />
-            <span>New Folder</span>
-          </Button>
-          <Button
-            size="sm"
-            className="w-[100px] flex items-center gap-2 bg-primary/90 text-white hover:bg-primary/90"
-            onClick={onUpload}
-            aria-label="Upload files"
-          >
-            <Upload className="h-4 w-4" />
-            <span>Upload</span>
-          </Button>
-        </div>
+        {canEdit && (
+          <div className="flex sm:hidden items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-[100px] flex items-center gap-2 "
+              onClick={onCreateFolder}
+              aria-label="Create new folder"
+            >
+              <FolderPlus className="h-4 w-4" />
+              <span>New Folder</span>
+            </Button>
+            <Button
+              size="sm"
+              className="w-[100px] flex items-center gap-2 bg-primary/90 text-white hover:bg-primary/90"
+              onClick={onUpload}
+              aria-label="Upload files"
+            >
+              <Upload className="h-4 w-4" />
+              <span>Upload</span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Bulk Action Bar */}
@@ -240,15 +249,6 @@ export default function ContentToolbar({
         onTag={onBulkTag}
         onMove={onBulkMove}
         onDownload={onBulkDownload}
-      />
-
-      <CreateFolderModal
-        isOpen={isCreateFolderModalOpen}
-        onClose={() => setIsCreateFolderModalOpen(false)}
-        folderId={currentFolderId}
-        folderType="room"
-        roomId={roomId}
-        onSuccess={onResetFilters}
       />
     </div>
   );

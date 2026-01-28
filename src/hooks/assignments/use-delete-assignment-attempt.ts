@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import type { Assignment, SubmissionStatus } from "@/types/assignment";
+import { studentAssignmentQueryKey } from "./use-student-assignment";
+import { refreshStudentAssignmentCache } from "@/server-actions/assignments";
 
 interface UndoTurnInData {
   assignmentId: string;
@@ -33,7 +35,7 @@ export default function useDeleteAssignmentAttempt({
   // Handles both array format and object format (with .assignments property)
   const updateAssignmentInList = (
     old: AssignmentsResponse | Assignment[] | undefined,
-    assignmentId: string
+    assignmentId: string,
   ): AssignmentsResponse | Assignment[] | undefined => {
     if (!old) return old;
 
@@ -42,7 +44,7 @@ export default function useDeleteAssignmentAttempt({
       return old.map((a) =>
         a.id === assignmentId
           ? { ...a, submissionStatus: "pending" as SubmissionStatus }
-          : a
+          : a,
       );
     }
 
@@ -53,7 +55,7 @@ export default function useDeleteAssignmentAttempt({
         assignments: old.assignments.map((a) =>
           a.id === assignmentId
             ? { ...a, submissionStatus: "pending" as SubmissionStatus }
-            : a
+            : a,
         ),
       };
     }
@@ -65,7 +67,7 @@ export default function useDeleteAssignmentAttempt({
     mutationFn: async (data: UndoTurnInData) => {
       // Use undo-turnin endpoint with roomId as query param
       const response = await api.delete(
-        `/assignments/attempts/${data.attemptId}/undo-turnin?roomId=${data.roomId}`
+        `/assignments/attempts/${data.attemptId}/undo-turnin?roomId=${data.roomId}`,
       );
       return response.data;
     },
@@ -73,7 +75,7 @@ export default function useDeleteAssignmentAttempt({
       // Update assignment detail - keep attempt data but change status to pending
       // This allows the user to modify files/note and resubmit
       queryClient.setQueryData(
-        ["assignment", data.assignmentId, "student"],
+        studentAssignmentQueryKey(data.assignmentId),
         (old: any) => {
           if (!old) return old;
           return {
@@ -82,7 +84,7 @@ export default function useDeleteAssignmentAttempt({
             // Keep the attempt data so user can see their previous files/note
             // and modify them before resubmitting
           };
-        }
+        },
       );
 
       // Update all assignment list caches
@@ -95,16 +97,20 @@ export default function useDeleteAssignmentAttempt({
         queryClient.setQueryData(
           query.queryKey,
           (old: AssignmentsResponse | undefined) =>
-            updateAssignmentInList(old, data.assignmentId)
+            updateAssignmentInList(old, data.assignmentId),
         );
       });
 
       toast.success("Submission undone successfully");
+
+      // Invalidate Next.js server cache so fresh data loads on navigation
+      refreshStudentAssignmentCache(data.roomId, data.assignmentId);
+
       onSuccess?.();
     },
     onError: (error: any) => {
       toast.error(
-        error?.response?.data?.message || "Failed to undo submission"
+        error?.response?.data?.message || "Failed to undo submission",
       );
     },
   });

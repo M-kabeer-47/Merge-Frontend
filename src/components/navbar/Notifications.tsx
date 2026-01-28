@@ -172,7 +172,7 @@ export default function NotificationDropdown() {
             </div>
 
             {/* Footer */}
-            <div className="p-3 bg-gray-50 text-center border-t border-gray-100">
+            <div className="p-3 bg-background text-center border-t border-border">
               <Button
                 variant="ghost"
                 size="sm"

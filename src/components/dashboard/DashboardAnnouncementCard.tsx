@@ -45,16 +45,17 @@ export default function DashboardAnnouncementCard({
       <h2 className="text-xl text-heading font-bold mb-2">{roomName}</h2>
       <div className="flex items-start gap-3 mb-2">
         {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-          {announcement.author.avatarUrl ? (
+        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {announcement.author.image ? (
             <img
-              src={announcement.author.avatarUrl}
-              alt={announcement.author.name}
-              className="w-10 h-10 rounded-full object-cover"
+              src={announcement.author.image}
+              alt={`${announcement.author.firstName} ${announcement.author.lastName}`}
+              className="w-full h-full object-cover"
             />
           ) : (
             <span className="text-primary font-semibold text-sm">
-              {announcement.author.initials}
+              {(announcement.author.firstName?.[0] || "") +
+                (announcement.author.lastName?.[0] || "")}
             </span>
           )}
         </div>
@@ -65,7 +66,12 @@ export default function DashboardAnnouncementCard({
             {announcement.title}
           </h3>
           <p className="text-xs text-para-muted">
-            {announcement.author.name} • {formatTimeAgo(announcement.createdAt)}
+            {announcement.author.firstName} {announcement.author.lastName} •{" "}
+            {formatTimeAgo(
+              announcement.createdAt instanceof Date
+                ? announcement.createdAt
+                : new Date(announcement.createdAt),
+            )}
           </p>
         </div>
       </div>

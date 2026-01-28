@@ -1,7 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
-  Pin,
-  MoreVertical,
   FileText,
   FileSpreadsheet,
   FileImage,
@@ -9,15 +7,20 @@ import {
   FileAudio,
   File as FileIcon,
   Download,
+  MoreVertical,
+  Edit,
+  Trash,
 } from "lucide-react";
 import type { Announcement } from "@/types/announcement";
 import { formatFileSize } from "@/utils/file-helpers";
+import Avatar from "@/components/ui/Avatar";
+import DropdownMenu, { DropdownOption } from "@/components/ui/Dropdown";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface AnnouncementCardProps {
   announcement: Announcement;
   isRecent?: boolean;
   bgColor?: string;
-  onPin?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
@@ -25,10 +28,15 @@ export default function AnnouncementCard({
   announcement,
   isRecent = false,
   bgColor,
-  onPin,
   onDelete,
-}: AnnouncementCardProps) {
+  onEdit,
+}: AnnouncementCardProps & {
+  onEdit?: (announcement: Announcement) => void;
+}) {
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useOnClickOutside(menuRef, () => setShowMenu(false), showMenu);
 
   const getFileIcon = (fileName: string, type: string) => {
     const ext = fileName.split(".").pop()?.toLowerCase();
@@ -64,6 +72,7 @@ export default function AnnouncementCard({
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
+    if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
@@ -73,14 +82,8 @@ export default function AnnouncementCard({
     });
   };
 
-  const handlePin = () => {
-    onPin?.(announcement.id);
-    setShowMenu(false);
-  };
-
   const handleDelete = () => {
     onDelete?.(announcement.id);
-    setShowMenu(false);
   };
 
   const handleDownload = (url: string, fileName: string) => {
@@ -93,160 +96,176 @@ export default function AnnouncementCard({
     document.body.removeChild(link);
   };
 
-  // Determine background color - use prop if provided, otherwise use existing logic
-  const cardBgColor = bgColor || (isRecent ? "bg-primary/90" : "bg-background");
+  // Helper for attachment colors
+  const getAttachmentStyle = (type: string, ext: string) => {
+    if (type === "image" || ["jpg", "jpeg", "png", "gif", "webp"].includes(ext))
+      return "bg-blue-50 text-blue-700 border-blue-100";
+    if (["pdf"].includes(ext)) return "bg-red-50 text-red-700 border-red-100";
+    if (["doc", "docx"].includes(ext))
+      return "bg-indigo-50 text-indigo-700 border-indigo-100";
+    if (["xls", "xlsx", "csv"].includes(ext))
+      return "bg-green-50 text-green-700 border-green-100";
+    return "bg-gray-50 text-gray-700 border-gray-100";
+  };
+
+  // AssignmentCard-like container styles
+  // We keep "isRecent" styles subtle (maybe just the badge) combined with the universal assignment-card look.
+  const containerClasses =
+    "relative border-2 border-primary/20 shadow-lg rounded-2xl overflow-hidden bg-background hover:shadow-xl transition-all duration-300 group";
+
+  // Dropdown options
+  const menuOptions: DropdownOption[] = [];
+  if (onEdit) {
+    menuOptions.push({
+      title: "Edit",
+      icon: <Edit size={16} />,
+      action: () => onEdit(announcement),
+    });
+  }
+  if (onDelete) {
+    menuOptions.push({
+      title: "Delete",
+      icon: <Trash size={16} />,
+      action: handleDelete,
+      destructive: true,
+    });
+  }
 
   return (
-    <div
-      className={`border-[0.5px] border-light-border rounded-lg p-4 ${cardBgColor}`}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-start gap-3">
-          <div
-            className={`w-10 h-10 rounded-full  text-white flex items-center justify-center text-sm font-medium ${
-              isRecent ? "bg-secondary" : "bg-primary"
-            }`}
-          >
-            {announcement.author.initials}
-          </div>
+    <div className={containerClasses}>
+      {/* Decorative gradient accent (same as AssignmentCard) */}
+      <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary via-secondary to-accent opacity-80" />
 
-          <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={`font-semibold ${
-                  isRecent ? "text-white" : "text-para"
-                }`}
-              >
-                {announcement.author.name}
-              </span>
-              <span
-                className={`px-2 py-0.5  rounded text-xs font-medium ${
-                  isRecent
-                    ? "bg-secondary text-white"
-                    : " bg-secondary/10 text-secondary"
-                }`}
-              >
-                {announcement.author.role}
-              </span>
-              {announcement.isPinned && (
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent rounded text-xs font-medium">
-                  <Pin className="w-3 h-3" />
-                  Pinned
+      {/* Label for recent card */}
+      {isRecent && (
+        <div className="absolute top-0 right-0 p-3 z-10">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+            Latest
+          </span>
+        </div>
+      )}
+
+      <div className="relative p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Avatar profileImage={announcement.author.image} size="md" />
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold font-raleway text-lg text-heading">
+                  {announcement.author.firstName} {announcement.author.lastName}
                 </span>
-              )}
-              {announcement.status === "scheduled" &&
-                announcement.scheduledFor && (
-                  <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-medium">
-                    Scheduled for{" "}
-                    {new Date(announcement.scheduledFor).toLocaleString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      }
-                    )}
+                {announcement.author.role && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-primary/5 text-primary border border-primary/10">
+                    {announcement.author.role}
                   </span>
                 )}
-            </div>
-            <div
-              className={` mt-0.5 text-sm ${
-                isRecent ? "text-white" : "text-para-muted"
-              }`}
-            >
-              {announcement.publishedAt
-                ? getTimeAgo(announcement.publishedAt)
-                : "Not published"}
+              </div>
+
+              <div className="text-xs flex items-center gap-2 mt-0.5 text-para-muted">
+                <span>
+                  {announcement.createdAt
+                    ? getTimeAgo(
+                        announcement.createdAt instanceof Date
+                          ? announcement.createdAt
+                          : new Date(announcement.createdAt),
+                      )
+                    : "Just now"}
+                </span>
+                {announcement.status === "scheduled" &&
+                  announcement.scheduledFor && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-current opacity-50" />
+                      <span className="text-blue-600 font-medium">
+                        Scheduled:{" "}
+                        {new Date(
+                          announcement.scheduledFor,
+                        ).toLocaleDateString()}
+                      </span>
+                    </>
+                  )}
+              </div>
             </div>
           </div>
+
+          {/* Actions - Positioned to not overlap with Recent badge if present */}
+          {menuOptions.length > 0 && (
+            <div
+              ref={menuRef}
+              className={`relative ${isRecent ? "mt-8" : ""} z-30`}
+            >
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 rounded-full transition-colors hover:bg-gray-100 text-gray-400 hover:text-gray-600 outline-none focus:bg-gray-100"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+              {showMenu && (
+                <DropdownMenu
+                  options={menuOptions}
+                  onClose={() => setShowMenu(false)}
+                  className="w-40"
+                />
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-1 relative">
-          <button
-            onClick={handlePin}
-            className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${
-              announcement.isPinned ? "text-accent" : "text-gray-400"
-            }`}
-            title={announcement.isPinned ? "Unpin" : "Pin"}
-          >
-            <Pin className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 rounded hover:bg-gray-100 transition-colors text-gray-400"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </button>
+        {/* Main Content - No indentation needed as AssignmentCard aligns left usually, but let's keep it clean */}
+        <div className="pl-0 sm:pl-[64px]">
+          {announcement.title && (
+            <h3 className="mb-2 font-bold font-raleway text-xl leading-tight text-heading">
+              {announcement.title}
+            </h3>
+          )}
 
-          {showMenu && (
-            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
-              <button
-                onClick={handlePin}
-                className="w-full px-4 py-2 text-left text-para hover:bg-background"
-              >
-                {announcement.isPinned ? "Unpin" : "Pin"}
-              </button>
-              <button
-                onClick={handleDelete}
-                className="w-full px-4 py-2 text-left text-red-600 hover:bg-background"
-              >
-                Delete
-              </button>
+          <div className="mb-5 whitespace-pre-wrap text-sm leading-relaxed text-para">
+            {announcement.content}
+          </div>
+
+          {/* Attachments Grid */}
+          {announcement.attachments && announcement.attachments.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {announcement.attachments.map((attachment, index) => {
+                const ext =
+                  attachment.name.split(".").pop()?.toLowerCase() || "";
+                const styleClass = `${getAttachmentStyle(
+                  attachment.type,
+                  ext,
+                )} border`;
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group/item cursor-pointer ${styleClass} hover:shadow-sm hover:-translate-y-0.5`}
+                    onClick={() =>
+                      handleDownload(attachment.url, attachment.name)
+                    }
+                  >
+                    <div className="p-2 rounded-lg bg-white">
+                      {getFileIcon(attachment.name, attachment.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate text-heading">
+                        {attachment.name}
+                      </p>
+                      {attachment.size && (
+                        <p className="text-xs text-para-muted">
+                          {formatFileSize(attachment.size)}
+                        </p>
+                      )}
+                    </div>
+                    <Download className="w-4 h-4 opacity-0 group-hover/item:opacity-100 transition-opacity text-gray-400" />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       </div>
-
-      {/* Title */}
-      {announcement.title && (
-        <h3
-          className={`mb-2 font-bold text-lg ${
-            isRecent ? "text-white" : "text-heading"
-          }`}
-        >
-          {announcement.title}
-        </h3>
-      )}
-
-      {/* Content */}
-      <div className="mb-3">
-        <p
-          className={` whitespace-pre-wrap text-sm ${
-            isRecent ? "text-white/90" : "text-para"
-          }`}
-        >
-          {announcement.content}
-        </p>
-      </div>
-
-      {announcement.attachments && announcement.attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-3">
-          {announcement.attachments.map((attachment, index) => (
-            <div
-              key={index}
-              className={`flex items-center gap-2 px-3 py-2 border-1 rounded-md border-light-border text-para-muted group  transition-colors ${
-                isRecent ? "text-white" : "text-para-muted"
-              }`}
-            >
-              {getFileIcon(attachment.name, attachment.type)}
-              <span className="text-sm ">{attachment.name}</span>
-              {attachment.size && (
-                <span className="text-xs ">
-                  ({formatFileSize(attachment.size)})
-                </span>
-              )}
-              <button
-                onClick={() => handleDownload(attachment.url, attachment.name)}
-                className="ml-2 p-1 rounded  transition-colors "
-                title="Download"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

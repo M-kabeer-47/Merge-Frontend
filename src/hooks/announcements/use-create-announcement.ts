@@ -13,24 +13,22 @@ export default function useCreateAnnouncement() {
     mutationFn: async (payload: CreateAnnouncementPayload) => {
       const { roomId, title, content, isPublished, scheduledAt } = payload;
 
-      const response = await api.post<Announcement>("announcements/schedule", {
+      const response = await api.post<Announcement>("announcements/create", {
         roomId,
         title,
         content,
-        isPublished,
-        scheduledAt,
+        ...(isPublished && { isPublished }),
+        ...(scheduledAt && { scheduledAt }),
       });
 
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.setQueryData(
-        ["announcements", variables.roomId],
-        (oldData: Announcement[] | undefined) => {
-          if (!oldData) return [data];
-          return [data, ...oldData];
-        },
-      );
+      // Invalidate to refetch with correct filters
+      queryClient.invalidateQueries({
+        queryKey: ["announcements", variables.roomId],
+      });
+
       toast.success(
         variables.isPublished
           ? "Announcement posted successfully"

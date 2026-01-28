@@ -14,10 +14,11 @@ export interface AnnouncementAttachment {
 
 export interface AnnouncementAuthor {
   id: string;
-  name: string;
-  role: string;
-  initials: string;
-  avatarUrl?: string; // Optional if not always available
+  firstName: string;
+  lastName: string;
+  image?: string;
+  email: string;
+  role?: string; // Keeping as optional in case it helps UI, otherwise will remove usage
 }
 
 export interface Announcement {
@@ -26,7 +27,6 @@ export interface Announcement {
   title: string;
   content: string;
   status: AnnouncementStatus;
-  isPinned: boolean;
   createdAt: string | Date; // API might return string
   publishedAt?: string | Date;
   scheduledFor?: string | Date; // API might return "scheduledAt"

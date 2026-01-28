@@ -14,22 +14,26 @@ import { Button } from "@/components/ui/Button";
 import { useRoom } from "@/providers/RoomProvider";
 import useFetchAnnouncements from "@/hooks/announcements/use-fetch-announcements";
 import useCreateAnnouncement from "@/hooks/announcements/use-create-announcement";
-import AnnouncementCardsSkeleton from "@/components/assignments/AssignmentCardsSkeleton"; // Reuse skeleton or create new one? reusing assignment one for now or generic skeleton
+import AnnouncementCardsSkeleton from "@/components/announcements/AnnouncementCardsSkeleton";
+import EditAnnouncementModal from "@/components/announcements/EditAnnouncementModal";
 
 export default function AnnouncementsList({ roomId }: { roomId: string }) {
-  // Hooks
-  const { userRole } = useRoom();
-  const { data: announcements = [], isLoading } = useFetchAnnouncements({
-    roomId,
-  });
-  const { mutate: createAnnouncement, isPending: isCreating } =
-    useCreateAnnouncement();
-
   // State
   const [showComposer, setShowComposer] = useState(false);
   const [activeFilter, setActiveFilter] = useState<
     "all" | "published" | "scheduled"
   >("all");
+  const [editingAnnouncement, setEditingAnnouncement] =
+    useState<Announcement | null>(null);
+
+  // Hooks
+  const { userRole } = useRoom();
+  const { data: announcements = [], isLoading } = useFetchAnnouncements({
+    roomId,
+    type: activeFilter,
+  });
+  const { mutate: createAnnouncement, isPending: isCreating } =
+    useCreateAnnouncement();
 
   // Permissions
   const canPostAnnouncements =
@@ -39,26 +43,13 @@ export default function AnnouncementsList({ roomId }: { roomId: string }) {
   const sortedAnnouncements = useMemo(() => {
     let items = [...announcements];
 
-    // Apply status filter
-    // Note: API might not return status for students as clearly as 'scheduled',
-    // but assuming data structure supports it.
-    if (activeFilter === "published") {
-      items = items.filter((ann) => ann.status === "published");
-    } else if (activeFilter === "scheduled") {
-      items = items.filter((ann) => ann.status === "scheduled");
-    }
-
     // Default sort: Newest first
     items.sort((a, b) => {
-      // Prioritize pinned
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
     return items;
-  }, [announcements, activeFilter]);
+  }, [announcements]);
 
   // Handlers
   const handlePost = (data: {
@@ -82,25 +73,10 @@ export default function AnnouncementsList({ roomId }: { roomId: string }) {
     );
   };
 
-  const handlePin = (id: string) => {
-    // TODO: Implement pin mutation
-    console.log("Pin", id);
-  };
-
   const handleDelete = (id: string) => {
     // TODO: Implement delete mutation
     console.log("Delete", id);
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 p-6 space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-40 bg-gray-100 animate-pulse rounded-lg" />
-        ))}
-      </div>
-    );
-  }
 
   const isEmpty = sortedAnnouncements.length === 0;
 
@@ -163,7 +139,9 @@ export default function AnnouncementsList({ roomId }: { roomId: string }) {
 
       {/* List */}
       <div className="flex-1 overflow-y-auto">
-        {isEmpty ? (
+        {isLoading ? (
+          <AnnouncementCardsSkeleton />
+        ) : isEmpty ? (
           <div className="h-full flex items-center justify-center">
             <EmptyAnnouncements onCreateFirst={() => setShowComposer(true)} />
           </div>
@@ -175,17 +153,27 @@ export default function AnnouncementsList({ roomId }: { roomId: string }) {
                 announcement={announcement}
                 isRecent={
                   index === 0 &&
-                  !announcement.isPinned &&
                   activeFilter === "all" &&
                   !announcement.scheduledFor
                 } // Highlight recent
-                onPin={canPostAnnouncements ? handlePin : undefined}
                 onDelete={canPostAnnouncements ? handleDelete : undefined}
+                onEdit={
+                  canPostAnnouncements ? setEditingAnnouncement : undefined
+                }
               />
             ))}
           </div>
         )}
       </div>
+
+      {editingAnnouncement && (
+        <EditAnnouncementModal
+          isOpen={!!editingAnnouncement}
+          onClose={() => setEditingAnnouncement(null)}
+          announcement={editingAnnouncement}
+          roomId={roomId}
+        />
+      )}
     </div>
   );
 }

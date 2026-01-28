@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   useContentFilters,
@@ -23,9 +23,12 @@ import type {
 } from "@/types/room-content";
 import { isRoomContentFolder } from "@/types/room-content";
 import type { MenuOption } from "@/types/display-item";
+import { useRoom } from "@/providers/RoomProvider";
+import CreateFolderModal from "../notes/CreateFolderModal";
 
 export default function ContentList() {
   const router = useRouter();
+  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const {
     roomId,
     folderId,
@@ -46,6 +49,10 @@ export default function ContentList() {
     setSortBy,
     setSelectedItems,
   } = useContentActions();
+
+  // Role check
+  const { userRole } = useRoom();
+  const canEdit = userRole === "instructor" || userRole === "moderator";
 
   // Map UI sort options to API sort params
   const apiSortBy: ContentSortBy =
@@ -149,22 +156,32 @@ export default function ContentList() {
     if (!item) return [];
 
     if (isRoomContentFolder(item)) {
-      return [
+      const options: MenuOption[] = [
         { title: "Open", action: () => handleFolderClick(id) },
-        { title: "Rename", action: () => onRenameItem(item) },
-        { title: "Delete", action: () => onDeleteItem(item) },
       ];
+      if (canEdit) {
+        options.push(
+          { title: "Rename", action: () => onRenameItem(item) },
+          { title: "Delete", action: () => onDeleteItem(item) },
+        );
+      }
+      return options;
     }
 
     const file = item as RoomContentFile;
-    return [
+    const options: MenuOption[] = [
       {
         title: "Download",
         action: () => downloadFile(file.filePath, file.originalName),
       },
-      { title: "Rename", action: () => onRenameItem(item) },
-      { title: "Delete", action: () => onDeleteItem(item) },
     ];
+    if (canEdit) {
+      options.push(
+        { title: "Rename", action: () => onRenameItem(item) },
+        { title: "Delete", action: () => onDeleteItem(item) },
+      );
+    }
+    return options;
   };
 
   return (
@@ -186,6 +203,7 @@ export default function ContentList() {
         contentItems={bulkActionItems}
         onClearSelection={() => setSelectedItems(new Set())}
         onUpload={onUpload}
+        onCreateFolder={() => setIsCreateFolderModalOpen(true)}
         onResetFilters={onResetFilters}
       />
 
@@ -206,7 +224,12 @@ export default function ContentList() {
               onClearSearch={() => setSearchTerm("")}
             />
           ) : (
-            <EmptyFolderState />
+            <EmptyFolderState
+              onUpload={canEdit ? onUpload : undefined}
+              onCreateFolder={
+                canEdit ? () => setIsCreateFolderModalOpen(true) : undefined
+              }
+            />
           )
         ) : viewMode === "list" ? (
           <SharedListView
@@ -223,6 +246,15 @@ export default function ContentList() {
           />
         )}
       </div>
+
+      <CreateFolderModal
+        isOpen={isCreateFolderModalOpen}
+        onClose={() => setIsCreateFolderModalOpen(false)}
+        folderId={folderId}
+        folderType="room"
+        roomId={roomId}
+        onSuccess={onResetFilters}
+      />
     </>
   );
 }

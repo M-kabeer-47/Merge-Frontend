@@ -3,7 +3,8 @@
 import { CalendarTask } from "@/app/(with-layout)/calendar/page";
 import { getCategoryIcon, getCategoryColor } from "@/lib/utils/calendar-utils";
 import { MoreVertical, Check, Edit2, Trash2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface TaskItemProps {
   task: CalendarTask;
@@ -27,18 +28,7 @@ export default function TaskItem({
   const isCompleted = task.status === "completed";
 
   // Close menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    }
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [showMenu]);
+  useOnClickOutside(menuRef, () => setShowMenu(false), showMenu);
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();

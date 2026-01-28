@@ -39,7 +39,7 @@ export default function ImageViewerModal({
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   useEffect(() => {

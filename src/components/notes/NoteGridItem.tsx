@@ -1,14 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Folder,
-  FileText,
-  MoreVertical,
-  Pin,
-} from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Folder, FileText, MoreVertical, Pin } from "lucide-react";
 import type { NoteOrFolder, NoteItem, FolderItem } from "@/types/note";
 import DropdownMenu from "@/components/ui/Dropdown";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface NoteGridItemProps {
   item: NoteOrFolder;
@@ -25,26 +21,10 @@ export default function NoteGridItem({
   const menuRef = useRef<HTMLDivElement>(null);
   const isFolder = item.type === "folder";
 
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showMenu]);
+  useOnClickOutside(menuRef, () => setShowMenu(false), showMenu);
 
   // Get color classes
   const getColorClasses = () => {
-
     return {
       bg: "",
       border: "border-secondary/20",
@@ -72,8 +52,6 @@ export default function NoteGridItem({
     });
   };
 
-
-
   return (
     <div
       className={`relative group cursor-pointer rounded-lg border ${colors.border} ${colors.bg} ${colors.hover} transition-all duration-200 hover:shadow-sm p-4`}
@@ -97,10 +75,11 @@ export default function NoteGridItem({
 
       {/* Content */}
       <div className="mb-3">
-        <h3 className={`text-base font-bold ${colors.text} font-raleway line-clamp-1 mb-1 pr-6`}>
+        <h3
+          className={`text-base font-bold ${colors.text} font-raleway line-clamp-1 mb-1 pr-6`}
+        >
           {item.name}
         </h3>
-
       </div>
 
       {/* Footer */}
@@ -130,4 +109,3 @@ export default function NoteGridItem({
     </div>
   );
 }
-
