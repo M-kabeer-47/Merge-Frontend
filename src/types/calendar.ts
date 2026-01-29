@@ -8,6 +8,7 @@ export interface CalendarTask {
   category: TaskCategory;
   date: string; // ISO date YYYY-MM-DD
   time?: string; // HH:mm format
+  deadline?: string; // Original full ISO string for local time conversion
   roomId?: string;
   roomName?: string;
   status?: TaskStatus;

@@ -58,8 +58,7 @@ export default function CalendarClient() {
         const dateA = parseISO(a.date);
         const dateB = parseISO(b.date);
         return dateA.getTime() - dateB.getTime();
-      })
-      .slice(0, 10); // Show next 10 upcoming tasks
+      });
   };
 
   const getFilteredTasks = (taskList: CalendarTask[]) => {

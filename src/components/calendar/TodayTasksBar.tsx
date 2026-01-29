@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { CalendarTask } from "@/types/calendar";
 import { getCategoryIcon, getCategoryColor } from "@/lib/utils/calendar-utils";
+import { format } from "date-fns";
 
 interface TodayTasksBarProps {
   tasks: CalendarTask[];
@@ -60,11 +61,15 @@ export default function TodayTasksBar({
                     <h3 className="font-medium text-heading text-sm line-clamp-1">
                       {task.title}
                     </h3>
-                    {task.time && (
+                    {task.deadline ? (
+                      <p className="text-xs text-para-muted mt-1">
+                        {format(new Date(task.deadline), "HH:mm")}
+                      </p>
+                    ) : task.time ? (
                       <p className="text-xs text-para-muted mt-1">
                         {task.time}
                       </p>
-                    )}
+                    ) : null}
                     {task.roomName && (
                       <p className="text-xs text-secondary mt-1">
                         {task.roomName}

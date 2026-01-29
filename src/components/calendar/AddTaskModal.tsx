@@ -10,6 +10,7 @@ import useCreateTask from "@/hooks/calendar/use-create-task";
 import useUpdateTask from "@/hooks/calendar/use-update-task";
 import { CalendarTask } from "@/types/calendar";
 import { format } from "date-fns";
+import { tryIt } from "@/utils/try-it";
 
 interface AddTaskModalProps {
   isOpen: boolean;
@@ -41,14 +42,8 @@ export default function AddTaskModal({
     if (isOpen) {
       if (taskToEdit) {
         // Pre-fill form for editing
-        let isoDeadline = "";
-        try {
-          // Construct ISO deadline from date and time
-          const timePart = taskToEdit.time || "23:59";
-          isoDeadline = `${taskToEdit.date}T${timePart}:00`;
-        } catch (e) {
-          console.error("Error constructing deadline", e);
-        }
+        const timePart = taskToEdit.time || "23:59";
+        const isoDeadline = `${taskToEdit.date}T${timePart}:00`;
 
         setFormData({
           title: taskToEdit.title,
@@ -91,26 +86,30 @@ export default function AddTaskModal({
 
     if (!validateForm()) return;
 
-    try {
-      if (isEditMode && taskToEdit) {
-        await updateTask({
-          id: taskToEdit.id,
-          title: formData.title,
-          description: formData.description || undefined,
-          deadline: formData.deadline,
-        });
-      } else {
-        await createTask({
-          title: formData.title,
-          description: formData.description || undefined,
-          deadline: formData.deadline,
-        });
-      }
+    const deadlineDate = new Date(formData.deadline);
+    const isoDeadline = deadlineDate.toISOString();
 
-      onClose();
-    } catch (error) {
-      // Error is handled by the hook
+    const [res, err] = await tryIt(
+      isEditMode && taskToEdit
+        ? updateTask({
+            id: taskToEdit.id,
+            title: formData.title,
+            description: formData.description || undefined,
+            deadline: isoDeadline,
+          })
+        : createTask({
+            title: formData.title,
+            description: formData.description || undefined,
+            deadline: isoDeadline,
+          }),
+    );
+
+    if (err) {
+      // Error is handled by the hook's onError callback (toast)
+      return;
     }
+
+    onClose();
   };
 
   const handleClose = () => {

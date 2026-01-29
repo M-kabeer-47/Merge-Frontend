@@ -15,230 +15,34 @@ import {
   addMonths,
   subMonths,
 } from "date-fns";
+import { parseISO } from "date-fns/parseISO";
+import { CalendarTask } from "@/types/calendar";
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPE DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════
-
-export interface Task {
-  id: string;
-  title: string;
-  type: "assignment" | "session" | "personal";
-  date: Date;
-  time?: string;
-  room?: string;
-  description?: string;
-  completed?: boolean;
-}
 
 interface CalendarDay {
   date: Date;
   dateNumber: number;
   isCurrentMonth: boolean;
   isToday: boolean;
-  tasks: Task[];
+  tasks: CalendarTask[];
 }
 
 interface TaskCalendarProps {
-  onDateSelect: (date: Date, tasks: Task[]) => void;
+  tasks?: CalendarTask[];
+  onDateSelect: (date: Date) => void;
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// SAMPLE DATA
-// ═══════════════════════════════════════════════════════════════════
-
-export const sampleTasks: Task[] = [
-  // October 2025 - Current Month Tasks
-  // Today's tasks (Oct 12, 2025)
-  {
-    id: "today-1",
-    title: "UI/UX Design Workshop",
-    type: "session",
-    date: new Date(2025, 9, 12), // Oct 12, 2025
-    time: "3:00 PM - 4:30 PM",
-    room: "Design Fundamentals",
-    description:
-      "Live session covering modern design principles and Figma workflows.",
-    completed: true,
-  },
-  {
-    id: "today-2",
-    title: "Complete React Hooks Assignment",
-    type: "assignment",
-    date: new Date(2025, 9, 12), // Oct 12, 2025
-    time: "Due by 11:59 PM",
-    room: "Advanced React Development",
-    description: "Build a custom hooks library with comprehensive tests.",
-    completed: false,
-  },
-  {
-    id: "today-3",
-    title: "Prepare Presentation Slides",
-    type: "personal",
-    date: new Date(2025, 9, 12), // Oct 12, 2025
-    time: "7:00 PM - 8:30 PM",
-    description: "Create slides for next week's project presentation.",
-    completed: false,
-  },
-  {
-    id: "1",
-    title: "Web Development Midterm",
-    type: "assignment",
-    date: new Date(2025, 9, 15), // Oct 15, 2025
-    time: "Due by 11:59 PM",
-    room: "Advanced Web Development",
-    description:
-      "Complete the full-stack application with authentication and database integration.",
-    completed: false,
-  },
-  {
-    id: "2",
-    title: "AI Ethics Discussion",
-    type: "session",
-    date: new Date(2025, 9, 16), // Oct 16, 2025
-    time: "2:00 PM - 3:30 PM",
-    room: "Artificial Intelligence & Ethics",
-    description:
-      "Live discussion on ethical implications of AI in modern society.",
-    completed: false,
-  },
-  {
-    id: "3",
-    title: "Complete React Tutorial",
-    type: "personal",
-    date: new Date(2025, 9, 17), // Oct 17, 2025
-    time: "10:00 AM - 12:00 PM",
-    description: "Finish advanced hooks tutorial and build practice project.",
-    completed: false,
-  },
-  {
-    id: "4",
-    title: "Database Optimization Assignment",
-    type: "assignment",
-    date: new Date(2025, 9, 18), // Oct 18, 2025
-    time: "Due by 11:59 PM",
-    room: "Database Systems",
-    description: "Optimize queries and implement proper indexing strategies.",
-    completed: false,
-  },
-  {
-    id: "5",
-    title: "Team Project Meeting",
-    type: "session",
-    date: new Date(2025, 9, 20), // Oct 20, 2025
-    time: "4:00 PM - 6:00 PM",
-    room: "Software Engineering Project",
-    description: "Sprint planning and task distribution for next iteration.",
-    completed: false,
-  },
-  {
-    id: "6",
-    title: "Review for Algorithms Exam",
-    type: "personal",
-    date: new Date(2025, 9, 22), // Oct 22, 2025
-    time: "6:00 PM - 9:00 PM",
-    description: "Study dynamic programming and graph algorithms.",
-    completed: false,
-  },
-  {
-    id: "7",
-    title: "UI/UX Case Study Presentation",
-    type: "assignment",
-    date: new Date(2025, 9, 23), // Oct 23, 2025
-    time: "Due by 2:00 PM",
-    room: "User Experience Design",
-    description: "Present redesign proposal with user research and prototypes.",
-    completed: false,
-  },
-  {
-    id: "8",
-    title: "Cloud Computing Workshop",
-    type: "session",
-    date: new Date(2025, 9, 24), // Oct 24, 2025
-    time: "1:00 PM - 3:00 PM",
-    room: "Cloud Architecture & DevOps",
-    description:
-      "Hands-on session with AWS services and deployment strategies.",
-    completed: false,
-  },
-  {
-    id: "9",
-    title: "Practice Coding Problems",
-    type: "personal",
-    date: new Date(2025, 9, 25), // Oct 25, 2025
-    time: "8:00 AM - 10:00 AM",
-    description: "LeetCode medium difficulty problems for interview prep.",
-    completed: false,
-  },
-  {
-    id: "10",
-    title: "Machine Learning Project Demo",
-    type: "assignment",
-    date: new Date(2025, 9, 28), // Oct 28, 2025
-    time: "Due by 11:59 PM",
-    room: "Applied Machine Learning",
-    description: "Submit final trained model and comprehensive documentation.",
-    completed: false,
-  },
-  {
-    id: "11",
-    title: "Career Fair Preparation",
-    type: "session",
-    date: new Date(2025, 9, 29), // Oct 29, 2025
-    time: "3:00 PM - 4:30 PM",
-    room: "Professional Development",
-    description:
-      "Resume review and mock interviews with industry professionals.",
-    completed: false,
-  },
-  {
-    id: "12",
-    title: "Final Project Planning",
-    type: "personal",
-    date: new Date(2025, 9, 30), // Oct 30, 2025
-    time: "5:00 PM - 7:00 PM",
-    description:
-      "Outline architecture and create development timeline for capstone project.",
-    completed: false,
-  },
-  // November 2025 - Upcoming Tasks
-  {
-    id: "13",
-    title: "System Design Quiz",
-    type: "assignment",
-    date: new Date(2025, 10, 5), // Nov 5, 2025
-    time: "Due by 11:59 PM",
-    room: "Software Architecture",
-    description:
-      "Design scalable distributed systems with proper trade-off analysis.",
-    completed: false,
-  },
-  {
-    id: "14",
-    title: "Hackathon Kickoff",
-    type: "session",
-    date: new Date(2025, 10, 8), // Nov 8, 2025
-    time: "6:00 PM - 8:00 PM",
-    room: "Annual Tech Hackathon",
-    description: "24-hour coding challenge with teams competing for prizes.",
-    completed: false,
-  },
-  {
-    id: "15",
-    title: "Study Group - Final Prep",
-    type: "personal",
-    date: new Date(2025, 10, 12), // Nov 12, 2025
-    time: "7:00 PM - 9:00 PM",
-    description: "Group review session for upcoming final examinations.",
-    completed: false,
-  },
-];
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════
 
-export default function TaskCalendar({ onDateSelect }: TaskCalendarProps) {
+export default function TaskCalendar({
+  tasks = [],
+  onDateSelect,
+}: TaskCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -272,8 +76,11 @@ export default function TaskCalendar({ onDateSelect }: TaskCalendarProps) {
     return days;
   };
 
-  const getTasksForDate = (date: Date): Task[] => {
-    return sampleTasks.filter((task) => isSameDay(task.date, date));
+  const getTasksForDate = (date: Date): CalendarTask[] => {
+    return tasks.filter((task) => {
+      const taskDate = parseISO(task.date);
+      return isSameDay(taskDate, date);
+    });
   };
 
   // ═════════════════════════════════════════════════════════════════
@@ -290,7 +97,7 @@ export default function TaskCalendar({ onDateSelect }: TaskCalendarProps) {
 
   const handleDateClick = (day: CalendarDay) => {
     setSelectedDate(day.date);
-    onDateSelect(day.date, day.tasks);
+    onDateSelect(day.date);
   };
 
   // ═════════════════════════════════════════════════════════════════

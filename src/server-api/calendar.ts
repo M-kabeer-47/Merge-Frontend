@@ -1,7 +1,7 @@
 "use server";
 import { getWithAuth } from "./fetch-with-auth";
 import { CalendarTask, TaskCategory, TaskStatus } from "@/types/calendar";
-import { format, parseISO } from "date-fns";
+import { format, isValid } from "date-fns";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -29,7 +29,7 @@ export async function getCalendarTasks(): Promise<CalendarTask[]> {
       },
     },
   );
-  console.log("data", data);
+
   if (error || !data) {
     console.error("Error fetching calendar tasks:", error?.message);
     return [];
@@ -41,18 +41,6 @@ export async function getCalendarTasks(): Promise<CalendarTask[]> {
   }
 
   return data.map((task) => {
-    let dateStr = "";
-    let timeStr = "";
-
-    try {
-      const deadlineDate = parseISO(task.deadline);
-      dateStr = format(deadlineDate, "yyyy-MM-dd");
-      timeStr = format(deadlineDate, "HH:mm");
-    } catch (e) {
-      console.error("Error parsing date:", task.deadline);
-      dateStr = format(new Date(), "yyyy-MM-dd"); // Fallback
-    }
-
     // Determine category: utilize 'category' or 'type' field, or fallback based on roomId
     let category: TaskCategory = "personal";
     if (task.category && isValidCategory(task.category)) {
@@ -68,8 +56,8 @@ export async function getCalendarTasks(): Promise<CalendarTask[]> {
       title: task.title,
       description: task.description || undefined,
       category,
-      date: dateStr,
-      time: timeStr,
+      date: task.deadline, // Use ISO string directly for date filtering
+      deadline: task.deadline, // Pass original ISO string for display
       roomId: task.roomId,
       roomName: task.room?.name,
       status: (task.status as TaskStatus) || "pending",

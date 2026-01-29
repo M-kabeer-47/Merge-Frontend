@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarTask } from "@/app/(with-layout)/calendar/page";
+import { CalendarTask } from "@/types/calendar";
 import TaskItem from "./TaskItem";
 
 interface TaskListProps {

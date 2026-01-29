@@ -1,6 +1,7 @@
 "use client";
+import { format } from "date-fns";
 
-import { CalendarTask } from "@/app/(with-layout)/calendar/page";
+import { CalendarTask } from "@/types/calendar";
 import { getCategoryIcon, getCategoryColor } from "@/lib/utils/calendar-utils";
 import { MoreVertical, Check, Edit2, Trash2 } from "lucide-react";
 import { useState, useRef } from "react";
@@ -82,12 +83,17 @@ export default function TaskItem({
           </h3>
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-para-muted">
-            {task.time && (
+            {task.deadline ? (
+              <span className="flex items-center gap-1">
+                <span>🕐</span>
+                {format(new Date(task.deadline), "HH:mm")}
+              </span>
+            ) : task.time ? (
               <span className="flex items-center gap-1">
                 <span>🕐</span>
                 {task.time}
               </span>
-            )}
+            ) : null}
             {task.roomName && (
               <span className="text-secondary">{task.roomName}</span>
             )}
