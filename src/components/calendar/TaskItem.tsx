@@ -1,5 +1,5 @@
 "use client";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 
 import { CalendarTask } from "@/types/calendar";
 import { getCategoryIcon, getCategoryColor } from "@/lib/utils/calendar-utils";
@@ -83,7 +83,7 @@ export default function TaskItem({
           </h3>
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-para-muted">
-            {task.deadline ? (
+            {task.deadline && isValid(new Date(task.deadline)) ? (
               <span className="flex items-center gap-1">
                 <span>🕐</span>
                 {format(new Date(task.deadline), "HH:mm")}

@@ -87,8 +87,11 @@ export default function AddTaskModal({
     if (!validateForm()) return;
 
     const deadlineDate = new Date(formData.deadline);
+    if (isNaN(deadlineDate.getTime())) {
+      setErrors({ deadline: "Invalid deadline format" });
+      return;
+    }
     const isoDeadline = deadlineDate.toISOString();
-
     const [res, err] = await tryIt(
       isEditMode && taskToEdit
         ? updateTask({

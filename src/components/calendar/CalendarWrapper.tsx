@@ -34,7 +34,10 @@ export default function CalendarWrapper({
         <h2 className="text-lg font-semibold text-heading mb-4">Calendar</h2>
         {/* Reduced height by wrapping in a constrained container */}
         <div className=" overflow-hidden">
-          <TaskCalendar tasks={tasks} onDateSelect={handleDateSelect} />
+          <TaskCalendar
+            tasks={calendarTasks}
+            onDateSelect={handleDateSelect}
+          />{" "}
         </div>
       </div>
 

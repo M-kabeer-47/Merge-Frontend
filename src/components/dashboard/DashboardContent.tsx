@@ -10,17 +10,16 @@ import FocusAnalytics from "@/components/dashboard/FocusAnalytics";
 import TasksToday from "@/components/dashboard/TasksToday";
 import StreakCounter from "@/components/dashboard/StreakCounter";
 import RewardsWidget from "@/components/dashboard/RewardsWidget";
-import TaskCalendar, {
-  Task,
-  sampleTasks,
-} from "@/components/dashboard/TaskCalendar";
 import { isSameDay } from "date-fns";
 import { setAuthTokens } from "@/utils/auth-tokens";
+import { CalendarTask as Task } from "@/types/calendar";
+import TaskCalendar from "./TaskCalendar";
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const sampleTasks: Task[] = [];
 
   useEffect(() => {
     const accessToken = searchParams?.get("token");
@@ -34,7 +33,7 @@ export default function DashboardContent() {
   useEffect(() => {
     const today = new Date();
     const todayTasks = sampleTasks.filter((task) =>
-      isSameDay(task.date, today)
+      isSameDay(task.date, today),
     );
     setSelectedDate(today);
     setSelectedTasks(todayTasks);
