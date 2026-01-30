@@ -9,7 +9,6 @@ import DateTimePicker from "@/components/ui/DateTimePicker";
 import useCreateTask from "@/hooks/calendar/use-create-task";
 import useUpdateTask from "@/hooks/calendar/use-update-task";
 import { CalendarTask } from "@/types/calendar";
-import { format } from "date-fns";
 import { tryIt } from "@/utils/try-it";
 
 interface AddTaskModalProps {
@@ -42,8 +41,9 @@ export default function AddTaskModal({
     if (isOpen) {
       if (taskToEdit) {
         // Pre-fill form for editing
-        const timePart = taskToEdit.time || "23:59";
-        const isoDeadline = `${taskToEdit.date}T${timePart}:00`;
+        // const isoDeadline = taskToEdit.deadline || taskToEdit.date;
+        // The backend now returns existing full ISO strings in 'deadline' (and mapped to 'date')
+        const isoDeadline = taskToEdit.deadline;
 
         setFormData({
           title: taskToEdit.title,

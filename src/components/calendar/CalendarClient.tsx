@@ -1,27 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import {
-  isSameDay,
-  format,
-  isToday,
-  isBefore,
-  startOfDay,
-  parseISO,
-} from "date-fns";
+import { isSameDay, format, isToday, isBefore, startOfDay } from "date-fns";
+import { parseISO } from "date-fns/parseISO";
 import TodayTasksBar from "@/components/calendar/TodayTasksBar";
 import CalendarWrapper from "@/components/calendar/CalendarWrapper";
 import SidebarTasks from "@/components/calendar/SidebarTasks";
 import AddTaskModal from "@/components/calendar/AddTaskModal";
 import TaskDetailsModal from "@/components/calendar/TaskDetailsModal";
 import useCalendarTasks from "@/hooks/calendar/use-calendar-tasks";
-import { CalendarTask, TaskCategory, TaskStatus } from "@/types/calendar";
+import { CalendarTask, TaskCategory } from "@/types/calendar";
 
+import useUpdateTask from "@/hooks/calendar/use-update-task";
 import useDeleteTask from "@/hooks/calendar/use-delete-task";
+import { tryIt } from "@/utils/try-it";
 
 export default function CalendarClient() {
   const { tasks } = useCalendarTasks();
   const { deleteTask } = useDeleteTask();
+  const { updateTask } = useUpdateTask();
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,14 +32,14 @@ export default function CalendarClient() {
 
   const getTasksForDate = (date: Date) => {
     return tasks.filter((task) => {
-      const taskDate = parseISO(task.date);
+      const taskDate = parseISO(task.deadline);
       return isSameDay(taskDate, date);
     });
   };
 
   const getTodayTasks = () => {
     return tasks.filter((task) => {
-      const taskDate = parseISO(task.date);
+      const taskDate = parseISO(task.deadline);
       return isToday(taskDate);
     });
   };
@@ -51,19 +48,19 @@ export default function CalendarClient() {
     const today = startOfDay(new Date());
     return tasks
       .filter((task) => {
-        const taskDate = parseISO(task.date);
+        const taskDate = parseISO(task.deadline);
         return !isBefore(taskDate, today);
       })
       .sort((a, b) => {
-        const dateA = parseISO(a.date);
-        const dateB = parseISO(b.date);
+        const dateA = parseISO(a.deadline);
+        const dateB = parseISO(b.deadline);
         return dateA.getTime() - dateB.getTime();
       });
   };
 
   const getFilteredTasks = (taskList: CalendarTask[]) => {
     if (activeFilters.length === 0) return taskList;
-    return taskList.filter((task) => activeFilters.includes(task.category));
+    return taskList.filter((task) => activeFilters.includes(task.taskCategory));
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -83,9 +80,17 @@ export default function CalendarClient() {
     setSelectedTask(task);
   };
 
-  const handleMarkDone = (taskId: string) => {
-    console.log("markTaskDone", { taskId });
-    // TODO: Implement optimistic update or mutation
+  const handleMarkDone = async (taskId: string) => {
+    const [_, err] = await tryIt(
+      updateTask({
+        id: taskId,
+        taskStatus: "completed",
+      }),
+    );
+
+    if (err) {
+      // Error is handled by the hook
+    }
   };
 
   const handleEditTask = (taskId: string) => {

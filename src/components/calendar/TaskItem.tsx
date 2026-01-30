@@ -24,9 +24,9 @@ export default function TaskItem({
 }: TaskItemProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const Icon = getCategoryIcon(task.category);
-  const color = getCategoryColor(task.category);
-  const isCompleted = task.status === "completed";
+  const Icon = getCategoryIcon(task.taskCategory);
+  const color = getCategoryColor(task.taskCategory);
+  const isCompleted = task.taskStatus === "completed";
 
   // Close menu when clicking outside
   useOnClickOutside(menuRef, () => setShowMenu(false), showMenu);
@@ -88,15 +88,7 @@ export default function TaskItem({
                 <span>🕐</span>
                 {format(new Date(task.deadline), "HH:mm")}
               </span>
-            ) : task.time ? (
-              <span className="flex items-center gap-1">
-                <span>🕐</span>
-                {task.time}
-              </span>
             ) : null}
-            {task.roomName && (
-              <span className="text-secondary">{task.roomName}</span>
-            )}
           </div>
 
           {task.description && (

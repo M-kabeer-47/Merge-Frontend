@@ -43,8 +43,8 @@ export default function TodayTasksBar({
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           {tasks.map((task) => {
-            const Icon = getCategoryIcon(task.category);
-            const color = getCategoryColor(task.category);
+            const Icon = getCategoryIcon(task.taskCategory);
+            const color = getCategoryColor(task.taskCategory);
 
             return (
               <button
@@ -76,16 +76,7 @@ export default function TodayTasksBar({
                           "HH:mm",
                         )}
                       </p>
-                    ) : task.time ? (
-                      <p className="text-xs text-para-muted mt-1">
-                        {task.time}
-                      </p>
                     ) : null}
-                    {task.roomName && (
-                      <p className="text-xs text-secondary mt-1">
-                        {task.roomName}
-                      </p>
-                    )}
                   </div>
                 </div>
               </button>

@@ -2,13 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import { revalidateCalendarTasks } from "@/server-actions/calendar";
+import { CalendarTask } from "@/types/calendar";
 
-export interface UpdateTaskData {
-  id: string;
-  title: string;
-  description?: string;
-  deadline: string;
-}
+// Define a type for the data passed to the update mutation
+// We want to allow updating subsets of fields, so we usage Partial
+type UpdateTaskData = Partial<CalendarTask> & { id: string };
 
 export default function useUpdateTask() {
   const queryClient = useQueryClient();

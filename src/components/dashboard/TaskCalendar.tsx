@@ -78,7 +78,8 @@ export default function TaskCalendar({
 
   const getTasksForDate = (date: Date): CalendarTask[] => {
     return tasks.filter((task) => {
-      const taskDate = parseISO(task.date);
+      if (!task.deadline) return false;
+      const taskDate = parseISO(task.deadline);
       return isSameDay(taskDate, date);
     });
   };

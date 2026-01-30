@@ -5,22 +5,8 @@ import { format, isValid } from "date-fns";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-interface BackendCalendarTask {
-  id: string;
-  title: string;
-  description?: string;
-  deadline: string;
-  type?: string;
-  category?: string;
-  status?: string;
-  roomId?: string;
-  room?: {
-    name: string;
-  };
-}
-
 export async function getCalendarTasks(): Promise<CalendarTask[]> {
-  const { data, error } = await getWithAuth<BackendCalendarTask[]>(
+  const { data, error } = await getWithAuth<CalendarTask[]>(
     `${API_BASE_URL}/calendar`,
     {
       next: {
@@ -40,31 +26,6 @@ export async function getCalendarTasks(): Promise<CalendarTask[]> {
     return [];
   }
 
-  return data.map((task) => {
-    // Determine category: utilize 'category' or 'type' field, or fallback based on roomId
-    let category: TaskCategory = "personal";
-    if (task.category && isValidCategory(task.category)) {
-      category = task.category as TaskCategory;
-    } else if (task.type && isValidCategory(task.type)) {
-      category = task.type as TaskCategory;
-    } else if (task.roomId) {
-      category = "assignment"; // Default to assignment if linked to a room
-    }
-
-    return {
-      id: task.id,
-      title: task.title,
-      description: task.description || undefined,
-      category,
-      date: task.deadline, // Use ISO string directly for date filtering
-      deadline: task.deadline, // Pass original ISO string for display
-      roomId: task.roomId,
-      roomName: task.room?.name,
-      status: (task.status as TaskStatus) || "pending",
-    };
-  });
-}
-
-function isValidCategory(cat: string): boolean {
-  return ["assignment", "quiz", "video-session", "personal"].includes(cat);
+  // The backend now returns data matching our CalendarTask interface exactly
+  return data as unknown as CalendarTask[];
 }

@@ -25,8 +25,8 @@ export default function TaskDetailsModal({
   onEdit,
   onDelete,
 }: TaskDetailsModalProps) {
-  const Icon = getCategoryIcon(task.category);
-  const color = getCategoryColor(task.category);
+  const Icon = getCategoryIcon(task.taskCategory);
+  const color = getCategoryColor(task.taskCategory);
   const isCompleted = task.status === "completed";
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -69,7 +69,7 @@ export default function TaskDetailsModal({
                   {task.title}
                 </h2>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
-                  {getCategoryLabel(task.category)}
+                  {getCategoryLabel(task.taskCategory)}
                 </span>
               </div>
             </div>

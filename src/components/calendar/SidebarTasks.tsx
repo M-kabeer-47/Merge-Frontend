@@ -39,10 +39,10 @@ export default function SidebarTasks({
   const taskCount = displayTasks.length;
 
   return (
-    <div className="bg-background border border-light-border rounded-xl shadow-sm h-fit  top-6">
-      <div className="p-5">
+    <div className="bg-background border border-light-border rounded-xl shadow-sm h-full top-6 flex flex-col">
+      <div className="p-5 flex flex-col flex-1 min-h-0">
         {/* Header with toggle */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-heading mb-1">
               {showingSelectedDate
@@ -77,7 +77,7 @@ export default function SidebarTasks({
         </div>
 
         {/* Category Filters */}
-        <div className="mb-4 pb-4 border-b border-light-border">
+        <div className="mb-4 pb-4 border-b border-light-border flex-shrink-0">
           <CategoryChips
             activeFilters={activeFilters}
             onToggle={onFilterToggle}
@@ -85,7 +85,7 @@ export default function SidebarTasks({
         </div>
 
         {/* Task List */}
-        <div className="max-h-[815px] overflow-y-auto scrollbar-hide">
+        <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
           {displayTasks.length > 0 ? (
             <TaskList
               tasks={displayTasks}
