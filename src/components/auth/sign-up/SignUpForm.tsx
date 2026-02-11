@@ -122,7 +122,7 @@ export default function SignUpForm() {
                 id="firstName"
                 placeholder="John"
                 error={errors.firstName?.message}
-                ref={firstNameRef}
+
               />
             </FormField>
 

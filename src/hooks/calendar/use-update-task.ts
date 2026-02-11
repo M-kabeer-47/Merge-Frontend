@@ -5,9 +5,8 @@ import { revalidateCalendarTasks } from "@/server-actions/calendar";
 import { CalendarTask } from "@/types/calendar";
 
 // Define a type for the data passed to the update mutation
-// We want to allow updating subsets of fields, so we usage Partial
+// We want to allow updating subsets of fields, so we use Partial
 type UpdateTaskData = Partial<CalendarTask> & { id: string };
-
 export default function useUpdateTask() {
   const queryClient = useQueryClient();
 

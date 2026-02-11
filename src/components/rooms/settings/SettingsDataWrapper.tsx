@@ -27,7 +27,7 @@ export default async function SettingsDataWrapper({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <RoomSettingsClient roomId={roomId} />
+      <RoomSettingsClient />
     </HydrationBoundary>
   );
 }

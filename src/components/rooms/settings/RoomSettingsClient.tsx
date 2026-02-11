@@ -38,13 +38,13 @@ export default function RoomSettingsClient() {
   });
 
   const { updateRoom, isUpdating: isUpdatingRoom } = useUpdateRoom({
-    roomId: room?.id,
+    roomId: room?.id || "",
   });
   const { removeMember, isRemoving: isRemovingMember } = useRemoveMember({
-    roomId: room?.id,
+    roomId: room?.id || "",
   });
   const { updateMemberRole, isUpdating: isUpdatingRole } = useUpdateMemberRole({
-    roomId: room?.id,
+    roomId: room?.id || "",
   });
 
   if (!isAdmin) {
