@@ -15,13 +15,15 @@ import {
 import type { ChatSession } from "@/types/ai-chat";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "../ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import NameInputModal from "@/components/ui/NameInputModal";
 
 interface ChatHistoryProps {
   sessions: ChatSession[];
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
-  onRenameSession?: (sessionId: string) => void;
+  onRenameSession?: (sessionId: string, newTitle: string) => void;
   onDeleteSession?: (sessionId: string) => void;
   onTogglePin?: (sessionId: string) => void;
   onClose?: () => void;
@@ -41,6 +43,10 @@ export default function ChatHistory({
 }: ChatHistoryProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<ChatSession | null>(null);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [sessionToRename, setSessionToRename] = useState<ChatSession | null>(null);
 
   // Filter sessions
   const filteredSessions = sessions.filter(
@@ -150,7 +156,8 @@ export default function ChatHistory({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onRenameSession?.(session.id);
+                setSessionToRename(session);
+                setIsRenameDialogOpen(true);
                 setMenuOpen(null);
               }}
               className="w-full px-3 py-2 text-left text-sm hover:bg-background transition-colors flex items-center gap-2"
@@ -161,9 +168,8 @@ export default function ChatHistory({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (confirm("Delete this chat session?")) {
-                  onDeleteSession?.(session.id);
-                }
+                setSessionToDelete(session);
+                setIsDeleteDialogOpen(true);
                 setMenuOpen(null);
               }}
               className="w-full px-3 py-2 text-left text-sm hover:bg-destructive/10 text-destructive transition-colors flex items-center gap-2 border-t border-light-border"
@@ -269,6 +275,50 @@ export default function ChatHistory({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setSessionToDelete(null);
+        }}
+        onConfirm={() => {
+          if (sessionToDelete) {
+            onDeleteSession?.(sessionToDelete.id);
+          }
+          setIsDeleteDialogOpen(false);
+          setSessionToDelete(null);
+        }}
+        title="Delete Chat Session"
+        message="Are you sure you want to delete"
+        itemName={sessionToDelete?.title}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
+
+      {/* Rename Dialog */}
+      <NameInputModal
+        isOpen={isRenameDialogOpen}
+        onClose={() => {
+          setIsRenameDialogOpen(false);
+          setSessionToRename(null);
+        }}
+        onSubmit={async (newTitle: string) => {
+          if (sessionToRename) {
+            onRenameSession?.(sessionToRename.id, newTitle);
+          }
+          setIsRenameDialogOpen(false);
+          setSessionToRename(null);
+        }}
+        title="Rename Chat Session"
+        label="Session Title"
+        placeholder="Enter new title..."
+        initialValue={sessionToRename?.title || ""}
+        submitText="Rename"
+        maxLength={100}
+      />
     </div>
   );
 }

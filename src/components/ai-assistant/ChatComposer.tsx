@@ -1,26 +1,32 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Send, Paperclip, FolderOpen, X, ArrowUp } from "lucide-react";
+import { Send, Paperclip, FolderOpen, X, ArrowUp, Loader2 } from "lucide-react";
 import type { ContextFile } from "@/types/ai-chat";
+import type { AttachmentUploadProgress } from "@/hooks/ai-assistant/use-upload-attachment";
 
 interface ChatComposerProps {
   onSendMessage: (message: string, files: ContextFile[]) => void;
   onAddContext: () => void;
+  onUploadFile: (file: File) => void;
   contextFiles: ContextFile[];
   onRemoveContextFile: (fileId: string) => void;
   disabled?: boolean;
+  uploadProgress?: AttachmentUploadProgress | null;
 }
 
 export default function ChatComposer({
   onSendMessage,
   onAddContext,
+  onUploadFile,
   contextFiles,
   onRemoveContextFile,
   disabled = false,
+  uploadProgress,
 }: ChatComposerProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = () => {
     if ((message.trim() || contextFiles.length > 0) && !disabled) {
@@ -46,8 +52,55 @@ export default function ChatComposer({
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (15MB limit)
+      if (file.size > 15 * 1024 * 1024) {
+        alert("File size must be less than 15MB");
+        return;
+      }
+      onUploadFile(file);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className=" bg-main-background w-full">
+      {/* Upload Progress Indicator */}
+      {uploadProgress && uploadProgress.status === "uploading" && (
+        <div className="px-4 pt-3">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-secondary/10 border border-secondary/20">
+              <Loader2 className="w-4 h-4 text-secondary animate-spin" />
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-para">
+                    Uploading {uploadProgress.file.name}
+                  </span>
+                  <span className="text-xs text-para-muted">
+                    {uploadProgress.progress}%
+                  </span>
+                </div>
+                <div className="w-full bg-secondary/20 rounded-full h-1.5">
+                  <div
+                    className="bg-secondary h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress.progress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Context Files Preview */}
       {contextFiles.length > 0 && (
         <div className="px-4 pt-3 pb-2">
@@ -93,9 +146,18 @@ export default function ChatComposer({
             {/* Row 2: Upload and Send buttons */}
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-light-border">
               <div className="flex items-center gap-2">
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                />
+
                 {/* Upload Local File */}
                 <button
-                  onClick={() => console.log("Upload local file")}
+                  onClick={handleUploadClick}
                   className="p-2 hover:bg-secondary/10 rounded transition-colors"
                   title="Upload file from device"
                   disabled={disabled}
