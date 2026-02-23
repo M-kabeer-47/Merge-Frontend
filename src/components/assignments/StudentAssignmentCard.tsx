@@ -15,6 +15,14 @@ import {
 import type { StudentAssignment } from "@/types/assignment";
 import { Button } from "@/components/ui/Button";
 import { IoTrophy } from "react-icons/io5";
+import { formatDueDate, formatSubmissionDate } from "@/utils/date-helpers";
+import { getStudentStatusConfig } from "@/utils/assignment-helpers";
+
+const iconMap = {
+  check: CheckCircle2,
+  x: XCircle,
+  alert: AlertCircle,
+};
 
 interface StudentAssignmentCardProps {
   assignment: StudentAssignment;
@@ -27,86 +35,8 @@ export default function StudentAssignmentCard({
   bgColor,
   onViewDetails,
 }: StudentAssignmentCardProps) {
-  // Status configuration
-  const getStatusConfig = () => {
-    if (assignment.submission.status === "graded") {
-      return {
-        icon: CheckCircle2,
-        iconFill: "#10b981", // success color
-        textColor: "text-success",
-        bgColor: "bg-success/10",
-        text: "Graded",
-      };
-    }
-    if (assignment.submission.status === "submitted") {
-      return {
-        icon: CheckCircle2,
-        iconFill: "#3b82f6", // info color
-        textColor: "text-info",
-        bgColor: "bg-info/10",
-        text: "Submitted",
-      };
-    }
-    if (assignment.submission.status === "overdue") {
-      return {
-        icon: XCircle,
-        iconFill: "#ef4444", // destructive color
-        textColor: "text-destructive",
-        bgColor: "bg-destructive/10",
-        text: "Overdue",
-      };
-    }
-    // pending (default case)
-    return {
-      icon: AlertCircle,
-      iconFill: "#e69a29", // accent color
-      textColor: "text-accent",
-      bgColor: "bg-accent/10",
-      text: "Pending",
-    };
-  };
-
-  // Format date
-  const formatDueDate = (date: Date) => {
-    const dueDate = new Date(date);
-    const now = new Date();
-    const diffMs = dueDate.getTime() - now.getTime();
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffDays < 0) {
-      return `Overdue by ${Math.abs(diffDays)} day${
-        Math.abs(diffDays) !== 1 ? "s" : ""
-      }`;
-    }
-    if (diffDays === 0) {
-      return "Due today";
-    }
-    if (diffDays === 1) {
-      return "Due tomorrow";
-    }
-    if (diffDays <= 7) {
-      return `Due in ${diffDays} days`;
-    }
-
-    return dueDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: dueDate.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-    });
-  };
-
-  const formatSubmissionDate = (date?: Date) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
-
-  const statusConfig = getStatusConfig();
-  const StatusIcon = statusConfig.icon;
+  const statusConfig = getStudentStatusConfig(assignment.submission.status);
+  const StatusIcon = iconMap[statusConfig.icon];
 
   // Determine background color - use prop if provided, otherwise use default
   const cardBgColor = bgColor || "bg-background";

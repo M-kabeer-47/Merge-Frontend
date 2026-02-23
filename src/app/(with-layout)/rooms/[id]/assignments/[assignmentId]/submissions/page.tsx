@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { getAssignmentForInstructor } from "@/server-api/assignment-submissions";
-import InstructorAssignmentView from "@/components/assignments/InstructorAssignmentView";
+import InstructorAssignmentView from "@/components/assignments/instructor-view/InstructorAssignmentView";
 
 interface AssignmentSubmissionsPageProps {
   params: Promise<{ id: string; assignmentId: string }>;

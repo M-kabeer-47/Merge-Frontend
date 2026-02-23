@@ -1,5 +1,7 @@
 // Announcement Types
 
+import type { Author } from "./common";
+
 export type AnnouncementStatus = "published" | "scheduled" | "draft";
 
 export type AnnouncementSortOption = "newest" | "oldest";
@@ -12,14 +14,7 @@ export interface AnnouncementAttachment {
   size?: number;
 }
 
-export interface AnnouncementAuthor {
-  id: string;
-  firstName: string;
-  lastName: string;
-  image?: string;
-  email: string;
-  role?: string; // Keeping as optional in case it helps UI, otherwise will remove usage
-}
+export type AnnouncementAuthor = Author;
 
 export interface Announcement {
   id: string;

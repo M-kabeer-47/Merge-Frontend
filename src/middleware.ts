@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tryIt } from "./utils/try-it";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 // Routes that don't require authentication
 const publicRoutes = [

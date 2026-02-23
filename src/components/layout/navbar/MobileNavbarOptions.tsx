@@ -8,7 +8,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
-import Avatar from "../ui/Avatar";
+import Avatar from "../../ui/Avatar";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "next-themes";

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 /**
  * Catch-all proxy route for development
@@ -47,7 +46,7 @@ async function handler(
 
   // Forward request to backend
   const backendResponse = await fetch(
-    `${BACKEND_URL}/${pathString}${queryString}`,
+    `${API_BASE_URL}/${pathString}${queryString}`,
     {
       method: request.method,
       headers,

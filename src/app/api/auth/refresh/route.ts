@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 /**
  * Proxy refresh requests to backend and rewrite cookies for localhost
@@ -19,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward request to backend
-    const backendResponse = await fetch(`${BACKEND_URL}/auth/refresh`, {
+    const backendResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

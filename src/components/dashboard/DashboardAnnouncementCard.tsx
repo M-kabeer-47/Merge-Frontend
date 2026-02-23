@@ -2,6 +2,7 @@
 
 import { MessageSquare } from "lucide-react";
 import type { Announcement } from "@/types/announcement";
+import { getTimeAgo } from "@/utils/date-helpers";
 
 interface DashboardAnnouncementCardProps {
   announcement: Announcement;
@@ -14,28 +15,6 @@ export default function DashboardAnnouncementCard({
   roomName,
   onClick,
 }: DashboardAnnouncementCardProps) {
-  const formatTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - new Date(date).getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) {
-      return `${diffMins}m ago`;
-    }
-    if (diffHours < 24) {
-      return `${diffHours}h ago`;
-    }
-    if (diffDays < 7) {
-      return `${diffDays}d ago`;
-    }
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   return (
     <div
       onClick={onClick}
@@ -67,7 +46,7 @@ export default function DashboardAnnouncementCard({
           </h3>
           <p className="text-xs text-para-muted">
             {announcement.author.firstName} {announcement.author.lastName} •{" "}
-            {formatTimeAgo(
+            {getTimeAgo(
               announcement.createdAt instanceof Date
                 ? announcement.createdAt
                 : new Date(announcement.createdAt),

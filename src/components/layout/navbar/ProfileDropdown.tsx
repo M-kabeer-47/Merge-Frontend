@@ -3,7 +3,7 @@
 import React, { useState, useRef } from "react";
 import { IconChevronDown, IconLogin, IconUser } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "motion/react";
-import Avatar from "../ui/Avatar";
+import Avatar from "../../ui/Avatar";
 import DropdownMenu, { DropdownOption } from "@/components/ui/Dropdown";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";

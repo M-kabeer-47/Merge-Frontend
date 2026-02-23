@@ -1,5 +1,7 @@
 // Quiz Types for Quiz Module
 
+import type { Author } from "./common";
+
 export type QuizAttemptStatus = "pending" | "graded" | "missed";
 
 export type QuizSortOption = "endAt" | "createdAt" | "totalScore";
@@ -13,13 +15,7 @@ export type QuizFilterType =
   | "closed";
 
 // Quiz Author from API
-export interface QuizAuthor {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  image?: string | null;
-}
+export type QuizAuthor = Author;
 
 // Single quiz question
 export interface QuizQuestion {

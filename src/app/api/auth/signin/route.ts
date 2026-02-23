@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 /**
  * Proxy sign-in requests to backend and rewrite cookies for localhost
@@ -11,7 +10,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Forward request to backend
-    const backendResponse = await fetch(`${BACKEND_URL}/auth/signin`, {
+    const backendResponse = await fetch(`${API_BASE_URL}/auth/signin`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

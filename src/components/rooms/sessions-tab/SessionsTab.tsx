@@ -3,11 +3,11 @@
 import React, { useState } from "react";
 import { Video, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import type { Session } from "./sessions-tab/types";
-import { sampleSessions } from "./sessions-tab/sample-data";
-import UpcomingSessionCard from "./sessions-tab/UpcomingSessionCard";
-import PastSessionCard from "./sessions-tab/PastSessionCard";
-import { EmptyUpcomingState, EmptyPastState } from "./sessions-tab/SessionEmptyStates";
+import type { Session } from "./types";
+import { sampleSessions } from "./sample-data";
+import UpcomingSessionCard from "./UpcomingSessionCard";
+import PastSessionCard from "./PastSessionCard";
+import { EmptyUpcomingState, EmptyPastState } from "./SessionEmptyStates";
 
 export default function SessionsTab() {
   const [sessions, setSessions] = useState<Session[]>(sampleSessions);

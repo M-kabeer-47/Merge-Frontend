@@ -5,7 +5,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { getAssignmentForStudent } from "@/server-api/assignment-submissions";
-import StudentAssignmentClient from "@/components/assignments/StudentAssignmentClient";
+import StudentAssignmentClient from "@/components/assignments/student-view/StudentAssignmentClient";
 import { studentAssignmentQueryKey } from "@/hooks/assignments/use-student-assignment";
 import AssignmentDetailSkeleton from "@/components/ui/skeletons/AssignmentDetailSkeleton";
 import { Button } from "@/components/ui/Button";

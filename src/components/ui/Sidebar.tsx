@@ -2,13 +2,8 @@
 import { cn } from "@/lib/shadcn/utils";
 import React, { useState, createContext, useContext, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import {
-  IconMenu2,
-  IconX,
-  IconChevronDown,
-  IconChevronRight,
-} from "@tabler/icons-react";
-import NotificationDropdown from "../navbar/Notifications";
+import { IconMenu2, IconX, IconChevronDown } from "@tabler/icons-react";
+import NotificationDropdown from "../layout/navbar/Notifications";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 

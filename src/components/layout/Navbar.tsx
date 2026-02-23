@@ -1,8 +1,8 @@
 "use client";
 import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
-import ToggleSwitch from "@/components/navbar/DarkModeToggle";
-import NotificationDropdown from "@/components/navbar/Notifications";
-import ProfileDropdown from "@/components/navbar/ProfileDropdown";
+import ToggleSwitch from "./navbar/DarkModeToggle";
+import NotificationDropdown from "./navbar/Notifications";
+import ProfileDropdown from "./navbar/ProfileDropdown";
 import useLogout from "@/hooks/auth/use-logout";
 import Image from "next/image";
 interface NavbarProps {

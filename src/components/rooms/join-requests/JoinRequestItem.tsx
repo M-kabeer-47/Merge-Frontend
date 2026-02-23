@@ -2,32 +2,13 @@ import { Check, X } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import type { JoinRequest } from "@/types/join-request";
 import { Button } from "@/components/ui/Button";
+import { getTimeAgo } from "@/utils/date-helpers";
 
 interface JoinRequestItemProps {
   request: JoinRequest;
   onAccept: (requestId: string) => void;
   onReject: (requestId: string) => void;
   isLoading?: boolean;
-}
-
-/**
- * Formats a date string to a relative time string (e.g., "2 hours ago")
- */
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60)
-    return `${diffMins} minute${diffMins === 1 ? "" : "s"} ago`;
-  if (diffHours < 24)
-    return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
-  return date.toLocaleDateString();
 }
 
 /**
@@ -40,7 +21,7 @@ export default function JoinRequestItem({
   isLoading = false,
 }: JoinRequestItemProps) {
   const { user, createdAt, id } = request;
-  const timeAgo = formatTimeAgo(createdAt);
+  const timeAgo = getTimeAgo(createdAt, false);
 
   return (
     <div className="flex items-center justify-between p-4 border border-light-border rounded-lg bg-background hover:bg-secondary/5 transition-colors">

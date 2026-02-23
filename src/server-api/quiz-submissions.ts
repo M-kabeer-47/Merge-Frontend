@@ -1,7 +1,6 @@
 import { getWithAuth } from "@/server-api/fetch-with-auth";
 import type { InstructorQuizDetail } from "@/types/quiz";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 export async function getQuizSubmissions(
   roomId: string,

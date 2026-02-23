@@ -10,6 +10,14 @@ import {
 } from "lucide-react";
 import type { StudentAssignment } from "@/types/assignment";
 import { IoTrophy } from "react-icons/io5";
+import { formatDueDate } from "@/utils/date-helpers";
+import { getStudentStatusConfig } from "@/utils/assignment-helpers";
+
+const iconMap = {
+  check: CheckCircle2,
+  x: XCircle,
+  alert: AlertCircle,
+};
 
 interface DashboardAssignmentCardProps {
   assignment: StudentAssignment;
@@ -22,71 +30,8 @@ export default function DashboardAssignmentCard({
   roomName,
   onClick,
 }: DashboardAssignmentCardProps) {
-  // Status configuration
-  const getStatusConfig = () => {
-    if (assignment.submission.status === "graded") {
-      return {
-        icon: CheckCircle2,
-        iconFill: "#10b981",
-        textColor: "text-success",
-        bgColor: "bg-success/10",
-        text: "Graded",
-      };
-    }
-    if (assignment.submission.status === "submitted") {
-      return {
-        icon: CheckCircle2,
-        iconFill: "#3b82f6",
-        textColor: "text-info",
-        bgColor: "bg-info/10",
-        text: "Submitted",
-      };
-    }
-    if (assignment.submission.status === "overdue") {
-      return {
-        icon: XCircle,
-        iconFill: "#ef4444",
-        textColor: "text-destructive",
-        bgColor: "bg-destructive/10",
-        text: "Overdue",
-      };
-    }
-    return {
-      icon: AlertCircle,
-      iconFill: "#e69a29",
-      textColor: "text-accent",
-      bgColor: "bg-accent/10",
-      text: "Pending",
-    };
-  };
-
-  const formatDueDate = (date: Date) => {
-    const dueDate = new Date(date);
-    const now = new Date();
-    const diffMs = dueDate.getTime() - now.getTime();
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffDays < 0) {
-      return `Overdue`;
-    }
-    if (diffDays === 0) {
-      return "Due today";
-    }
-    if (diffDays === 1) {
-      return "Due tomorrow";
-    }
-    if (diffDays <= 7) {
-      return `Due in ${diffDays}d`;
-    }
-
-    return dueDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const statusConfig = getStatusConfig();
-  const StatusIcon = statusConfig.icon;
+  const statusConfig = getStudentStatusConfig(assignment.submission.status);
+  const StatusIcon = iconMap[statusConfig.icon];
 
   return (
     <div
@@ -149,7 +94,7 @@ export default function DashboardAssignmentCard({
         <div className="flex items-center gap-3 text-xs text-para-muted">
           <span className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" />
-            {formatDueDate(assignment.dueDate)}
+            {formatDueDate(assignment.dueDate, true)}
           </span>
           <span className="flex items-center gap-1">
             <IoTrophy className="w-3.5 h-3.5" fill="#e69a29" />

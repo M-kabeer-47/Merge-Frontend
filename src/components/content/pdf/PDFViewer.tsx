@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import "@/lib/pdfjs/pdfjs";
-import PDFToolbar from "./pdf/PDFToolbar";
-import PDFPageList from "./pdf/PDFPageList";
-import PDFFooter from "./pdf/PDFFooter";
+import PDFToolbar from "./PDFToolbar";
+import PDFPageList from "./PDFPageList";
+import PDFFooter from "./PDFFooter";
 import { downloadFile } from "@/utils/download-file";
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];

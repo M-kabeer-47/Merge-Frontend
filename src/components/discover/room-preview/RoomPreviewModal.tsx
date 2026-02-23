@@ -3,13 +3,13 @@
 import { UserPlus, X } from "lucide-react";
 import Image from "next/image";
 import type { PublicRoom } from "@/types/discover";
-import TagChip from "./TagChip";
-import { Button } from "../ui/Button";
+import TagChip from "../TagChip";
+import { Button } from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
-import RoomDescriptionSection from "./room-preview/RoomDescriptionSection";
-import RoomMembersSection from "./room-preview/RoomMembersSection";
-import RoomFilesSection from "./room-preview/RoomFilesSection";
-import RoomAssignmentsSection from "./room-preview/RoomAssignmentsSection";
+import RoomDescriptionSection from "./RoomDescriptionSection";
+import RoomMembersSection from "./RoomMembersSection";
+import RoomFilesSection from "./RoomFilesSection";
+import RoomAssignmentsSection from "./RoomAssignmentsSection";
 
 interface RoomPreviewModalProps {
   room: PublicRoom | null;

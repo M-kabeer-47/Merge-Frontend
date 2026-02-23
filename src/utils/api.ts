@@ -1,12 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { API_BASE_URL } from "@/lib/constants/api";
 
 // Queue for failed requests during token refresh
 interface QueueItem {
   resolve: () => void;
   reject: (error: Error) => void;
 }
-
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 // Use NEXT_PUBLIC_ prefix so it's available on client-side
 // Set NEXT_PUBLIC_USE_AUTH_PROXY=true in .env.local for development
 const USE_API_PROXY =
@@ -30,7 +29,7 @@ const processQueue = (error: Error | null = null) => {
 // In development with proxy enabled, all requests go through /api/*
 // In production, requests go directly to backend
 const api = axios.create({
-  baseURL: USE_API_PROXY ? "/api" : BASE_URL,
+  baseURL: USE_API_PROXY ? "/api" : API_BASE_URL,
   withCredentials: true,
 });
 

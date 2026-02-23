@@ -11,7 +11,7 @@ import {
   IconCalendar,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import MobileNavbarOptions from "../navbar/MobileNavbarOptions";
+import MobileNavbarOptions from "./navbar/MobileNavbarOptions";
 import { useTheme } from "next-themes";
 
 interface Links {

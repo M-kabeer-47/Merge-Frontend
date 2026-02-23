@@ -11,14 +11,13 @@ import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import Avatar from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
-import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   Search,
   Users,
   ChevronLeft,
   ChevronRight,
   UserMinus,
-  AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { RoomMember } from "@/server-api/room-members";
@@ -238,8 +237,8 @@ export default function MembersTable({
         )}
       </div>
 
-      {/* Remove Member Confirmation Modal */}
-      <Modal
+      {/* Remove Member Confirmation */}
+      <ConfirmDialog
         isOpen={showRemoveConfirm}
         onClose={() => {
           if (!isRemoving) {
@@ -247,56 +246,18 @@ export default function MembersTable({
             setMemberToRemove(null);
           }
         }}
+        onConfirm={confirmRemove}
         title="Remove Member"
-        icon={
-          <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-destructive" />
-          </div>
+        message="Are you sure you want to remove this member from the room? They will lose access to all room content."
+        itemName={
+          memberToRemove
+            ? `${memberToRemove.user.firstName} ${memberToRemove.user.lastName}`
+            : undefined
         }
-        maxWidth="md"
-      >
-        {memberToRemove && (
-          <div className="space-y-4">
-            <p className="text-sm text-para">
-              Are you sure you want to remove{" "}
-              <span className="font-semibold text-heading">
-                {memberToRemove.user.firstName} {memberToRemove.user.lastName}
-              </span>{" "}
-              from this room? They will lose access to all room content.
-            </p>
-
-            <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
-              <p className="text-xs text-para-muted">
-                They can rejoin the room later if it's public or by invitation.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => {
-                  setShowRemoveConfirm(false);
-                  setMemberToRemove(null);
-                }}
-                variant="outline"
-                className="flex-1"
-                disabled={isRemoving}
-                aria-label="Cancel removal"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={confirmRemove}
-                variant="destructive"
-                className="flex-1"
-                disabled={isRemoving}
-                aria-label="Confirm remove member"
-              >
-                {isRemoving ? "Removing..." : "Remove Member"}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+        confirmText="Remove Member"
+        isLoading={isRemoving}
+        variant="danger"
+      />
     </>
   );
 }

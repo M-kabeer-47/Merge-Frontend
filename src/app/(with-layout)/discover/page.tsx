@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import SearchBar from "@/components/ui/SearchBar";
 import FilterBar from "@/components/discover/FilterBar";
 import RoomGrid from "@/components/discover/RoomGrid";
-import RoomPreviewModal from "@/components/discover/RoomPreviewModal";
+import RoomPreviewModal from "@/components/discover/room-preview/RoomPreviewModal";
 import RecommendedRooms from "@/components/discover/RecommendedRooms";
 import EmptyState from "@/components/discover/EmptyState";
 import { mockRooms, allTags } from "@/lib/constants/discover-mock-data";

@@ -1,5 +1,6 @@
 import { FileText, Download, X } from "lucide-react";
 import { downloadFile } from "@/utils/download-file";
+import { formatSubmissionDate } from "@/utils/date-helpers";
 
 interface SubmittedFilesSectionProps {
   files?: { name: string; url: string }[];
@@ -27,15 +28,6 @@ export default function SubmittedFilesSection({
   const handleRemove = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
     onRemoveFile?.(index);
-  };
-
-  const formatSubmissionDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
   };
 
   return (

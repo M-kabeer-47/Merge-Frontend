@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { StudentAssignment } from "@/types/assignment";
 import { isStudentAssignment } from "@/types/assignment";
-import AssignmentHeader from "./AssignmentHeader";
+import AssignmentHeader from "../AssignmentHeader";
 import StudentAssignmentView from "./StudentAssignmentView";
 import useSubmitAssignment from "@/hooks/assignments/use-submit-assignment";
 import useDeleteAssignmentAttempt from "@/hooks/assignments/use-delete-assignment-attempt";

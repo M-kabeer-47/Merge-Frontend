@@ -3,8 +3,7 @@ import type {
   Announcement,
   CreateAnnouncementPayload,
 } from "@/types/announcement";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 interface AnnouncementsResponse {
   announcements: Announcement[];

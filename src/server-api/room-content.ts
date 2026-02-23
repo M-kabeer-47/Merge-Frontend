@@ -4,8 +4,7 @@ import type {
   ContentSortBy,
   ContentSortOrder,
 } from "@/types/room-content";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 export interface GetRoomContentParams {
   roomId: string;

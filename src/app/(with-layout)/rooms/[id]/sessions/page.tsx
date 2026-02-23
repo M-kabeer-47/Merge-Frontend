@@ -1,4 +1,4 @@
-import SessionsTab from "@/components/rooms/SessionsTab";
+import SessionsTab from "@/components/rooms/sessions-tab/SessionsTab";
 
 export default function SessionsPage() {
   return <SessionsTab />;

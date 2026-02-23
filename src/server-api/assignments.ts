@@ -3,8 +3,7 @@ import type {
   StudentAssignment,
   InstructorAssignment,
 } from "@/types/assignment";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 export interface FetchAssignmentsParams {
   roomId: string;

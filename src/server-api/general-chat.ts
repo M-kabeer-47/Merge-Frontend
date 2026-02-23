@@ -1,7 +1,6 @@
 import { getWithAuth } from "./fetch-with-auth";
 import type { FetchMessagesResponse } from "@/types/general-chat";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 export interface FetchGeneralChatMessagesParams {
   roomId: string;

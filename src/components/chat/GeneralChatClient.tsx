@@ -13,7 +13,7 @@ import {
 } from "@/hooks/general-chat/use-socket-chat-events";
 import MessageItem from "@/components/chat/MessageItem";
 import MessageSkeleton from "@/components/chat/MessageSkeleton";
-import MessageComposer from "@/components/chat/MesageComposer";
+import MessageComposer from "@/components/chat/MessageComposer";
 import { AttachmentFile } from "@/components/chat/AttachmentPreview";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { ChatMessage } from "@/types/general-chat";

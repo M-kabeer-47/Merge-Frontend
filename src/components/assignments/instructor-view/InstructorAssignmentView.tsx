@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import type { InstructorAssignment } from "@/types/assignment";
-import InstructionsSection from "./student-view/InstructionsSection";
-import HorizontalStats from "./instructor-view/HorizontalStats";
-import SubmissionsTable from "./instructor-view/SubmissionsTable";
+import InstructionsSection from "../student-view/InstructionsSection";
+import HorizontalStats from "./HorizontalStats";
+import SubmissionsTable from "./SubmissionsTable";
 import Tabs from "@/components/ui/Tabs";
 import useFetchSubmissions from "@/hooks/assignments/use-fetch-submissions";
 import SubmissionsTableSkeleton from "@/components/ui/skeletons/SubmissionsTableSkeleton";

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 /**
  * Proxy sign-out requests to backend and clear local cookies
@@ -12,7 +11,7 @@ export async function POST(request: NextRequest) {
     const refreshToken = request.cookies.get("refreshToken")?.value;
 
     // Forward request to backend
-    const backendResponse = await fetch(`${BACKEND_URL}/auth/signout`, {
+    const backendResponse = await fetch(`${API_BASE_URL}/auth/signout`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

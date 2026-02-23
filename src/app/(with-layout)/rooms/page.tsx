@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import RoomsPageClient from "@/components/rooms/room/roomsPage/RoomsPageClient";
-import RoomsDataWrapper from "@/components/rooms/room/roomsPage/RoomsDataWrapper";
-import RoomsSkeleton from "@/components/rooms/room/roomsPage/RoomsSkeleton";
+import RoomsPageClient from "@/components/rooms/room/rooms-page/RoomsPageClient";
+import RoomsDataWrapper from "@/components/rooms/room/rooms-page/RoomsDataWrapper";
+import RoomsSkeleton from "@/components/rooms/room/rooms-page/RoomsSkeleton";
 
 interface RoomsPageProps {
   searchParams: Promise<{ filter?: string; search?: string }>;

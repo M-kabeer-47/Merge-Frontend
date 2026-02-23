@@ -1,7 +1,6 @@
 import { getWithAuth } from "@/server-api/fetch-with-auth";
 import type { Note, Folder } from "@/types/note";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 export interface NotesResponse {
   notes: Note[];

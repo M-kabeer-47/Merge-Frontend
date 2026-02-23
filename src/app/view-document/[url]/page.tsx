@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 
-const PdfViewer = dynamic(() => import("@/components/content/PDFViewer"), {
+const PdfViewer = dynamic(() => import("@/components/content/pdf/PDFViewer"), {
   ssr: false,
 });
 

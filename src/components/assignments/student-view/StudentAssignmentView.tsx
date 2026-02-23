@@ -1,7 +1,7 @@
 import type { StudentAssignment } from "@/types/assignment";
-import InstructionsSection from "./student-view/InstructionsSection";
-import FeedbackSection from "./student-view/FeedbackSection";
-import YourWorkSidebar from "./student-view/YourWorkSidebar";
+import InstructionsSection from "./InstructionsSection";
+import FeedbackSection from "./FeedbackSection";
+import YourWorkSidebar from "./YourWorkSidebar";
 
 interface StudentAssignmentViewProps {
   assignment: StudentAssignment;

@@ -2,8 +2,7 @@
 import { getWithAuth } from "./fetch-with-auth";
 import { CalendarTask, TaskCategory, TaskStatus } from "@/types/calendar";
 import { format, isValid } from "date-fns";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { API_BASE_URL } from "@/lib/constants/api";
 
 export async function getCalendarTasks(): Promise<CalendarTask[]> {
   const { data, error } = await getWithAuth<CalendarTask[]>(

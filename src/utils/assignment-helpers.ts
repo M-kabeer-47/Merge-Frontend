@@ -1,48 +1,7 @@
 import type { SubmissionStatus } from "@/types/assignment";
 
-/**
- * Format due date to human-readable relative or absolute format
- */
-export function formatDueDate(date: Date): string {
-  const dueDate = new Date(date);
-  const now = new Date();
-  const diffMs = dueDate.getTime() - now.getTime();
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffDays < 0) {
-    return `Overdue by ${Math.abs(diffDays)} day${
-      Math.abs(diffDays) !== 1 ? "s" : ""
-    }`;
-  }
-  if (diffDays === 0) {
-    return "Due today";
-  }
-  if (diffDays === 1) {
-    return "Due tomorrow";
-  }
-  if (diffDays <= 7) {
-    return `Due in ${diffDays} days`;
-  }
-
-  return dueDate.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: dueDate.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-  });
-}
-
-/**
- * Format submission date to readable format
- */
-export function formatSubmissionDate(date?: Date): string | null {
-  if (!date) return null;
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+// Re-export from centralized date-helpers for backward compatibility
+export { formatDueDate, formatSubmissionDate } from "@/utils/date-helpers";
 
 /**
  * Status configuration for student submission status badge
