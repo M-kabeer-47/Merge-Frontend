@@ -14,10 +14,17 @@ import type {
 /**
  * Map file type to AttachmentType enum
  */
-function mapFileTypeToAttachmentType(fileType: string): AttachmentType | undefined {
+function mapFileTypeToAttachmentType(
+  fileType: string,
+): AttachmentType | undefined {
   const lowerType = fileType.toLowerCase();
-  
-  if (lowerType.includes("image") || lowerType.includes("jpeg") || lowerType.includes("jpg") || lowerType.includes("png")) {
+
+  if (
+    lowerType.includes("image") ||
+    lowerType.includes("jpeg") ||
+    lowerType.includes("jpg") ||
+    lowerType.includes("png")
+  ) {
     return AttachmentType.IMAGE;
   }
   if (lowerType.includes("pdf")) {
@@ -32,7 +39,7 @@ function mapFileTypeToAttachmentType(fileType: string): AttachmentType | undefin
   if (lowerType.includes("txt") || lowerType.includes("text/plain")) {
     return AttachmentType.TXT;
   }
-  
+
   return undefined;
 }
 
@@ -50,37 +57,52 @@ export default function useSendMessage(conversationId: string | null) {
 
       const response = await api.post<SendMessageResponse>(
         `/ai-assistant/conversations/${conversationId}/messages`,
-        data
+        data,
       );
+      console.log("Response", response.data);
       return response.data;
     },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to send message. Please try again."
-      );
-    },
-    onSuccess: (aiResponse, userMessageData) => {
+    onMutate: async (userMessageData) => {
       if (!conversationId) return;
 
-      // Create user message object
-      const userMessage: ChatMessage = {
+      // Optimistically add the user message immediately
+      const optimisticUserMessage: ChatMessage = {
         id: `user-${Date.now()}`,
         role: "user",
         content: userMessageData.message,
         createdAt: new Date().toISOString(),
       };
 
-      // Update conversation with both user message and AI response
       queryClient.setQueryData<ConversationWithMessages>(
         ["ai-conversation", conversationId],
         (old) => {
           if (!old) return old;
           return {
             ...old,
-            messages: [...old.messages, userMessage, aiResponse],
+            messages: [...old.messages, optimisticUserMessage],
           };
-        }
+        },
+      );
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to send message. Please try again.",
+      );
+    },
+    onSuccess: (aiResponse) => {
+      if (!conversationId) return;
+
+      // Append AI response to the conversation (user message already added in onMutate)
+      queryClient.setQueryData<ConversationWithMessages>(
+        ["ai-conversation", conversationId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            messages: [...old.messages, aiResponse],
+          };
+        },
       );
 
       // Invalidate conversations list to update message count and last message
@@ -96,4 +118,3 @@ export default function useSendMessage(conversationId: string | null) {
     mapFileTypeToAttachmentType,
   };
 }
-

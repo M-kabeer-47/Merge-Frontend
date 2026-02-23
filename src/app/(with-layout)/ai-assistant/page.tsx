@@ -2,12 +2,16 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
-import { PanelRightOpen, Sparkles } from "lucide-react";
+import { PanelRightOpen } from "lucide-react";
 import { toast } from "sonner";
 import ChatMessage from "@/components/ai-assistant/ChatMessage";
 import ChatComposer from "@/components/ai-assistant/ChatComposer";
 import ChatHistory from "@/components/ai-assistant/ChatHistory";
+import ChatLoadingSkeleton from "@/components/ai-assistant/ChatLoadingSkeleton";
+import WelcomeScreen from "@/components/ai-assistant/WelcomeScreen";
+import TypingIndicator from "@/components/ai-assistant/TypingIndicator";
 import NameInputModal from "@/components/ui/NameInputModal";
+import RoomFilePickerModal from "@/components/ai-assistant/RoomFilePickerModal";
 import useFetchConversations from "@/hooks/ai-assistant/use-fetch-conversations";
 import useFetchConversation from "@/hooks/ai-assistant/use-fetch-conversation";
 import useCreateConversation from "@/hooks/ai-assistant/use-create-conversation";
@@ -16,29 +20,34 @@ import useUpdateConversationTitle from "@/hooks/ai-assistant/use-update-conversa
 import useSendMessage from "@/hooks/ai-assistant/use-send-message";
 import useUploadAttachment from "@/hooks/ai-assistant/use-upload-attachment";
 import { useAuth } from "@/providers/AuthProvider";
-import type { ContextFile, ChatSession } from "@/types/ai-chat";
+import { useQueryClient } from "@tanstack/react-query";
+import type { ContextFile, ConversationWithMessages } from "@/types/ai-chat";
 
 export default function AIAssistantPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(true);
   const [contextFiles, setContextFiles] = useState<ContextFile[]>([]);
-  const [pinnedSessions, setPinnedSessions] = useState<Set<string>>(new Set());
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [pendingMessage, setPendingMessage] = useState<{ content: string; files: ContextFile[] } | null>(null);
+  const [isFilePickerOpen, setIsFilePickerOpen] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState<{
+    content: string;
+    files: ContextFile[];
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch conversations and active conversation
   const { conversations, isLoading: loadingConversations } =
     useFetchConversations();
-  const { messages, isLoading: loadingMessages } =
-    useFetchConversation(activeSessionId);
+  const { messages, isLoading: loadingMessages } = useFetchConversation(activeSessionId);
 
   // Mutations
   const { createConversation, isCreating } = useCreateConversation();
   const { deleteConversation, isDeleting } = useDeleteConversation();
   const { updateTitle } = useUpdateConversationTitle();
-  const { sendMessage, isSending, mapFileTypeToAttachmentType } = useSendMessage(activeSessionId);
+  const { sendMessage, isSending, mapFileTypeToAttachmentType } =
+    useSendMessage(activeSessionId);
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
@@ -46,12 +55,6 @@ export default function AIAssistantPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  // Add sessions with pin status
-  const sessionsWithPins: ChatSession[] = conversations.map((conv) => ({
-    ...conv,
-    isPinned: pinnedSessions.has(conv.id),
-  }));
 
   // Handle new chat - open dialog
   const handleNewChat = () => {
@@ -62,15 +65,25 @@ export default function AIAssistantPage() {
   const handleCreateConversation = async (title: string) => {
     try {
       const newConversation = await createConversation({ title });
+
+      // Pre-populate cache so skeleton doesn't flash for new empty conversations
+      queryClient.setQueryData<ConversationWithMessages>(
+        ["ai-conversation", newConversation.id],
+        {
+          ...newConversation,
+          messages: [],
+        },
+      );
+
       setActiveSessionId(newConversation.id);
       setContextFiles([]);
-      
+
       // If there's a pending message, send it after creating the conversation
       if (pendingMessage) {
         await sendMessageToConversation(
           newConversation.id,
           pendingMessage.content,
-          pendingMessage.files
+          pendingMessage.files,
         );
         setPendingMessage(null);
       }
@@ -83,19 +96,6 @@ export default function AIAssistantPage() {
   const handleSelectSession = (sessionId: string) => {
     setActiveSessionId(sessionId);
     setContextFiles([]);
-  };
-
-  // Handle toggle pin (client-side only)
-  const handleTogglePin = (sessionId: string) => {
-    setPinnedSessions((prev) => {
-      const next = new Set(prev);
-      if (next.has(sessionId)) {
-        next.delete(sessionId);
-      } else {
-        next.add(sessionId);
-      }
-      return next;
-    });
   };
 
   // Handle delete conversation
@@ -111,7 +111,10 @@ export default function AIAssistantPage() {
   };
 
   // Handle rename conversation
-  const handleRenameConversation = async (sessionId: string, newTitle: string) => {
+  const handleRenameConversation = async (
+    sessionId: string,
+    newTitle: string,
+  ) => {
     try {
       await updateTitle({
         conversationId: sessionId,
@@ -136,15 +139,18 @@ export default function AIAssistantPage() {
   const sendMessageToConversation = async (
     conversationId: string,
     content: string,
-    files: ContextFile[]
+    files: ContextFile[],
   ) => {
     try {
       const attachmentData = files.length > 0 ? files[0] : null;
 
       await sendMessage({
         message: content,
+        contextFileId: attachmentData?.roomId ? attachmentData.id : undefined,
         attachmentS3Url: attachmentData?.url,
-        attachmentType: attachmentData ? mapFileTypeToAttachmentType(attachmentData.type) : undefined,
+        attachmentType: attachmentData
+          ? mapFileTypeToAttachmentType(attachmentData.type)
+          : undefined,
         attachmentOriginalName: attachmentData?.name,
         attachmentFileSize: attachmentData?.size,
       });
@@ -160,7 +166,7 @@ export default function AIAssistantPage() {
   const handleUploadFile = async (file: File) => {
     try {
       const uploaded = await uploadAttachment(file);
-      
+
       const contextFile: ContextFile = {
         id: `file-${Date.now()}`,
         name: uploaded.fileName,
@@ -168,7 +174,7 @@ export default function AIAssistantPage() {
         size: uploaded.fileSize,
         url: uploaded.s3Url,
       };
-      
+
       setContextFiles((prev) => [...prev, contextFile]);
     } catch (error) {
       console.error("Failed to upload file:", error);
@@ -177,8 +183,11 @@ export default function AIAssistantPage() {
 
   // Handle context file management
   const handleAddContext = () => {
-    // TODO: Implement modal to select files from rooms
-    toast.info("Feature coming soon: Select files from your rooms");
+    setIsFilePickerOpen(true);
+  };
+
+  const handleSelectRoomFile = (file: ContextFile) => {
+    setContextFiles((prev) => [...prev, file]);
   };
 
   const handleRemoveContextFile = (fileId: string) => {
@@ -202,8 +211,18 @@ export default function AIAssistantPage() {
 
   const isGenerating = isSending;
 
+  const composerProps = {
+    onSendMessage: handleSendMessage,
+    onAddContext: handleAddContext,
+    onUploadFile: handleUploadFile,
+    contextFiles,
+    onRemoveContextFile: handleRemoveContextFile,
+    disabled: isGenerating || isUploading,
+    uploadProgress,
+  };
+
   return (
-    <div className="h-screen flex overflow-hidden bg-main-background">
+    <div className="h-full flex overflow-hidden bg-main-background">
       {/* History Sidebar - Animated width like AppSidebar */}
       <motion.div
         animate={{
@@ -216,13 +235,12 @@ export default function AIAssistantPage() {
         className="relative flex-shrink-0 overflow-hidden border-r border-light-border"
       >
         {showHistory && (
-          <div className="w-[280px]">
+          <div className="w-[280px] h-full">
             <ChatHistory
-              sessions={sessionsWithPins}
+              sessions={conversations}
               activeSessionId={activeSessionId}
               onSelectSession={handleSelectSession}
               onNewChat={handleNewChat}
-              onTogglePin={handleTogglePin}
               onRenameSession={handleRenameConversation}
               onDeleteSession={handleDeleteConversation}
               onClose={() => setShowHistory(false)}
@@ -233,7 +251,7 @@ export default function AIAssistantPage() {
       </motion.div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Minimal Header - Just toggle button */}
         <div className="absolute top-4 left-4 z-20">
           <button
@@ -241,39 +259,21 @@ export default function AIAssistantPage() {
             className="p-2 rounded-lg bg-main-background border border-light-border hover:bg-background transition-colors shadow-sm"
             title="Toggle Chat History"
           >
-            <PanelRightOpen className={`w-5 h-5 text-para transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+            <PanelRightOpen
+              className={`w-5 h-5 text-para transition-transform ${showHistory ? "rotate-180" : ""}`}
+            />
           </button>
         </div>
 
         {/* Chat Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Welcome Section (when no messages) */}
-          {messages.length === 0 && (
-            <div className="flex-1 flex items-center justify-center p-6 pb-32">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-2xl text-center"
-              >
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-                  <Sparkles className="w-10 h-10 text-white" />
-                </div>
-                <h2 className="text-3xl font-raleway font-bold text-heading mb-3">
-                  Good Morning, {user?.firstName || "there"}
-                </h2>
-                <p className="text-lg text-para mb-8">
-                  How Can I{" "}
-                  <span className="text-primary font-semibold">
-                    Assist You Today?
-                  </span>
-                </p>
-              </motion.div>
-            </div>
-          )}
-
-          {/* Messages Area */}
-          {messages.length > 0 && (
-            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-44">
+        {activeSessionId && loadingMessages ? (
+          <ChatLoadingSkeleton />
+        ) : messages.length === 0 && !isGenerating ? (
+          <WelcomeScreen userName={user?.firstName} {...composerProps} />
+        ) : (
+          /* Conversation State: messages scroll, composer fixed at bottom */
+          <>
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-4">
               <div className="max-w-3xl mx-auto">
                 {messages.map((message) => (
                   <ChatMessage
@@ -284,50 +284,24 @@ export default function AIAssistantPage() {
                   />
                 ))}
 
-                {/* Loading Indicator */}
-                {isGenerating && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex gap-3 mb-6"
-                  >
-                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1 max-w-[85%]">
-                      <div className="rounded-2xl px-4 py-3 bg-main-background border border-light-border">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse delay-75" />
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse delay-150" />
-                          <span className="text-sm text-para-muted ml-2">
-                            Thinking...
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
+                {isGenerating && <TypingIndicator />}
 
                 <div ref={messagesEndRef} />
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Composer - Fixed at bottom */}
-        <div className="absolute w-full max-w-[700px] left-1/2 -translate-x-1/2 bottom-22 z-10">
-          <ChatComposer
-            onSendMessage={handleSendMessage}
-            onAddContext={handleAddContext}
-            onUploadFile={handleUploadFile}
-            contextFiles={contextFiles}
-            onRemoveContextFile={handleRemoveContextFile}
-            disabled={isGenerating || isUploading}
-            uploadProgress={uploadProgress}
-          />
-        </div>
+            <div className="shrink-0 w-full max-w-[700px] mx-auto px-4 pb-4">
+              <ChatComposer {...composerProps} />
+            </div>
+          </>
+        )}
       </div>
+
+      {/* Room File Picker Modal */}
+      <RoomFilePickerModal
+        isOpen={isFilePickerOpen}
+        onClose={() => setIsFilePickerOpen(false)}
+        onSelectFile={handleSelectRoomFile}
+      />
 
       {/* Create Conversation Dialog */}
       <NameInputModal

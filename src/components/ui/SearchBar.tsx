@@ -55,7 +55,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       {value && (
         <button
           onClick={handleClear}
-          className="absolute right-3 p-1 hover:bg-gray-100 rounded-full transition-colors"
+          className="absolute right-3 p-1 hover:bg-secondary/10 rounded-full transition-colors"
           aria-label="Clear search"
         >
           <IconX className="h-4 w-4 text-para-muted hover:text-heading" />

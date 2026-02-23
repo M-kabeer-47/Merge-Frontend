@@ -28,7 +28,8 @@ export default function useFetchConversation(conversationId: string | null) {
   return {
     conversation: data,
     messages: data?.messages || [],
-    isLoading: isLoading || isFetching,
+    isLoading, // true only on initial fetch (no cached data)
+    isFetching, // true on any fetch including background refetches
     isError,
     error,
     refetch,

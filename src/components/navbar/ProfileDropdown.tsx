@@ -35,10 +35,10 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     return (
       <div className={className}>
         <div className="flex items-center gap-2 px-2 py-1.5 rounded-full animate-pulse bg-white/10 border border-white/20">
-          <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+          <div className="w-8 h-8 bg-secondary/20 rounded-full"></div>
           <div className="hidden md:block space-y-1">
-            <div className="h-3 w-20 bg-gray-300 rounded"></div>
-            <div className="h-2 w-16 bg-gray-300 rounded"></div>
+            <div className="h-3 w-20 bg-secondary/20 rounded"></div>
+            <div className="h-2 w-16 bg-secondary/20 rounded"></div>
           </div>
         </div>
       </div>

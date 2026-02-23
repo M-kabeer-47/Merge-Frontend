@@ -2,13 +2,13 @@
 
 import { X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
   message: string;
   itemName?: string;
@@ -30,8 +30,6 @@ export default function ConfirmDialog({
   isLoading = false,
   variant = "danger",
 }: ConfirmDialogProps) {
-  if (!isOpen) return null;
-
   const handleConfirm = () => {
     onConfirm();
   };
@@ -62,73 +60,83 @@ export default function ConfirmDialog({
   const styles = getVariantStyles();
   const isDeleteFolder = title.toLowerCase() === "delete folder";
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.3 }}
-        className="bg-main-background rounded-lg shadow-xl w-full max-w-xl mx-4 border border-light-border"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-light-border">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-full ${styles.iconBg} flex items-center justify-center`}
-            >
-              <AlertTriangle className={`w-5 h-5 ${styles.icon}`} />
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="bg-main-background rounded-lg shadow-xl w-full max-w-xl mx-4 border border-light-border"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-light-border">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-10 h-10 rounded-full ${styles.iconBg} flex items-center justify-center`}
+                >
+                  <AlertTriangle className={`w-5 h-5 ${styles.icon}`} />
+                </div>
+                <h2 className="text-xl font-bold text-heading font-raleway">
+                  {title}
+                </h2>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-secondary/5 transition-colors"
+                disabled={isLoading}
+              >
+                <X className="w-5 h-5 text-para-muted" />
+              </button>
             </div>
-            <h2 className="text-xl font-bold text-heading font-raleway">
-              {title}
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-secondary/5 transition-colors"
-            disabled={isLoading}
-          >
-            <X className="w-5 h-5 text-para-muted" />
-          </button>
-        </div>
 
-        {/* Content */}
-        <div className="px-6 py-4">
-          <p className="text-para text-sm leading-relaxed">
-            {message}
+            {/* Content */}
+            <div className="px-6 py-4">
+              <p className="text-para text-sm leading-relaxed">
+                {message}
 
-            <span className="font-bold">
-              {itemName ? " " + itemName + "?" : ""}
-            </span>
-            {isDeleteFolder &&
-              " All content inside this folder will also be deleted."}
-          </p>
-        </div>
+                <span className="font-bold">
+                  {itemName ? " " + itemName + "?" : ""}
+                </span>
+                {isDeleteFolder &&
+                  " All content inside this folder will also be deleted."}
+              </p>
+            </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-light-border">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-            className="min-w-[110px]"
-          >
-            {cancelText}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleConfirm}
-            disabled={isLoading}
-            className={`${styles.button} min-w-[110px]`}
-          >
-            {isLoading ? (
-              <LoadingSpinner size="sm" text="Please wait..." />
-            ) : (
-              confirmText
-            )}
-          </Button>
-        </div>
-      </motion.div>
-    </div>
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-light-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+                className="min-w-[110px]"
+              >
+                {cancelText}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirm}
+                disabled={isLoading}
+                className={`${styles.button} min-w-[110px]`}
+              >
+                {isLoading ? (
+                  <LoadingSpinner size="sm" text="Please wait..." />
+                ) : (
+                  confirmText
+                )}
+              </Button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

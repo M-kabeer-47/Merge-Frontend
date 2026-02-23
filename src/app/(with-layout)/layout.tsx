@@ -18,7 +18,7 @@ export default function WithLayoutLayout({
           <NotificationTrigger />
         </Suspense>
 
-        <div className=" flex md:flex-row flex-col h-screen w-full bg-gray-50 overflow-hidden">
+        <div className="flex md:flex-row flex-col h-screen w-full bg-main-background overflow-hidden">
           {/* Sidebar */}
           <AppSidebar />
 
@@ -31,7 +31,7 @@ export default function WithLayoutLayout({
 
             {/* Page Content */}
             <main className="flex-1 bg-main-background overflow-y-auto">
-              <div className="max-w-full mx-auto">{children}</div>
+              <div className="max-w-full mx-auto h-full">{children}</div>
             </main>
           </div>
         </div>

@@ -73,11 +73,11 @@ export default function ChatComposer({
   };
 
   return (
-    <div className=" bg-main-background w-full">
-      {/* Upload Progress Indicator */}
-      {uploadProgress && uploadProgress.status === "uploading" && (
-        <div className="px-4 pt-3">
-          <div className="max-w-3xl mx-auto">
+    <div className="w-full">
+      <div className="max-w-3xl mx-auto">
+        {/* Upload Progress Indicator */}
+        {uploadProgress && uploadProgress.status === "uploading" && (
+          <div className="mb-3">
             <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-secondary/10 border border-secondary/20">
               <Loader2 className="w-4 h-4 text-secondary animate-spin" />
               <div className="flex-1">
@@ -98,54 +98,56 @@ export default function ChatComposer({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Context Files Preview */}
-      {contextFiles.length > 0 && (
-        <div className="px-4 pt-3 pb-2">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex flex-wrap gap-2">
-              {contextFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/10 border border-secondary/20 text-sm"
-                >
-                  <FolderOpen className="w-3.5 h-3.5 text-secondary" />
-                  <span className="text-para max-w-[120px] truncate">
-                    {file.name}
-                  </span>
-                  <button
-                    onClick={() => onRemoveContextFile(file.id)}
-                    className="text-para-muted hover:text-destructive transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+        {/* Main Composer Card */}
+        <div className="relative group">
+          {/* Glow effect behind the card (dark mode only) */}
+          <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-secondary/20 via-primary/10 to-transparent opacity-0 dark:opacity-100 blur-[1px] pointer-events-none" />
+
+          <div className="relative rounded-2xl border border-light-border bg-background backdrop-blur-sm shadow-sm dark:shadow-lg dark:shadow-primary/5 overflow-hidden transition-all duration-300 focus-within:shadow-md dark:focus-within:shadow-primary/10 dark:focus-within:border-primary/30">
+            {/* Context Files Preview */}
+            {contextFiles.length > 0 && (
+              <div className="px-4 pt-3 pb-1">
+                <div className="flex flex-wrap gap-2">
+                  {contextFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/10 border border-secondary/20 text-sm"
+                    >
+                      <FolderOpen className="w-3.5 h-3.5 text-secondary" />
+                      <span className="text-para max-w-[120px] truncate">
+                        {file.name}
+                      </span>
+                      <button
+                        onClick={() => onRemoveContextFile(file.id)}
+                        className="text-para-muted hover:text-destructive transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Textarea */}
+            <div className="px-4 pt-3 pb-1">
+              <textarea
+                ref={textareaRef}
+                value={message}
+                onChange={handleTextareaChange}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask anything or attach files from a room..."
+                disabled={disabled}
+                className="text-para bg-transparent w-full focus:outline-none resize-none max-h-[20px] text-sm overflow-y-auto placeholder:text-para-muted/70"
+                rows={1}
+              />
             </div>
-          </div>
-        </div>
-      )}
 
-      <div className="px-4 py-3 w-full">
-        <div className="max-w-3xl mx-auto">
-          <div className="border border-light-border rounded-lg p-3">
-            {/* Row 1: Textarea */}
-            <textarea
-              ref={textareaRef}
-              value={message}
-              onChange={handleTextareaChange}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask anything or attach files from a room..."
-              disabled={disabled}
-              className="text-para w-full focus:outline-none resize-none min-h-[46px] max-h-[120px] text-sm overflow-y-auto placeholder:text-para-muted"
-              rows={1}
-            />
-
-            {/* Row 2: Upload and Send buttons */}
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-light-border">
-              <div className="flex items-center gap-2">
+            {/* Action Bar */}
+            <div className="flex items-center justify-between px-3 pb-3 pt-1">
+              <div className="flex items-center gap-1">
                 {/* Hidden file input */}
                 <input
                   ref={fileInputRef}
@@ -158,23 +160,23 @@ export default function ChatComposer({
                 {/* Upload Local File */}
                 <button
                   onClick={handleUploadClick}
-                  className="p-2 hover:bg-secondary/10 rounded transition-colors"
+                  className="p-2 rounded-lg hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors"
                   title="Upload file from device"
                   disabled={disabled}
                   aria-label="Upload file from your device"
                 >
-                  <Paperclip className="h-4 w-4 text-para-muted" />
+                  <Paperclip className="h-[18px] w-[18px] text-para-muted" />
                 </button>
 
                 {/* Add from Rooms */}
                 <button
                   onClick={onAddContext}
-                  className="p-2 hover:bg-secondary/10 rounded transition-colors"
+                  className="p-2 rounded-lg hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors"
                   title="Add files from rooms"
                   disabled={disabled}
                   aria-label="Add files from your rooms"
                 >
-                  <FolderOpen className="h-4 w-4 text-secondary" />
+                  <FolderOpen className="h-[18px] w-[18px] text-secondary" />
                 </button>
               </div>
 
@@ -182,10 +184,10 @@ export default function ChatComposer({
               <button
                 onClick={handleSend}
                 disabled={!message.trim() && contextFiles.length === 0}
-                className={`px-3 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                className={`p-2.5 rounded-xl transition-all duration-200 flex items-center justify-center ${
                   message.trim() || contextFiles.length > 0
-                    ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
-                    : "bg-primary/50 text-white cursor-not-allowed"
+                    ? "bg-primary text-white hover:bg-primary/90 shadow-md dark:shadow-primary/30 hover:scale-105 active:scale-95"
+                    : "bg-primary/30 dark:bg-white/5 text-white/40 dark:text-para-muted/40 cursor-not-allowed"
                 }`}
               >
                 <ArrowUp className="h-4 w-4" />

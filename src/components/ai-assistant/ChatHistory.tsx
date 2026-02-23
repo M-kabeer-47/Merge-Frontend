@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState } from "react";
 import {
   Plus,
   Search,
   MessageSquare,
-  Pin,
   MoreVertical,
   Edit2,
   Trash2,
@@ -23,9 +21,8 @@ interface ChatHistoryProps {
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
-  onRenameSession?: (sessionId: string, newTitle: string) => void;
-  onDeleteSession?: (sessionId: string) => void;
-  onTogglePin?: (sessionId: string) => void;
+  onRenameSession?: (sessionId: string, newTitle: string) => Promise<void> | void;
+  onDeleteSession?: (sessionId: string) => Promise<void> | void;
   onClose?: () => void;
   isMobile?: boolean;
 }
@@ -37,29 +34,32 @@ export default function ChatHistory({
   onNewChat,
   onRenameSession,
   onDeleteSession,
-  onTogglePin,
   onClose,
   isMobile = false,
 }: ChatHistoryProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [sessionToDelete, setSessionToDelete] = useState<ChatSession | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<ChatSession | null>(
+    null,
+  );
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const [sessionToRename, setSessionToRename] = useState<ChatSession | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [sessionToRename, setSessionToRename] = useState<ChatSession | null>(
+    null,
+  );
 
   // Filter sessions
   const filteredSessions = sessions.filter(
     (session) =>
       session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      session.preview.toLowerCase().includes(searchTerm.toLowerCase())
+      (session.lastMessage?.content || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
   );
 
-  // Separate pinned and unpinned
-  const pinnedSessions = filteredSessions.filter((s) => s.isPinned);
-  const unpinnedSessions = filteredSessions.filter((s) => !s.isPinned);
-
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string | Date) => {
     const now = new Date();
     const diff = now.getTime() - new Date(date).getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -73,115 +73,6 @@ export default function ChatHistory({
       day: "numeric",
     });
   };
-
-  const SessionItem = ({ session }: { session: ChatSession }) => (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className={`group relative px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
-        activeSessionId === session.id
-          ? "bg-primary/10 border border-primary/20"
-          : "hover:bg-gray-100"
-      }`}
-      onClick={() => {
-        onSelectSession(session.id);
-        if (isMobile) onClose?.();
-      }}
-    >
-      <div className="flex items-start gap-2">
-        <MessageSquare
-          className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
-            activeSessionId === session.id ? "text-primary" : "text-para-muted"
-          }`}
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <h4
-              className={`text-sm font-medium truncate ${
-                activeSessionId === session.id ? "text-primary" : "text-heading"
-              }`}
-            >
-              {session.title}
-            </h4>
-            {session.isPinned && (
-              <Pin
-                className="w-3 h-3 text-accent flex-shrink-0"
-                fill="currentColor"
-              />
-            )}
-          </div>
-          <p className="text-xs text-para-muted truncate mb-1">
-            {session.preview}
-          </p>
-          <div className="flex items-center gap-2 text-xs text-para-muted">
-            <span>{formatDate(session.updatedAt)}</span>
-            <span>•</span>
-            <span>{session.messageCount} msgs</span>
-          </div>
-        </div>
-
-        {/* Menu Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setMenuOpen(menuOpen === session.id ? null : session.id);
-          }}
-          className="p-1 rounded hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <MoreVertical className="w-4 h-4 text-para-muted" />
-        </button>
-      </div>
-
-      {/* Dropdown Menu */}
-      {menuOpen === session.id && (
-        <>
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setMenuOpen(null)}
-          />
-          <div className="absolute right-2 top-10 w-40 bg-main-background border border-light-border rounded-lg shadow-lg z-20 overflow-hidden">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onTogglePin?.(session.id);
-                setMenuOpen(null);
-              }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-background transition-colors flex items-center gap-2"
-            >
-              <Pin className="w-3.5 h-3.5" />
-              {session.isPinned ? "Unpin" : "Pin"}
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSessionToRename(session);
-                setIsRenameDialogOpen(true);
-                setMenuOpen(null);
-              }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-background transition-colors flex items-center gap-2"
-            >
-              <Edit2 className="w-3.5 h-3.5" />
-              Rename
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSessionToDelete(session);
-                setIsDeleteDialogOpen(true);
-                setMenuOpen(null);
-              }}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-destructive/10 text-destructive transition-colors flex items-center gap-2 border-t border-light-border"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Delete
-            </button>
-          </div>
-        </>
-      )}
-    </motion.div>
-  );
 
   return (
     <div
@@ -198,7 +89,7 @@ export default function ChatHistory({
           {isMobile && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-secondary/10 transition-colors"
             >
               <X className="w-5 h-5 text-para-muted" />
             </button>
@@ -240,38 +131,103 @@ export default function ChatHistory({
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Pinned Sessions */}
-            {pinnedSessions.length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold text-para-muted uppercase tracking-wide px-3 mb-2">
-                  Pinned
-                </h3>
-                <div className="space-y-1">
-                  <AnimatePresence>
-                    {pinnedSessions.map((session) => (
-                      <SessionItem key={session.id} session={session} />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </div>
-            )}
+          <div className="space-y-1">
+            {filteredSessions.map((session) => (
+              <div
+                key={session.id}
+                className={`group relative px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
+                  activeSessionId === session.id
+                    ? "bg-secondary/20"
+                    : "hover:bg-secondary/10"
+                }`}
+                onClick={() => {
+                  if (menuOpen) return;
+                  onSelectSession(session.id);
+                  if (isMobile) onClose?.();
+                }}
+              >
+                <div className="flex items-start gap-2">
+                  <MessageSquare
+                    className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
+                      activeSessionId === session.id
+                        ? "text-primary"
+                        : "text-para-muted"
+                    }`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h4
+                      className={`text-sm font-medium truncate mb-0.5 ${
+                        activeSessionId === session.id
+                          ? "text-primary"
+                          : "text-heading"
+                      }`}
+                    >
+                      {session.title}
+                    </h4>
+                    <p className="text-xs text-para-muted truncate mb-1">
+                      {session.lastMessage?.content || "No messages yet"}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-para-muted">
+                      <span>{formatDate(session.updatedAt)}</span>
+                      <span>•</span>
+                      <span>{session.messageCount} msgs</span>
+                    </div>
+                  </div>
 
-            {/* Recent Sessions */}
-            {unpinnedSessions.length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold text-para-muted uppercase tracking-wide px-3 mb-2">
-                  Recent
-                </h3>
-                <div className="space-y-1">
-                  <AnimatePresence>
-                    {unpinnedSessions.map((session) => (
-                      <SessionItem key={session.id} session={session} />
-                    ))}
-                  </AnimatePresence>
+                  {/* Menu Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(
+                        menuOpen === session.id ? null : session.id,
+                      );
+                    }}
+                    className="p-1 rounded hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <MoreVertical className="w-4 h-4 text-para-muted" />
+                  </button>
                 </div>
+
+                {/* Dropdown Menu */}
+                {menuOpen === session.id && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(null);
+                      }}
+                    />
+                    <div className="absolute right-2 top-10 w-40 bg-main-background border border-light-border rounded-lg shadow-lg z-20 overflow-hidden">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSessionToRename(session);
+                          setIsRenameDialogOpen(true);
+                          setMenuOpen(null);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-background transition-colors flex items-center gap-2"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        Rename
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSessionToDelete(session);
+                          setIsDeleteDialogOpen(true);
+                          setMenuOpen(null);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-destructive/10 text-destructive transition-colors flex items-center gap-2 border-t border-light-border"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -283,13 +239,19 @@ export default function ChatHistory({
           setIsDeleteDialogOpen(false);
           setSessionToDelete(null);
         }}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (sessionToDelete) {
-            onDeleteSession?.(sessionToDelete.id);
+            try {
+              setIsDeleting(true);
+              await onDeleteSession?.(sessionToDelete.id);
+            } finally {
+              setIsDeleting(false);
+            }
           }
           setIsDeleteDialogOpen(false);
           setSessionToDelete(null);
         }}
+        isLoading={isDeleting}
         title="Delete Chat Session"
         message="Are you sure you want to delete"
         itemName={sessionToDelete?.title}
@@ -307,11 +269,15 @@ export default function ChatHistory({
         }}
         onSubmit={async (newTitle: string) => {
           if (sessionToRename) {
-            onRenameSession?.(sessionToRename.id, newTitle);
+            try {
+              setIsRenaming(true);
+              await onRenameSession?.(sessionToRename.id, newTitle);
+            } finally {
+              setIsRenaming(false);
+            }
           }
-          setIsRenameDialogOpen(false);
-          setSessionToRename(null);
         }}
+        isLoading={isRenaming}
         title="Rename Chat Session"
         label="Session Title"
         placeholder="Enter new title..."

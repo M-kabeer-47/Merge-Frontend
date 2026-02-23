@@ -61,15 +61,15 @@ export default function MobileNavbarOptions({
         <div className="border-t border-light-border"></div>
         <div className="space-y-2">
           <div className="flex items-center gap-3 p-3 rounded-lg animate-pulse">
-            <div className="w-5 h-5 bg-gray-300 rounded"></div>
-            <div className="h-4 w-24 bg-gray-300 rounded"></div>
+            <div className="w-5 h-5 bg-secondary/20 rounded"></div>
+            <div className="h-4 w-24 bg-secondary/20 rounded"></div>
           </div>
         </div>
         <div className="flex items-center gap-3 px-1 animate-pulse">
-          <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+          <div className="w-12 h-12 bg-secondary/20 rounded-full"></div>
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 bg-gray-300 rounded"></div>
-            <div className="h-3 w-20 bg-gray-300 rounded"></div>
+            <div className="h-4 w-32 bg-secondary/20 rounded"></div>
+            <div className="h-3 w-20 bg-secondary/20 rounded"></div>
           </div>
         </div>
       </div>

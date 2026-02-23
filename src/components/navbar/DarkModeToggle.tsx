@@ -50,10 +50,10 @@ export default function ToggleSwitch({
       onClick={toggleTheme}
       className={`${
         currentSize.switch
-      } relative rounded-full p-0.5 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-200 ${
+      } relative rounded-full p-0.5 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-secondary/20 ${
         isDarkMode
           ? "bg-gradient-to-r from-primary to-secondary"
-          : "bg-gray-200"
+          : "bg-light-border"
       }`}
     >
       {/* Background Icons */}

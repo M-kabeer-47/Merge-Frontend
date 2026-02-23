@@ -39,6 +39,7 @@ export default function signIn({
       // Backend sets cookies via Set-Cookie headers (same-origin via proxy)
       if (data.token && data.refreshToken && data.userId) {
         toast.success("Signed in successfully!");
+        console.log("Signed In Successfully");
         setTimeout(() => {
           router.push("/rooms");
         }, 500);

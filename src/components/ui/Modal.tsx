@@ -9,10 +9,11 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   icon?: React.ReactNode;
   children: React.ReactNode;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
+  footer?: React.ReactNode;
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
 }
 
 const maxWidthClasses = {
@@ -21,6 +22,7 @@ const maxWidthClasses = {
   lg: "max-w-lg",
   xl: "max-w-xl",
   "2xl": "max-w-2xl",
+  "3xl": "max-w-3xl",
 };
 
 export default function Modal({
@@ -30,6 +32,7 @@ export default function Modal({
   description,
   icon,
   children,
+  footer,
   maxWidth = "lg",
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -81,9 +84,9 @@ export default function Modal({
                     {title}
                   </h2>
                   {description && (
-                    <p className="text-sm text-para-muted mt-1">
+                    <div className="text-sm text-para-muted mt-1">
                       {description}
-                    </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -98,6 +101,11 @@ export default function Modal({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">{children}</div>
+
+            {/* Footer */}
+            {footer && (
+              <div className="border-t border-light-border">{footer}</div>
+            )}
           </motion.div>
         </motion.div>
       )}

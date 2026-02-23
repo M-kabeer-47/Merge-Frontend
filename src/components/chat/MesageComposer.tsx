@@ -11,19 +11,13 @@ import {
   Send,
   Paperclip,
   Smile,
-  X,
-  AtSign,
   Image as ImageIcon,
 } from "lucide-react";
 import type { ChatMessage, ChatUser } from "@/types/general-chat";
-import { getUserDisplayName } from "@/types/general-chat";
-import {
-  EmojiPicker,
-  EmojiPickerSearch,
-  EmojiPickerContent,
-  EmojiPickerFooter,
-} from "@/components/ui/EmojiPicker";
 import AttachmentPreview, { AttachmentFile } from "./AttachmentPreview";
+import EditModeBanner from "./EditModeBanner";
+import ReplyPreviewBanner from "./ReplyPreviewBanner";
+import EmojiPickerPopover from "./EmojiPickerPopover";
 
 interface MessageComposerProps {
   onSendMessage: (
@@ -138,15 +132,6 @@ const MessageComposer = forwardRef(function MessageComposer(
     setAttachments([]);
   };
 
-  // Cleanup previews on unmount
-  // useEffect(() => {
-  //   return () => {
-  //     attachments.forEach((attachment) => {
-  //       URL.revokeObjectURL(attachment.preview);
-  //     });
-  //   };
-  // }, [attachments]);
-
   // insert emoji helper (used internally and exposed)
   const insertEmojiLocal = (emoji: string) => {
     const textarea = textareaRef.current;
@@ -254,68 +239,26 @@ const MessageComposer = forwardRef(function MessageComposer(
 
       {/* Editing Banner */}
       {editingMessage && (
-        <div className="px-6 py-3 relative bg-primary/10 rounded-lg mx-4 mt-3">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="text-xs text-primary mb-1 font-medium">
-                Editing message
-              </div>
-              <div className="text-sm text-para line-clamp-2">
-                {editingMessage.content}
-              </div>
-            </div>
-            <button
-              onClick={onCancelEdit}
-              className="p-1 rounded transition-colors ml-2 hover:bg-primary/10"
-            >
-              <X className="h-4 w-4 text-para" />
-            </button>
-          </div>
-        </div>
+        <EditModeBanner
+          editingMessage={editingMessage}
+          onCancelEdit={onCancelEdit}
+        />
       )}
 
       {replyingTo && replyingToUser && (
-        <div className="px-6 py-3 relative ">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="text-xs text-para-muted mb-1">
-                Replying to{" "}
-                <span className="font-medium text-heading">
-                  {getUserDisplayName(replyingToUser)}
-                </span>
-              </div>
-              <div className="text-sm text-para line-clamp-2">
-                {replyingTo.content}
-              </div>
-            </div>
-            <button
-              onClick={onCancelReply}
-              className="p-1  rounded transition-colors ml-2"
-            >
-              <X className="h-4 w-4 text-heading absolute right-[25px] " />
-            </button>
-          </div>
-        </div>
+        <ReplyPreviewBanner
+          replyingTo={replyingTo}
+          replyingToUser={replyingToUser}
+          onCancelReply={onCancelReply}
+        />
       )}
 
-      {/* Emoji picker - shown above composer when isEmojiOpen */}
-      {isEmojiOpen && (
-        <div
-          ref={emojiRef}
-          className="absolute bottom-full mb-2 right-4 z-50 pointer-events-auto"
-        >
-          <div className="w-[280px] h-[420px] shadow-lg rounded-md overflow-hidden">
-            <EmojiPicker
-              onEmojiSelect={handleEmojiSelect}
-              className="h-full w-full"
-            >
-              <EmojiPickerSearch />
-              <EmojiPickerContent />
-              <EmojiPickerFooter />
-            </EmojiPicker>
-          </div>
-        </div>
-      )}
+      {/* Emoji picker */}
+      <EmojiPickerPopover
+        isOpen={isEmojiOpen}
+        onEmojiSelect={handleEmojiSelect}
+        emojiRef={emojiRef}
+      />
 
       <div className="px-4 py-3 w-full ">
         <div className="flex items-center gap-3 w-full">
@@ -364,10 +307,6 @@ const MessageComposer = forwardRef(function MessageComposer(
                 onChange={handleFileChange}
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.7z"
               />
-
-              {/* <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">
-                <AtSign className="h-4 w-4 text-para-muted" />
-              </button> */}
 
               {/* Emoji toggle button - opens emoji picker */}
               <button

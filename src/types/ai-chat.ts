@@ -97,6 +97,7 @@ export interface UpdateConversationTitlePayload {
 
 export interface SendMessagePayload {
   message: string;
+  contextFileId?: string;
   attachmentS3Url?: string;
   attachmentType?: AttachmentType;
   attachmentOriginalName?: string;

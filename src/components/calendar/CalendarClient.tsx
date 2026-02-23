@@ -184,15 +184,14 @@ export default function CalendarClient() {
         taskToEdit={taskToEdit}
       />
 
-      {selectedTask && (
-        <TaskDetailsModal
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onMarkDone={handleMarkDone}
-          onEdit={handleEditTask}
-          onDelete={handleDeleteTask}
-        />
-      )}
+      <TaskDetailsModal
+        task={selectedTask}
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onMarkDone={handleMarkDone}
+        onEdit={handleEditTask}
+        onDelete={handleDeleteTask}
+      />
     </div>
   );
 }

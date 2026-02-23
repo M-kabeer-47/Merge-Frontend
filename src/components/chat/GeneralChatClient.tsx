@@ -250,7 +250,7 @@ const GeneralChatClient: React.FC<GeneralChatClientProps> = ({ roomId }) => {
         <div
           id="scrollableDiv"
           ref={scrollContainerRef}
-          className="h-[500px] overflow-y-auto relative flex flex-col-reverse"
+          className="min-h-[500px] overflow-y-auto relative flex flex-col-reverse"
         >
           <InfiniteScroll
             dataLength={messages.length}

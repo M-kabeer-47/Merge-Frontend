@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Get response data
     const data = await backendResponse.json();
-
+    console.log("data", data);
     // Create response
     const response = NextResponse.json(data, {
       status: backendResponse.status,
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     // If successful, extract cookies from backend and rewrite for localhost
     if (backendResponse.ok) {
       const setCookieHeaders = backendResponse.headers.getSetCookie();
+      console.log("setCookieHeaders", setCookieHeaders);
 
       for (const cookieHeader of setCookieHeaders) {
         // Parse the cookie
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
     console.error("[Proxy] Sign-in error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

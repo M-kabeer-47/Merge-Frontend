@@ -26,7 +26,7 @@ interface SidebarContextProps {
 }
 
 const SidebarContext = createContext<SidebarContextProps | undefined>(
-  undefined
+  undefined,
 );
 
 export const useSidebar = () => {
@@ -98,7 +98,7 @@ export const DesktopSidebar = ({
       <motion.div
         className={cn(
           "h-full px-4 py-4 hidden md:flex md:flex-col bg-main-background border-r border-light-border shrink-0 shadow-sm",
-          className
+          className,
         )}
         initial={false}
         animate={{
@@ -131,7 +131,7 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "h-16 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-main-background border-b border-light-border w-full shadow-sm"
+          "h-16 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-main-background border-b border-light-border w-full shadow-sm",
         )}
         {...props}
       >
@@ -167,7 +167,7 @@ export const MobileSidebar = ({
               }}
               className={cn(
                 "fixed h-full w-full inset-0 bg-main-background p-6 z-[100] flex flex-col",
-                className
+                className,
               )}
             >
               <div
@@ -219,7 +219,7 @@ export const SidebarLink = ({
         className={cn(
           "text-para flex items-center justify-between gap-3 group/sidebar py-2.5 hover:bg-secondary/10 rounded-lg px-3 transition-all duration-200  hover:text-primary border-transparent hover:border-primary/20",
           isActive && "bg-secondary/10 text-primary",
-          className
+          className,
         )}
         onClick={handleClick}
         {...props}
@@ -230,9 +230,7 @@ export const SidebarLink = ({
               isActive ? "text-primary" : "text-para-muted"
             }`}
           >
-            
-              {link.icon}
-            
+            {link.icon}
           </div>
           <motion.span
             animate={{

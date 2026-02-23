@@ -32,7 +32,7 @@ export default function ChatMessage({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const formatTime = (date: Date) => {
+  const formatTime = (date: string) => {
     return new Date(date).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
@@ -151,7 +151,7 @@ export default function ChatMessage({
             {contentParts.map((part, idx) => (
               <div key={idx}>
                 {part.type === "code" ? (
-                  <pre className="bg-gray-900 text-gray-100 rounded-lg p-3 my-2 overflow-x-auto">
+                  <pre className="bg-main-background dark:bg-[#0a0812] text-para rounded-lg p-3 my-2 overflow-x-auto border border-light-border">
                     <code className="text-sm font-mono">{part.content}</code>
                   </pre>
                 ) : (
@@ -161,25 +161,20 @@ export default function ChatMessage({
             ))}
           </div>
 
-          {/* Context Files (if any) */}
-          {message.contextFiles && message.contextFiles.length > 0 && (
+          {/* Context File Indicator */}
+          {message.contextFileId && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {message.contextFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="text-xs px-2 py-1 rounded-md bg-secondary/10 text-secondary border border-secondary/20 flex items-center gap-1"
-                >
-                  <FileText className="w-3 h-3" />
-                  <span>{file.name}</span>
-                </div>
-              ))}
+              <div className="text-xs px-2 py-1 rounded-md bg-secondary/10 text-secondary border border-secondary/20 flex items-center gap-1">
+                <FileText className="w-3 h-3" />
+                <span>Attached file</span>
+              </div>
             </div>
           )}
         </div>
 
         {/* Timestamp */}
         <div className="text-xs text-para-muted mt-1 px-2">
-          {formatTime(message.timestamp)}
+          {formatTime(message.createdAt)}
         </div>
 
         {/* Actions (for assistant messages) */}
@@ -187,7 +182,7 @@ export default function ChatMessage({
           <div className="flex items-center gap-1 mt-2">
             <button
               onClick={handleCopy}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-para-muted hover:text-para"
+              className="p-1.5 rounded-lg hover:bg-secondary/10 transition-colors text-para-muted hover:text-para"
               title="Copy"
             >
               {copied ? (
@@ -198,14 +193,14 @@ export default function ChatMessage({
             </button>
             <button
               onClick={() => onSaveToNotes?.(message.id)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-para-muted hover:text-para"
+              className="p-1.5 rounded-lg hover:bg-secondary/10 transition-colors text-para-muted hover:text-para"
               title="Save to notes"
             >
               <BookmarkPlus className="w-4 h-4" />
             </button>
             <button
               onClick={() => onRegenerate?.(message.id)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-para-muted hover:text-para"
+              className="p-1.5 rounded-lg hover:bg-secondary/10 transition-colors text-para-muted hover:text-para"
               title="Regenerate"
             >
               <RefreshCw className="w-4 h-4" />
