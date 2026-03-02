@@ -30,6 +30,12 @@ async function handler(
     "Content-Type": request.headers.get("Content-Type") || "application/json",
   };
 
+  // Forward Authorization header if present
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader) {
+    headers["Authorization"] = authHeader;
+  }
+
   if (cookieHeader) {
     headers["Cookie"] = cookieHeader;
   }
@@ -54,9 +60,26 @@ async function handler(
     },
   );
 
-  // Get response data
-  let responseData: any;
   const contentType = backendResponse.headers.get("content-type");
+
+  // Handle streaming responses (SSE)
+  if (contentType?.includes("text/event-stream")) {
+    console.log("[API Proxy] Streaming response detected for:", pathString);
+    
+    // Pass through the stream directly without buffering
+    return new NextResponse(backendResponse.body, {
+      status: backendResponse.status,
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no", // Disable nginx buffering if behind nginx
+      },
+    });
+  }
+
+  // Handle regular responses (non-streaming)
+  let responseData: any;
 
   if (contentType?.includes("application/json")) {
     responseData = await backendResponse.json();

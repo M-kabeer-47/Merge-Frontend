@@ -10,15 +10,14 @@ import ChatHistory from "@/components/ai-assistant/ChatHistory";
 import ChatLoadingSkeleton from "@/components/ai-assistant/ChatLoadingSkeleton";
 import WelcomeScreen from "@/components/ai-assistant/WelcomeScreen";
 import TypingIndicator from "@/components/ai-assistant/TypingIndicator";
-import NameInputModal from "@/components/ui/NameInputModal";
 import RoomFilePickerModal from "@/components/ai-assistant/RoomFilePickerModal";
 import useFetchConversations from "@/hooks/ai-assistant/use-fetch-conversations";
 import useFetchConversation from "@/hooks/ai-assistant/use-fetch-conversation";
 import useCreateConversation from "@/hooks/ai-assistant/use-create-conversation";
 import useDeleteConversation from "@/hooks/ai-assistant/use-delete-conversation";
-import useUpdateConversationTitle from "@/hooks/ai-assistant/use-update-conversation-title";
-import useSendMessage from "@/hooks/ai-assistant/use-send-message";
+import useStreamQuery from "@/hooks/ai-assistant/use-stream-query";
 import useUploadAttachment from "@/hooks/ai-assistant/use-upload-attachment";
+import { useTypingEffect } from "@/hooks/ai-assistant/use-typing-effect";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ContextFile, ConversationWithMessages } from "@/types/ai-chat";
@@ -29,13 +28,12 @@ export default function AIAssistantPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(true);
   const [contextFiles, setContextFiles] = useState<ContextFile[]>([]);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isFilePickerOpen, setIsFilePickerOpen] = useState(false);
-  const [pendingMessage, setPendingMessage] = useState<{
-    content: string;
-    files: ContextFile[];
-  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastScrollHeightRef = useRef<number>(0);
+  const isUserScrollingRef = useRef<boolean>(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch conversations and active conversation
   const { conversations, isLoading: loadingConversations } =
@@ -45,26 +43,83 @@ export default function AIAssistantPage() {
   // Mutations
   const { createConversation, isCreating } = useCreateConversation();
   const { deleteConversation, isDeleting } = useDeleteConversation();
-  const { updateTitle } = useUpdateConversationTitle();
-  const { sendMessage, isSending, mapFileTypeToAttachmentType } =
-    useSendMessage(activeSessionId);
+  const { streamQuery, isStreaming, streamingMessage } = useStreamQuery();
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
-  // Auto-scroll to bottom
+  // Smooth typing effect for streaming message
+  const { displayedText } = useTypingEffect(
+    streamingMessage?.content || null,
+    15 // 15ms per character for smooth, fast typing effect
+  );
+
+  // Smart auto-scroll: only scroll if user is already at bottom, with throttling
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer || isUserScrollingRef.current) return;
 
-  // Handle new chat - open dialog
-  const handleNewChat = () => {
-    setIsCreateDialogOpen(true);
-  };
+    // Throttle scroll updates during streaming to avoid jank
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
 
-  // Handle create conversation with title
-  const handleCreateConversation = async (title: string) => {
+    scrollTimeoutRef.current = setTimeout(() => {
+      // Check if user is near the bottom (within 150px threshold)
+      const threshold = 150;
+      const isNearBottom = 
+        scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < threshold;
+
+      if (isNearBottom) {
+        // Use instant scroll during streaming for smooth typing effect
+        if (streamingMessage) {
+          // During streaming, scroll instantly to avoid animation lag
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        } else {
+          // After message sent, smooth scroll
+          messagesEndRef.current?.scrollIntoView({ 
+            behavior: "smooth",
+            block: "end"
+          });
+        }
+      }
+    }, 50); // Throttle to 50ms for smooth performance
+
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [messages.length, displayedText.length]);
+
+  // Track user scrolling
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const threshold = 150;
+      const isNearBottom = 
+        scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < threshold;
+      
+      // Mark as user scrolling if they've scrolled away from bottom
+      isUserScrollingRef.current = !isNearBottom;
+      
+      // Reset after a delay so auto-scroll can resume
+      if (!isNearBottom) {
+        setTimeout(() => {
+          isUserScrollingRef.current = false;
+        }, 1000);
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle new chat - create conversation without dialog
+  const handleNewChat = async () => {
     try {
-      const newConversation = await createConversation({ title });
+      const newConversation = await createConversation();
 
       // Pre-populate cache so skeleton doesn't flash for new empty conversations
       queryClient.setQueryData<ConversationWithMessages>(
@@ -77,16 +132,6 @@ export default function AIAssistantPage() {
 
       setActiveSessionId(newConversation.id);
       setContextFiles([]);
-
-      // If there's a pending message, send it after creating the conversation
-      if (pendingMessage) {
-        await sendMessageToConversation(
-          newConversation.id,
-          pendingMessage.content,
-          pendingMessage.files,
-        );
-        setPendingMessage(null);
-      }
     } catch (error) {
       console.error("Failed to create conversation:", error);
     }
@@ -110,56 +155,48 @@ export default function AIAssistantPage() {
     }
   };
 
-  // Handle rename conversation
-  const handleRenameConversation = async (
-    sessionId: string,
-    newTitle: string,
-  ) => {
-    try {
-      await updateTitle({
-        conversationId: sessionId,
-        data: { title: newTitle },
-      });
-    } catch (error) {
-      console.error("Failed to rename conversation:", error);
-    }
-  };
-
-  // Handle send message with optional file
+  // Handle send message with streaming
   const handleSendMessage = async (content: string, files: ContextFile[]) => {
-    if (!activeSessionId) {
-      // Show create dialog when no active session
-      setPendingMessage({ content, files });
-      setIsCreateDialogOpen(true);
-    } else {
-      await sendMessageToConversation(activeSessionId, content, files);
-    }
-  };
+    const attachmentData = files.length > 0 ? files[0] : null;
 
-  const sendMessageToConversation = async (
-    conversationId: string,
-    content: string,
-    files: ContextFile[],
-  ) => {
-    try {
-      const attachmentData = files.length > 0 ? files[0] : null;
+    // Map file type to attachment type
+    const mapFileTypeToAttachmentType = (
+      fileType: string,
+    ): "pdf" | "docx" | "txt" | "pptx" | "xlsx" | undefined => {
+      const lowerType = fileType.toLowerCase();
+      if (lowerType.includes("pdf")) return "pdf";
+      if (lowerType.includes("docx") || lowerType.includes("document")) return "docx";
+      if (lowerType.includes("txt") || lowerType.includes("text/plain")) return "txt";
+      if (lowerType.includes("pptx") || lowerType.includes("presentation")) return "pptx";
+      if (lowerType.includes("xlsx") || lowerType.includes("spreadsheet")) return "xlsx";
+      return undefined;
+    };
 
-      await sendMessage({
+    await streamQuery(
+      {
+        conversationId: activeSessionId || undefined,
         message: content,
-        contextFileId: attachmentData?.roomId ? attachmentData.id : undefined,
         attachmentS3Url: attachmentData?.url,
         attachmentType: attachmentData
           ? mapFileTypeToAttachmentType(attachmentData.type)
           : undefined,
         attachmentOriginalName: attachmentData?.name,
         attachmentFileSize: attachmentData?.size,
-      });
+      },
+      (conversationId) => {
+        // On conversation created
+        if (!activeSessionId) {
+          setActiveSessionId(conversationId);
+        }
+      },
+      (title) => {
+        // On title updated (optional callback)
+        console.log("Conversation title updated:", title);
+      },
+    );
 
-      // Clear context files after sending
-      setContextFiles([]);
-    } catch (error) {
-      console.error("Failed to send message:", error);
-    }
+    // Clear context files after sending
+    setContextFiles([]);
   };
 
   // Handle file upload from device
@@ -209,15 +246,13 @@ export default function AIAssistantPage() {
     toast.info("Feature coming soon: Regenerate response");
   };
 
-  const isGenerating = isSending;
-
   const composerProps = {
     onSendMessage: handleSendMessage,
     onAddContext: handleAddContext,
     onUploadFile: handleUploadFile,
     contextFiles,
     onRemoveContextFile: handleRemoveContextFile,
-    disabled: isGenerating || isUploading,
+    disabled: isStreaming || isUploading,
     uploadProgress,
   };
 
@@ -241,7 +276,6 @@ export default function AIAssistantPage() {
               activeSessionId={activeSessionId}
               onSelectSession={handleSelectSession}
               onNewChat={handleNewChat}
-              onRenameSession={handleRenameConversation}
               onDeleteSession={handleDeleteConversation}
               onClose={() => setShowHistory(false)}
               isMobile={false}
@@ -268,12 +302,19 @@ export default function AIAssistantPage() {
         {/* Chat Content Area */}
         {activeSessionId && loadingMessages ? (
           <ChatLoadingSkeleton />
-        ) : messages.length === 0 && !isGenerating ? (
+        ) : messages.length === 0 && !isStreaming ? (
           <WelcomeScreen userName={user?.firstName} {...composerProps} />
         ) : (
           /* Conversation State: messages scroll, composer fixed at bottom */
           <>
-            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-4">
+            <div 
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-4"
+              style={{
+                scrollBehavior: streamingMessage ? 'auto' : 'smooth',
+                overflowAnchor: 'none',
+              }}
+            >
               <div className="max-w-3xl mx-auto">
                 {messages.map((message) => (
                   <ChatMessage
@@ -284,7 +325,20 @@ export default function AIAssistantPage() {
                   />
                 ))}
 
-                {isGenerating && <TypingIndicator />}
+                {/* Show streaming message with smooth typing effect */}
+                {streamingMessage && (
+                  <ChatMessage
+                    key={streamingMessage.id}
+                    message={{
+                      ...streamingMessage,
+                      content: displayedText,
+                    }}
+                    onSaveToNotes={handleSaveToNotes}
+                    onRegenerate={handleRegenerate}
+                  />
+                )}
+
+                {isStreaming && !streamingMessage && <TypingIndicator />}
 
                 <div ref={messagesEndRef} />
               </div>
@@ -301,25 +355,6 @@ export default function AIAssistantPage() {
         isOpen={isFilePickerOpen}
         onClose={() => setIsFilePickerOpen(false)}
         onSelectFile={handleSelectRoomFile}
-      />
-
-      {/* Create Conversation Dialog */}
-      <NameInputModal
-        isOpen={isCreateDialogOpen}
-        onClose={() => {
-          setIsCreateDialogOpen(false);
-          setPendingMessage(null);
-        }}
-        onSubmit={async (title: string) => {
-          await handleCreateConversation(title);
-          setIsCreateDialogOpen(false);
-        }}
-        title="New Chat Session"
-        label="Session Title"
-        placeholder="Enter a title for your chat..."
-        submitText="Create"
-        isLoading={isCreating}
-        maxLength={100}
       />
     </div>
   );
