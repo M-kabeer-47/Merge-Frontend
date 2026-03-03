@@ -104,3 +104,44 @@ export interface SendMessagePayload {
   attachmentFileSize?: number;
 }
 
+// Streaming Query Payload (New Endpoint)
+export interface StreamQueryPayload {
+  conversationId?: string;
+  message: string;
+  attachmentS3Url?: string;
+  attachmentType?: 'pdf' | 'docx' | 'txt' | 'pptx' | 'xlsx';
+  attachmentOriginalName?: string;
+  attachmentFileSize?: number;
+  topK?: number;
+}
+
+// SSE Event Types
+export interface ConversationEvent {
+  conversation_id: string;
+}
+
+export interface TitleEvent {
+  title: string;
+}
+
+export interface DataEvent {
+  text: string;
+}
+
+export interface SourceEvent {
+  fileId: string;
+  chunkIndex: number;
+  content: string;
+  relevanceScore: number;
+}
+
+export interface DoneEvent {
+  messageId: string;
+  totalChunks?: number;
+  processingTimeMs?: number;
+}
+
+export interface ErrorEvent {
+  error: string;
+}
+

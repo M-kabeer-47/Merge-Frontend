@@ -6,7 +6,6 @@ import {
   Search,
   MessageSquare,
   MoreVertical,
-  Edit2,
   Trash2,
   X,
 } from "lucide-react";
@@ -14,14 +13,12 @@ import type { ChatSession } from "@/types/ai-chat";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "../ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import NameInputModal from "@/components/ui/NameInputModal";
 
 interface ChatHistoryProps {
   sessions: ChatSession[];
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
-  onRenameSession?: (sessionId: string, newTitle: string) => Promise<void> | void;
   onDeleteSession?: (sessionId: string) => Promise<void> | void;
   onClose?: () => void;
   isMobile?: boolean;
@@ -32,7 +29,6 @@ export default function ChatHistory({
   activeSessionId,
   onSelectSession,
   onNewChat,
-  onRenameSession,
   onDeleteSession,
   onClose,
   isMobile = false,
@@ -42,11 +38,6 @@ export default function ChatHistory({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<ChatSession | null>(
-    null,
-  );
-  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [sessionToRename, setSessionToRename] = useState<ChatSession | null>(
     null,
   );
 
@@ -202,23 +193,11 @@ export default function ChatHistory({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSessionToRename(session);
-                          setIsRenameDialogOpen(true);
-                          setMenuOpen(null);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-background transition-colors flex items-center gap-2"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        Rename
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
                           setSessionToDelete(session);
                           setIsDeleteDialogOpen(true);
                           setMenuOpen(null);
                         }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-destructive/10 text-destructive transition-colors flex items-center gap-2 border-t border-light-border"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-destructive/10 text-destructive transition-colors flex items-center gap-2"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         Delete
@@ -258,32 +237,6 @@ export default function ChatHistory({
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
-      />
-
-      {/* Rename Dialog */}
-      <NameInputModal
-        isOpen={isRenameDialogOpen}
-        onClose={() => {
-          setIsRenameDialogOpen(false);
-          setSessionToRename(null);
-        }}
-        onSubmit={async (newTitle: string) => {
-          if (sessionToRename) {
-            try {
-              setIsRenaming(true);
-              await onRenameSession?.(sessionToRename.id, newTitle);
-            } finally {
-              setIsRenaming(false);
-            }
-          }
-        }}
-        isLoading={isRenaming}
-        title="Rename Chat Session"
-        label="Session Title"
-        placeholder="Enter new title..."
-        initialValue={sessionToRename?.title || ""}
-        submitText="Rename"
-        maxLength={100}
       />
     </div>
   );

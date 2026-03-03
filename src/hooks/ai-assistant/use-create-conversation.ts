@@ -17,10 +17,10 @@ export default function useCreateConversation() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (data: CreateConversationPayload) => {
+    mutationFn: async () => {
       const response = await api.post<CreateConversationResponse>(
         "/ai-assistant/conversations",
-        data
+        { title: "New Conversation" }
       );
       return response.data;
     },
