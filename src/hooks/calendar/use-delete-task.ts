@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { revalidateCalendarTasks } from "@/server-actions/calendar";
 
 export default function useDeleteTask() {
@@ -16,7 +17,7 @@ export default function useDeleteTask() {
       toast.success("Task deleted successfully");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to delete task");
+      toastApiError(error, "Failed to delete task");
     },
   });
 

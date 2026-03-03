@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import {
   refreshRoomCache,
   refreshRoomMembersCache,
@@ -70,9 +71,7 @@ export default function useRemoveMember({ roomId }: { roomId: string }) {
     },
 
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to remove member from room",
-      );
+      toastApiError(error, "Failed to remove member from room");
     },
   });
 

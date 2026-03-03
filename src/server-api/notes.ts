@@ -1,6 +1,7 @@
 import { getWithAuth } from "@/server-api/fetch-with-auth";
 import type { Note, Folder } from "@/types/note";
 import { API_BASE_URL } from "@/lib/constants/api";
+import { buildQueryParams } from "@/utils/query-params";
 
 export interface NotesResponse {
   notes: Note[];
@@ -33,9 +34,7 @@ export async function getNotes(
   const { folderId, search = "" } = params;
 
   // Build query string
-  const queryParams = new URLSearchParams();
-  if (folderId) queryParams.append("folderId", folderId);
-  if (search) queryParams.append("search", search);
+  const queryParams = buildQueryParams({ folderId, search });
 
   const queryString = queryParams.toString();
   const url = `${API_BASE_URL}/notes${queryString ? `?${queryString}` : ""}`;

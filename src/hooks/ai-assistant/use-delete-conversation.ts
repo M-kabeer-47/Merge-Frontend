@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import type { DeleteConversationResponse, ChatSession } from "@/types/ai-chat";
 
 /**
@@ -22,10 +23,7 @@ export default function useDeleteConversation() {
       console.error("Delete conversation error:", error);
       console.error("Error response:", error?.response);
       console.error("Error data:", error?.response?.data);
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to delete conversation. Please try again."
-      );
+      toastApiError(error, "Failed to delete conversation. Please try again.");
     },
     onSuccess: (_, conversationId) => {
       // Remove from conversations list

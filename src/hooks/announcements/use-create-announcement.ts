@@ -5,6 +5,7 @@ import type {
   Announcement,
 } from "@/types/announcement";
 import { toast } from "sonner";
+import { toastApiError } from "@/utils/toast-helpers";
 
 export default function useCreateAnnouncement() {
   const queryClient = useQueryClient();
@@ -37,9 +38,7 @@ export default function useCreateAnnouncement() {
     },
     onError: (error: any) => {
       console.error("Failed to create announcement:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to create announcement",
-      );
+      toastApiError(error, "Failed to create announcement");
     },
   });
 }

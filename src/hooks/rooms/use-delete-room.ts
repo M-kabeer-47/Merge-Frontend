@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { refreshRoomsCache } from "@/server-actions/rooms";
 
 interface DeleteRoomParams {
@@ -25,10 +26,7 @@ export default function useDeleteRoom() {
   } = useMutation({
     mutationFn: ({ roomId }: DeleteRoomParams) => deleteRoomFunction(roomId),
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to delete room. Please try again."
-      );
+      toastApiError(error, "Failed to delete room. Please try again.");
     },
     onSuccess: (_, { roomId, filter, search }) => {
       // Update cache after successful deletion

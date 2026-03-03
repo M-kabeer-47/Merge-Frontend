@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import type { CreateQuizPayload } from "@/types/quiz";
 import { addQuizToCache } from "@/lib/cache";
 
@@ -26,10 +27,7 @@ export default function useCreateQuiz({
       onSuccess?.();
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to create quiz. Please try again.",
-      );
+      toastApiError(error, "Failed to create quiz. Please try again.");
     },
   });
 

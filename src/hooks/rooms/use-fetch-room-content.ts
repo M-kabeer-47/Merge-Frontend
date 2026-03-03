@@ -8,6 +8,7 @@ import type {
   ContentSortBy,
   ContentSortOrder,
 } from "@/types/room-content";
+import { buildQueryParams } from "@/utils/query-params";
 
 interface UseRoomContentParams {
   roomId: string;
@@ -35,11 +36,7 @@ export default function useFetchRoomContent({
   };
 
   const fetchContent = async () => {
-    const params = new URLSearchParams();
-    if (folderId) params.append("folderId", folderId);
-    if (search) params.append("search", search);
-    if (sortBy) params.append("sortBy", sortBy);
-    if (sortOrder) params.append("sortOrder", sortOrder);
+    const params = buildQueryParams({ folderId, search, sortBy, sortOrder });
 
     return fetchContentData(params.toString());
   };

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/utils/api";
 import { Note, Folder } from "@/types/note";
+import { buildQueryParams } from "@/utils/query-params";
 
 interface NoteFilters {
   folderId?: string;
@@ -15,9 +16,10 @@ export default function useFetchNotes(filters?: NoteFilters) {
   };
 
   const fetchNotes = async () => {
-    const params = new URLSearchParams();
-    if (filters?.folderId) params.append("folderId", filters.folderId);
-    if (filters?.search) params.append("search", filters.search);
+    const params = buildQueryParams({
+      folderId: filters?.folderId,
+      search: filters?.search,
+    });
 
     return fetchNotesData(params.toString());
   };

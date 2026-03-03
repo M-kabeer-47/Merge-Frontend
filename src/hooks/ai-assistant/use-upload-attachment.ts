@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { uploadToS3 } from "@/utils/s3-upload";
 
 export interface AttachmentUploadProgress {
@@ -83,10 +83,7 @@ export default function useUploadAttachment() {
       }
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to upload attachment. Please try again."
-      );
+      toastApiError(error, "Failed to upload attachment. Please try again.");
     },
     onSuccess: () => {
       // Clear progress after a short delay

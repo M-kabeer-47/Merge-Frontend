@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { ChangePasswordType } from "@/types/user-operations";
 
 export default function useChangePassword() {
@@ -23,10 +24,7 @@ export default function useChangePassword() {
       toast.success("Password changed successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to change password. Please try again."
-      );
+      toastApiError(error, "Failed to change password. Please try again.");
     },
   });
 

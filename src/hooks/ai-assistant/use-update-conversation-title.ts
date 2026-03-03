@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import type {
   UpdateConversationTitlePayload,
   UpdateConversationResponse,
@@ -30,10 +31,7 @@ export default function useUpdateConversationTitle() {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to update conversation title. Please try again."
-      );
+      toastApiError(error, "Failed to update conversation title. Please try again.");
     },
     onSuccess: (updatedConversation, { conversationId }) => {
       // Update in conversations list

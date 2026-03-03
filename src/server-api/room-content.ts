@@ -5,6 +5,7 @@ import type {
   ContentSortOrder,
 } from "@/types/room-content";
 import { API_BASE_URL } from "@/lib/constants/api";
+import { buildQueryParams } from "@/utils/query-params";
 
 export interface GetRoomContentParams {
   roomId: string;
@@ -42,11 +43,7 @@ export async function getRoomContent(
 ): Promise<RoomContentResponse> {
   const { roomId, folderId, search = "", sortBy, sortOrder } = params;
 
-  const queryParams = new URLSearchParams();
-  if (folderId) queryParams.append("folderId", folderId);
-  if (search) queryParams.append("search", search);
-  if (sortBy) queryParams.append("sortBy", sortBy);
-  if (sortOrder) queryParams.append("sortOrder", sortOrder);
+  const queryParams = buildQueryParams({ folderId, search, sortBy, sortOrder });
 
   const queryString = queryParams.toString();
   const url = `${API_BASE_URL}/room/${roomId}/course-content${

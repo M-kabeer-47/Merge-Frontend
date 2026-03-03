@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { JoinRoomType } from "@/schemas/room/join-room";
 import { RoomsResponse } from "./use-get-user-rooms";
 
@@ -21,10 +22,7 @@ export default function useJoinRoom() {
   } = useMutation({
     mutationFn: joinRoomFunction,
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to send join request. Please check the room code.",
-      );
+      toastApiError(error, "Failed to send join request. Please check the room code.");
     },
     onSuccess: (data) => {
       const message = data?.message || "";

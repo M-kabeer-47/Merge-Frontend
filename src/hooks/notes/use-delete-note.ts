@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { revalidateNotesCache } from "@/server-actions/notes";
 
 interface DeleteNoteParams {
@@ -25,10 +26,7 @@ export default function useDeleteNote() {
   } = useMutation({
     mutationFn: ({ noteId }: DeleteNoteParams) => deleteNoteFunction(noteId),
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to delete note. Please try again."
-      );
+      toastApiError(error, "Failed to delete note. Please try again.");
     },
     onSuccess: (_, { noteId, folderId, searchQuery }) => {
       // Update client cache after successful deletion

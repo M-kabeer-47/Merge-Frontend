@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import type { ContentSortBy, ContentSortOrder } from "@/types/room-content";
 
 interface UseBulkDeleteOptions {
@@ -91,10 +92,7 @@ export default function useBulkDelete({
       onSuccess?.();
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to delete items. Please try again."
-      );
+      toastApiError(error, "Failed to delete items. Please try again.");
     },
   });
 

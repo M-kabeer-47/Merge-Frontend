@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { uploadToS3 } from "@/utils/s3-upload";
 import type { Assignment, SubmissionStatus } from "@/types/assignment";
 import { useRouter } from "next/navigation";
@@ -162,9 +163,7 @@ export default function useSubmitAssignment() {
       toast.success("Assignment submitted successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to submit assignment",
-      );
+      toastApiError(error, "Failed to submit assignment");
     },
   });
 

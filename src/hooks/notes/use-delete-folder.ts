@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { revalidateNotesCache } from "@/server-actions/notes";
 
 interface DeleteFolderParams {
@@ -26,10 +27,7 @@ export default function useDeleteFolder() {
     mutationFn: ({ folderId }: DeleteFolderParams) =>
       deleteFolderFunction(folderId),
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to delete folder. Please try again."
-      );
+      toastApiError(error, "Failed to delete folder. Please try again.");
     },
     onSuccess: (_, { folderId, parentFolderId, searchQuery }) => {
       // Optimistic update - instantly remove folder from cache

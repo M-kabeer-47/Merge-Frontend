@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 
 interface RenameFolderParams {
   folderId: string;
@@ -61,10 +62,7 @@ export default function useRenameFolder({
       toast.success("Folder renamed successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to rename folder. Please try again."
-      );
+      toastApiError(error, "Failed to rename folder. Please try again.");
     },
   });
 

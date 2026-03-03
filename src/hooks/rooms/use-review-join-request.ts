@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import type {
   JoinRequest,
   JoinRequestAction,
@@ -55,9 +56,7 @@ export default function useReviewJoinRequest({
           context.previousRequests
         );
       }
-      toast.error(
-        error?.response?.data?.message || "Failed to process request"
-      );
+      toastApiError(error, "Failed to process request");
     },
     onSuccess: (_, { action }) => {
       const message =

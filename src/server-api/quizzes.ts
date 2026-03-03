@@ -1,6 +1,7 @@
 import { getWithAuth } from "@/server-api/fetch-with-auth";
 import type { Quiz } from "@/types/quiz";
 import { API_BASE_URL } from "@/lib/constants/api";
+import { buildQueryParams } from "@/utils/query-params";
 
 export interface FetchQuizzesParams {
   roomId: string;
@@ -49,10 +50,12 @@ export async function getQuizzes(params: FetchQuizzesParams): Promise<Quiz[]> {
   const { roomId, sortBy, sortOrder, search } = params;
 
   // Build query string
-  const queryParams = new URLSearchParams({ roomId });
-  if (sortBy) queryParams.append("sortBy", sortBy);
-  if (sortOrder) queryParams.append("sortOrder", sortOrder.toUpperCase());
-  if (search) queryParams.append("search", search);
+  const queryParams = buildQueryParams({
+    roomId,
+    sortBy,
+    sortOrder: sortOrder?.toUpperCase(),
+    search,
+  });
 
   const { data, error } = await getWithAuth<QuizzesResponse | Quiz[]>(
     `${API_BASE_URL}/quiz?${queryParams.toString()}`,

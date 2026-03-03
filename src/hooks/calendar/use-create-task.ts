@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { revalidateCalendarTasks } from "@/server-actions/calendar";
 import { CalendarTask } from "@/types/calendar";
 
@@ -34,7 +35,7 @@ export default function useCreateTask() {
       toast.success("Task created successfully!");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to create task");
+      toastApiError(error, "Failed to create task");
     },
   });
 

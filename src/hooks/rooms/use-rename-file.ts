@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 
 interface RenameFileParams {
   fileId: string;
@@ -57,10 +58,7 @@ export default function useRenameFile({
       toast.success("File renamed successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to rename file. Please try again."
-      );
+      toastApiError(error, "Failed to rename file. Please try again.");
     },
   });
 

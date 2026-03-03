@@ -1,5 +1,6 @@
 import type { Quiz } from "@/types/quiz";
 import { API_BASE_URL } from "@/lib/constants/api";
+import { buildQueryParams } from "@/utils/query-params";
 
 export interface FetchQuizzesParams {
   roomId: string;
@@ -20,10 +21,7 @@ export async function fetchQuizzesServer(
   } = params;
 
   // Build query string
-  const queryParams = new URLSearchParams({ roomId });
-  if (sortBy) queryParams.append("sortBy", sortBy);
-  if (sortOrder) queryParams.append("sortOrder", sortOrder);
-  if (search) queryParams.append("search", search);
+  const queryParams = buildQueryParams({ roomId, sortBy, sortOrder, search });
 
   // Get access token from cookies
 

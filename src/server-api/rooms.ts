@@ -1,6 +1,7 @@
 import { getWithAuth } from "@/server-api/fetch-with-auth";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/constants/api";
+import { buildQueryParams } from "@/utils/query-params";
 
 interface RoomAdmin {
   id: string;
@@ -77,8 +78,7 @@ export async function getRooms(
   const { filter = "all", search = "" } = params;
 
   // Build query string
-  const queryParams = new URLSearchParams({ filter });
-  if (search) queryParams.append("search", search);
+  const queryParams = buildQueryParams({ filter, search });
 
   const { data, error } = await getWithAuth<RoomsResponse>(
     `${API_BASE_URL}/user/rooms?${queryParams.toString()}`,

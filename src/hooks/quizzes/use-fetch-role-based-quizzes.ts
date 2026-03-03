@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/utils/api";
 import type { StudentQuiz, InstructorQuiz, Quiz } from "@/types/quiz";
+import { buildQueryParams } from "@/utils/query-params";
 
 interface FetchQuizzesParams {
   roomId: string;
@@ -42,11 +43,13 @@ export default function useFetchRoleBasedQuizzes({
   return useQuery({
     queryKey,
     queryFn: async (): Promise<Quiz[]> => {
-      const params = new URLSearchParams({ roomId });
-      if (search) params.append("search", search);
-      if (sortBy) params.append("sortBy", sortBy);
-      if (filter) params.append("filter", filter);
-      if (sortOrder) params.append("sortOrder", sortOrder.toUpperCase());
+      const params = buildQueryParams({
+        roomId,
+        search,
+        sortBy,
+        filter,
+        sortOrder: sortOrder?.toUpperCase(),
+      });
       console.log("params", params);
       const response = await api.get<
         QuizzesResponse<StudentQuiz | InstructorQuiz> | Quiz[]

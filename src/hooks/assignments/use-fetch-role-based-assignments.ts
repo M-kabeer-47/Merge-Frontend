@@ -5,6 +5,7 @@ import type {
   InstructorAssignment,
   Assignment,
 } from "@/types/assignment";
+import { buildQueryParams } from "@/utils/query-params";
 
 interface FetchAssignmentsParams {
   roomId: string;
@@ -44,11 +45,13 @@ export default function useFetchRoleBasedAssignments({
   return useQuery({
     queryKey,
     queryFn: async (): Promise<Assignment[]> => {
-      const params = new URLSearchParams({ roomId });
-      if (search) params.append("search", search);
-      if (sortBy) params.append("sortBy", sortBy);
-      if (filter) params.append("filter", filter);
-      if (sortOrder) params.append("sortOrder", sortOrder.toUpperCase());
+      const params = buildQueryParams({
+        roomId,
+        search,
+        sortBy,
+        filter,
+        sortOrder: sortOrder?.toUpperCase(),
+      });
 
       const response = await api.get<
         | AssignmentsResponse<StudentAssignment | InstructorAssignment>

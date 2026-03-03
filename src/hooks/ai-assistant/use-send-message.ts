@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { AttachmentType } from "@/types/ai-chat";
 import type {
   SendMessagePayload,
@@ -85,10 +85,7 @@ export default function useSendMessage(conversationId: string | null) {
       );
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to send message. Please try again.",
-      );
+      toastApiError(error, "Failed to send message. Please try again.");
     },
     onSuccess: (aiResponse) => {
       if (!conversationId) return;

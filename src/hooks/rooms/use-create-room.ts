@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { CreateRoomType } from "@/schemas/room/create-room";
 import { RoomsResponse, Room } from "@/server-api/rooms";
 import { refreshRoomsCache } from "@/server-actions/rooms";
@@ -22,10 +23,7 @@ export default function useCreateRoom() {
   } = useMutation({
     mutationFn: createRoomFunction,
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to create room. Please try again."
-      );
+      toastApiError(error, "Failed to create room. Please try again.");
     },
     onSuccess: (createdRoom: Room) => {
       // Optimistic update - add new room to all matching query keys

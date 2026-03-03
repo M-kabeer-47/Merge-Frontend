@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/utils/api";
 import type { Announcement } from "@/types/announcement";
 import { toast } from "sonner";
+import { toastApiError } from "@/utils/toast-helpers";
 
 interface UpdateAnnouncementPayload {
   id: string;
@@ -32,9 +33,7 @@ export default function useUpdateAnnouncement() {
     },
     onError: (error: any) => {
       console.error("Failed to update announcement:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to update announcement",
-      );
+      toastApiError(error, "Failed to update announcement");
     },
   });
 }

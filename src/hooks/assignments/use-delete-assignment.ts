@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import type { Assignment } from "@/types/assignment";
 
 interface DeleteAssignmentParams {
@@ -79,10 +80,7 @@ export default function useDeleteAssignment({
       onSuccess?.();
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to delete assignment. Please try again.",
-      );
+      toastApiError(error, "Failed to delete assignment. Please try again.");
     },
   });
 

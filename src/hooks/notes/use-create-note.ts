@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { CreateNoteType } from "@/types/note-operations";
 import { useRouter } from "next/navigation";
 
@@ -15,10 +16,7 @@ export default function useCreateNote() {
   const { isPending: isCreating, mutateAsync: createNote } = useMutation({
     mutationFn: createNoteFunction,
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to create note. Please try again."
-      );
+      toastApiError(error, "Failed to create note. Please try again.");
     },
     onSuccess: (data, variables) => {
       // Add the newly created note to the cache

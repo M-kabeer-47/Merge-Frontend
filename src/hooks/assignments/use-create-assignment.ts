@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { uploadToS3 } from "@/utils/s3-upload";
 import { addAssignmentToCache } from "@/lib/cache";
 
@@ -132,10 +133,7 @@ export default function useCreateAssignment({
       onSuccess?.();
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to create assignment. Please try again.",
-      );
+      toastApiError(error, "Failed to create assignment. Please try again.");
       setAttachmentProgress([]);
     },
   });

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { refreshRoomCache, refreshRoomsCache } from "@/server-actions/rooms";
 import type { RoomsResponse, Room } from "@/server-api/rooms";
 import type { RoomDetails } from "@/types/room-details";
@@ -136,10 +137,7 @@ export default function useUpdateRoom({
         );
       }
 
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to update room. Please try again."
-      );
+      toastApiError(error, "Failed to update room. Please try again.");
     },
 
     // On success - sync with server response and revalidate Next.js cache

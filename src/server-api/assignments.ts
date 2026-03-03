@@ -4,6 +4,7 @@ import type {
   InstructorAssignment,
 } from "@/types/assignment";
 import { API_BASE_URL } from "@/lib/constants/api";
+import { buildQueryParams } from "@/utils/query-params";
 
 export interface FetchAssignmentsParams {
   roomId: string;
@@ -31,11 +32,13 @@ export async function getStudentAssignments(
   const { roomId, sortBy, sortOrder, search, filter } = params;
 
   // Build query string
-  const queryParams = new URLSearchParams({ roomId });
-  if (sortBy) queryParams.append("sortBy", sortBy);
-  if (sortOrder) queryParams.append("sortOrder", sortOrder.toUpperCase());
-  if (search) queryParams.append("search", search);
-  if (filter) queryParams.append("filter", filter);
+  const queryParams = buildQueryParams({
+    roomId,
+    sortBy,
+    sortOrder: sortOrder?.toUpperCase(),
+    search,
+    filter,
+  });
 
   const { data, error } = await getWithAuth<
     StudentAssignmentsResponse | StudentAssignment[]
@@ -66,11 +69,13 @@ export async function getInstructorAssignments(
   const { roomId, sortBy, sortOrder, search, filter = "all" } = params;
 
   // Build query string
-  const queryParams = new URLSearchParams({ roomId });
-  if (sortBy) queryParams.append("sortBy", sortBy);
-  if (sortOrder) queryParams.append("sortOrder", sortOrder.toUpperCase());
-  if (search) queryParams.append("search", search);
-  if (filter) queryParams.append("filter", filter);
+  const queryParams = buildQueryParams({
+    roomId,
+    sortBy,
+    sortOrder: sortOrder?.toUpperCase(),
+    search,
+    filter,
+  });
 
   const { data, error } = await getWithAuth<
     InstructorAssignmentsResponse | InstructorAssignment[]

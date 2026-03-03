@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { revalidateNotesCache } from "@/server-actions/notes";
 import { refreshFolderCache } from "@/server-actions/room-content";
 
@@ -96,10 +97,7 @@ export default function useCreateFolder() {
       toast.success("Folder created successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to create folder. Please try again."
-      );
+      toastApiError(error, "Failed to create folder. Please try again.");
     },
   });
 

@@ -1,6 +1,7 @@
 import { getWithAuth } from "./fetch-with-auth";
 import type { FetchMessagesResponse } from "@/types/general-chat";
 import { API_BASE_URL } from "@/lib/constants/api";
+import { buildQueryParams } from "@/utils/query-params";
 
 export interface FetchGeneralChatMessagesParams {
   roomId: string;
@@ -28,19 +29,14 @@ export async function getGeneralChatMessages(
   } = params;
 
   // Build query string
-  const queryParams = new URLSearchParams({
+  const queryParams = buildQueryParams({
     roomId,
-    page: page.toString(),
-    limit: limit.toString(),
+    page,
+    limit,
     sortOrder,
+    beforeMessageId,
+    afterMessageId,
   });
-
-  if (beforeMessageId) {
-    queryParams.append("beforeMessageId", beforeMessageId);
-  }
-  if (afterMessageId) {
-    queryParams.append("afterMessageId", afterMessageId);
-  }
 
   const { data, error } = await getWithAuth<FetchMessagesResponse>(
     `${API_BASE_URL}/general-chat?${queryParams.toString()}`,

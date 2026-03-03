@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { UpdateNoteType } from "@/types/note-operations";
 
 export default function useUpdateNote(noteId: string) {
@@ -20,10 +21,7 @@ export default function useUpdateNote(noteId: string) {
   } = useMutation({
     mutationFn: updateNoteFunction,
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to update note. Please try again."
-      );
+      toastApiError(error, "Failed to update note. Please try again.");
     },
     onSuccess: () => {
       toast.success("Note updated successfully!");

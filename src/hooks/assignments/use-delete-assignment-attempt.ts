@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import type { Assignment, SubmissionStatus } from "@/types/assignment";
 import { studentAssignmentQueryKey } from "./use-student-assignment";
 import { refreshStudentAssignmentCache } from "@/server-actions/assignments";
@@ -109,9 +110,7 @@ export default function useDeleteAssignmentAttempt({
       onSuccess?.();
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to undo submission",
-      );
+      toastApiError(error, "Failed to undo submission");
     },
   });
 

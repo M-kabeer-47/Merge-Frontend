@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
+import { toastApiError } from "@/utils/toast-helpers";
 import { UpdateProfileType } from "@/types/user-operations";
 
 export default function useUpdateProfile() {
@@ -23,10 +24,7 @@ export default function useUpdateProfile() {
       toast.success("Profile updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to update profile. Please try again."
-      );
+      toastApiError(error, "Failed to update profile. Please try again.");
     },
   });
 
