@@ -9,7 +9,7 @@ interface FormData {
   title: string;
   description?: string;
   points: number;
-  startAt?: string;
+  scheduledAt?: string;
   endAt: string;
   isTurnInLateEnabled: boolean;
 }

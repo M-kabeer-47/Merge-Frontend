@@ -11,7 +11,7 @@ export interface CreateAssignmentData {
   title: string;
   description?: string;
   totalScore: number;
-  startAt?: string; // ISO 8601 format
+  scheduledAt?: string; // ISO 8601 format
   endAt: string; // ISO 8601 format (due date)
   isTurnInLateEnabled: boolean;
 }

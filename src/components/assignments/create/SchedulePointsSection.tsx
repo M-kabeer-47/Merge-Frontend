@@ -12,7 +12,7 @@ interface FormData {
   title: string;
   description?: string;
   points: number;
-  startAt?: string;
+  scheduledAt?: string;
   endAt: string;
   isTurnInLateEnabled: boolean;
 }
@@ -134,13 +134,13 @@ export default function SchedulePointsSection({
             transition={{ duration: 0.2 }}
           >
             <Controller
-              name="startAt"
+              name="scheduledAt"
               control={control}
               render={({ field }) => (
                 <FormField
                   label="Start Date"
-                  htmlFor="startAt"
-                  error={errors.startAt?.message}
+                  htmlFor="scheduledAt"
+                  error={errors.scheduledAt?.message}
                 >
                   <DateTimePicker
                     value={field.value || ""}
@@ -148,7 +148,7 @@ export default function SchedulePointsSection({
                     placeholder="Select when to publish the assignment"
                     disabled={isDisabled}
                     minDate={new Date()}
-                    error={errors.startAt?.message}
+                    error={errors.scheduledAt?.message}
                   />
                   <p className="text-xs text-para-muted mt-1.5">
                     Assignment will be visible to students from this date
