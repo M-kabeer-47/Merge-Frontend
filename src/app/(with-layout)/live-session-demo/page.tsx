@@ -1,9 +1,4 @@
-/**
- * Live Session Demo Page
- * 
- * Professional video conferencing interface with integrated chat,
- * canvas, and file sharing. Inspired by modern video call platforms.
- */
+
 
 "use client";
 
