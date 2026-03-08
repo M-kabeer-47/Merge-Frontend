@@ -119,7 +119,14 @@ export default function SuccessContent() {
 
       <Button
         className="w-full"
-        onClick={() => router.push(config.buttonHref)}
+        onClick={() => {
+          const askNotifications = searchParams.get("askNotifications");
+          const separator = config.buttonHref.includes("?") ? "&" : "?";
+          const href = askNotifications
+            ? `${config.buttonHref}${separator}askNotifications=${askNotifications}`
+            : config.buttonHref;
+          router.push(href);
+        }}
       >
         {config.buttonText}
       </Button>

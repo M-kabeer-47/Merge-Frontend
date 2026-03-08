@@ -4,6 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import AuthProviderServer from "@/providers/AuthProviderServer";
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import NotificationTrigger from "@/components/notifications/NotificationTrigger";
+import OnboardingModal from "@/components/onboarding/OnboardingModal";
 
 export default function WithLayoutLayout({
   children,
@@ -17,6 +18,8 @@ export default function WithLayoutLayout({
         <Suspense fallback={null}>
           <NotificationTrigger />
         </Suspense>
+
+        <OnboardingModal />
 
         <div className="flex md:flex-row flex-col h-screen w-full bg-main-background overflow-hidden">
           {/* Sidebar */}

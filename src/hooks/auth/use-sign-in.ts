@@ -5,6 +5,20 @@ import { toast } from "sonner";
 import { ApiError } from "@/types/api-error";
 import api from "@/utils/api";
 import { useRouter } from "next/navigation";
+import { requestFCMToken } from "@/lib/firebase";
+import { useRegisterFCMToken } from "@/hooks/notifications/use-register-fcm-token";
+
+// Generate a unique device ID for this browser
+function getDeviceId(): string {
+  if (typeof window === "undefined") return "";
+
+  let deviceId = localStorage.getItem("merge_device_id");
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem("merge_device_id", deviceId);
+  }
+  return deviceId;
+}
 
 export default function signIn({
   setError,
@@ -15,6 +29,8 @@ export default function signIn({
   password: string;
 }) {
   const router = useRouter();
+  const { mutate: registerToken } = useRegisterFCMToken();
+
   const signInFn = async ({
     email,
     password,
@@ -31,7 +47,7 @@ export default function signIn({
 
   const { mutateAsync, isError, isPending } = useMutation({
     mutationFn: signInFn,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.message === "A new OTP has been sent to your email.") {
         window.location.href = `/two-factor?email=${email}`;
         return;
@@ -39,9 +55,36 @@ export default function signIn({
       // Backend sets cookies via Set-Cookie headers (same-origin via proxy)
       if (data.token && data.refreshToken && data.userId) {
         toast.success("Signed in successfully!");
-        console.log("Signed In Successfully");
+
+        const notificationStatus = data.notificationStatus || "default";
+        let redirect = "/rooms";
+
+        // If browser already has permission (granted), ensure token is registered
+        if (Notification.permission === "granted") {
+          try {
+            const fcmToken = await requestFCMToken();
+            if (fcmToken) {
+              localStorage.setItem("merge_fcm_token", fcmToken);
+              registerToken({
+                notificationStatus: "allowed",
+                token: fcmToken,
+                deviceType: "web",
+                deviceId: getDeviceId(),
+              });
+            }
+          } catch {
+            // Non-blocking, token refresh will handle it
+          }
+        } else if (
+          notificationStatus === "default" &&
+          Notification.permission === "default"
+        ) {
+          // Browser hasn't been asked yet — trigger permission prompt
+          redirect = "/rooms?askNotifications=true";
+        }
+
         setTimeout(() => {
-          router.push("/rooms");
+          router.push(redirect);
         }, 500);
       }
     },

@@ -13,7 +13,8 @@ interface ModalProps {
   icon?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
+  hideCloseButton?: boolean;
 }
 
 const maxWidthClasses = {
@@ -23,6 +24,7 @@ const maxWidthClasses = {
   xl: "max-w-xl",
   "2xl": "max-w-2xl",
   "3xl": "max-w-3xl",
+  "4xl": "max-w-4xl",
 };
 
 export default function Modal({
@@ -34,6 +36,7 @@ export default function Modal({
   children,
   footer,
   maxWidth = "lg",
+  hideCloseButton = false,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -90,13 +93,15 @@ export default function Modal({
                   )}
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="ml-4 p-2 rounded-lg text-para-muted hover:text-heading hover:bg-secondary/10 transition-colors"
-                aria-label="Close modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {!hideCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="ml-4 p-2 rounded-lg text-para-muted hover:text-heading hover:bg-secondary/10 transition-colors"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
 
             {/* Content */}

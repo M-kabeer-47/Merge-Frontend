@@ -1,17 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRoom } from "@/providers/RoomProvider";
 import useFetchRoleBasedAssignments from "@/hooks/assignments/use-fetch-role-based-assignments";
 import useDeleteAssignment from "@/hooks/assignments/use-delete-assignment";
 import AssignmentCard from "./AssignmentCard";
 import AssignmentCardsSkeleton from "./AssignmentCardsSkeleton";
+import EditAssignmentModal from "./EditAssignmentModal";
 import {
   EmptyAssignments,
   NoSearchResults,
   EmptyFilterResults,
 } from "./EmptyStates";
 import type {
+  Assignment,
   InstructorAssignment,
   StudentAssignment,
 } from "@/types/assignment";
@@ -36,6 +39,9 @@ export default function AssignmentsList({
 
   const isInstructor = userRole === "instructor" || userRole === "moderator";
 
+  // Edit modal state
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+
   // Fetch assignments based on role
   const { data: assignments = [], isLoading } = useFetchRoleBasedAssignments({
     roomId,
@@ -58,8 +64,10 @@ export default function AssignmentsList({
   };
 
   const handleEdit = (id: string) => {
-    console.log("Edit assignment:", id);
-    // TODO: Implement edit assignment functionality
+    const assignment = assignments.find((a) => a.id === id);
+    if (assignment) {
+      setEditingAssignment(assignment);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -79,6 +87,16 @@ export default function AssignmentsList({
   const handleCreateFirst = () => {
     router.push(`/rooms/${roomId}/assignments/create`);
   };
+
+  // Edit modal (rendered once, shared across all views)
+  const editModal = editingAssignment ? (
+    <EditAssignmentModal
+      isOpen={!!editingAssignment}
+      onClose={() => setEditingAssignment(null)}
+      assignment={editingAssignment}
+      roomId={roomId}
+    />
+  ) : null;
 
   // Show skeleton while loading or role is not yet determined
   if (isLoading || !userRole) {
@@ -115,38 +133,44 @@ export default function AssignmentsList({
   // Instructor view - grid layout
   if (isInstructor) {
     return (
+      <>
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-4 sm:px-6 py-4 grid grid-cols-1 sm:grid-cols-2 items-stretch gap-5">
+            {(assignments as InstructorAssignment[]).map((assignment) => (
+              <AssignmentCard
+                key={assignment.id}
+                assignment={assignment}
+                isInstructor={true}
+                onViewResponses={handleViewResponses}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        </div>
+        {editModal}
+      </>
+    );
+  }
+
+  // Student view - list layout
+  return (
+    <>
       <div className="flex-1 overflow-y-auto">
-        <div className="px-4 sm:px-6 py-4 grid grid-cols-1 sm:grid-cols-2 items-stretch gap-5">
-          {(assignments as InstructorAssignment[]).map((assignment) => (
+        <div className="px-4 sm:px-6 py-4 space-y-4">
+          {(assignments as StudentAssignment[]).map((assignment) => (
             <AssignmentCard
               key={assignment.id}
               assignment={assignment}
-              isInstructor={true}
-              onViewResponses={handleViewResponses}
+              isInstructor={false}
+              onViewDetails={handleViewDetails}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
           ))}
         </div>
       </div>
-    );
-  }
-
-  // Student view - list layout
-  return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="px-4 sm:px-6 py-4 space-y-4">
-        {(assignments as StudentAssignment[]).map((assignment) => (
-          <AssignmentCard
-            key={assignment.id}
-            assignment={assignment}
-            isInstructor={false}
-            onViewDetails={handleViewDetails}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
-    </div>
+      {editModal}
+    </>
   );
 }
