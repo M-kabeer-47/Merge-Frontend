@@ -54,7 +54,7 @@ export default function useFetchSubmissions({
       const response = await api.get<InstructorAssignment>(endpoint);
       // API returns full assignment, extract just the attempts
       console.log("Response", response.data)
-      return response.data.attempts;
+      return response.data.attempts!;
     },
     enabled: enabled && !!assignmentId,
     staleTime: 0, // Always refetch on filter change

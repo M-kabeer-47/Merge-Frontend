@@ -43,7 +43,7 @@ export default function AIAssistantPage() {
   // Mutations
   const { createConversation, isCreating } = useCreateConversation();
   const { deleteConversation, isDeleting } = useDeleteConversation();
-  const { streamQuery, isStreaming, streamingMessage } = useStreamQuery();
+  const { streamQuery, isStreaming, streamingMessage, pendingUserMessage } = useStreamQuery();
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
@@ -279,6 +279,7 @@ export default function AIAssistantPage() {
               onDeleteSession={handleDeleteConversation}
               onClose={() => setShowHistory(false)}
               isMobile={false}
+              isLoading={loadingConversations}
             />
           </div>
         )}
@@ -300,14 +301,14 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Chat Content Area */}
-        {activeSessionId && loadingMessages ? (
+        {activeSessionId && loadingMessages && !pendingUserMessage ? (
           <ChatLoadingSkeleton />
-        ) : messages.length === 0 && !isStreaming ? (
+        ) : messages.length === 0 && !isStreaming && !pendingUserMessage ? (
           <WelcomeScreen userName={user?.firstName} {...composerProps} />
         ) : (
           /* Conversation State: messages scroll, composer fixed at bottom */
           <>
-            <div 
+            <div
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-4"
               style={{
@@ -316,6 +317,16 @@ export default function AIAssistantPage() {
               }}
             >
               <div className="max-w-3xl mx-auto">
+                {/* Show pending user message (first message before conversation is created) */}
+                {pendingUserMessage && !messages.some((m) => m.id === pendingUserMessage.id) && (
+                  <ChatMessage
+                    key={pendingUserMessage.id}
+                    message={pendingUserMessage}
+                    onSaveToNotes={handleSaveToNotes}
+                    onRegenerate={handleRegenerate}
+                  />
+                )}
+
                 {messages.map((message) => (
                   <ChatMessage
                     key={message.id}

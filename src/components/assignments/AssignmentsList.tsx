@@ -12,7 +12,7 @@ import {
   EmptyAssignments,
   NoSearchResults,
   EmptyFilterResults,
-} from "./EmptyStates";
+} from "./empty-states";
 import type {
   Assignment,
   InstructorAssignment,

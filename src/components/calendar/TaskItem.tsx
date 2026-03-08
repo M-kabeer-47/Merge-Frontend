@@ -3,7 +3,13 @@ import { format, isValid } from "date-fns";
 
 import { CalendarTask } from "@/types/calendar";
 import { getCategoryIcon, getCategoryColor } from "@/lib/utils/calendar-utils";
-import { MoreVertical, Check, Edit2, Trash2 } from "lucide-react";
+import {
+  MoreVertical,
+  Circle,
+  CheckCircle2,
+  Edit2,
+  Trash2,
+} from "lucide-react";
 import { useState, useRef } from "react";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
@@ -42,12 +48,18 @@ export default function TaskItem({
     setShowMenu(false);
   };
 
+  const handleMarkDone = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isCompleted) {
+      onMarkDone();
+    }
+  };
+
   return (
     <div
       className={`
-        group relative bg-card border border-light-border rounded-lg p-3 
+        group relative bg-card border border-light-border rounded-lg p-3
         hover:shadow-md transition-all cursor-pointer
-        ${isCompleted ? "opacity-60" : ""}
       `}
       onClick={onClick}
       role="button"
@@ -61,10 +73,29 @@ export default function TaskItem({
       aria-label={`Task: ${task.title}`}
     >
       <div className="flex items-start gap-3">
+        {/* Completion Toggle */}
+        <button
+          onClick={handleMarkDone}
+          className={`
+            flex-shrink-0 mt-2 transition-colors
+            ${isCompleted
+              ? "text-green-500"
+              : "text-para-muted hover:text-green-500"
+            }
+          `}
+          aria-label={isCompleted ? "Completed" : "Mark as done"}
+        >
+          {isCompleted ? (
+            <CheckCircle2 className="w-[22px] h-[22px]" fill="currentColor" stroke="white" />
+          ) : (
+            <Circle className="w-[22px] h-[22px]" />
+          )}
+        </button>
+
         {/* Category Icon */}
         <div
           className={`
-            flex-shrink-0 w-10 h-10 rounded-lg ${color.bg} 
+            flex-shrink-0 w-10 h-10 rounded-lg ${color.bg}
             flex items-center justify-center
           `}
         >
@@ -98,29 +129,31 @@ export default function TaskItem({
           )}
         </div>
 
-        {/* Actions Menu */}
+        {/* Mark as Done text button - visible when not completed */}
+        {!isCompleted && (
+          <button
+            onClick={handleMarkDone}
+            className="flex-shrink-0 text-xs font-medium text-para-muted hover:text-green-600 transition-colors"
+            aria-label="Mark as done"
+          >
+            Mark as Done
+          </button>
+        )}
+
+        {/* Actions Menu - always visible */}
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
             onClick={handleMenuClick}
-            className="p-1 rounded hover:bg-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 rounded hover:bg-secondary/10 transition-colors"
             aria-label="Task actions"
             aria-expanded={showMenu}
             aria-haspopup="true"
           >
-            <MoreVertical className="w-4 h-4 text-para" />
+            <MoreVertical className="w-4 h-4 text-para-muted" />
           </button>
 
           {showMenu && (
             <div className="absolute right-0 top-8 w-40 bg-background border border-light-border rounded-lg shadow-lg py-1 z-10">
-              {!isCompleted && (
-                <button
-                  onClick={(e) => handleAction(e, onMarkDone)}
-                  className="w-full px-4 py-2 text-left text-sm text-para hover:bg-secondary/10 flex items-center gap-2"
-                >
-                  <Check className="w-4 h-4" />
-                  Mark Done
-                </button>
-              )}
               <button
                 onClick={(e) => handleAction(e, onEdit)}
                 className="w-full px-4 py-2 text-left text-sm text-para hover:bg-secondary/10 flex items-center gap-2"
@@ -139,15 +172,6 @@ export default function TaskItem({
           )}
         </div>
       </div>
-
-      {/* Completion Badge */}
-      {isCompleted && (
-        <div className="absolute top-2 right-2">
-          <div className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
-            Completed
-          </div>
-        </div>
-      )}
     </div>
   );
 }

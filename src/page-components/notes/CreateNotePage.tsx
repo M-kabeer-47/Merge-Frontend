@@ -9,7 +9,7 @@ import { Suspense } from "react";
 const DynamicNoteEditor = dynamic(
   () => import("@/components/notes/NoteEditor"),
 
-  { ssr: false, loading: () => <NoteEditorSkeleton /> }
+  { ssr: false, loading: () => <NoteEditorSkeleton /> },
 );
 
 function CreateNotePageFunction() {
@@ -21,7 +21,7 @@ function CreateNotePageFunction() {
     await createNote({
       title: data.title,
       content: data.content,
-      folderId: folderId || "",
+      folderId: folderId,
     });
   };
 

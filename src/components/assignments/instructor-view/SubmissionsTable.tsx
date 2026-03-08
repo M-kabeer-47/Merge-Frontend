@@ -208,12 +208,12 @@ export default function SubmissionsTable({
       header: "Student",
       render: (attempt) => (
         <div className="flex items-center gap-3">
-          <Avatar profileImage={attempt.user.image || undefined} size="sm" />
+          <Avatar profileImage={attempt.user?.image || undefined} size="sm" />
           <div>
             <p className="text-sm font-medium text-heading">
-              {attempt.user.firstName} {attempt.user.lastName}
+              {attempt.user?.firstName} {attempt.user?.lastName}
             </p>
-            <p className="text-xs text-para-muted">{attempt.user.email}</p>
+            <p className="text-xs text-para-muted">{attempt.user?.email}</p>
           </div>
         </div>
       ),

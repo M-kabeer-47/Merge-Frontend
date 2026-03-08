@@ -108,10 +108,10 @@ export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
           </Button>
           <Button
             onClick={handleJoinClick}
-            aria-label={`Request to join ${room.title}`}
+            aria-label={`${room.autoJoin ? "Join" : "Request to join"} ${room.title}`}
           >
             <UserPlus className="w-4 h-4" />
-            <span>Request to join</span>
+            <span>{room.autoJoin ? "Join Room" : "Request to join"}</span>
           </Button>
         </div>
       </div>

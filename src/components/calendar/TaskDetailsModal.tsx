@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Clock, MapPin, FileText } from "lucide-react";
+import { Calendar, Clock, FileText } from "lucide-react";
 import { CalendarTask } from "@/types/calendar";
 import {
   getCategoryIcon,
@@ -32,7 +32,7 @@ export default function TaskDetailsModal({
 
   const Icon = getCategoryIcon(task.taskCategory);
   const color = getCategoryColor(task.taskCategory);
-  const isCompleted = task.status === "completed";
+  const isCompleted = task.taskStatus === "completed";
 
   return (
     <Modal
@@ -101,23 +101,20 @@ export default function TaskDetailsModal({
           <div className="flex items-center gap-3 text-para">
             <Calendar className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm">
-              {format(parseISO(task.date), "EEEE, MMMM d, yyyy")}
+              {format(parseISO(task.deadline), "EEEE, MMMM d, yyyy")}
             </span>
           </div>
 
-          {task.time && (
-            <div className="flex items-center gap-3 text-para">
-              <Clock className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{task.time}</span>
-            </div>
-          )}
-
-          {task.roomName && (
-            <div className="flex items-center gap-3 text-para">
-              <MapPin className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{task.roomName}</span>
-            </div>
-          )}
+          {(() => {
+            const parsed = parseISO(task.deadline);
+            const timeStr = format(parsed, "h:mm a");
+            return timeStr !== "12:00 AM" ? (
+              <div className="flex items-center gap-3 text-para">
+                <Clock className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">{timeStr}</span>
+              </div>
+            ) : null;
+          })()}
         </div>
 
         {/* Description */}

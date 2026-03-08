@@ -13,6 +13,7 @@ import type {
 interface StreamingState {
   isStreaming: boolean;
   streamingMessage: ChatMessage | null;
+  pendingUserMessage: ChatMessage | null;
   sources: SourceEvent[];
   error: string | null;
 }
@@ -25,6 +26,7 @@ export default function useStreamQuery() {
   const [streamingState, setStreamingState] = useState<StreamingState>({
     isStreaming: false,
     streamingMessage: null,
+    pendingUserMessage: null,
     sources: [],
     error: null,
   });
@@ -41,22 +43,24 @@ export default function useStreamQuery() {
       let accumulatedAnswer = "";
       const accumulatedSources: SourceEvent[] = [];
 
+      // Create optimistic user message upfront so it can be displayed immediately
+      const optimisticUserMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: payload.message,
+        createdAt: new Date().toISOString(),
+      };
+      userMessageId = optimisticUserMessage.id;
+
       setStreamingState({
         isStreaming: true,
         streamingMessage: null,
+        pendingUserMessage: !conversationId ? optimisticUserMessage : null,
         sources: [],
         error: null,
       });
 
       try {
-        // Create optimistic user message
-        const optimisticUserMessage: ChatMessage = {
-          id: `user-${Date.now()}`,
-          role: "user",
-          content: payload.message,
-          createdAt: new Date().toISOString(),
-        };
-        userMessageId = optimisticUserMessage.id;
 
         // Add user message to cache if we have a conversation ID
         if (conversationId) {
@@ -144,6 +148,12 @@ export default function useStreamQuery() {
                         messages: [optimisticUserMessage],
                       }),
                     );
+
+                    // Clear pending user message since it's now in cache
+                    setStreamingState((prev) => ({
+                      ...prev,
+                      pendingUserMessage: null,
+                    }));
                   }
                 } else if (currentEvent === "title" || parsed.title) {
                   // title event
@@ -306,6 +316,7 @@ export default function useStreamQuery() {
           ...prev,
           isStreaming: false,
           streamingMessage: null,
+          pendingUserMessage: null,
         }));
       } catch (error: any) {
         console.error("[SSE Error]", error);
@@ -316,6 +327,7 @@ export default function useStreamQuery() {
           ...prev,
           isStreaming: false,
           streamingMessage: null,
+          pendingUserMessage: null,
           error: errorMsg,
         }));
 
@@ -343,6 +355,7 @@ export default function useStreamQuery() {
     setStreamingState({
       isStreaming: false,
       streamingMessage: null,
+      pendingUserMessage: null,
       sources: [],
       error: null,
     });
@@ -352,6 +365,7 @@ export default function useStreamQuery() {
     streamQuery,
     isStreaming: streamingState.isStreaming,
     streamingMessage: streamingState.streamingMessage,
+    pendingUserMessage: streamingState.pendingUserMessage,
     sources: streamingState.sources,
     error: streamingState.error,
     resetStreaming,

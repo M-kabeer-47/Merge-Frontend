@@ -7,7 +7,7 @@ import {
   EmptyQuizzes,
   NoSearchResults,
   EmptyFilterResults,
-} from "@/components/quizzes/EmptyStates";
+} from "@/components/quizzes/empty-states";
 import type { Quiz, QuizFilterType, StudentQuiz } from "@/types/quiz";
 
 interface QuizCardsClientProps {

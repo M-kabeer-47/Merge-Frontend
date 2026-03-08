@@ -136,7 +136,6 @@ export default function NoteEditor({
 
       // Clear draft from localStorage on successful save
       if (type === "create") {
-        alert("Removing Note Draft from Local Storage");
         localStorage.removeItem("note-draft");
       }
 

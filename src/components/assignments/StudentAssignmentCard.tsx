@@ -77,16 +77,6 @@ export default function StudentAssignmentCard({
               {assignment.points} points
             </span>
 
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              Uploaded:{" "}
-              {new Date(assignment.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
-
             {/* Show grade if graded */}
             {assignment.submission.status === "graded" &&
               assignment.submission.grade !== undefined && (

@@ -69,7 +69,7 @@ export default function EditAssignmentModal({
       title: assignment.title,
       description: assignment.description || "",
       points: assignment.totalScore,
-      endAt: format(new Date(assignment.endAt), "yyyy-MM-dd'T'HH:mm"),
+      endAt: assignment.endAt ? format(new Date(assignment.endAt), "yyyy-MM-dd'T'HH:mm") : "",
       isTurnInLateEnabled: assignment.isTurnInLateEnabled,
     },
   });
@@ -81,7 +81,7 @@ export default function EditAssignmentModal({
         title: assignment.title,
         description: assignment.description || "",
         points: assignment.totalScore,
-        endAt: format(new Date(assignment.endAt), "yyyy-MM-dd'T'HH:mm"),
+        endAt: assignment.endAt ? format(new Date(assignment.endAt), "yyyy-MM-dd'T'HH:mm") : "",
         isTurnInLateEnabled: assignment.isTurnInLateEnabled,
       });
     }

@@ -30,8 +30,15 @@ export default function DashboardAssignmentCard({
   roomName,
   onClick,
 }: DashboardAssignmentCardProps) {
-  const statusConfig = getStudentStatusConfig(assignment.submission.status);
+  const statusConfig = getStudentStatusConfig(assignment.submissionStatus);
   const StatusIcon = iconMap[statusConfig.icon];
+
+  const authorName = assignment.author
+    ? `${assignment.author.firstName} ${assignment.author.lastName}`
+    : "";
+  const authorInitials = assignment.author
+    ? `${assignment.author.firstName[0]}${assignment.author.lastName[0]}`
+    : "";
 
   return (
     <div
@@ -43,15 +50,15 @@ export default function DashboardAssignmentCard({
       <div className="flex items-start gap-3 mb-2">
         {/* Avatar */}
         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-          {assignment.author.avatarUrl ? (
+          {assignment.author?.image ? (
             <img
-              src={assignment.author.avatarUrl}
-              alt={assignment.author.name}
+              src={assignment.author.image}
+              alt={authorName}
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (
             <span className="text-primary font-semibold text-sm">
-              {assignment.author.initials}
+              {authorInitials}
             </span>
           )}
         </div>
@@ -64,7 +71,7 @@ export default function DashboardAssignmentCard({
                 {assignment.title}
               </h3>
               <p className="text-xs text-para-muted">
-                {assignment.author.name}
+                {authorName}
               </p>
             </div>
             {/* Compact Status Badge */}
@@ -90,27 +97,27 @@ export default function DashboardAssignmentCard({
 
       {/* Footer - Room & Due Date & Points */}
       <div className="flex items-center justify-end pt-3 border-t border-primary/20">
-        
+
         <div className="flex items-center gap-3 text-xs text-para-muted">
           <span className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" />
-            {formatDueDate(assignment.dueDate, true)}
+            {assignment.endAt ? formatDueDate(assignment.endAt, true) : "No due date"}
           </span>
           <span className="flex items-center gap-1">
             <IoTrophy className="w-3.5 h-3.5" fill="#e69a29" />
-            {assignment.points}pts
+            {assignment.totalScore}pts
           </span>
         </div>
       </div>
 
       {/* Show grade if graded */}
-      {assignment.submission.status === "graded" &&
-        assignment.submission.grade !== undefined && (
+      {assignment.submissionStatus === "graded" &&
+        assignment.score !== undefined && (
           <div className="mt-3 pt-3 border-t border-primary/20">
             <div className="flex items-center justify-between text-xs">
               <span className="text-para-muted">Grade:</span>
               <span className="font-semibold text-secondary">
-                {assignment.submission.grade}/{assignment.points}
+                {assignment.score}/{assignment.totalScore}
               </span>
             </div>
           </div>

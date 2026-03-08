@@ -8,7 +8,7 @@ import {
   EmptyQuizzes,
   NoSearchResults,
   EmptyFilterResults,
-} from "@/components/quizzes/EmptyStates";
+} from "@/components/quizzes/empty-states";
 import Tabs from "@/components/ui/Tabs";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "@/components/ui/Button";

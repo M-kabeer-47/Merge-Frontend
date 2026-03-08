@@ -48,7 +48,7 @@ export default function NotesPageClient({
         path: `/notes?folderId=${item.id}`,
       })),
     ],
-    [breadcrumb]
+    [breadcrumb],
   );
 
   // Navigate to breadcrumb by index
@@ -70,7 +70,7 @@ export default function NotesPageClient({
 
   // Action handlers
   const handleCreateNote = () => {
-    router.push(`/notes/create?folderId=${folderId || ""}`);
+    router.push(`/notes/create${folderId ? `?folderId=${folderId}` : ""}`);
   };
 
   const handleCreateFolder = () => {

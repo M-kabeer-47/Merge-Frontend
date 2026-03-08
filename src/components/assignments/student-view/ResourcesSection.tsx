@@ -1,9 +1,8 @@
 import { FileText, Download } from "lucide-react";
-import type { AssignmentAttachment } from "@/types/assignment";
 import { formatFileSize } from "@/utils/file-helpers";
 
 interface ResourcesSectionProps {
-  attachments?: string[];
+  attachments?: { name: string; url: string; size?: number }[];
 }
 
 export default function ResourcesSection({
@@ -17,7 +16,7 @@ export default function ResourcesSection({
       <div className="space-y-2">
         {attachments.map((attachment) => (
           <div
-            key={attachment}
+            key={attachment.url}
             className="flex items-center justify-between p-3 bg-secondary/5 border border-light-border rounded-lg transition-colors"
           >
             <div className="flex items-center gap-3 flex-1 min-w-0">

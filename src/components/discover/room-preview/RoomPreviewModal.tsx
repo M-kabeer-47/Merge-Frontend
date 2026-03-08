@@ -50,7 +50,7 @@ export default function RoomPreviewModal({
           </Button>
           <Button className="w-1/2" onClick={() => onJoin(room.roomCode)}>
             <UserPlus className="w-4 h-4" />
-            <span>Join Room</span>
+            <span>{room.autoJoin ? "Join Room" : "Request to join"}</span>
           </Button>
         </div>
       }

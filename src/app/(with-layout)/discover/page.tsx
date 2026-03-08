@@ -3,22 +3,18 @@
 import { useState, useMemo, useCallback } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import SearchBar from "@/components/ui/SearchBar";
-import FilterBar from "@/components/discover/FilterBar";
 import RoomGrid from "@/components/discover/RoomGrid";
 import RoomPreviewModal from "@/components/discover/room-preview/RoomPreviewModal";
 import EmptyState from "@/components/discover/EmptyState";
 import LoaderSkeleton from "@/components/discover/LoaderSkeleton";
 import { useFetchFeed } from "@/hooks/discover/use-fetch-feed";
-import useFetchAvailableTags from "@/hooks/user/use-fetch-available-tags";
 import useJoinRoom from "@/hooks/rooms/use-join-room";
 import { useAuth } from "@/providers/AuthProvider";
-import type { FeedRoom, SortOption } from "@/types/discover";
+import type { FeedRoom } from "@/types/discover";
 
 export default function DiscoverPage() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [selectedRoom, setSelectedRoom] = useState<FeedRoom | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -32,35 +28,12 @@ export default function DiscoverPage() {
   const { rooms, hasMore, isLoading, isFetchingNextPage, fetchNextPage, total } =
     useFetchFeed({ search: searchQuery || undefined, userTags });
 
-  // Fetch available tags for filter bar
-  const { data: availableTags } = useFetchAvailableTags();
-  const tagNames = useMemo(
-    () => availableTags?.map((t) => t.name) ?? [],
-    [availableTags],
-  );
-
   // Join room hook
   const { joinRoom } = useJoinRoom();
 
   // Handlers
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-  }, []);
-
-  const handleTagToggle = useCallback((tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
-  }, []);
-
-  const handleSortChange = useCallback((sort: SortOption) => {
-    setSortBy(sort);
-  }, []);
-
-  const handleClearFilters = useCallback(() => {
-    setSearchQuery("");
-    setSelectedTags([]);
-    setSortBy("newest");
   }, []);
 
   const handleJoinRoom = useCallback(
@@ -80,7 +53,6 @@ export default function DiscoverPage() {
     setTimeout(() => setSelectedRoom(null), 300);
   }, []);
 
-  const hasFilters = searchQuery || selectedTags.length > 0;
   const showEmpty = !isLoading && rooms.length === 0;
 
   return (
@@ -104,18 +76,6 @@ export default function DiscoverPage() {
             </div>
           </header>
 
-          {/* Filter Bar */}
-          <div className="mb-8">
-            <FilterBar
-              availableTags={tagNames}
-              selectedTags={selectedTags}
-              sortBy={sortBy}
-              onTagToggle={handleTagToggle}
-              onSortChange={handleSortChange}
-              onClearFilters={handleClearFilters}
-            />
-          </div>
-
           {/* Results Count */}
           {!showEmpty && !isLoading && (
             <div className="mb-4">
@@ -137,7 +97,7 @@ export default function DiscoverPage() {
             <EmptyState
               type="no-results"
               searchQuery={searchQuery}
-              onClearFilters={hasFilters ? handleClearFilters : undefined}
+              onClearFilters={searchQuery ? () => setSearchQuery("") : undefined}
             />
           ) : (
             <InfiniteScroll

@@ -7,7 +7,7 @@ import type { Session } from "./types";
 import { sampleSessions } from "./sample-data";
 import UpcomingSessionCard from "./UpcomingSessionCard";
 import PastSessionCard from "./PastSessionCard";
-import { EmptyUpcomingState, EmptyPastState } from "./SessionEmptyStates";
+import { EmptyUpcomingState, EmptyPastState } from "./empty-states";
 
 export default function SessionsTab() {
   const [sessions, setSessions] = useState<Session[]>(sampleSessions);

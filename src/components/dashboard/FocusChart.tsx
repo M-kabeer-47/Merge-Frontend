@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -12,7 +10,7 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { TrendingUp, Calendar, Clock } from "lucide-react";
+import { CustomTooltip, CustomDot } from "./FocusChartHelpers";
 
 /**
  * Focus Analytics Chart Component
@@ -39,56 +37,6 @@ interface FocusAnalyticsChartProps {
   threshold?: number;
 }
 
-/**
- * Custom Tooltip Component for displaying session details
- */
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-background border border-light-border rounded-lg p-3 shadow-lg">
-        <p className="font-semibold text-heading text-sm mb-2">
-          {data.sessionName}
-        </p>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs text-para">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>{data.date}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-para">
-            <Clock className="w-3.5 h-3.5" />
-            <span>{data.durationMinutes} minutes</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            <TrendingUp className="w-3.5 h-3.5 text-primary" />
-            <span className="text-primary">{data.focusPercent}% Focus</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-/**
- * Custom dot component for the line chart
- */
-const CustomDot = (props: any) => {
-  const { cx, cy, payload } = props;
-
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={5}
-      fill="#2f1a58"
-      stroke="#ffffff"
-      strokeWidth={2}
-      className="hover:r-6 transition-all"
-    />
-  );
-};
-
 export default function FocusAnalyticsChart({
   data,
   averageFocus,
@@ -110,7 +58,7 @@ export default function FocusAnalyticsChart({
   // Handle smooth resize
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     const handleResize = () => {
       setIsResizing(true);
       clearTimeout(timeoutId);
@@ -135,8 +83,8 @@ export default function FocusAnalyticsChart({
       role="region"
       aria-label="Focus Analytics Chart showing percentage of focus per session"
     >
-      <ResponsiveContainer 
-        width="100%" 
+      <ResponsiveContainer
+        width="100%"
         height={400}
         debounce={50}
       >
