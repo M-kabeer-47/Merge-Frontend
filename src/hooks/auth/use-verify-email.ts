@@ -17,15 +17,10 @@ export default function VerifyPage({ token }: { token: string }) {
         setAuthTokens(data.token, data.refreshToken);
       }
 
-      // Only ask for notification permission if browser hasn't been asked yet
+      // Ask for notification permission if backend status is default
       const notificationStatus = data.notificationStatus || "default";
-      const browserNotAsked =
-        typeof Notification !== "undefined" &&
-        Notification.permission === "default";
       const askParam =
-        notificationStatus === "default" && browserNotAsked
-          ? "&askNotifications=true"
-          : "";
+        notificationStatus === "default" ? "&askNotifications=true" : "";
 
       setTimeout(() => {
         router.push(`/success?type=email_verified${askParam}`);

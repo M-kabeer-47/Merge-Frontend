@@ -56,36 +56,13 @@ export default function signIn({
       if (data.token && data.refreshToken && data.userId) {
         toast.success("Signed in successfully!");
 
-        const notificationStatus = data.notificationStatus || "default";
+        const notificationStatus = data.notificationStatus;
         let redirect = "/rooms";
-
-        // If browser already has permission (granted), ensure token is registered
-        if (Notification.permission === "granted") {
-          try {
-            const fcmToken = await requestFCMToken();
-            if (fcmToken) {
-              localStorage.setItem("merge_fcm_token", fcmToken);
-              registerToken({
-                notificationStatus: "allowed",
-                token: fcmToken,
-                deviceType: "web",
-                deviceId: getDeviceId(),
-              });
-            }
-          } catch {
-            // Non-blocking, token refresh will handle it
-          }
-        } else if (
-          notificationStatus === "default" &&
-          Notification.permission === "default"
-        ) {
-          // Browser hasn't been asked yet — trigger permission prompt
+        if (notificationStatus === "default") {
           redirect = "/rooms?askNotifications=true";
         }
 
-        setTimeout(() => {
-          router.push(redirect);
-        }, 500);
+        router.push(redirect);
       }
     },
     onError: (error: ApiError) => {

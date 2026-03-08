@@ -72,10 +72,19 @@ export default function StudentAssignmentCard({
               <Calendar className="w-4 h-4" />
               {formatDueDate(assignment.dueDate)}
             </span>
-            <span className="flex items-center gap-1"> 
-            
+            <span className="flex items-center gap-1">
               <IoTrophy className="w-4 h-4" fill="#e69a29" />
               {assignment.points} points
+            </span>
+
+            <span className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              Uploaded:{" "}
+              {new Date(assignment.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
             </span>
 
             {/* Show grade if graded */}

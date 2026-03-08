@@ -13,8 +13,8 @@ const successConfig = {
     title: "Experience Created!",
     description:
       "Your experience has been successfully created and is now live. You can manage or edit it from your dashboard.",
-    buttonText: "Go to Dashboard",
-    buttonHref: "/dashboard",
+    buttonText: "Go to rooms",
+    buttonHref: "/rooms",
   },
   booking: {
     title: "Booking Confirmed!",

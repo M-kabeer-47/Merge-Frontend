@@ -38,19 +38,10 @@ export default function NotificationTrigger() {
     hasTriggered.current = true;
 
     // Clean the URL param, then ask for permission after a short delay
-    const cleanUrl = () => {
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.delete("askNotifications");
-      const newUrl = newParams.toString()
-        ? `${pathname}?${newParams}`
-        : pathname;
-      router.replace(newUrl, { scroll: false });
-    };
 
-    // Trigger native Chrome permission dialog
+    // Trigger native Chrome permission dialSg
     const askPermission = async () => {
       // Clean URL first, then show the dialog
-      cleanUrl();
 
       // This shows Chrome's native notification permission dialog
       const [response, error] = await tryIt(Notification.requestPermission());

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import {
+  Calendar,
   Clock,
   Trophy,
   MoreVertical,
@@ -105,6 +106,16 @@ export default function InstructorAssignmentCard({
                 year: "numeric",
                 hour: "numeric",
                 minute: "2-digit",
+              })}
+            </span>
+
+            <span className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              Uploaded:{" "}
+              {new Date(assignment.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
               })}
             </span>
           </div>
