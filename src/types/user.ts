@@ -11,6 +11,7 @@ export type User = {
   hashedRefreshToken: string;
   twoFactorEnabled: boolean;
   notificationStatus: "default" | "allowed" | "denied";
+  tags?: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
 };

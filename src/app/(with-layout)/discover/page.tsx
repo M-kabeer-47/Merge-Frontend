@@ -1,106 +1,46 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import SearchBar from "@/components/ui/SearchBar";
 import FilterBar from "@/components/discover/FilterBar";
 import RoomGrid from "@/components/discover/RoomGrid";
 import RoomPreviewModal from "@/components/discover/room-preview/RoomPreviewModal";
-import RecommendedRooms from "@/components/discover/RecommendedRooms";
 import EmptyState from "@/components/discover/EmptyState";
-import { mockRooms, allTags } from "@/lib/constants/discover-mock-data";
-import type { PublicRoom, SortOption } from "@/types/discover";
-
-const ITEMS_PER_PAGE = 12;
+import LoaderSkeleton from "@/components/discover/LoaderSkeleton";
+import { useFetchFeed } from "@/hooks/discover/use-fetch-feed";
+import useFetchAvailableTags from "@/hooks/user/use-fetch-available-tags";
+import useJoinRoom from "@/hooks/rooms/use-join-room";
+import { useAuth } from "@/providers/AuthProvider";
+import type { FeedRoom, SortOption } from "@/types/discover";
 
 export default function DiscoverPage() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [selectedRoom, setSelectedRoom] = useState<PublicRoom | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<FeedRoom | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Filter and sort rooms
-  const filteredRooms = useMemo(() => {
-    let rooms = [...mockRooms];
+  // Get user tags from auth context
+  const userTags = useMemo(() => {
+    if (!user?.tags) return [];
+    return user.tags.map((t) => t.name);
+  }, [user?.tags]);
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      rooms = rooms.filter(
-        (room) =>
-          room.title.toLowerCase().includes(query) ||
-          room.description.toLowerCase().includes(query) ||
-          room.creator.name.toLowerCase().includes(query) ||
-          room.tags.some((tag) => tag.toLowerCase().includes(query))
-      );
-    }
+  // Fetch feed from API
+  const { rooms, hasMore, isLoading, isFetchingNextPage, fetchNextPage, total } =
+    useFetchFeed({ search: searchQuery || undefined, userTags });
 
-    // Tag filter
-    if (selectedTags.length > 0) {
-      rooms = rooms.filter((room) =>
-        selectedTags.every((tag) => room.tags.includes(tag))
-      );
-    }
+  // Fetch available tags for filter bar
+  const { data: availableTags } = useFetchAvailableTags();
+  const tagNames = useMemo(
+    () => availableTags?.map((t) => t.name) ?? [],
+    [availableTags],
+  );
 
-    // Sort
-    rooms.sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return (
-            new Date(b.lastActiveAt).getTime() -
-            new Date(a.lastActiveAt).getTime()
-          );
-        case "most-active":
-          return b.activeNow === a.activeNow ? 0 : b.activeNow ? 1 : -1;
-        case "most-members":
-          return b.membersCount - a.membersCount;
-        default:
-          return 0;
-      }
-    });
-
-    return rooms;
-  }, [searchQuery, selectedTags, sortBy]);
-
-  // Get recommended rooms (mock - top 3 most popular active rooms)
-  const recommendedRooms = useMemo(() => {
-    return mockRooms
-      .filter((room) => room.activeNow)
-      .sort((a, b) => b.membersCount - a.membersCount)
-      .slice(0, 3);
-  }, []);
-
-  // Paginated display
-  const displayedRooms = filteredRooms.slice(0, displayedCount);
-  const hasMore = displayedCount < filteredRooms.length;
-
-  // Infinite scroll handler
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 500 &&
-        hasMore &&
-        !isLoadingMore
-      ) {
-        setIsLoadingMore(true);
-        setTimeout(() => {
-          setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
-          setIsLoadingMore(false);
-        }, 500);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [hasMore, isLoadingMore]);
-
-  // Reset pagination when filters change
-  useEffect(() => {
-    setDisplayedCount(ITEMS_PER_PAGE);
-  }, [searchQuery, selectedTags, sortBy]);
+  // Join room hook
+  const { joinRoom } = useJoinRoom();
 
   // Handlers
   const handleSearch = useCallback((query: string) => {
@@ -109,7 +49,7 @@ export default function DiscoverPage() {
 
   const handleTagToggle = useCallback((tag: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   }, []);
 
@@ -123,13 +63,14 @@ export default function DiscoverPage() {
     setSortBy("newest");
   }, []);
 
-  const handleJoinRoom = useCallback((roomId: string) => {
-    // TODO: Implement join room logic
-    console.log("Join room:", roomId);
-    alert(`Request to join room ${roomId} sent!`);
-  }, []);
+  const handleJoinRoom = useCallback(
+    (roomCode: string) => {
+      joinRoom({ roomCode });
+    },
+    [joinRoom],
+  );
 
-  const handlePreviewRoom = useCallback((room: PublicRoom) => {
+  const handlePreviewRoom = useCallback((room: FeedRoom) => {
     setSelectedRoom(room);
     setIsModalOpen(true);
   }, []);
@@ -139,21 +80,14 @@ export default function DiscoverPage() {
     setTimeout(() => setSelectedRoom(null), 300);
   }, []);
 
-  const handleOpenFullRoom = useCallback((roomId: string) => {
-    // TODO: Navigate to full room page
-    console.log("Open full room:", roomId);
-    window.location.href = `/rooms/${roomId}`;
-  }, []);
-
   const hasFilters = searchQuery || selectedTags.length > 0;
-  const showEmpty = filteredRooms.length === 0;
+  const showEmpty = !isLoading && rooms.length === 0;
 
   return (
     <div className="min-h-screen bg-main-background">
       <div className="sm:px-6 px-4 sm:py-6 py-4 transition-all duration-300 ease-in-out">
-        <div className="">
+        <div>
           {/* Header */}
-
           <header className="mb-8">
             <h1 className="text-3xl font-bold text-heading mb-2 font-raleway">
               Discover Rooms
@@ -170,18 +104,10 @@ export default function DiscoverPage() {
             </div>
           </header>
 
-          {/* Recommended Section
-          <RecommendedRooms
-            rooms={recommendedRooms}
-            onRoomClick={handlePreviewRoom}
-          /> */}
-
-          {/* Search Bar */}
-
           {/* Filter Bar */}
           <div className="mb-8">
             <FilterBar
-              availableTags={allTags}
+              availableTags={tagNames}
               selectedTags={selectedTags}
               sortBy={sortBy}
               onTagToggle={handleTagToggle}
@@ -191,38 +117,54 @@ export default function DiscoverPage() {
           </div>
 
           {/* Results Count */}
-          {!showEmpty && (
+          {!showEmpty && !isLoading && (
             <div className="mb-4">
               <p className="text-sm text-para-muted">
-                Showing {displayedRooms.length} of {filteredRooms.length} room
-                {filteredRooms.length !== 1 ? "s" : ""}
+                Showing {rooms.length} of {total} room
+                {total !== 1 ? "s" : ""}
               </p>
             </div>
           )}
 
-          {/* Room Grid */}
-          {showEmpty ? (
+          {/* Initial Loading Skeleton */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <LoaderSkeleton key={`initial-skeleton-${i}`} />
+              ))}
+            </div>
+          ) : showEmpty ? (
             <EmptyState
-              type={mockRooms.length === 0 ? "no-rooms" : "no-results"}
+              type="no-results"
               searchQuery={searchQuery}
               onClearFilters={hasFilters ? handleClearFilters : undefined}
             />
           ) : (
-            <RoomGrid
-              rooms={displayedRooms}
-              loading={isLoadingMore}
-              onJoin={handleJoinRoom}
-              onPreview={handlePreviewRoom}
-            />
-          )}
-
-          {/* Load More Indicator */}
-          {hasMore && !isLoadingMore && (
-            <div className="text-center mt-8">
-              <p className="text-sm text-para-muted">
-                Scroll down to load more rooms...
-              </p>
-            </div>
+            <InfiniteScroll
+              dataLength={rooms.length}
+              next={() => fetchNextPage()}
+              hasMore={!!hasMore}
+              loader={
+                <div className="grid grid-cols-1 gap-6 mt-6">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <LoaderSkeleton key={`scroll-skeleton-${i}`} />
+                  ))}
+                </div>
+              }
+              endMessage={
+                rooms.length > 0 ? (
+                  <p className="text-center text-sm text-para-muted py-8">
+                    No more rooms to show
+                  </p>
+                ) : null
+              }
+            >
+              <RoomGrid
+                rooms={rooms}
+                onJoin={handleJoinRoom}
+                onPreview={handlePreviewRoom}
+              />
+            </InfiniteScroll>
           )}
         </div>
       </div>
@@ -233,7 +175,6 @@ export default function DiscoverPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onJoin={handleJoinRoom}
-        onOpenFull={handleOpenFullRoom}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import Modal from "@/components/ui/Modal";
@@ -15,6 +16,7 @@ import useSkipOnboarding from "@/hooks/user/use-skip-onboarding";
 type Step = "role" | "tags";
 
 export default function OnboardingModal() {
+  const router = useRouter();
   const { user, setUser } = useAuth();
   const [selectedRole, setSelectedRole] = useState<string | undefined>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -49,19 +51,21 @@ export default function OnboardingModal() {
     try {
       const updatedUser = await setUserTags(selectedTags);
       setUser(updatedUser);
+      router.push("/discover");
     } catch {
       // Error handled by hook
     }
-  }, [selectedTags, setUserTags, setUser]);
+  }, [selectedTags, setUserTags, setUser, router]);
 
   const handleSkip = useCallback(async () => {
     try {
       const updatedUser = await skipOnboarding();
       setUser(updatedUser);
+      router.push("/discover");
     } catch {
       // Error handled by hook
     }
-  }, [skipOnboarding, setUser]);
+  }, [skipOnboarding, setUser, router]);
 
   if (!isOpen) return null;
 

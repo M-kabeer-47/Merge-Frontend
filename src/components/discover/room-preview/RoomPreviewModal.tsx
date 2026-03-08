@@ -1,22 +1,18 @@
 "use client";
 
-import { UserPlus, X } from "lucide-react";
-import Image from "next/image";
-import type { PublicRoom } from "@/types/discover";
+import { UserPlus, Users, X } from "lucide-react";
+import type { FeedRoom } from "@/types/discover";
 import TagChip from "../TagChip";
 import { Button } from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import RoomDescriptionSection from "./RoomDescriptionSection";
-import RoomMembersSection from "./RoomMembersSection";
-import RoomFilesSection from "./RoomFilesSection";
-import RoomAssignmentsSection from "./RoomAssignmentsSection";
+import Avatar from "@/components/ui/Avatar";
 
 interface RoomPreviewModalProps {
-  room: PublicRoom | null;
+  room: FeedRoom | null;
   isOpen: boolean;
   onClose: () => void;
-  onJoin: (roomId: string) => void;
-  onOpenFull: (roomId: string) => void;
+  onJoin: (roomCode: string) => void;
 }
 
 export default function RoomPreviewModal({
@@ -24,9 +20,10 @@ export default function RoomPreviewModal({
   isOpen,
   onClose,
   onJoin,
-  onOpenFull,
 }: RoomPreviewModalProps) {
   if (!room) return null;
+
+  const creatorName = `${room.admin.firstName} ${room.admin.lastName}`;
 
   return (
     <Modal
@@ -35,21 +32,10 @@ export default function RoomPreviewModal({
       title={room.title}
       description={
         <div className="flex items-center gap-3 mt-1">
-          <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden flex-shrink-0">
-            <Image
-              src={room.creator.avatar}
-              alt={room.creator.name}
-              width={32}
-              height={32}
-              className="object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          </div>
+          <Avatar profileImage={room.admin.image} size="sm" />
           <div>
             <p className="text-sm font-semibold text-heading">
-              {room.creator.name}
+              {creatorName}
             </p>
             <p className="text-xs text-para-muted">Room Creator</p>
           </div>
@@ -62,7 +48,7 @@ export default function RoomPreviewModal({
             <X className="w-4 h-4" />
             <span>Close</span>
           </Button>
-          <Button className="w-1/2" onClick={() => onJoin(room.id)}>
+          <Button className="w-1/2" onClick={() => onJoin(room.roomCode)}>
             <UserPlus className="w-4 h-4" />
             <span>Join Room</span>
           </Button>
@@ -77,19 +63,21 @@ export default function RoomPreviewModal({
           <h3 className="text-sm font-semibold text-heading mb-2">Tags</h3>
           <div className="flex flex-wrap gap-2">
             {room.tags.map((tag) => (
-              <TagChip key={tag} label={tag} />
+              <TagChip key={tag.id} label={tag.name} />
             ))}
           </div>
         </section>
 
-        <RoomMembersSection
-          membersCount={room.membersCount}
-          membersPreview={room.membersPreview}
-        />
-
-        <RoomFilesSection files={room.files} />
-
-        <RoomAssignmentsSection assignments={room.assignments} />
+        {/* Members */}
+        <section>
+          <h3 className="text-sm font-semibold text-heading mb-2">Members</h3>
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-para-muted" />
+            <span className="text-sm text-para">
+              {room.memberCount} member{room.memberCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </section>
       </div>
     </Modal>
   );

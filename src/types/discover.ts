@@ -51,3 +51,37 @@ export interface FilterState {
   selectedTags: string[];
   sortBy: SortOption;
 }
+
+// Types matching the backend /room/feed response
+export interface FeedRoom {
+  id: string;
+  title: string;
+  description: string;
+  isPublic: boolean;
+  autoJoin: boolean;
+  roomCode: string;
+  admin: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image: string | null;
+  };
+  tags: { id: string; name: string }[];
+  createdAt: string;
+  updatedAt: string;
+  memberCount: number;
+  tagMatches: number;
+  isRecommended: boolean;
+  joinedByUser: boolean;
+}
+
+export interface FeedResponse {
+  rooms: FeedRoom[];
+  total: number;
+  totalPages: number;
+  currentPage: number;
+  userTags: string[];
+  hasPersonalizedFeed: boolean;
+  search: string | null;
+}

@@ -37,13 +37,10 @@ export default function AuthCallbackContent() {
         // Invalidate the user query so it refetches with the new token
         queryClient.invalidateQueries({ queryKey: ["user"] });
 
-        // Handle notification registration based on browser permission state
+        // Handle notification registration based on backend status
         let finalRedirect = redirect;
-        if (
-          typeof Notification !== "undefined" &&
-          Notification.permission === "granted"
-        ) {
-          // Browser already has permission — silently register token
+        if (notificationStatus === "allowed") {
+          // User already allowed — silently register token
           try {
             const fcmToken = await requestFCMToken();
             if (fcmToken) {
@@ -58,12 +55,8 @@ export default function AuthCallbackContent() {
           } catch {
             // Non-blocking
           }
-        } else if (
-          notificationStatus === "default" &&
-          typeof Notification !== "undefined" &&
-          Notification.permission === "default"
-        ) {
-          // Browser hasn't been asked yet — trigger permission prompt
+        } else if (notificationStatus === "default") {
+          // User hasn't been asked yet — trigger permission prompt
           const separator = redirect.includes("?") ? "&" : "?";
           finalRedirect = `${redirect}${separator}askNotifications=true`;
         }
