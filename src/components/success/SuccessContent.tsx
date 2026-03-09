@@ -46,8 +46,8 @@ const successConfig = {
     title: "Email Verified Successfully!",
     description:
       "Welcome to Merge! Your email has been verified and your account is now active.",
-    buttonText: "Dashboard",
-    buttonHref: "/dashboard",
+    buttonText: "Rooms",
+    buttonHref: "/rooms?askNotifications=true",
   },
   default: {
     title: "Success!",
