@@ -53,6 +53,16 @@ export default function AIAssistantPage() {
     15 // 15ms per character for smooth, fast typing effect
   );
 
+  // During streaming, filter out the assistant message from cached messages
+  // to avoid duplicate rendering (it's shown via streamingMessage instead)
+  const displayMessages = streamingMessage
+    ? messages.filter(
+        (m) =>
+          m.id !== streamingMessage.id &&
+          !m.id.startsWith("assistant-streaming"),
+      )
+    : messages;
+
   // Smart auto-scroll: only scroll if user is already at bottom, with throttling
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -331,7 +341,7 @@ export default function AIAssistantPage() {
                   />
                 )}
 
-                {messages.map((message) => (
+                {displayMessages.map((message) => (
                   <ChatMessage
                     key={message.id}
                     message={message}
