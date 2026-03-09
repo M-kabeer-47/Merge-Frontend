@@ -108,6 +108,7 @@ export interface SendMessagePayload {
 export interface StreamQueryPayload {
   conversationId?: string;
   message: string;
+  contextFileId?: string;
   attachmentS3Url?: string;
   attachmentType?: 'pdf' | 'docx' | 'txt' | 'pptx' | 'xlsx';
   attachmentOriginalName?: string;

@@ -48,6 +48,7 @@ export default function useStreamQuery() {
         id: `user-${Date.now()}`,
         role: "user",
         content: payload.message,
+        contextFileId: payload.contextFileId || null,
         createdAt: new Date().toISOString(),
       };
       userMessageId = optimisticUserMessage.id;

@@ -35,15 +35,15 @@ export default function AIAssistantPage() {
   const isUserScrollingRef = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch conversations and active conversation
-  const { conversations, isLoading: loadingConversations } =
-    useFetchConversations();
-  const { messages, isLoading: loadingMessages } = useFetchConversation(activeSessionId);
-
   // Mutations
   const { createConversation, isCreating } = useCreateConversation();
   const { deleteConversation, isDeleting } = useDeleteConversation();
   const { streamQuery, isStreaming, streamingMessage, pendingUserMessage } = useStreamQuery();
+
+  // Fetch conversations and active conversation
+  const { conversations, isLoading: loadingConversations } =
+    useFetchConversations();
+  const { messages, isLoading: loadingMessages } = useFetchConversation(activeSessionId, isStreaming);
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
@@ -172,10 +172,14 @@ export default function AIAssistantPage() {
       return undefined;
     };
 
+    // If the file is from a room (has roomId), send its ID as contextFileId
+    const contextFileId = attachmentData?.roomId ? attachmentData.id : undefined;
+
     await streamQuery(
       {
         conversationId: activeSessionId || undefined,
         message: content,
+        contextFileId,
         attachmentS3Url: attachmentData?.url,
         attachmentType: attachmentData
           ? mapFileTypeToAttachmentType(attachmentData.type)

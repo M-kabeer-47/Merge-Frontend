@@ -6,8 +6,14 @@ import type { ConversationWithMessages } from "@/types/ai-chat";
 
 /**
  * Hook to fetch a specific conversation with all its messages
+ * @param conversationId - The conversation ID to fetch
+ * @param isStreaming - When true, disables background refetching to prevent
+ *   overwriting optimistic cache updates during streaming
  */
-export default function useFetchConversation(conversationId: string | null) {
+export default function useFetchConversation(
+  conversationId: string | null,
+  isStreaming: boolean = false,
+) {
   const fetchConversation = async (): Promise<ConversationWithMessages | null> => {
     if (!conversationId) return null;
 
@@ -21,8 +27,13 @@ export default function useFetchConversation(conversationId: string | null) {
     queryKey: ["ai-conversation", conversationId],
     queryFn: fetchConversation,
     enabled: !!conversationId,
-    staleTime: 10 * 1000, // 10 seconds
+    staleTime: 30 * 1000, // 30 seconds
     retry: 2,
+    // Disable all background refetching during streaming to prevent
+    // server data from overwriting optimistic cache updates
+    refetchOnWindowFocus: !isStreaming,
+    refetchOnReconnect: !isStreaming,
+    refetchInterval: false,
   });
 
   return {
