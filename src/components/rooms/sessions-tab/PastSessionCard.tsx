@@ -1,4 +1,4 @@
-import { Video, Calendar, Users, FileText } from "lucide-react";
+import { Video, Calendar, Users, FileText, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Avatar from "@/components/ui/Avatar";
 import type { Session } from "./types";
@@ -72,6 +72,17 @@ export default function PastSessionCard({ session }: { session: Session }) {
           <Users className="w-4 h-4 mr-2" />
           View Attendees
         </Button>
+        {session.summaryPdfUrl && (
+          <a
+            href={session.summaryPdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors"
+          >
+            <BookOpen className="w-4 h-4" />
+            Study Notes
+          </a>
+        )}
       </div>
     </article>
   );

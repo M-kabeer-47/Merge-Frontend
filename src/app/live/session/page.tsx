@@ -350,6 +350,35 @@ function LiveSessionPageContent() {
   const [sessionEndTimestamp, setSessionEndTimestamp] = useState<string | undefined>(undefined);
   const hasLeftRef = useRef(false);
   const socketRef = useRef<Socket | null>(null);
+  const [summaryPdfUrl, setSummaryPdfUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sessionTerminated || !sessionId || !roomId) return;
+    if (summaryPdfUrl) return;
+
+    let attempts = 0;
+    const MAX_ATTEMPTS = 24;
+
+    const poll = setInterval(async () => {
+      attempts += 1;
+      try {
+        const res = await fetch(
+          `${BACKEND_URL}/live-sessions/${sessionId}/summary?roomId=${roomId}`,
+          { credentials: "include" }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.summaryPdfUrl) {
+            setSummaryPdfUrl(data.summaryPdfUrl);
+            clearInterval(poll);
+          }
+        }
+      } catch (_) {}
+      if (attempts >= MAX_ATTEMPTS) clearInterval(poll);
+    }, 5000);
+
+    return () => clearInterval(poll);
+  }, [sessionTerminated, sessionId, roomId, summaryPdfUrl]);
 
   const navigateToSessions = useCallback(() => {
     router.push(`/rooms/${roomId}/sessions`);
@@ -634,6 +663,117 @@ function LiveSessionPageContent() {
     }
   }, [isLeaving, isEnding]);
 
+  const transcriptionSocketRef = useRef<Socket | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (!isHost || !sessionId || !BACKEND_URL) return;
+    if (sessionTerminated) return;
+
+    let socket: Socket | null = null;
+    let audioContext: AudioContext | null = null;
+    let mediaStream: MediaStream | null = null;
+    let workletNode: AudioWorkletNode | null = null;
+
+    const WORKLET_CODE = `
+class PCMProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this._buffer = [];
+    this._bufferSize = 4096;
+  }
+  process(inputs) {
+    const input = inputs[0];
+    if (!input || !input[0]) return true;
+    const samples = input[0];
+    for (let i = 0; i < samples.length; i++) {
+      this._buffer.push(samples[i]);
+    }
+    while (this._buffer.length >= this._bufferSize) {
+      const chunk = this._buffer.splice(0, this._bufferSize);
+      const int16 = new Int16Array(this._bufferSize);
+      for (let i = 0; i < this._bufferSize; i++) {
+        const s = Math.max(-1, Math.min(1, chunk[i]));
+        int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+      }
+      this.port.postMessage(int16.buffer, [int16.buffer]);
+    }
+    return true;
+  }
+}
+registerProcessor('pcm-processor', PCMProcessor);
+`;
+
+    const start = async () => {
+      try {
+        const token = await fetchSocketAccessToken();
+        if (!token) {
+          console.warn("[Transcription] No auth token, skipping");
+          return;
+        }
+
+        socket = io(`${BACKEND_URL}/transcription`, {
+          path: "/socket.io",
+          transports: ["websocket", "polling"],
+          auth: { token },
+        });
+        transcriptionSocketRef.current = socket;
+
+        socket.on("connect", () => {
+          console.log("[Transcription] Socket connected, starting transcription");
+          socket?.emit("startTranscription", { sessionId });
+        });
+
+        socket.on("connect_error", (err) => {
+          console.error("[Transcription] connect error:", err.message);
+        });
+
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioStreamRef.current = mediaStream;
+
+        audioContext = new AudioContext({ sampleRate: 16000 });
+        audioContextRef.current = audioContext;
+
+        const blob = new Blob([WORKLET_CODE], { type: "application/javascript" });
+        const workletUrl = URL.createObjectURL(blob);
+        await audioContext.audioWorklet.addModule(workletUrl);
+        URL.revokeObjectURL(workletUrl);
+
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        workletNode = new AudioWorkletNode(audioContext, "pcm-processor");
+
+        workletNode.port.onmessage = (event: MessageEvent<ArrayBuffer>) => {
+          if (socket?.connected) {
+            socket.emit("audioChunk", event.data);
+          }
+        };
+
+        source.connect(workletNode);
+        workletNode.connect(audioContext.destination);
+
+        console.log("[Transcription] Audio capture started");
+      } catch (err) {
+        console.error("[Transcription] Failed to start audio capture:", err);
+      }
+    };
+
+    start();
+
+    return () => {
+      try {
+        workletNode?.disconnect();
+        audioContext?.close();
+        mediaStream?.getTracks().forEach((t) => t.stop());
+        if (socket) {
+          socket.emit("stopTranscription", { sessionId });
+          socket.disconnect();
+          transcriptionSocketRef.current = null;
+        }
+      } catch (_) {}
+    };
+  }, [isHost, sessionId, sessionTerminated]);
+
   const toggleMic = () => {
     if (!myPermissions.canMic) {
       showToastMsg("warning", "Microphone has been disabled by the host");
@@ -762,15 +902,28 @@ function LiveSessionPageContent() {
       {/* Session Terminated Overlay */}
       {sessionTerminated && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="text-center">
+          <div className="text-center max-w-sm px-4">
             <div className="mb-4 text-6xl">👋</div>
             <h2 className="mb-2 text-2xl font-bold text-white">Session Ended</h2>
             <p className="mb-4 text-white/70">
               {sessionEndReason === "manual" ? "The host ended the session." : "The session ended automatically."}
             </p>
             {sessionEndTimestamp && (
-              <p className="mb-6 text-sm text-white/50">
+              <p className="mb-4 text-sm text-white/50">
                 Ended at: {new Date(sessionEndTimestamp).toLocaleTimeString()}
+              </p>
+            )}
+            {summaryPdfUrl ? (
+              <a
+                href={summaryPdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mb-4 flex items-center justify-center gap-2 rounded-lg bg-[#34a853] px-6 py-2 font-medium text-white transition hover:bg-[#2d9248]"
+              >
+                📄 Download Study Notes (PDF)
+              </a>
+            ) : (
+              <p className="mb-4 text-sm text-white/40">📊 Generating study notes... check the sessions list shortly.
               </p>
             )}
             <button
