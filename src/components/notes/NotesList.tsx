@@ -14,6 +14,7 @@ import SharedListView from "@/components/shared/SharedListView";
 import type { NoteOrFolder, Note } from "@/types/note";
 import type { MenuOption } from "@/types/display-item";
 import { useDownloadPdf } from "@/hooks/use-download-pdf";
+import { FolderOpen, Pencil, Download, Trash2 } from "lucide-react";
 
 export default function NotesList() {
   const router = useRouter();
@@ -77,6 +78,7 @@ export default function NotesList() {
     const options: MenuOption[] = [
       {
         title: item?.type === "folder" ? "Open" : "Edit",
+        icon: item?.type === "folder" ? <FolderOpen className="w-4 h-4" /> : <Pencil className="w-4 h-4" />,
         action: () => handleEdit(id),
       },
     ];
@@ -84,6 +86,7 @@ export default function NotesList() {
     if (item?.type === "note") {
       options.push({
         title: "Download",
+        icon: <Download className="w-4 h-4" />,
         action: () => {
           const noteItem = item as Note;
           downloadPdf({
@@ -96,6 +99,8 @@ export default function NotesList() {
 
     options.push({
       title: "Delete",
+      icon: <Trash2 className="w-4 h-4" />,
+      destructive: true,
       action: () => handleDelete(id),
     });
 

@@ -36,16 +36,16 @@ export default function StudentAssignmentView({
       {/* Left Column - Main Content */}
       <div className="flex-1 min-w-0 space-y-6">
         <InstructionsSection
-          description={assignment.description}
+          description={assignment.description ?? undefined}
           assignmentFiles={assignment.assignmentFiles}
         />
 
-        <FeedbackSection feedback={attempt?.feedback} isGraded={isGraded} />
+        <FeedbackSection feedback={attempt?.note ?? undefined} isGraded={isGraded} />
       </div>
 
       {/* Right Column - Your Work Sidebar */}
       <YourWorkSidebar
-        attempt={attempt}
+        attempt={attempt ?? undefined}
         submissionStatus={submissionStatus}
         canSubmit={canSubmit}
         selectedFiles={selectedFiles}

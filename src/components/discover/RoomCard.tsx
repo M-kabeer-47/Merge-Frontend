@@ -1,23 +1,23 @@
 "use client";
 
-import { Eye, UserPlus, Users, Star } from "lucide-react";
-import Image from "next/image";
-import type { PublicRoom } from "@/types/discover";
+import { Eye, UserPlus, Users } from "lucide-react";
+import type { FeedRoom } from "@/types/discover";
 import TagChip from "./TagChip";
-import MemberAvatars from "../rooms/MembersAvatar";
 import Avatar from "../ui/Avatar";
 import { Button } from "../ui/Button";
 
 interface RoomCardProps {
-  room: PublicRoom;
-  onJoin: (roomId: string) => void;
-  onPreview: (room: PublicRoom) => void;
+  room: FeedRoom;
+  onJoin: (roomCode: string) => void;
+  onPreview: (room: FeedRoom) => void;
 }
 
 export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
+  const creatorName = `${room.admin.firstName} ${room.admin.lastName}`;
+
   const handleJoinClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onJoin(room.id);
+    onJoin(room.roomCode);
   };
 
   const handlePreviewClick = (e: React.MouseEvent) => {
@@ -37,31 +37,9 @@ export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
           onPreview(room);
         }
       }}
-      aria-label={`Room: ${room.title} by ${room.creator.name}`}
+      aria-label={`Room: ${room.title} by ${creatorName}`}
     >
-      {/* Thumbnail */}
-      {/* <div className="relative w-full h-40 bg-secondary/15 rounded-lg mb-4 overflow-hidden">
-        <Image
-          src={room.thumbnail}
-          alt={`${room.title} thumbnail`}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            // Fallback to gradient background
-            e.currentTarget.style.display = "none";
-          }}
-        />
-        {room.activeNow && (
-          <div className="absolute top-3 right-3 px-2 py-1 bg-success rounded-full flex items-center gap-1.5">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-xs font-medium text-white">Active</span>
-          </div>
-        )}
-      </div> */}
-
-      {/* Creator */}
-
-      {/* Title & Rating */}
+      {/* Title */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <h3
           className="text-lg font-bold text-heading line-clamp-1 group-hover:text-primary transition-colors flex-1"
@@ -69,31 +47,23 @@ export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
         >
           {room.title}
         </h3>
-        {room.rating && (
-          <div
-            className="flex items-center gap-1 px-2 py-1 bg-accent/10 rounded-lg flex-shrink-0"
-            title={`${room.rating.average} stars from ${room.rating.count} ratings`}
-          >
-            <Star className="w-4 h-4 fill-accent text-accent" />
-            <span className="text-sm font-semibold text-heading">
-              {room.rating.average.toFixed(1)}
-            </span>
-            <span className="text-xs text-para-muted">
-              ({room.rating.count})
-            </span>
-          </div>
+        {room.isRecommended && (
+          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full flex-shrink-0">
+            Recommended
+          </span>
         )}
       </div>
 
+      {/* Creator */}
       <div className="flex items-center gap-3 mb-3">
-        <Avatar profileImage={room.creator.avatar} size="md" />
+        <Avatar profileImage={room.admin.image} size="md" />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-para-muted">Created by</p>
           <p
             className="text-sm font-semibold text-heading truncate"
-            title={room.creator.name}
+            title={creatorName}
           >
-            {room.creator.name}
+            {creatorName}
           </p>
         </div>
       </div>
@@ -109,7 +79,7 @@ export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
       {/* Tags */}
       <div className="flex flex-wrap gap-2 mb-4">
         {room.tags.slice(0, 3).map((tag) => (
-          <TagChip key={tag} label={tag} />
+          <TagChip key={tag.id} label={tag.name} />
         ))}
         {room.tags.length > 3 && (
           <span className="text-xs text-para-muted self-center">
@@ -122,20 +92,12 @@ export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
       <div className="flex items-center justify-between pt-4 border-t border-light-border">
         {/* Members */}
         <div className="flex items-center gap-2">
-          <MemberAvatars
-            members={room.membersPreview.map((m) => ({
-              id: m.id,
-              name: m.name,
-              image: m.avatar,
-            }))}
-            maxVisible={7}
-            size="sm"
-          />
+          <Users className="w-4 h-4 text-para-muted" />
           <span className="text-sm text-para-muted">
-            {room.membersCount} member{room.membersCount !== 1 ? "s" : ""}
+            {room.memberCount} member{room.memberCount !== 1 ? "s" : ""}
           </span>
         </div>
-        <div className="flex gap-2 mt-3 justify-end">
+        <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={handlePreviewClick}
@@ -146,14 +108,12 @@ export default function RoomCard({ room, onJoin, onPreview }: RoomCardProps) {
           </Button>
           <Button
             onClick={handleJoinClick}
-            aria-label={`Request to join ${room.title}`}
+            aria-label={`${room.autoJoin ? "Join" : "Request to join"} ${room.title}`}
           >
             <UserPlus className="w-4 h-4" />
-            <span>Request to join</span>
+            <span>{room.autoJoin ? "Join Room" : "Request to join"}</span>
           </Button>
         </div>
-
-        {/* Actions */}
       </div>
     </article>
   );

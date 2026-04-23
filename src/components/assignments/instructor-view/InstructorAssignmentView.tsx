@@ -74,7 +74,7 @@ export default function InstructorAssignmentView({
     <div className="w-full space-y-6">
       {/* Instructions & Files */}
       <InstructionsSection
-        description={assignment.description}
+        description={assignment.description ?? undefined}
         assignmentFiles={assignment.assignmentFiles}
       />
 
@@ -84,7 +84,7 @@ export default function InstructorAssignmentView({
         gradedAttempts={gradedAttempts}
         ungradedAttempts={ungradedAttempts}
         totalScore={assignment.totalScore}
-        dueDate={assignment.endAt}
+        dueDate={assignment.endAt!}
         isClosed={assignment.isClosed}
       />
 

@@ -64,7 +64,7 @@ export default function SharedGridCard({
             e.stopPropagation();
             onSelect(item.id);
           }}
-          className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-3 left-3  transition-opacity"
         >
           <div
             className={`w-[18px] h-[18px] rounded border flex items-center justify-center transition-all cursor-pointer ${
@@ -99,7 +99,7 @@ export default function SharedGridCard({
             e.stopPropagation();
             setShowMenu(!showMenu);
           }}
-          className="p-1 rounded hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+          className="p-1 rounded hover:bg-gray-100 transition-colors "
         >
           <MoreVertical className="w-4 h-4 text-para-muted" />
         </button>

@@ -1,10 +1,10 @@
-import { CheckCircle2 } from "lucide-react";
-import Icon from "@/components/ui/Icon";
+import { CheckCircle2, Trophy, Clock } from "lucide-react";
 import { formatDueDate } from "@/utils/assignment-helpers";
 
 interface AssignmentMetaInfoProps {
   totalScore: number;
   endAt: Date;
+  createdAt?: Date;
   isInstructor: boolean;
   submissionStatus?: string;
   grade?: number;
@@ -13,6 +13,7 @@ interface AssignmentMetaInfoProps {
 export default function AssignmentMetaInfo({
   totalScore,
   endAt,
+  createdAt,
   isInstructor,
   submissionStatus,
   grade,
@@ -20,13 +21,25 @@ export default function AssignmentMetaInfo({
   return (
     <div className="flex items-center gap-3 flex-wrap text-sm text-para-muted">
       <span className="flex items-center gap-1">
-        <Icon src="/icons/trophy.jpg" alt="Points" />
+        <Trophy className="w-4 h-4 text-accent" />
         {totalScore} points
       </span>
       {(submissionStatus === "pending" || submissionStatus === "missed") && (
         <span className="flex items-center gap-1">
-          <Icon src="/icons/timer.png" alt="Due date" />
+          <Clock className="w-4 h-4 text-warning" />
           {formatDueDate(endAt)}
+        </span>
+      )}
+
+      {createdAt && (
+        <span className="flex items-center gap-1">
+          <Clock className="w-4 h-4 text-para-muted" />
+          Uploaded:{" "}
+          {new Date(createdAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
         </span>
       )}
 

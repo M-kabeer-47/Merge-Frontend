@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import
+ { useState } from "react";
 import {
-  Calendar,
   Clock,
   Trophy,
   MoreVertical,
@@ -33,10 +33,11 @@ export default function InstructorAssignmentCard({
   const [showMenu, setShowMenu] = useState(false);
 
   const isClosed = assignment.status === "closed";
-  
+
   // Calculate submission percentage for progress bar
   const submissionPercentage = Math.round(
-    (assignment.submissionStats.submitted / assignment.submissionStats.total) * 100
+    (assignment.submissionStats.submitted / assignment.submissionStats.total) *
+      100,
   );
 
   // Dropdown menu options
@@ -50,14 +51,6 @@ export default function InstructorAssignmentCard({
       title: "Edit Assignment",
       icon: <Edit className="w-4 h-4" />,
       action: () => onEdit?.(assignment.id),
-    },
-    {
-      title: "Change Due Date",
-      icon: <Calendar className="w-4 h-4" />,
-      action: () => {
-        // TODO: Open date picker modal
-        console.log("Change due date for:", assignment.id);
-      },
     },
     {
       title: "Delete",

@@ -11,7 +11,7 @@ import useDeleteSession from "@/hooks/live-sessions/use-delete-session";
 import useJoinSession from "@/hooks/live-sessions/use-join-session";
 import UpcomingSessionCard from "./UpcomingSessionCard";
 import PastSessionCard from "./PastSessionCard";
-import { EmptyUpcomingState, EmptyPastState } from "./SessionEmptyStates";
+import { EmptyUpcomingState, EmptyPastState } from "./empty-states";
 import { useRouter } from "next/navigation";
 
 // Schedule modal

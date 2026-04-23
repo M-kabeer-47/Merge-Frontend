@@ -13,8 +13,8 @@ const successConfig = {
     title: "Experience Created!",
     description:
       "Your experience has been successfully created and is now live. You can manage or edit it from your dashboard.",
-    buttonText: "Go to Dashboard",
-    buttonHref: "/dashboard",
+    buttonText: "Go to rooms",
+    buttonHref: "/rooms",
   },
   booking: {
     title: "Booking Confirmed!",
@@ -46,8 +46,8 @@ const successConfig = {
     title: "Email Verified Successfully!",
     description:
       "Welcome to Merge! Your email has been verified and your account is now active.",
-    buttonText: "Dashboard",
-    buttonHref: "/dashboard",
+    buttonText: "Rooms",
+    buttonHref: "/rooms?askNotifications=true",
   },
   default: {
     title: "Success!",
@@ -119,7 +119,14 @@ export default function SuccessContent() {
 
       <Button
         className="w-full"
-        onClick={() => router.push(config.buttonHref)}
+        onClick={() => {
+          const askNotifications = searchParams.get("askNotifications");
+          const separator = config.buttonHref.includes("?") ? "&" : "?";
+          const href = askNotifications
+            ? `${config.buttonHref}${separator}askNotifications=${askNotifications}`
+            : config.buttonHref;
+          router.push(href);
+        }}
       >
         {config.buttonText}
       </Button>

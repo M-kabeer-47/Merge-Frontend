@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { Plus, X } from "lucide-react";
 import AnnouncementComposer from "@/components/announcements/AnnouncementComposer";
 import AnnouncementCard from "@/components/announcements/AnnouncementCard";
-import { EmptyAnnouncements } from "@/components/announcements/EmptyStates";
+import { EmptyAnnouncements } from "@/components/announcements/empty-states";
 import Tabs from "@/components/ui/Tabs";
 import type {
   Announcement,

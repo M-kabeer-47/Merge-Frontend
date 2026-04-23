@@ -13,6 +13,7 @@ import type { ChatSession } from "@/types/ai-chat";
 import SearchBar from "@/components/ui/SearchBar";
 import { Button } from "../ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ChatHistorySkeleton from "./ChatHistorySkeleton";
 
 interface ChatHistoryProps {
   sessions: ChatSession[];
@@ -22,6 +23,7 @@ interface ChatHistoryProps {
   onDeleteSession?: (sessionId: string) => Promise<void> | void;
   onClose?: () => void;
   isMobile?: boolean;
+  isLoading?: boolean;
 }
 
 export default function ChatHistory({
@@ -32,6 +34,7 @@ export default function ChatHistory({
   onDeleteSession,
   onClose,
   isMobile = false,
+  isLoading = false,
 }: ChatHistoryProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -107,7 +110,9 @@ export default function ChatHistory({
 
       {/* Sessions List */}
       <div className="flex-1 overflow-y-auto px-3 py-3">
-        {filteredSessions.length === 0 ? (
+        {isLoading ? (
+          <ChatHistorySkeleton />
+        ) : filteredSessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
               <Search className="w-7 h-7 text-primary" />

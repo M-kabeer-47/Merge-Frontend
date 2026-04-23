@@ -43,7 +43,7 @@ export default function CreateAssignmentPage() {
       title: "",
       description: "",
       points: 0,
-      scheduledAt: new Date().toISOString(),
+      scheduledAt: null,
       endAt: "",
       isTurnInLateEnabled: false,
     },
@@ -57,9 +57,7 @@ export default function CreateAssignmentPage() {
         title: data.title,
         description: data.description,
         totalScore: data.points,
-        scheduledAt: data.scheduledAt
-          ? new Date(data.scheduledAt).toISOString()
-          : new Date().toISOString(),
+        ...(data.scheduledAt ? { scheduledAt: data.scheduledAt } : {}),
         endAt: new Date(data.endAt).toISOString(),
         isTurnInLateEnabled: data.isTurnInLateEnabled,
       },

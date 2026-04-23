@@ -72,10 +72,11 @@ export default function AssignmentCard({
 
             <AssignmentMetaInfo
               totalScore={assignment.totalScore}
-              endAt={assignment.endAt}
+              endAt={assignment.endAt!}
+              createdAt={assignment.createdAt}
               isInstructor={isInstructor}
               submissionStatus={studentAssignment?.submissionStatus}
-              grade={studentAssignment?.score}
+              grade={studentAssignment?.score ?? undefined}
             />
           </div>
         </div>
@@ -101,7 +102,7 @@ export default function AssignmentCard({
             {!isInstructor && studentAssignment && (
               <StudentStats
                 submissionStatus={studentAssignment.submissionStatus}
-                submittedAt={studentAssignment?.submittedAt}
+                submittedAt={studentAssignment?.submittedAt ?? undefined}
               />
             )}
           </div>

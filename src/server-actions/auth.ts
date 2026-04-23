@@ -3,14 +3,14 @@
 import { cookies } from "next/headers";
 
 const COOKIE_OPTIONS = {
-  httpOnly: false, // Allow client-side access
+  httpOnly: true, // Allow client-side access
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
 };
 
 export async function setAuthCookies(
   accessToken: string,
-  refreshToken: string
+  refreshToken: string,
 ): Promise<{ success: boolean }> {
   try {
     const cookieStore = await cookies();

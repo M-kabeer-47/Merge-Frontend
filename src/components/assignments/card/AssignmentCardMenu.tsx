@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Edit, Calendar, Trash2 } from "lucide-react";
+import { MoreVertical, Edit, Trash2 } from "lucide-react";
 import DropdownMenu from "@/components/ui/Dropdown";
 
 interface AssignmentCardMenuProps {
@@ -20,13 +20,6 @@ export default function AssignmentCardMenu({
       title: "Edit Assignment",
       icon: <Edit className="w-4 h-4" />,
       action: () => onEdit?.(assignmentId),
-    },
-    {
-      title: "Change Due Date",
-      icon: <Calendar className="w-4 h-4" />,
-      action: () => {
-        console.log("Change due date for:", assignmentId);
-      },
     },
     {
       title: "Delete",

@@ -22,12 +22,6 @@ export default function TagSelector({
 }: TagSelectorProps) {
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
-  const [showAll, setShowAll] = useState(false);
-  const initialDisplayCount = 12;
-
-  const displayedTags = showAll
-    ? availableTags
-    : availableTags.slice(0, initialDisplayCount);
 
   const handleToggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -55,7 +49,7 @@ export default function TagSelector({
 
       {/* Tags Grid */}
       <div className="flex flex-wrap gap-2">
-        {displayedTags.map((tag) => {
+        {availableTags.map((tag) => {
           const isSelected = selectedTags.includes(tag);
           const isDisabled = !isSelected && selectedTags.length >= maxTags;
 
@@ -74,12 +68,12 @@ export default function TagSelector({
                   isSelected
                     ? "bg-primary text-white border-2 border-main-background"
                     : isDisabled
-                    ? "bg-background text-para-muted border-2 border-light-border cursor-not-allowed opacity-50"
-                    : `bg-background text-para border-2 border-light-border hover:border-secondary/30  hover:bg-secondary/10 ${
-                        isDarkMode
-                          ? "hover:text-secondary"
-                          : "hover:text-primary"
-                      }`
+                      ? "bg-background text-para-muted border-2 border-light-border cursor-not-allowed opacity-50"
+                      : `bg-background text-para border-2 border-light-border hover:border-secondary/30  hover:bg-secondary/10 ${
+                          isDarkMode
+                            ? "hover:text-secondary"
+                            : "hover:text-primary"
+                        }`
                 }
               `}
             >
@@ -90,25 +84,6 @@ export default function TagSelector({
       </div>
 
       {/* Show More/Less Button */}
-      {availableTags.length > initialDisplayCount && (
-        <button
-          type="button"
-          onClick={() => setShowAll(!showAll)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-        >
-          {showAll ? (
-            <>
-              <ChevronUp className="w-4 h-4" />
-              Show Less
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-4 h-4" />
-              Show {availableTags.length - initialDisplayCount} More Tags
-            </>
-          )}
-        </button>
-      )}
 
       {/* Error Message */}
       {error && <p className="text-xs text-destructive font-medium">{error}</p>}

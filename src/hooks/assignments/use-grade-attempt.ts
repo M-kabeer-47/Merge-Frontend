@@ -52,7 +52,7 @@ export default function useGradeAttempt({
           if (!old) return old;
 
           // Update the specific attempt in the attempts list
-          const updatedAttemptsData = old.attempts.data.map((attempt) => {
+          const updatedAttemptsData = (old.attempts?.data ?? []).map((attempt) => {
             if (attempt.id === newData.attemptId) {
               return { ...attempt, score: newData.score };
             }
@@ -60,9 +60,8 @@ export default function useGradeAttempt({
           });
 
           // Calculate new stats (simple approximation for optimistic UI)
-          // In a real app, you might want more precise logic or just wait for invalidation
           const wasGraded =
-            old.attempts.data.find((a) => a.id === newData.attemptId)?.score !==
+            (old.attempts?.data ?? []).find((a) => a.id === newData.attemptId)?.score !==
             null;
 
           let newGradedCount = old.gradedAttempts;

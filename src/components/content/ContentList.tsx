@@ -14,7 +14,7 @@ import SharedListView from "@/components/shared/SharedListView";
 import ContentToolbar from "./ContentToolbar";
 import ContentSkeleton from "./ContentSkeleton";
 import ErrorState from "@/components/ui/ErrorState";
-import { EmptyFolderState, NoSearchResults } from "./EmptyStates";
+import { EmptyFolderState, NoSearchResults } from "./empty-states";
 import type {
   RoomContentItem,
   RoomContentFile,

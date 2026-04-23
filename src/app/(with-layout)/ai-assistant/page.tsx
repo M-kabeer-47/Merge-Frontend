@@ -35,15 +35,15 @@ export default function AIAssistantPage() {
   const isUserScrollingRef = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch conversations and active conversation
-  const { conversations, isLoading: loadingConversations } =
-    useFetchConversations();
-  const { messages, isLoading: loadingMessages } = useFetchConversation(activeSessionId);
-
   // Mutations
   const { createConversation, isCreating } = useCreateConversation();
   const { deleteConversation, isDeleting } = useDeleteConversation();
-  const { streamQuery, isStreaming, streamingMessage } = useStreamQuery();
+  const { streamQuery, isStreaming, streamingMessage, pendingUserMessage } = useStreamQuery();
+
+  // Fetch conversations and active conversation
+  const { conversations, isLoading: loadingConversations } =
+    useFetchConversations();
+  const { messages, isLoading: loadingMessages } = useFetchConversation(activeSessionId, isStreaming);
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
@@ -52,6 +52,16 @@ export default function AIAssistantPage() {
     streamingMessage?.content || null,
     15 // 15ms per character for smooth, fast typing effect
   );
+
+  // During streaming, filter out the assistant message from cached messages
+  // to avoid duplicate rendering (it's shown via streamingMessage instead)
+  const displayMessages = streamingMessage
+    ? messages.filter(
+        (m) =>
+          m.id !== streamingMessage.id &&
+          !m.id.startsWith("assistant-streaming"),
+      )
+    : messages;
 
   // Smart auto-scroll: only scroll if user is already at bottom, with throttling
   useEffect(() => {
@@ -172,10 +182,14 @@ export default function AIAssistantPage() {
       return undefined;
     };
 
+    // If the file is from a room (has roomId), send its ID as contextFileId
+    const contextFileId = attachmentData?.roomId ? attachmentData.id : undefined;
+
     await streamQuery(
       {
         conversationId: activeSessionId || undefined,
         message: content,
+        contextFileId,
         attachmentS3Url: attachmentData?.url,
         attachmentType: attachmentData
           ? mapFileTypeToAttachmentType(attachmentData.type)
@@ -279,6 +293,7 @@ export default function AIAssistantPage() {
               onDeleteSession={handleDeleteConversation}
               onClose={() => setShowHistory(false)}
               isMobile={false}
+              isLoading={loadingConversations}
             />
           </div>
         )}
@@ -300,14 +315,14 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Chat Content Area */}
-        {activeSessionId && loadingMessages ? (
+        {activeSessionId && loadingMessages && !pendingUserMessage ? (
           <ChatLoadingSkeleton />
-        ) : messages.length === 0 && !isStreaming ? (
+        ) : messages.length === 0 && !isStreaming && !pendingUserMessage ? (
           <WelcomeScreen userName={user?.firstName} {...composerProps} />
         ) : (
           /* Conversation State: messages scroll, composer fixed at bottom */
           <>
-            <div 
+            <div
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-4"
               style={{
@@ -316,7 +331,17 @@ export default function AIAssistantPage() {
               }}
             >
               <div className="max-w-3xl mx-auto">
-                {messages.map((message) => (
+                {/* Show pending user message (first message before conversation is created) */}
+                {pendingUserMessage && !messages.some((m) => m.id === pendingUserMessage.id) && (
+                  <ChatMessage
+                    key={pendingUserMessage.id}
+                    message={pendingUserMessage}
+                    onSaveToNotes={handleSaveToNotes}
+                    onRegenerate={handleRegenerate}
+                  />
+                )}
+
+                {displayMessages.map((message) => (
                   <ChatMessage
                     key={message.id}
                     message={message}

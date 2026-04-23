@@ -81,10 +81,13 @@ export default function CalendarClient() {
   };
 
   const handleMarkDone = async (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || task.taskStatus === "completed") return;
+
     const [_, err] = await tryIt(
       updateTask({
         id: taskId,
-        taskStatus: "completed",
+        status: "completed",
       }),
     );
 

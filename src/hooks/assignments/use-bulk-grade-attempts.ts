@@ -54,7 +54,7 @@ export default function useBulkGradeAttempts({
           if (!old) return old;
 
           // Update the specific attempts in the attempts list
-          const updatedAttemptsData = old.attempts.data.map((attempt) => {
+          const updatedAttemptsData = (old.attempts?.data ?? []).map((attempt) => {
             const newScore = scoreMap.get(attempt.id);
             if (newScore !== undefined) {
               // Check if this was previously ungraded
