@@ -93,7 +93,9 @@ export default function useStreamQuery() {
             (old) => {
               const entry = ensureCacheEntry(old);
               // Avoid duplicate: check if user message already exists
-              if (entry.messages.some((m) => m.id === optimisticUserMessage.id)) {
+              if (
+                entry.messages.some((m) => m.id === optimisticUserMessage.id)
+              ) {
                 return entry;
               }
               return {
@@ -224,7 +226,10 @@ export default function useStreamQuery() {
                   }
                 } else if (currentEvent === "status" && parsed.status) {
                   // status event - silently ignore
-                } else if (currentEvent === "chunk" || parsed.text !== undefined) {
+                } else if (
+                  currentEvent === "chunk" ||
+                  parsed.text !== undefined
+                ) {
                   // chunk event - progressive text streaming
                   const chunkText = parsed.text || "";
                   accumulatedAnswer += chunkText;
@@ -253,8 +258,7 @@ export default function useStreamQuery() {
                         const entry = ensureCacheEntry(old);
                         const messages = [...entry.messages];
                         const idx = messages.findIndex(
-                          (m) =>
-                            m.id === assistantMessageId,
+                          (m) => m.id === assistantMessageId,
                         );
 
                         const streamMsg: ChatMessage = {
@@ -309,8 +313,7 @@ export default function useStreamQuery() {
                         const messages = [...entry.messages];
 
                         const assistantMsgIndex = messages.findIndex(
-                          (m) =>
-                            m.id === assistantMessageId,
+                          (m) => m.id === assistantMessageId,
                         );
 
                         const finalMessage: ChatMessage = {
@@ -370,8 +373,7 @@ export default function useStreamQuery() {
               const entry = ensureCacheEntry(old);
               const messages = [...entry.messages];
               const idx = messages.findIndex(
-                (m) =>
-                  m.id === assistantMessageId,
+                (m) => m.id === assistantMessageId,
               );
 
               const fallbackMessage: ChatMessage = {
@@ -433,8 +435,7 @@ export default function useStreamQuery() {
               const entry = ensureCacheEntry(old);
               const messages = [...entry.messages];
               const idx = messages.findIndex(
-                (m) =>
-                  m.id === assistantMessageId,
+                (m) => m.id === assistantMessageId,
               );
 
               const partialMessage: ChatMessage = {

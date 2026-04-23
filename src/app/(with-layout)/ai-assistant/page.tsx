@@ -17,7 +17,6 @@ import useCreateConversation from "@/hooks/ai-assistant/use-create-conversation"
 import useDeleteConversation from "@/hooks/ai-assistant/use-delete-conversation";
 import useStreamQuery from "@/hooks/ai-assistant/use-stream-query";
 import useUploadAttachment from "@/hooks/ai-assistant/use-upload-attachment";
-import { useTypingEffect } from "@/hooks/ai-assistant/use-typing-effect";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ContextFile, ConversationWithMessages } from "@/types/ai-chat";
@@ -38,19 +37,23 @@ export default function AIAssistantPage() {
   // Mutations
   const { createConversation, isCreating } = useCreateConversation();
   const { deleteConversation, isDeleting } = useDeleteConversation();
-  const { streamQuery, isStreaming, streamingMessage, pendingUserMessage } = useStreamQuery();
+  const { streamQuery, isStreaming, streamingMessage, pendingUserMessage } =
+    useStreamQuery();
 
   // Fetch conversations and active conversation
   const { conversations, isLoading: loadingConversations } =
     useFetchConversations();
-  const { messages, isLoading: loadingMessages } = useFetchConversation(activeSessionId, isStreaming);
+  const { messages, isLoading: loadingMessages } = useFetchConversation(
+    activeSessionId,
+    isStreaming,
+  );
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
   // Smooth typing effect for streaming message
   const { displayedText } = useTypingEffect(
     streamingMessage?.content || null,
-    15 // 15ms per character for smooth, fast typing effect
+    15, // 15ms per character for smooth, fast typing effect
   );
 
   // During streaming, filter out the assistant message from cached messages
@@ -72,8 +75,11 @@ export default function AIAssistantPage() {
     scrollTimeoutRef.current = setTimeout(() => {
       // Check if user is near the bottom (within 150px threshold)
       const threshold = 150;
-      const isNearBottom = 
-        scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < threshold;
+      const isNearBottom =
+        scrollContainer.scrollHeight -
+          scrollContainer.scrollTop -
+          scrollContainer.clientHeight <
+        threshold;
 
       if (isNearBottom) {
         // Use instant scroll during streaming for smooth typing effect
@@ -82,9 +88,9 @@ export default function AIAssistantPage() {
           scrollContainer.scrollTop = scrollContainer.scrollHeight;
         } else {
           // After message sent, smooth scroll
-          messagesEndRef.current?.scrollIntoView({ 
+          messagesEndRef.current?.scrollIntoView({
             behavior: "smooth",
-            block: "end"
+            block: "end",
           });
         }
       }
@@ -95,7 +101,7 @@ export default function AIAssistantPage() {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [messages.length, displayedText.length]);
+  }, [messages.length, streamingMessage?.content?.length]);
 
   // Track user scrolling
   useEffect(() => {
@@ -104,12 +110,15 @@ export default function AIAssistantPage() {
 
     const handleScroll = () => {
       const threshold = 150;
-      const isNearBottom = 
-        scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < threshold;
-      
+      const isNearBottom =
+        scrollContainer.scrollHeight -
+          scrollContainer.scrollTop -
+          scrollContainer.clientHeight <
+        threshold;
+
       // Mark as user scrolling if they've scrolled away from bottom
       isUserScrollingRef.current = !isNearBottom;
-      
+
       // Reset after a delay so auto-scroll can resume
       if (!isNearBottom) {
         setTimeout(() => {
@@ -118,8 +127,8 @@ export default function AIAssistantPage() {
       }
     };
 
-    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Handle new chat - create conversation without dialog
@@ -171,15 +180,21 @@ export default function AIAssistantPage() {
     ): "pdf" | "docx" | "txt" | "pptx" | "xlsx" | undefined => {
       const lowerType = fileType.toLowerCase();
       if (lowerType.includes("pdf")) return "pdf";
-      if (lowerType.includes("docx") || lowerType.includes("document")) return "docx";
-      if (lowerType.includes("txt") || lowerType.includes("text/plain")) return "txt";
-      if (lowerType.includes("pptx") || lowerType.includes("presentation")) return "pptx";
-      if (lowerType.includes("xlsx") || lowerType.includes("spreadsheet")) return "xlsx";
+      if (lowerType.includes("docx") || lowerType.includes("document"))
+        return "docx";
+      if (lowerType.includes("txt") || lowerType.includes("text/plain"))
+        return "txt";
+      if (lowerType.includes("pptx") || lowerType.includes("presentation"))
+        return "pptx";
+      if (lowerType.includes("xlsx") || lowerType.includes("spreadsheet"))
+        return "xlsx";
       return undefined;
     };
 
     // If the file is from a room (has roomId), send its ID as contextFileId
-    const contextFileId = attachmentData?.roomId ? attachmentData.id : undefined;
+    const contextFileId = attachmentData?.roomId
+      ? attachmentData.id
+      : undefined;
 
     await streamQuery(
       {
@@ -322,20 +337,21 @@ export default function AIAssistantPage() {
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-4"
               style={{
-                scrollBehavior: streamingMessage ? 'auto' : 'smooth',
-                overflowAnchor: 'none',
+                scrollBehavior: streamingMessage ? "auto" : "smooth",
+                overflowAnchor: "none",
               }}
             >
               <div className="max-w-3xl mx-auto">
                 {/* Show pending user message (first message before conversation is created) */}
-                {pendingUserMessage && !messages.some((m) => m.id === pendingUserMessage.id) && (
-                  <ChatMessage
-                    key={pendingUserMessage.id}
-                    message={pendingUserMessage}
-                    onSaveToNotes={handleSaveToNotes}
-                    onRegenerate={handleRegenerate}
-                  />
-                )}
+                {pendingUserMessage &&
+                  !messages.some((m) => m.id === pendingUserMessage.id) && (
+                    <ChatMessage
+                      key={pendingUserMessage.id}
+                      message={pendingUserMessage}
+                      onSaveToNotes={handleSaveToNotes}
+                      onRegenerate={handleRegenerate}
+                    />
+                  )}
 
                 {displayMessages.map((message) => (
                   <ChatMessage
@@ -346,14 +362,12 @@ export default function AIAssistantPage() {
                   />
                 ))}
 
-                {/* Show streaming message */}
+                {/* Show streaming message with live chunks */}
                 {streamingMessage && (
                   <ChatMessage
                     key={streamingMessage.id}
-                    message={{
-                      ...streamingMessage,
-                      content: displayedText,
-                    }}
+                    message={streamingMessage}
+                    isStreaming={true}
                     onSaveToNotes={handleSaveToNotes}
                     onRegenerate={handleRegenerate}
                   />

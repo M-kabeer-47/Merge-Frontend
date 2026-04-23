@@ -16,12 +16,14 @@ import type { ChatMessage as ChatMessageType } from "@/types/ai-chat";
 
 interface ChatMessageProps {
   message: ChatMessageType;
+  isStreaming?: boolean;
   onSaveToNotes?: (messageId: string) => void;
   onRegenerate?: (messageId: string) => void;
 }
 
 export default function ChatMessage({
   message,
+  isStreaming = false,
   onSaveToNotes,
   onRegenerate,
 }: ChatMessageProps) {
@@ -97,7 +99,8 @@ export default function ChatMessage({
                       const codeString = String(children).replace(/\n$/, "");
                       // Code blocks (fenced ```) either have a language class OR contain newlines
                       // Inline code (`code`) is single-line with no className
-                      const isInline = !match && !className && !codeString.includes("\n");
+                      const isInline =
+                        !match && !className && !codeString.includes("\n");
                       const codeId = `code-${message.id}-${codeString.slice(0, 20)}`;
 
                       if (isInline) {
@@ -130,7 +133,10 @@ export default function ChatMessage({
                             </button>
                           </div>
                           <pre className="!mt-0 !rounded-t-none bg-[#1e1e2e] dark:bg-[#0a0812] border border-t-0 border-light-border overflow-x-auto">
-                            <code className={`text-sm font-mono ${className || ""}`} {...props}>
+                            <code
+                              className={`text-sm font-mono ${className || ""}`}
+                              {...props}
+                            >
                               {children}
                             </code>
                           </pre>
@@ -149,7 +155,9 @@ export default function ChatMessage({
                     },
                     th({ children }) {
                       return (
-                        <th className="!bg-secondary/5 !font-semibold">{children}</th>
+                        <th className="!bg-secondary/5 !font-semibold">
+                          {children}
+                        </th>
                       );
                     },
                   }}
@@ -178,8 +186,8 @@ export default function ChatMessage({
           {formatTime(message.createdAt)}
         </div>
 
-        {/* Actions (for assistant messages) */}
-        {isAssistant && (
+        {/* Actions (for assistant messages, hidden during streaming) */}
+        {isAssistant && !isStreaming && (
           <div className="flex items-center gap-1 mt-2">
             <button
               onClick={handleCopy}
