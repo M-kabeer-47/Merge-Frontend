@@ -70,6 +70,8 @@ export interface LiveSessionResponse {
     id: string;
     title: string;
   } | null;
+  summaryText?: string | null;
+  summaryPdfUrl?: string | null;
   attendeeCount: number;
   attendees?: {
     id: string;
