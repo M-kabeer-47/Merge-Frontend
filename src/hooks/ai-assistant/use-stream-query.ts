@@ -41,36 +41,66 @@ export default function useStreamQuery() {
       let userMessageId: string | null = null;
       let assistantMessageId: string | null = null;
       let accumulatedAnswer = "";
+      let completedSuccessfully = false;
       const accumulatedSources: SourceEvent[] = [];
 
-      try {
-        // Create optimistic user message
-        const optimisticUserMessage: ChatMessage = {
-          id: `user-${Date.now()}`,
-          role: "user",
-          content: payload.message,
-          createdAt: new Date().toISOString(),
-        };
-        userMessageId = optimisticUserMessage.id;
+      // Create optimistic user message upfront so it can be displayed immediately
+      const optimisticUserMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: payload.message,
+        contextFileId: payload.contextFileId || null,
+        createdAt: new Date().toISOString(),
+      };
+      userMessageId = optimisticUserMessage.id;
 
-        // Set streaming state with pending user message for immediate display
-        setStreamingState({
-          isStreaming: true,
-          streamingMessage: null,
-          pendingUserMessage: conversationId ? null : optimisticUserMessage,
-          sources: [],
-          error: null,
-        });
+      // Helper: ensure cache entry always exists (never silently drop updates)
+      const ensureCacheEntry = (
+        old: ConversationWithMessages | undefined,
+      ): ConversationWithMessages => {
+        if (old) return old;
+        // Create a minimal entry so updates aren't lost
+        return {
+          id: conversationId!,
+          title: "Conversation",
+          summary: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          messages: [optimisticUserMessage],
+        };
+      };
+
+      setStreamingState({
+        isStreaming: true,
+        streamingMessage: null,
+        pendingUserMessage: !conversationId ? optimisticUserMessage : null,
+        sources: [],
+        error: null,
+      });
+
+      try {
+        // Cancel any in-flight conversation queries to prevent race conditions
+        if (conversationId) {
+          await queryClient.cancelQueries({
+            queryKey: ["ai-conversation", conversationId],
+          });
+        }
 
         // Add user message to cache if we have a conversation ID
         if (conversationId) {
           queryClient.setQueryData<ConversationWithMessages>(
             ["ai-conversation", conversationId],
             (old) => {
-              if (!old) return old;
+              const entry = ensureCacheEntry(old);
+              // Avoid duplicate: check if user message already exists
+              if (
+                entry.messages.some((m) => m.id === optimisticUserMessage.id)
+              ) {
+                return entry;
+              }
               return {
-                ...old,
-                messages: [...old.messages, optimisticUserMessage],
+                ...entry,
+                messages: [...entry.messages, optimisticUserMessage],
               };
             },
           );
@@ -107,7 +137,7 @@ export default function useStreamQuery() {
           }
 
           const chunk = decoder.decode(value, { stream: true });
-          
+
           buffer += chunk;
           const lines = buffer.split("\n");
           buffer = lines.pop() || ""; // Keep incomplete line in buffer
@@ -124,22 +154,41 @@ export default function useStreamQuery() {
               const data = line.slice(5).trim();
               if (!data) continue;
 
+              let parsed: any;
               try {
-                const parsed = JSON.parse(data);
+                parsed = JSON.parse(data);
+              } catch (parseError) {
+                console.error("[SSE JSON Parse Error]", parseError);
+                currentEvent = "";
+                continue;
+              }
 
+              // Handle error events OUTSIDE try-catch so they propagate
+              if (currentEvent === "error" || parsed.error) {
+                throw new Error(
+                  parsed.error || "An error occurred during streaming",
+                );
+              }
+
+              try {
                 // Handle based on event type
                 if (currentEvent === "conversation" || parsed.conversation_id) {
                   // conversation event
                   conversationId = parsed.conversation_id;
                   if (conversationId) {
                     onConversationCreated?.(conversationId);
+
+                    // Cancel any queries for the new conversation too
+                    await queryClient.cancelQueries({
+                      queryKey: ["ai-conversation", conversationId],
+                    });
                   }
 
                   // If this is a new conversation, add user message now
                   if (!payload.conversationId) {
                     queryClient.setQueryData<ConversationWithMessages>(
                       ["ai-conversation", conversationId],
-                      (old) => ({
+                      () => ({
                         id: conversationId!,
                         title: "New Conversation",
                         summary: null,
@@ -149,7 +198,7 @@ export default function useStreamQuery() {
                       }),
                     );
 
-                    // Clear pending user message now that it's in the cache
+                    // Clear pending user message since it's now in cache
                     setStreamingState((prev) => ({
                       ...prev,
                       pendingUserMessage: null,
@@ -168,26 +217,23 @@ export default function useStreamQuery() {
                         return { ...old, title: parsed.title };
                       },
                     );
-
-                    // Also update in conversations list
-                    queryClient.invalidateQueries({
-                      queryKey: ["ai-conversations"],
-                    });
                   }
                 } else if (currentEvent === "status" && parsed.status) {
-                  // status event - could be used to show "searching", "generating", etc.
-                  // Silently ignore for now
-                } else if (currentEvent === "chunk" || parsed.text !== undefined) {
+                  // status event - silently ignore
+                } else if (
+                  currentEvent === "chunk" ||
+                  parsed.text !== undefined
+                ) {
                   // chunk event - progressive text streaming
                   const chunkText = parsed.text || "";
                   accumulatedAnswer += chunkText;
-                  
+
                   // Create streaming message for real-time display
                   if (!assistantMessageId) {
                     assistantMessageId = `assistant-streaming-${Date.now()}`;
                   }
-                  
-                  // Update state for smooth streaming display
+
+                  // Update streaming message state for real-time display
                   setStreamingState((prev) => ({
                     ...prev,
                     streamingMessage: {
@@ -198,8 +244,36 @@ export default function useStreamQuery() {
                     },
                   }));
 
-                  // Note: We don't update cache on every chunk for performance
-                  // Cache will be updated with final message on 'complete' event
+                  // Also persist to cache so the message survives streamingMessage clearing
+                  if (conversationId) {
+                    queryClient.setQueryData<ConversationWithMessages>(
+                      ["ai-conversation", conversationId],
+                      (old) => {
+                        const entry = ensureCacheEntry(old);
+                        const messages = [...entry.messages];
+                        const idx = messages.findIndex(
+                          (m) =>
+                            m.id === assistantMessageId ||
+                            m.id.startsWith("assistant-streaming"),
+                        );
+
+                        const streamMsg: ChatMessage = {
+                          id: assistantMessageId!,
+                          role: "assistant",
+                          content: accumulatedAnswer,
+                          createdAt: new Date().toISOString(),
+                        };
+
+                        if (idx !== -1) {
+                          messages[idx] = streamMsg;
+                        } else {
+                          messages.push(streamMsg);
+                        }
+
+                        return { ...entry, messages };
+                      },
+                    );
+                  }
                 } else if (currentEvent === "sources" || parsed.fileId) {
                   // sources event
                   const source: SourceEvent = {
@@ -213,52 +287,29 @@ export default function useStreamQuery() {
                     ...prev,
                     sources: accumulatedSources,
                   }));
+                } else if (
+                  currentEvent === "complete" ||
+                  parsed.messageId ||
+                  parsed.processing_time_ms !== undefined
+                ) {
+                  // complete event - finalize the streaming message
+                  completedSuccessfully = true;
+                  const finalMessageId = parsed.messageId || parsed.message_id;
+                  const processingTime =
+                    parsed.processing_time_ms || parsed.processingTimeMs;
+                  const chunksRetrieved =
+                    parsed.chunks_retrieved ?? parsed.totalChunks;
 
-                  // Update assistant message with sources
+                  // Finalize the assistant message in cache
                   if (conversationId && assistantMessageId) {
                     queryClient.setQueryData<ConversationWithMessages>(
                       ["ai-conversation", conversationId],
                       (old) => {
-                        if (!old) return old;
-                        const messages = [...old.messages];
+                        const entry = ensureCacheEntry(old);
+                        const messages = [...entry.messages];
+
                         const assistantMsgIndex = messages.findIndex(
                           (m) => m.id === assistantMessageId,
-                        );
-
-                        if (assistantMsgIndex !== -1) {
-                          messages[assistantMsgIndex] = {
-                            ...messages[assistantMsgIndex],
-                            sources: accumulatedSources.map((s) => ({
-                              file_id: s.fileId,
-                              chunk_index: s.chunkIndex,
-                              content: s.content,
-                              relevance_score: s.relevanceScore,
-                              section_title: "",
-                            })),
-                          };
-                        }
-
-                        return { ...old, messages };
-                      },
-                    );
-                  }
-                } else if (currentEvent === "complete" || parsed.messageId || parsed.processing_time_ms !== undefined) {
-                  // complete event - finalize the streaming message
-                  const finalMessageId = parsed.messageId || parsed.message_id;
-                  const processingTime = parsed.processing_time_ms || parsed.processingTimeMs;
-                  const chunksRetrieved = parsed.chunks_retrieved || parsed.totalChunks;
-
-                  // Add or update the final assistant message in cache
-                  if (conversationId && assistantMessageId) {
-                    queryClient.setQueryData<ConversationWithMessages>(
-                      ["ai-conversation", conversationId],
-                      (old) => {
-                        if (!old) return old;
-                        const messages = [...old.messages];
-                        
-                        // Find existing streaming message by exact ID
-                        const assistantMsgIndex = messages.findIndex((m) =>
-                          m.id === assistantMessageId,
                         );
 
                         const finalMessage: ChatMessage = {
@@ -268,47 +319,93 @@ export default function useStreamQuery() {
                           createdAt: new Date().toISOString(),
                           processingTimeMs: processingTime,
                           chunksRetrieved: chunksRetrieved,
-                          sources: accumulatedSources.length > 0 
-                            ? accumulatedSources.map((s) => ({
-                                file_id: s.fileId,
-                                chunk_index: s.chunkIndex,
-                                content: s.content,
-                                relevance_score: s.relevanceScore,
-                                section_title: "",
-                              }))
-                            : undefined,
+                          sources:
+                            accumulatedSources.length > 0
+                              ? accumulatedSources.map((s) => ({
+                                  file_id: s.fileId,
+                                  chunk_index: s.chunkIndex,
+                                  content: s.content,
+                                  relevance_score: s.relevanceScore,
+                                  section_title: "",
+                                }))
+                              : undefined,
                         };
 
                         if (assistantMsgIndex !== -1) {
-                          // Update existing message
                           messages[assistantMsgIndex] = finalMessage;
                         } else {
-                          // Add new message
                           messages.push(finalMessage);
                         }
 
-                        return { ...old, messages };
+                        return { ...entry, messages };
                       },
                     );
-
-                    // Invalidate conversations list
-                    queryClient.invalidateQueries({
-                      queryKey: ["ai-conversations"],
-                    });
                   }
-                } else if (currentEvent === "error" || parsed.error) {
-                  // error event
-                  throw new Error(parsed.error);
                 }
-                
+
                 // Reset event type after processing
                 currentEvent = "";
-              } catch (parseError) {
-                console.error("[SSE Parse Error]", parseError);
+              } catch (eventError) {
+                console.error("[SSE Event Processing Error]", eventError);
+                currentEvent = "";
               }
             }
           }
         }
+
+        // Fallback: if stream ended without a "complete" event, ensure message is in cache
+        if (
+          !completedSuccessfully &&
+          accumulatedAnswer &&
+          conversationId &&
+          assistantMessageId
+        ) {
+          console.warn(
+            "[SSE] Stream ended without complete event — saving accumulated answer as fallback",
+          );
+          queryClient.setQueryData<ConversationWithMessages>(
+            ["ai-conversation", conversationId],
+            (old) => {
+              const entry = ensureCacheEntry(old);
+              const messages = [...entry.messages];
+              const idx = messages.findIndex(
+                (m) =>
+                  m.id === assistantMessageId ||
+                  m.id.startsWith("assistant-streaming"),
+              );
+
+              const fallbackMessage: ChatMessage = {
+                id: assistantMessageId!,
+                role: "assistant",
+                content: accumulatedAnswer,
+                createdAt: new Date().toISOString(),
+                sources:
+                  accumulatedSources.length > 0
+                    ? accumulatedSources.map((s) => ({
+                        file_id: s.fileId,
+                        chunk_index: s.chunkIndex,
+                        content: s.content,
+                        relevance_score: s.relevanceScore,
+                        section_title: "",
+                      }))
+                    : undefined,
+              };
+
+              if (idx !== -1) {
+                messages[idx] = fallbackMessage;
+              } else {
+                messages.push(fallbackMessage);
+              }
+
+              return { ...entry, messages };
+            },
+          );
+        }
+
+        // Invalidate conversations list AFTER streaming ends (not mid-stream)
+        queryClient.invalidateQueries({
+          queryKey: ["ai-conversations"],
+        });
 
         setStreamingState((prev) => ({
           ...prev,
@@ -321,6 +418,37 @@ export default function useStreamQuery() {
         const errorMsg =
           error?.message || "Failed to send message. Please try again.";
 
+        // Even on error, save accumulated answer if we have one
+        if (accumulatedAnswer && conversationId && assistantMessageId) {
+          queryClient.setQueryData<ConversationWithMessages>(
+            ["ai-conversation", conversationId],
+            (old) => {
+              const entry = ensureCacheEntry(old);
+              const messages = [...entry.messages];
+              const idx = messages.findIndex(
+                (m) =>
+                  m.id === assistantMessageId ||
+                  m.id.startsWith("assistant-streaming"),
+              );
+
+              const partialMessage: ChatMessage = {
+                id: assistantMessageId!,
+                role: "assistant",
+                content: accumulatedAnswer,
+                createdAt: new Date().toISOString(),
+              };
+
+              if (idx !== -1) {
+                messages[idx] = partialMessage;
+              } else {
+                messages.push(partialMessage);
+              }
+
+              return { ...entry, messages };
+            },
+          );
+        }
+
         setStreamingState((prev) => ({
           ...prev,
           isStreaming: false,
@@ -331,8 +459,8 @@ export default function useStreamQuery() {
 
         toast.error(errorMsg);
 
-        // Remove optimistic user message on error
-        if (conversationId && userMessageId) {
+        // Only remove optimistic user message if we have NO accumulated answer
+        if (!accumulatedAnswer && conversationId && userMessageId) {
           queryClient.setQueryData<ConversationWithMessages>(
             ["ai-conversation", conversationId],
             (old) => {

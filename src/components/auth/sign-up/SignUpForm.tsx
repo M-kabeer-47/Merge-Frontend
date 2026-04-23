@@ -122,7 +122,6 @@ export default function SignUpForm() {
                 id="firstName"
                 placeholder="John"
                 error={errors.firstName?.message}
-
               />
             </FormField>
 
@@ -204,7 +203,7 @@ export default function SignUpForm() {
           <p className="text-para-muted text-sm">
             Already have an account?{" "}
             <motion.a
-              href="/signin"
+              href="/sign-in"
               className="text-primary hover:text-primary/80 font-medium transition-colors duration-200"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}

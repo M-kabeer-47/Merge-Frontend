@@ -1,13 +1,11 @@
-// Assignment Types for Assignments Tab
+// Assignment Types for Assignments Tab — matches backend API response
 
-export type AssignmentStatus = "published" | "draft" | "closed";
+export type SubmissionStatus = "pending" | "submitted" | "graded" | "missed";
 
-export type SubmissionStatus =
-  | "pending"
-  | "completed"
-  | "graded"
-  | "missed"
-  | "submitted";
+export type InstructorAssignmentStatus =
+  | "closed"
+  | "needs_grading"
+  | "graded";
 
 export type AssignmentSortOption = "dueDate" | "points" | "title" | "status";
 
@@ -23,70 +21,42 @@ export type AssignmentFilterType =
 
 export interface AssignmentAuthor {
   id: string;
-  name: string;
-  role: "instructor" | "student" | "ta";
-  avatarUrl?: string;
-  initials: string;
-}
-
-export interface AssignmentAttachment {
-  id: string;
-  name: string;
-  type: "file" | "link";
-  url: string;
-  size?: number;
-}
-
-// Instructor-specific data - matches API response
-export interface AssignmentSubmissionStats {
-  totalAttempts: number;
-  gradedAttempts: number;
-  ungradedAttempts: number;
-}
-
-// Student-specific data
-export interface StudentSubmission {
-  id: string;
-  submittedAt?: Date;
-  status: SubmissionStatus;
-  submitAt?: Date;
-  score?: number;
-  feedback?: string;
-  attachments?: AssignmentAttachment[];
-  files?: { name: string; url: string }[]; // From API attempt response
-  note?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  image: string | null;
 }
 
 export interface BaseAssignment {
   id: string;
   title: string;
-  description: string;
-  author: AssignmentAuthor;
+  description: string | null;
+  author: AssignmentAuthor | null;
   createdAt: Date;
-  dueDate: Date;
-  endAt: Date;
+  startAt: Date | null;
+  endAt: Date | null;
   isTurnInLateEnabled: boolean;
   isClosed: boolean;
-  points: number;
   totalScore: number;
-  attachmentUrls?: string[];
-  assignmentFiles?: { name: string; url: string }[];
+  assignmentFiles: { name: string; url: string }[];
+  room: { id: string; title: string } | null;
 }
 
 // Attempt from instructor view
 export interface InstructorAttempt {
   id: string;
-  submitAt: string;
+  submitAt: Date;
   score: number | null;
   files: { name: string; url: string }[];
   note: string | null;
+  isLate: boolean;
   user: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
     image: string | null;
-  };
+  } | null;
 }
 
 // Paginated attempts response
@@ -99,19 +69,28 @@ export interface AttemptsResponse {
 
 // For instructor view - includes attempt stats and attempts list from API
 export interface InstructorAssignment extends BaseAssignment {
-  status: "needs_grading" | "graded" | "no_attempts";
+  status: InstructorAssignmentStatus;
   totalAttempts: number;
   gradedAttempts: number;
   ungradedAttempts: number;
-  attempts: AttemptsResponse;
+  attempts?: AttemptsResponse;
 }
 
-// For student view - includes flattened submission fields for convenience
-export interface StudentAssignment extends BaseAssignment {
-  submissionStatus?: SubmissionStatus;
-  note?: string;
+// Student attempt (nested in student assignment response)
+export interface StudentAttempt {
+  id: string;
+  submitAt: Date;
+  score: number | null;
+  files: { name: string; url: string }[];
+  note?: string | null;
+}
 
-  attempt?: StudentSubmission;
+// For student view - includes flattened submission fields from API
+export interface StudentAssignment extends BaseAssignment {
+  submissionStatus: SubmissionStatus;
+  submittedAt?: Date | null;
+  score?: number | null;
+  attempt?: StudentAttempt | null;
 }
 
 // Union type for general use

@@ -30,7 +30,7 @@ export default function useCreateNote() {
       });
       localStorage.removeItem("note-draft");
       toast.success("Note created successfully!");
-      router.push("/notes?folderId=" + variables.folderId);
+      router.push(`/notes/${folderId ? `?folderId=${folderId}` : ""}`);
     },
   });
 

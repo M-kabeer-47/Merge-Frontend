@@ -5,12 +5,13 @@ export type User = {
   firstName: string;
   lastName: string;
   new_user: boolean;
-  role: "student" | "instructor";
+  role: "student" | "instructor" | null;
   isVerified: boolean;
   googleAccount: boolean;
   hashedRefreshToken: string;
   twoFactorEnabled: boolean;
   notificationStatus: "default" | "allowed" | "denied";
+  tags?: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
 };

@@ -17,9 +17,13 @@ export default function VerifyPage({ token }: { token: string }) {
         setAuthTokens(data.token, data.refreshToken);
       }
 
-      // Redirect to success page with type parameter
+      // Ask for notification permission if backend status is default
+      const notificationStatus = data.notificationStatus || "default";
+      const askParam =
+        notificationStatus === "default" ? "&askNotifications=true" : "";
+
       setTimeout(() => {
-        router.push("/success?type=email_verified");
+        router.push(`/success?type=email_verified${askParam}`);
       }, 500);
     },
     onError: (err) => {

@@ -9,7 +9,7 @@ import {
   EmptyQuizzes,
   NoSearchResults,
   EmptyFilterResults,
-} from "./EmptyStates";
+} from "./empty-states";
 import type { InstructorQuiz, StudentQuiz } from "@/types/quiz";
 
 interface QuizzesListProps {

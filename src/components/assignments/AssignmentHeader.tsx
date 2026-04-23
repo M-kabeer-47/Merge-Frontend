@@ -64,8 +64,7 @@ export default function AssignmentHeader({
 
   const isSubmitted =
     submissionStatus === "submitted" ||
-    submissionStatus === "graded" ||
-    submissionStatus === "completed";
+    submissionStatus === "graded";
 
   // Single button logic based on state
   const getButtonConfig = () => {
@@ -136,7 +135,10 @@ export default function AssignmentHeader({
             {assignment.title}
           </h1>
           <p className="text-para text-xs sm:text-sm">
-            {assignment.author.name} • {assignment.totalScore} points
+            {assignment.author
+              ? `${assignment.author.firstName} ${assignment.author.lastName}`
+              : ""}{" "}
+            • {assignment.totalScore} points
           </p>
         </div>
 
@@ -171,10 +173,10 @@ export default function AssignmentHeader({
                     }`}
                   >
                     <span className="sm:hidden">
-                      {formatDateShort(assignment.endAt)}
+                      {assignment.endAt ? formatDateShort(assignment.endAt) : "No due date"}
                     </span>
                     <span className="hidden sm:inline">
-                      {formatDateFull(assignment.endAt)}
+                      {assignment.endAt ? formatDateFull(assignment.endAt) : "No due date"}
                     </span>
                   </p>
                 </>
@@ -189,8 +191,7 @@ export default function AssignmentHeader({
                 </p>
                 <span
                   className={`inline-block text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-full ${
-                    submissionStatus === "submitted" ||
-                    submissionStatus === "completed"
+                    submissionStatus === "submitted"
                       ? "bg-success/10 text-success"
                       : submissionStatus === "graded"
                         ? "bg-primary/10 text-primary"
@@ -199,8 +200,7 @@ export default function AssignmentHeader({
                           : "bg-secondary/10 text-secondary"
                   }`}
                 >
-                  {submissionStatus === "submitted" ||
-                  submissionStatus === "completed"
+                  {submissionStatus === "submitted"
                     ? "Submitted"
                     : submissionStatus.charAt(0).toUpperCase() +
                       submissionStatus.slice(1)}

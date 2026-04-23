@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { motion } from "motion/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Copy,
   Check,
@@ -26,6 +28,7 @@ export default function ChatMessage({
   onRegenerate,
 }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
+  const [copiedCodeBlock, setCopiedCodeBlock] = useState<string | null>(null);
   const isAssistant = message.role === "assistant";
 
   const handleCopy = () => {
@@ -34,82 +37,18 @@ export default function ChatMessage({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyCode = (code: string, id: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCodeBlock(id);
+    setTimeout(() => setCopiedCodeBlock(null), 2000);
+  };
+
   const formatTime = (date: string) => {
     return new Date(date).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
     });
   };
-
-  // Format message content with basic markdown-like support
-  const formatContent = (content: string) => {
-    const lines = content.split("\n");
-    return lines.map((line, idx) => {
-      // Code blocks
-      if (line.startsWith("```")) {
-        return null; // Handle separately
-      }
-      // Bold text
-      if (line.includes("**")) {
-        const parts = line.split("**");
-        return (
-          <p key={idx} className="mb-2">
-            {parts.map((part, i) =>
-              i % 2 === 1 ? (
-                <strong key={i} className="font-semibold">
-                  {part}
-                </strong>
-              ) : (
-                part
-              )
-            )}
-          </p>
-        );
-      }
-      // List items
-      if (line.match(/^\d+\./)) {
-        return (
-          <li key={idx} className="ml-4 mb-1">
-            {line.replace(/^\d+\.\s*/, "")}
-          </li>
-        );
-      }
-      if (line.startsWith("- ")) {
-        return (
-          <li key={idx} className="ml-4 mb-1 list-disc">
-            {line.slice(2)}
-          </li>
-        );
-      }
-      // Regular paragraph
-      return line.trim() ? (
-        <p key={idx} className="mb-2 last:mb-0">
-          {line}
-        </p>
-      ) : (
-        <br key={idx} />
-      );
-    });
-  };
-
-  // Extract code blocks
-  const hasCodeBlock = message.content.includes("```");
-  let contentParts: { type: "text" | "code"; content: string }[] = [];
-  
-  if (hasCodeBlock) {
-    const parts = message.content.split(/(```[\s\S]*?```)/g);
-    contentParts = parts.map((part) => {
-      if (part.startsWith("```") && part.endsWith("```")) {
-        return {
-          type: "code",
-          content: part.slice(3, -3).trim(),
-        };
-      }
-      return { type: "text", content: part };
-    });
-  } else {
-    contentParts = [{ type: "text", content: message.content }];
-  }
 
   return (
     <motion.div
@@ -150,20 +89,84 @@ export default function ChatMessage({
               isAssistant ? "text-para" : "text-white"
             }`}
           >
-            {contentParts.map((part, idx) => (
-              <div key={idx}>
-                {part.type === "code" ? (
-                  <pre className="bg-main-background dark:bg-[#0a0812] text-para rounded-lg p-3 my-2 overflow-x-auto border border-light-border">
-                    <code className="text-sm font-mono">{part.content}</code>
-                  </pre>
-                ) : (
-                  <div>{formatContent(part.content)}</div>
-                )}
+            {isAssistant ? (
+              <div className="prose prose-sm dark:prose-invert max-w-none prose-p:mb-2 prose-p:last:mb-0 prose-headings:text-heading prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-strong:text-heading prose-strong:font-semibold prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-blockquote:border-primary/40 prose-blockquote:text-para-muted prose-hr:border-light-border prose-table:text-sm prose-th:text-heading prose-td:text-para">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code({ className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || "");
+                      const codeString = String(children).replace(/\n$/, "");
+                      // Code blocks (fenced ```) either have a language class OR contain newlines
+                      // Inline code (`code`) is single-line with no className
+                      const isInline =
+                        !match && !className && !codeString.includes("\n");
+                      const codeId = `code-${message.id}-${codeString.slice(0, 20)}`;
+
+                      if (isInline) {
+                        return (
+                          <code
+                            className="px-1.5 py-0.5 rounded-md bg-secondary/10 text-secondary font-mono text-[13px]"
+                            {...props}
+                          >
+                            {children}
+                          </code>
+                        );
+                      }
+
+                      return (
+                        <div className="relative group/code my-3">
+                          <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e2e] dark:bg-[#0a0812] rounded-t-lg border border-b-0 border-light-border">
+                            <span className="text-xs text-para-muted font-mono">
+                              {match?.[1] || "code"}
+                            </span>
+                            <button
+                              onClick={() => handleCopyCode(codeString, codeId)}
+                              className="text-para-muted hover:text-para transition-colors p-1 rounded"
+                              title="Copy code"
+                            >
+                              {copiedCodeBlock === codeId ? (
+                                <Check className="w-3.5 h-3.5 text-success" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                          <pre className="!mt-0 !rounded-t-none bg-[#1e1e2e] dark:bg-[#0a0812] border border-t-0 border-light-border overflow-x-auto">
+                            <code
+                              className={`text-sm font-mono ${className || ""}`}
+                              {...props}
+                            >
+                              {children}
+                            </code>
+                          </pre>
+                        </div>
+                      );
+                    },
+                    pre({ children }) {
+                      return <>{children}</>;
+                    },
+                    table({ children }) {
+                      return (
+                        <div className="overflow-x-auto my-3 rounded-lg border border-light-border">
+                          <table className="!my-0">{children}</table>
+                        </div>
+                      );
+                    },
+                    th({ children }) {
+                      return (
+                        <th className="!bg-secondary/5 !font-semibold">
+                          {children}
+                        </th>
+                      );
+                    },
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
               </div>
-            ))}
-            {/* Blinking cursor for streaming */}
-            {isStreaming && (
-              <span className="inline-block w-[3px] h-[1.1em] bg-primary ml-0.5 align-middle rounded-sm animate-pulse" />
+            ) : (
+              <p className="whitespace-pre-wrap">{message.content}</p>
             )}
           </div>
 
@@ -217,4 +220,3 @@ export default function ChatMessage({
     </motion.div>
   );
 }
-

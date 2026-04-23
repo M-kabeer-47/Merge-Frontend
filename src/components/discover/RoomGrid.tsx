@@ -1,14 +1,14 @@
 "use client";
 
-import type { PublicRoom } from "@/types/discover";
+import type { FeedRoom } from "@/types/discover";
 import RoomCard from "./RoomCard";
 import LoaderSkeleton from "./LoaderSkeleton";
 
 interface RoomGridProps {
-  rooms: PublicRoom[];
+  rooms: FeedRoom[];
   loading?: boolean;
-  onJoin: (roomId: string) => void;
-  onPreview: (room: PublicRoom) => void;
+  onJoin: (roomCode: string) => void;
+  onPreview: (room: FeedRoom) => void;
 }
 
 export default function RoomGrid({
@@ -30,7 +30,7 @@ export default function RoomGrid({
       ))}
 
       {loading &&
-        Array.from({ length: 8 }).map((_, index) => (
+        Array.from({ length: 3 }).map((_, index) => (
           <div key={`skeleton-${index}`} role="listitem" aria-busy="true">
             <LoaderSkeleton />
           </div>

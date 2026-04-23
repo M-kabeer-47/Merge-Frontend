@@ -62,7 +62,7 @@ export default function StudentAssignmentClient({
   }
 
   // Calculate submission-related states
-  const isPastDue = new Date() > new Date(assignment.endAt);
+  const isPastDue = assignment.endAt ? new Date() > new Date(assignment.endAt) : false;
   const isClosed = assignment.isClosed;
 
   // canSubmit: not closed AND (not past due OR can turn in late)

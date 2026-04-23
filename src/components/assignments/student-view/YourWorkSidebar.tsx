@@ -1,13 +1,13 @@
 "use client";
 
 import { Trophy } from "lucide-react";
-import type { StudentSubmission, SubmissionStatus } from "@/types/assignment";
+import type { StudentAttempt, SubmissionStatus } from "@/types/assignment";
 
 import SubmittedFilesSection from "./SubmittedFilesSection";
 import FileUploadArea from "./FileUploadArea";
 
 interface YourWorkSidebarProps {
-  attempt?: StudentSubmission;
+  attempt?: StudentAttempt;
   submissionStatus?: SubmissionStatus;
   canSubmit: boolean;
   selectedFiles: File[];

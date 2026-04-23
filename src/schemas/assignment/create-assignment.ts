@@ -14,9 +14,9 @@ export const createAssignmentSchema = z.object({
     z
       .number()
       .min(0, "Total score must be a positive number")
-      .max(1000, "Total score cannot exceed 1000")
+      .max(1000, "Total score cannot exceed 1000"),
   ),
-  scheduledAt: z.string().default(new Date().toISOString()),
+  scheduledAt: z.string().default(new Date().toISOString()).nullable(),
   endAt: z.string().min(1, "Due date is required"),
   isTurnInLateEnabled: z.boolean(),
 });

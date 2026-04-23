@@ -63,10 +63,28 @@ export async function requestFCMToken(): Promise<string | null> {
       return null;
     }
 
-    // Register service worker
+    // Register service worker and pass Firebase config to it
     const registration = await navigator.serviceWorker.register(
       "/firebase-messaging-sw.js",
     );
+
+    // Send Firebase config to the service worker so it doesn't need hardcoded credentials
+    if (registration.active) {
+      registration.active.postMessage({
+        type: "FIREBASE_CONFIG",
+        config: firebaseConfig,
+      });
+    } else if (registration.installing || registration.waiting) {
+      const sw = registration.installing || registration.waiting;
+      sw?.addEventListener("statechange", () => {
+        if (sw.state === "activated") {
+          sw.postMessage({
+            type: "FIREBASE_CONFIG",
+            config: firebaseConfig,
+          });
+        }
+      });
+    }
 
     // Get FCM token
     const token = await getToken(messaging, {

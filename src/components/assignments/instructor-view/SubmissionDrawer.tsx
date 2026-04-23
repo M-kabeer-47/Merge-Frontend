@@ -55,12 +55,12 @@ export default function SubmissionDrawer({
         {/* Header */}
         <div className="p-6 border-b border-light-border">
           <div className="flex items-center gap-4">
-            <Avatar profileImage={user.image || undefined} size="lg" />
+            <Avatar profileImage={user?.image || undefined} size="lg" />
             <div className="flex-1 min-w-0">
               <h2 className="text-xl font-semibold text-heading">
-                {user.firstName} {user.lastName}
+                {user?.firstName} {user?.lastName}
               </h2>
-              <p className="text-sm text-para-muted truncate">{user.email}</p>
+              <p className="text-sm text-para-muted truncate">{user?.email}</p>
             </div>
           </div>
           <div className="mt-3 flex items-center gap-2 text-sm text-para-muted">

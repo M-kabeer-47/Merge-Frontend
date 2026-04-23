@@ -1,25 +1,81 @@
 "use client";
 
 import React, { useState } from "react";
-import { Video, Calendar } from "lucide-react";
+import { Video, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import type { Session } from "./types";
-import { sampleSessions } from "./sample-data";
+import { useRoom } from "@/providers/RoomProvider";
+import useFetchSessions from "@/hooks/live-sessions/use-fetch-sessions";
+import useCreateSession from "@/hooks/live-sessions/use-create-session";
+import useStartSession from "@/hooks/live-sessions/use-start-session";
+import useDeleteSession from "@/hooks/live-sessions/use-delete-session";
+import useJoinSession from "@/hooks/live-sessions/use-join-session";
 import UpcomingSessionCard from "./UpcomingSessionCard";
 import PastSessionCard from "./PastSessionCard";
-import { EmptyUpcomingState, EmptyPastState } from "./SessionEmptyStates";
+import { EmptyUpcomingState, EmptyPastState } from "./empty-states";
+import { useRouter } from "next/navigation";
+
+// Schedule modal
+import ScheduleSessionModal from "./ScheduleSessionModal";
 
 export default function SessionsTab() {
-  const [sessions, setSessions] = useState<Session[]>(sampleSessions);
+  const { room, userRole } = useRoom();
+  const router = useRouter();
+  const roomId = room?.id || "";
+  const isAdmin = userRole === "instructor";
+
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+
+  // Fetch all sessions for this room
+  const { data, isLoading } = useFetchSessions({ roomId });
+
+  // Mutations
+  const { createSession, isCreating } = useCreateSession();
+  const { startSession, isStarting } = useStartSession();
+  const { deleteSession, isDeleting } = useDeleteSession();
+  const { joinSession, isJoining } = useJoinSession();
+
+  const sessions = data?.sessions || [];
 
   // Separate sessions by status
-  const upcomingSessions = sessions
-    .filter((s) => s.status === "upcoming" || s.status === "live")
-    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+  const upcomingSessions = sessions.filter(
+    (s) => s.status === "scheduled" || s.status === "live"
+  );
 
-  const pastSessions = sessions
-    .filter((s) => s.status === "completed")
-    .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
+  const pastSessions = sessions.filter((s) => s.status === "ended");
+
+  // Handlers
+  const handleStartInstantSession = async () => {
+    if (!roomId) return;
+    const result = await createSession({
+      roomId,
+      title: `Live Session - ${new Date().toLocaleDateString()}`,
+    });
+    if (result?.id) {
+      router.push(`/rooms/${roomId}/live?sessionId=${result.id}`);
+    }
+  };
+
+  const handleStartScheduledSession = async (sessionId: string) => {
+    await startSession({ sessionId, roomId });
+    router.push(`/rooms/${roomId}/live?sessionId=${sessionId}`);
+  };
+
+  const handleJoinSession = async (sessionId: string) => {
+    await joinSession({ sessionId, roomId });
+    router.push(`/rooms/${roomId}/live?sessionId=${sessionId}`);
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    await deleteSession({ sessionId, roomId });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 h-full overflow-y-auto bg-main-background">
@@ -28,16 +84,32 @@ export default function SessionsTab() {
         <h2 className="text-xl font-semibold text-heading">
           Upcoming Sessions
         </h2>
-        <div className="flex items-center gap-4">
-          <Button size="sm" className="w-[150px]">
-            <Video className="w-4 h-4 mr-2" />
-            Start Session
-          </Button>
-          <Button size="sm" variant="outline" className="w-[150px]">
-            <Calendar className="w-4 h-4 mr-2" />
-            Schedule
-          </Button>
-        </div>
+        {isAdmin && (
+          <div className="flex items-center gap-4">
+            <Button
+              size="sm"
+              className="w-[150px]"
+              onClick={handleStartInstantSession}
+              disabled={isCreating}
+            >
+              {isCreating ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Video className="w-4 h-4 mr-2" />
+              )}
+              Start Session
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-[150px]"
+              onClick={() => setShowScheduleModal(true)}
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Upcoming Sessions */}
@@ -45,7 +117,15 @@ export default function SessionsTab() {
         <section className="mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {upcomingSessions.map((session) => (
-              <UpcomingSessionCard key={session.id} session={session} />
+              <UpcomingSessionCard
+                key={session.id}
+                session={session}
+                onJoin={handleJoinSession}
+                onStart={handleStartScheduledSession}
+                onDelete={handleDeleteSession}
+                isStarting={isStarting}
+                isDeleting={isDeleting}
+              />
             ))}
           </div>
         </section>
@@ -68,6 +148,14 @@ export default function SessionsTab() {
           <EmptyPastState />
         )}
       </section>
+
+      {/* Schedule Modal */}
+      {showScheduleModal && (
+        <ScheduleSessionModal
+          roomId={roomId}
+          onClose={() => setShowScheduleModal(false)}
+        />
+      )}
     </div>
   );
 }

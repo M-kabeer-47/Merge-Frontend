@@ -40,10 +40,29 @@ function getDeviceId(): string {
 
   let deviceId = localStorage.getItem("merge_device_id");
   if (!deviceId) {
-    deviceId = `web_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    deviceId = crypto.randomUUID();
     localStorage.setItem("merge_device_id", deviceId);
   }
   return deviceId;
+}
+
+// Extract a canonical dedup key from notification data.
+// Both Socket.IO notifications (with DB id) and FCM postMessages
+// (with content-type IDs) need to resolve to the same key.
+function getDeduplicationKey(notification: {
+  id?: string;
+  metadata?: Record<string, string>;
+}): string {
+  const meta = notification.metadata;
+  // Prefer the content-type ID as canonical key (same across Socket + FCM)
+  return (
+    meta?.announcementId ||
+    meta?.assignmentId ||
+    meta?.quizId ||
+    meta?.eventId ||
+    notification.id ||
+    `unknown-${Date.now()}`
+  );
 }
 
 interface NotificationProviderProps {
@@ -60,32 +79,143 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const [socketConnected, setSocketConnected] = useState(false);
   const [notifications, setNotifications] = useState<NotificationPayload[]>([]);
 
-  // Sync status from user data OR browser permission
+  // Sync status from backend user data (source of truth)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Check browser permission first
-    if (Notification.permission === "granted") {
-      setStatus("allowed");
-      return;
-    } else if (Notification.permission === "denied") {
-      setStatus("denied");
-      return;
-    }
-
-    // Otherwise use backend status
+    // Backend notificationStatus is the source of truth per user.
+    // Browser Notification.permission is per-origin and persists across users,
+    // so it must NOT override the backend status.
     if (user?.notificationStatus) {
       setStatus(user.notificationStatus);
+    } else if (Notification.permission === "denied") {
+      // If browser explicitly denied, reflect that
+      setStatus("denied");
     }
   }, [user?.notificationStatus]);
 
-  // NOTE: FCM token registration is now handled by NotificationTrigger component
-  // which only runs once after login with ?askNotifications=true param
+  // Token refresh: on each app load, check if FCM token changed and re-register.
+  // Only runs if the user has explicitly opted in (backend status "allowed")
+  // AND the browser still has permission granted.
+  useEffect(() => {
+    if (!isAuthenticated || typeof window === "undefined") return;
+    if (user?.notificationStatus !== "allowed") return;
+    if (Notification.permission !== "granted") return;
 
-  // Connect Socket.IO ALWAYS when authenticated (for real-time updates)
-  // Track shown notification IDs to prevent duplicates
-  const shownNotificationIds = useRef<Set<string>>(new Set());
+    const refreshToken = async () => {
+      try {
+        const currentToken = await requestFCMToken();
+        if (!currentToken) return;
 
+        const lastToken = localStorage.getItem("merge_fcm_token");
+        if (currentToken !== lastToken) {
+          localStorage.setItem("merge_fcm_token", currentToken);
+          registerToken({
+            notificationStatus: "allowed",
+            token: currentToken,
+            deviceType: "web",
+            deviceId: getDeviceId(),
+          });
+        }
+      } catch (error) {
+        console.error("[Notifications] Token refresh failed:", error);
+      }
+    };
+
+    refreshToken();
+  }, [isAuthenticated, user?.notificationStatus, registerToken]);
+
+  // Track shown notification dedup keys to prevent duplicates across Socket + FCM
+  const shownNotificationKeys = useRef<Set<string>>(new Set());
+
+  // BroadcastChannel for cross-tab deduplication
+  const broadcastChannel = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const channel = new BroadcastChannel("merge-notifications");
+    broadcastChannel.current = channel;
+
+    // When another tab shows a notification, add its key to our dedup set
+    channel.onmessage = (event: MessageEvent) => {
+      if (event.data?.type === "NOTIFICATION_SHOWN" && event.data?.key) {
+        shownNotificationKeys.current.add(event.data.key);
+      }
+    };
+
+    return () => {
+      channel.close();
+      broadcastChannel.current = null;
+    };
+  }, []);
+
+  // Helper: check dedup + broadcast to other tabs, show toast only if focused
+  const handleIncomingNotification = useCallback(
+    (notification: NotificationPayload) => {
+      const dedupKey = getDeduplicationKey(notification);
+
+      // Deduplicate across sources (Socket + FCM) and tabs
+      if (shownNotificationKeys.current.has(dedupKey)) {
+        return;
+      }
+      shownNotificationKeys.current.add(dedupKey);
+
+      // Broadcast to other tabs so they skip this notification
+      broadcastChannel.current?.postMessage({
+        type: "NOTIFICATION_SHOWN",
+        key: dedupKey,
+      });
+
+      // Add to React Query cache for persistence
+      addNotificationToCache(queryClient, notification);
+
+      // Update local state
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === notification.id)) return prev;
+        return [notification, ...prev];
+      });
+
+      // Invalidate assignment/quiz cache for students
+      const { roomId, assignmentId, quizId } = notification.metadata;
+      if (roomId) {
+        if (assignmentId)
+          invalidateStudentAssignmentsCache(queryClient, roomId);
+        if (quizId) invalidateStudentQuizzesCache(queryClient, roomId);
+      }
+
+      // Only show toast when this tab is focused
+      if (!document.hidden) {
+        const actionUrl = notification.metadata.actionUrl;
+        toast(notification.content, {
+          id: dedupKey,
+          description: notification.metadata.roomTitle || undefined,
+          duration: 8000,
+          style: {
+            background: "var(--toast-bg)",
+            color: "var(--para)",
+            border: "1px solid var(--light-border)",
+            borderLeft: "4px solid var(--primary)",
+          },
+          actionButtonStyle: {
+            color: "var(--primary)",
+            fontWeight: 600,
+          },
+          action: actionUrl
+            ? {
+                label: "View →",
+                onClick: () => {
+                  window.location.href = actionUrl;
+                },
+              }
+            : undefined,
+        });
+      }
+    },
+    [queryClient],
+  );
+
+  // Connect Socket.IO when authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       disconnectNotificationSocket();
@@ -93,58 +223,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       return;
     }
 
-    // Connect with callbacks (async function)
     const connect = async () => {
       await connectNotificationSocket({
         onConnect: () => setSocketConnected(true),
         onDisconnect: () => setSocketConnected(false),
         onNotification: (notification) => {
-          console.log("Notificaion", notification);
-          // Deduplicate: skip if we've already shown this notification
-          if (shownNotificationIds.current.has(notification.id)) {
-            return;
-          }
-          shownNotificationIds.current.add(notification.id);
-
-          // Add to React Query cache for persistence
-          addNotificationToCache(queryClient, notification);
-
-          // Also update local state for context consumers
-          setNotifications((prev) => {
-            if (prev.some((n) => n.id === notification.id)) {
-              return prev;
-            }
-            return [notification, ...prev];
-          });
-
-          // Invalidate assignment/quiz cache for students (triggers background refetch)
-          const { roomId, assignmentId, quizId } = notification.metadata;
-          if (roomId) {
-            if (assignmentId) {
-              invalidateStudentAssignmentsCache(queryClient, roomId);
-            }
-            if (quizId) {
-              invalidateStudentQuizzesCache(queryClient, roomId);
-            }
-          }
-
-          // Only show in-app toast when app is focused
-          // Background push notifications are handled by FCM service worker
-          if (!document.hidden) {
-            const actionUrl = notification.metadata.actionUrl;
-
-            toast(notification.content, {
-              id: notification.id, // Use notification ID to prevent duplicate toasts
-              description: notification.metadata.roomTitle || undefined,
-              duration: 8000,
-              action: actionUrl
-                ? {
-                    label: "View →",
-                    onClick: () => {},
-                  }
-                : undefined,
-            });
-          }
+          handleIncomingNotification(notification);
         },
       });
     };
@@ -153,32 +237,26 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
     return () => {
       disconnectNotificationSocket();
-      // Clear shown IDs when disconnecting
-      shownNotificationIds.current.clear();
+      shownNotificationKeys.current.clear();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, handleIncomingNotification]);
 
-  // Listen for messages from service worker (when app is focused)
-  // SW sends notification data via postMessage instead of showing native push
+  // Listen for FCM messages from service worker (when app is focused)
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === "FCM_NOTIFICATION") {
         const data = event.data.payload?.data || {};
+
+        // Build notification payload from FCM data
         const notificationId =
           data.announcementId ||
           data.assignmentId ||
           data.quizId ||
+          data.eventId ||
           `fcm-${Date.now()}`;
 
-        // Deduplicate
-        if (shownNotificationIds.current.has(notificationId)) {
-          return;
-        }
-        shownNotificationIds.current.add(notificationId);
-
-        // Build notification payload
         const notification: NotificationPayload = {
           id: notificationId,
           content:
@@ -200,35 +278,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           createdAt: new Date().toISOString(),
         };
 
-        // Add to cache
-        addNotificationToCache(queryClient, notification);
-
-        // Update local state
-        setNotifications((prev) => {
-          if (prev.some((n) => n.id === notification.id)) return prev;
-          return [notification, ...prev];
-        });
-
-        // Invalidate assignment/quiz cache
-        const { roomId, assignmentId, quizId } = notification.metadata;
-        if (roomId) {
-          if (assignmentId)
-            invalidateStudentAssignmentsCache(queryClient, roomId);
-          if (quizId) invalidateStudentQuizzesCache(queryClient, roomId);
-        }
-
-        // Show toast
-        toast(notification.content, {
-          id: notification.id,
-          description: notification.metadata.roomTitle || undefined,
-          duration: 8000,
-          action: notification.metadata.actionUrl
-            ? {
-                label: "View →",
-                onClick: () => {},
-              }
-            : undefined,
-        });
+        handleIncomingNotification(notification);
       }
     };
 
@@ -237,22 +287,19 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     return () => {
       navigator.serviceWorker?.removeEventListener("message", handleMessage);
     };
-  }, [isAuthenticated, queryClient]);
+  }, [isAuthenticated, handleIncomingNotification]);
 
   // Refresh caches when user returns to app (after being in background)
-  // This ensures they see latest data after receiving background notifications
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        // Get current room ID from URL if available
         const path = window.location.pathname;
         const roomMatch = path.match(/\/rooms\/([^/]+)/);
         const roomId = roomMatch?.[1];
 
         if (roomId) {
-          // Invalidate assignment and quiz caches for this room
           queryClient.invalidateQueries({
             queryKey: ["assignments", roomId, "student"],
           });
@@ -261,7 +308,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           });
         }
 
-        // Always refresh notifications
         queryClient.invalidateQueries({
           queryKey: ["notifications"],
         });
@@ -285,9 +331,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       if (permission === "granted") {
         setStatus("allowed");
 
-        // Get FCM token and register
         const token = await requestFCMToken();
         if (token) {
+          localStorage.setItem("merge_fcm_token", token);
           registerToken({
             notificationStatus: "allowed",
             token,
@@ -323,7 +369,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     setNotifications([]);
   }, []);
 
-  // Computed values
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const value: NotificationContextValue = {
@@ -356,6 +401,3 @@ export function useNotifications(): NotificationContextValue {
   }
   return context;
 }
-
-// NOTE: useShouldShowNotificationPrompt removed - we now use NotificationTrigger
-// component with URL param approach instead of custom prompt

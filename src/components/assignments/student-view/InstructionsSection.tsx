@@ -1,9 +1,10 @@
 import { FileText, Download } from "lucide-react";
-import type { AssignmentFile } from "@/types/assignment";
 import { downloadFile } from "@/utils/download-file";
 
+type AssignmentFile = { name: string; url: string };
+
 interface InstructionsSectionProps {
-  description: string;
+  description?: string;
   assignmentFiles?: AssignmentFile[];
 }
 

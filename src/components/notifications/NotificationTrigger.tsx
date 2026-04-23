@@ -13,7 +13,7 @@ function getDeviceId(): string {
 
   let deviceId = localStorage.getItem("merge_device_id");
   if (!deviceId) {
-    deviceId = `web_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    deviceId = crypto.randomUUID();
     localStorage.setItem("merge_device_id", deviceId);
   }
   return deviceId;
@@ -29,10 +29,7 @@ export default function NotificationTrigger() {
 
   useEffect(() => {
     // Only run once per mount and only if param is present
-    const shouldAsk = searchParams?.get("askNotifications") === "true" || true;
-    console.log("[Notifications] shouldAsk:", shouldAsk);
-    console.log("[Notifications] isAuthenticated:", isAuthenticated);
-    console.log("[Notifications] hasTriggered:", hasTriggered.current);
+    const shouldAsk = searchParams?.get("askNotifications") === "true";
 
     if (!shouldAsk || !isAuthenticated || hasTriggered.current) {
       return;
@@ -40,19 +37,16 @@ export default function NotificationTrigger() {
 
     hasTriggered.current = true;
 
-    // Remove the param from URL immediately (clean URL)
-    const newParams = new URLSearchParams(searchParams.toString());
-    newParams.delete("askNotifications");
-    const newUrl = newParams.toString() ? `${pathname}?${newParams}` : pathname;
-    router.replace(newUrl, { scroll: false });
+    // Clean the URL param, then ask for permission after a short delay
 
-    // Trigger native Chrome permission dialog
+    // Trigger native Chrome permission dialSg
     const askPermission = async () => {
+      // Clean URL first, then show the dialog
+
       // This shows Chrome's native notification permission dialog
       const [response, error] = await tryIt(Notification.requestPermission());
       if (response === "granted") {
         // User allowed - get FCM token and register
-
         const [token, tokenError] = await tryIt(requestFCMToken());
         if (token) {
           registerToken({
@@ -78,8 +72,9 @@ export default function NotificationTrigger() {
       // If "default" (dismissed), we don't do anything - they can enable later in settings
     };
 
-    const timer = setTimeout(askPermission, 500);
-    return () => clearTimeout(timer);
+    // Use a microtask-safe approach: don't return cleanup that cancels the timer,
+    // since router.replace will trigger a re-render and the cleanup would cancel it
+    setTimeout(askPermission, 500);
   }, [searchParams, pathname, router, isAuthenticated, registerToken]);
 
   return null;

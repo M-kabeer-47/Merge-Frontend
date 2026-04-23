@@ -1,3 +1,5 @@
+import React from "react";
+
 // Shared display item interface for list/grid views
 // Both notes and room content can be adapted to this interface
 
@@ -30,4 +32,6 @@ export interface BaseDisplayItem {
 export interface MenuOption {
   title: string;
   action: () => void;
+  icon?: React.ReactNode;
+  destructive?: boolean;
 }

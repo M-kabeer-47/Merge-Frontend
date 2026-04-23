@@ -24,7 +24,7 @@ export default function useFetchConversations() {
 
   return {
     conversations: data || [],
-    isLoading: isLoading || isFetching,
+    isLoading,
     isError,
     error,
     refetch,

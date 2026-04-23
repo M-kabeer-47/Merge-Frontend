@@ -47,6 +47,44 @@ export interface LiveSession {
   maxAttendees: number;
 }
 
+// API response type from backend
+export type SessionStatusType = 'scheduled' | 'live' | 'ended' | 'cancelled';
+
+export interface LiveSessionResponse {
+  id: string;
+  title: string;
+  description?: string;
+  status: SessionStatusType;
+  scheduledAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  durationMinutes?: number;
+  createdAt: string;
+  host: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    image?: string;
+  } | null;
+  room: {
+    id: string;
+    title: string;
+  } | null;
+  attendeeCount: number;
+  attendees?: {
+    id: string;
+    joinedAt: string;
+    leftAt?: string;
+    focusScore: number;
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      image?: string;
+    } | null;
+  }[];
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // CHAT TYPES
 // ═══════════════════════════════════════════════════════════════════
