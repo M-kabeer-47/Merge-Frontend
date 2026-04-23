@@ -14,12 +14,14 @@ import type { ChatMessage as ChatMessageType } from "@/types/ai-chat";
 
 interface ChatMessageProps {
   message: ChatMessageType;
+  isStreaming?: boolean;
   onSaveToNotes?: (messageId: string) => void;
   onRegenerate?: (messageId: string) => void;
 }
 
 export default function ChatMessage({
   message,
+  isStreaming = false,
   onSaveToNotes,
   onRegenerate,
 }: ChatMessageProps) {
@@ -159,6 +161,10 @@ export default function ChatMessage({
                 )}
               </div>
             ))}
+            {/* Blinking cursor for streaming */}
+            {isStreaming && (
+              <span className="inline-block w-[3px] h-[1.1em] bg-primary ml-0.5 align-middle rounded-sm animate-pulse" />
+            )}
           </div>
 
           {/* Context File Indicator */}
@@ -177,8 +183,8 @@ export default function ChatMessage({
           {formatTime(message.createdAt)}
         </div>
 
-        {/* Actions (for assistant messages) */}
-        {isAssistant && (
+        {/* Actions (for assistant messages, hidden during streaming) */}
+        {isAssistant && !isStreaming && (
           <div className="flex items-center gap-1 mt-2">
             <button
               onClick={handleCopy}

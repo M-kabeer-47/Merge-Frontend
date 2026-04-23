@@ -128,8 +128,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
           )}
         </div>
 
-        {/* Attachments */}
-        <MessageAttachments message={message} isOwnMessage={isOwnMessage} />
+        {/* Attachments - hide for deleted messages */}
+        {message.content !== "This message was deleted" && (
+          <MessageAttachments message={message} isOwnMessage={isOwnMessage} />
+        )}
 
         {/* Time and Seen Status */}
         <div

@@ -17,7 +17,6 @@ import useCreateConversation from "@/hooks/ai-assistant/use-create-conversation"
 import useDeleteConversation from "@/hooks/ai-assistant/use-delete-conversation";
 import useStreamQuery from "@/hooks/ai-assistant/use-stream-query";
 import useUploadAttachment from "@/hooks/ai-assistant/use-upload-attachment";
-import { useTypingEffect } from "@/hooks/ai-assistant/use-typing-effect";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ContextFile, ConversationWithMessages } from "@/types/ai-chat";
@@ -43,15 +42,9 @@ export default function AIAssistantPage() {
   // Mutations
   const { createConversation, isCreating } = useCreateConversation();
   const { deleteConversation, isDeleting } = useDeleteConversation();
-  const { streamQuery, isStreaming, streamingMessage } = useStreamQuery();
+  const { streamQuery, isStreaming, streamingMessage, pendingUserMessage } = useStreamQuery();
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
-
-  // Smooth typing effect for streaming message
-  const { displayedText } = useTypingEffect(
-    streamingMessage?.content || null,
-    15 // 15ms per character for smooth, fast typing effect
-  );
 
   // Smart auto-scroll: only scroll if user is already at bottom, with throttling
   useEffect(() => {
@@ -89,7 +82,7 @@ export default function AIAssistantPage() {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [messages.length, displayedText.length]);
+  }, [messages.length, streamingMessage?.content?.length]);
 
   // Track user scrolling
   useEffect(() => {
@@ -176,6 +169,7 @@ export default function AIAssistantPage() {
       {
         conversationId: activeSessionId || undefined,
         message: content,
+        contextFileId: attachmentData?.roomId ? attachmentData.id : undefined,
         attachmentS3Url: attachmentData?.url,
         attachmentType: attachmentData
           ? mapFileTypeToAttachmentType(attachmentData.type)
@@ -316,6 +310,14 @@ export default function AIAssistantPage() {
               }}
             >
               <div className="max-w-3xl mx-auto">
+                {/* Show pending user message immediately (before conversation is created) */}
+                {pendingUserMessage && !messages.some(m => m.id === pendingUserMessage.id) && (
+                  <ChatMessage
+                    key={pendingUserMessage.id}
+                    message={pendingUserMessage}
+                  />
+                )}
+
                 {messages.map((message) => (
                   <ChatMessage
                     key={message.id}
@@ -325,14 +327,12 @@ export default function AIAssistantPage() {
                   />
                 ))}
 
-                {/* Show streaming message with smooth typing effect */}
+                {/* Show streaming message with live chunks */}
                 {streamingMessage && (
                   <ChatMessage
                     key={streamingMessage.id}
-                    message={{
-                      ...streamingMessage,
-                      content: displayedText,
-                    }}
+                    message={streamingMessage}
+                    isStreaming={true}
                     onSaveToNotes={handleSaveToNotes}
                     onRegenerate={handleRegenerate}
                   />

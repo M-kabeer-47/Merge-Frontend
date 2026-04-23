@@ -198,7 +198,8 @@ export function useChatStore(roomId: string) {
       // Show deleted message text when deleted for everyone
       updateMessage(messageId, {
         content: "This message was deleted",
-        isDeletedForEveryone: true
+        isDeletedForEveryone: true,
+        attachments: []
       });
     }
   };

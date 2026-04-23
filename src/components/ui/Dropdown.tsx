@@ -17,6 +17,7 @@ interface DropdownMenuProps {
   onClose?: () => void;
   align?: "right" | "left";
   size?: "small" | "medium" | "large";
+  direction?: "down" | "up";
 }
 
 export default function DropdownMenu({
@@ -25,21 +26,23 @@ export default function DropdownMenu({
   onClose,
   align = "right",
   size = "medium",
+  direction = "down",
 }: DropdownMenuProps) {
+  const isUp = direction === "up";
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+      initial={{ opacity: 0, y: isUp ? 10 : -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+      exit={{ opacity: 0, y: isUp ? 10 : -10, scale: 0.95 }}
       transition={{ duration: 0.18 }}
-      className={`origin-top-right absolute text-para flex items-center  ${
+      className={`${isUp ? "origin-bottom-right bottom-full mb-2" : "origin-top-right mt-2"} absolute text-para flex items-center  ${
         align === "right" ? "right-0" : "left-0"
       } ${
         size === "small"
-          ? "mt-2 w-40 text-xs px-2 "
+          ? "w-40 text-xs px-2 "
           : size === "large"
           ? "mt-4 w-full justify-center"
-          : "mt-2 w-44"
+          : "w-44"
       } rounded-lg shadow-lg bg-background border border-light-border z-50 overflow-hidden ${className}`}
       onClick={(e) => e.stopPropagation()}
     >

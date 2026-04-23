@@ -13,6 +13,7 @@ import type {
 interface StreamingState {
   isStreaming: boolean;
   streamingMessage: ChatMessage | null;
+  pendingUserMessage: ChatMessage | null;
   sources: SourceEvent[];
   error: string | null;
 }
@@ -25,6 +26,7 @@ export default function useStreamQuery() {
   const [streamingState, setStreamingState] = useState<StreamingState>({
     isStreaming: false,
     streamingMessage: null,
+    pendingUserMessage: null,
     sources: [],
     error: null,
   });
@@ -41,13 +43,6 @@ export default function useStreamQuery() {
       let accumulatedAnswer = "";
       const accumulatedSources: SourceEvent[] = [];
 
-      setStreamingState({
-        isStreaming: true,
-        streamingMessage: null,
-        sources: [],
-        error: null,
-      });
-
       try {
         // Create optimistic user message
         const optimisticUserMessage: ChatMessage = {
@@ -57,6 +52,15 @@ export default function useStreamQuery() {
           createdAt: new Date().toISOString(),
         };
         userMessageId = optimisticUserMessage.id;
+
+        // Set streaming state with pending user message for immediate display
+        setStreamingState({
+          isStreaming: true,
+          streamingMessage: null,
+          pendingUserMessage: conversationId ? null : optimisticUserMessage,
+          sources: [],
+          error: null,
+        });
 
         // Add user message to cache if we have a conversation ID
         if (conversationId) {
@@ -144,6 +148,12 @@ export default function useStreamQuery() {
                         messages: [optimisticUserMessage],
                       }),
                     );
+
+                    // Clear pending user message now that it's in the cache
+                    setStreamingState((prev) => ({
+                      ...prev,
+                      pendingUserMessage: null,
+                    }));
                   }
                 } else if (currentEvent === "title" || parsed.title) {
                   // title event
@@ -212,9 +222,7 @@ export default function useStreamQuery() {
                         if (!old) return old;
                         const messages = [...old.messages];
                         const assistantMsgIndex = messages.findIndex(
-                          (m) =>
-                            m.id === assistantMessageId ||
-                            m.id.startsWith("assistant-streaming"),
+                          (m) => m.id === assistantMessageId,
                         );
 
                         if (assistantMsgIndex !== -1) {
@@ -248,9 +256,9 @@ export default function useStreamQuery() {
                         if (!old) return old;
                         const messages = [...old.messages];
                         
-                        // Find existing streaming message or add new one
+                        // Find existing streaming message by exact ID
                         const assistantMsgIndex = messages.findIndex((m) =>
-                          m.id === assistantMessageId || m.id.startsWith("assistant-streaming"),
+                          m.id === assistantMessageId,
                         );
 
                         const finalMessage: ChatMessage = {
@@ -306,6 +314,7 @@ export default function useStreamQuery() {
           ...prev,
           isStreaming: false,
           streamingMessage: null,
+          pendingUserMessage: null,
         }));
       } catch (error: any) {
         console.error("[SSE Error]", error);
@@ -316,6 +325,7 @@ export default function useStreamQuery() {
           ...prev,
           isStreaming: false,
           streamingMessage: null,
+          pendingUserMessage: null,
           error: errorMsg,
         }));
 
@@ -343,6 +353,7 @@ export default function useStreamQuery() {
     setStreamingState({
       isStreaming: false,
       streamingMessage: null,
+      pendingUserMessage: null,
       sources: [],
       error: null,
     });
@@ -352,6 +363,7 @@ export default function useStreamQuery() {
     streamQuery,
     isStreaming: streamingState.isStreaming,
     streamingMessage: streamingState.streamingMessage,
+    pendingUserMessage: streamingState.pendingUserMessage,
     sources: streamingState.sources,
     error: streamingState.error,
     resetStreaming,

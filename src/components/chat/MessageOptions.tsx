@@ -69,6 +69,7 @@ export default function MessageOptions({
         {open && (
           <DropdownMenu
             size="small"
+            direction="up"
             options={
               isOwnMessage
                 ? [
