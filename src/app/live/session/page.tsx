@@ -26,7 +26,6 @@ import {
   Minimize2,
   Presentation,
   Hand,
-  Captions,
   Phone,
   Info,
   Clock,
@@ -351,6 +350,7 @@ function LiveSessionPageContent() {
   const hasLeftRef = useRef(false);
   const socketRef = useRef<Socket | null>(null);
   const [summaryPdfUrl, setSummaryPdfUrl] = useState<string | null>(null);
+  const [transcriptionLang, setTranscriptionLang] = useState<"en" | "ur">("en");
 
   useEffect(() => {
     if (!sessionTerminated || !sessionId || !roomId) return;
@@ -431,7 +431,6 @@ function LiveSessionPageContent() {
   const [cameraOn, setCameraOn] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showCaptions, setShowCaptions] = useState(false);
   const [raisedHand, setRaisedHand] = useState(false);
 
   const initialMediaApplied = useRef(false);
@@ -722,7 +721,7 @@ registerProcessor('pcm-processor', PCMProcessor);
 
         socket.on("connect", () => {
           console.log("[Transcription] Socket connected, starting transcription");
-          socket?.emit("startTranscription", { sessionId });
+          socket?.emit("startTranscription", { sessionId, language: transcriptionLang });
         });
 
         socket.on("connect_error", (err) => {
@@ -772,7 +771,7 @@ registerProcessor('pcm-processor', PCMProcessor);
         }
       } catch (_) {}
     };
-  }, [isHost, sessionId, sessionTerminated]);
+  }, [isHost, sessionId, sessionTerminated, transcriptionLang]);
 
   const toggleMic = () => {
     if (!myPermissions.canMic) {
@@ -1111,14 +1110,6 @@ registerProcessor('pcm-processor', PCMProcessor);
                 title={myPermissions.canCamera ? (cameraOn ? "Turn off camera" : "Turn on camera") : "Camera disabled by host"}
               />
 
-              {/* Captions */}
-              <ControlButton
-                onClick={() => setShowCaptions(!showCaptions)}
-                active={showCaptions}
-                activeColor={showCaptions ? "bg-[#8ab4f8]" : "bg-[#3c4043] hover:bg-[#494c50]"}
-                icon={<Captions className="w-5 h-5 text-white" />}
-                title="Turn on captions"
-              />
 
               {/* Raise Hand */}
               <ControlButton
@@ -1137,6 +1128,18 @@ registerProcessor('pcm-processor', PCMProcessor);
                 icon={<Presentation className="w-5 h-5 text-white" />}
                 title="Present now"
               />
+
+              {/* Transcription Language Toggle (Host only) */}
+              {isHost && (
+                <button
+                  onClick={() => setTranscriptionLang((prev) => (prev === "en" ? "ur" : "en"))}
+                  className="h-12 px-3 rounded-full bg-[#3c4043] hover:bg-[#494c50] flex items-center justify-center gap-1.5 transition-colors"
+                  title={`Transcription: ${transcriptionLang === "en" ? "English" : "اردو (Urdu)"}`}
+                >
+                  <span className="text-xs font-bold text-white uppercase">{transcriptionLang}</span>
+                  <span className="text-[10px] text-white/60">{transcriptionLang === "en" ? "EN" : "UR"}</span>
+                </button>
+              )}
 
               {/* More Options */}
               <div className="relative">
