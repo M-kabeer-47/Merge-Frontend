@@ -8,7 +8,9 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useRouter } from "next/navigation";
+import { io, Socket } from "socket.io-client";
 import {
   Mic,
   MicOff,
@@ -42,12 +44,16 @@ import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
 import useLiveKitToken from "@/hooks/live-sessions/use-livekit-token";
 import useGetSession from "@/hooks/live-sessions/use-get-session";
+import useJoinSession from "@/hooks/live-sessions/use-join-session";
+import useLeaveSession from "@/hooks/live-sessions/use-leave-session";
+import useEndSession from "@/hooks/live-sessions/use-end-session";
 import LiveKitStage from "@/components/live-session/LiveKitStage";
 import LiveKitControlsBridge from "@/components/live-session/LiveKitControlsBridge";
 import AttendeesGridView from "@/components/live-session/AttendeesGridView";
 import PermissionEnforcer, { type PermissionKey } from "@/components/live-session/PermissionEnforcer";
 import HandRaiseSync from "@/components/live-session/HandRaiseSync";
 import { useLiveQna } from "@/hooks/live-qna/use-live-qna";
+import { toastApiError } from "@/utils/toast-helpers";
 
 function decodeLivekitTokenIdentity(token: string): string | null {
   try {
@@ -108,6 +114,145 @@ function useSessionDuration(startedAt: string | undefined) {
   }, [startedAt]);
 
   return duration;
+}
+
+interface HostLeaveModalProps {
+  isOpen: boolean;
+  isEnding: boolean;
+  isLeaving: boolean;
+  attendees: Attendee[];
+  actingHostId: string | null;
+  onChangeActingHost: (attendeeId: string | null) => void;
+  onEndForAll: () => void;
+  onLeaveOnly: () => void;
+  onClose: () => void;
+}
+
+function HostLeaveModal({
+  isOpen,
+  isEnding,
+  isLeaving,
+  attendees,
+  actingHostId,
+  onChangeActingHost,
+  onEndForAll,
+  onLeaveOnly,
+  onClose,
+}: HostLeaveModalProps) {
+  const busy = isEnding || isLeaving;
+  const eligibleActingHosts = attendees.filter((attendee) => attendee.role !== "host");
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="w-full max-w-lg rounded-xl border border-white/10 bg-[#202124] p-6 text-white shadow-2xl"
+          >
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold">Leave session</h2>
+              <p className="text-sm text-white/70">
+                You are the host. Leaving keeps the session running for others. Promote an acting host or end the
+                session for everyone.
+              </p>
+            </div>
+
+            {eligibleActingHosts.length > 0 && (
+              <div className="mt-5 space-y-2">
+                <label className="text-sm font-medium text-white/80">Promote acting host</label>
+                <select
+                  className="w-full rounded-lg border border-white/10 bg-[#2c2f33] px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none"
+                  value={actingHostId ?? ""}
+                  onChange={(event) => onChangeActingHost(event.target.value || null)}
+                  disabled={busy}
+                >
+                  <option value="">No acting host</option>
+                  {eligibleActingHosts.map((attendee) => (
+                    <option key={attendee.id} value={attendee.id}>
+                      {attendee.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="mt-6 space-y-3">
+              <button
+                className="flex w-full items-center justify-between rounded-lg bg-[#ea4335] px-4 py-3 text-left font-medium transition hover:bg-[#d33b28] disabled:cursor-not-allowed disabled:bg-[#ea4335]/70"
+                onClick={onEndForAll}
+                disabled={busy}
+              >
+                <span>End session for everyone</span>
+                {isEnding && <span className="text-sm text-white/80">Ending...</span>}
+              </button>
+              <button
+                className="flex w-full items-center justify-between rounded-lg bg-[#3c4043] px-4 py-3 text-left font-medium transition hover:bg-[#4a4d52] disabled:cursor-not-allowed disabled:bg-[#3c4043]/70"
+                onClick={onLeaveOnly}
+                disabled={busy}
+              >
+                <span>Leave without ending</span>
+                {isLeaving && <span className="text-sm text-white/80">Leaving...</span>}
+              </button>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={busy}
+                className="rounded-md px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:text-white/50"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+const COMMUNICATION_URL = process.env.NEXT_PUBLIC_COMMUNICATION_URL || "";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+
+async function fetchSocketAccessToken(): Promise<string | null> {
+  try {
+    const response = await fetch("/api/auth/token");
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.token || null;
+  } catch (error) {
+    console.error("[LiveSession] Failed to fetch socket access token", error);
+    return null;
+  }
+}
+
+function sendLeavePing(sessionId: string, roomId: string) {
+  if (typeof window === "undefined") return;
+  if (!BACKEND_URL || !sessionId || !roomId) return;
+
+  const normalizedBase = BACKEND_URL.endsWith("/") ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
+  const url = `${normalizedBase}/live-sessions/${sessionId}/leave?roomId=${roomId}`;
+
+  try {
+    fetch(url, {
+      method: "POST",
+      credentials: "include",
+      keepalive: true,
+    }).catch(() => {});
+  } catch (error) {
+    console.error("[LiveSession] Failed to send leave ping", error);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -189,8 +334,30 @@ function LiveSessionPageContent() {
   });
 
   const sessionDuration = useSessionDuration(sessionData?.startedAt);
+  const [toast, setToast] = useState<{ type: "success" | "error" | "info" | "warning"; message: string } | null>(null);
 
+  const showToastMsg = useCallback((type: "success" | "error" | "info" | "warning", message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  const queryClient = useQueryClient();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [hostLeaveModalOpen, setHostLeaveModalOpen] = useState(false);
+  const [actingHostCandidate, setActingHostCandidate] = useState<string | null>(null);
+  const [sessionTerminated, setSessionTerminated] = useState(false);
+  const [sessionEndReason, setSessionEndReason] = useState<"manual" | "auto" | null>(null);
+  const [sessionEndTimestamp, setSessionEndTimestamp] = useState<string | undefined>(undefined);
+  const hasLeftRef = useRef(false);
+  const socketRef = useRef<Socket | null>(null);
+
+  const navigateToSessions = useCallback(() => {
+    router.push(`/rooms/${roomId}/sessions`);
+  }, [router, roomId]);
+
+  const { joinSession } = useJoinSession();
+  const { leaveSession, isLeaving } = useLeaveSession();
+  const { endSession, isEnding } = useEndSession();
 
   // LiveKit
   const { getToken, isFetchingToken } = useLiveKitToken();
@@ -279,9 +446,6 @@ function LiveSessionPageContent() {
   // Raised hands by identity
   const [raisedHands, setRaisedHands] = useState<Record<string, boolean>>({});
 
-  // Data
-  const [toast, setToast] = useState<{ type: "success" | "error" | "info" | "warning"; message: string } | null>(null);
-
   // Fullscreen handler
   const toggleFullscreen = useCallback(async () => {
     try {
@@ -307,11 +471,6 @@ function LiveSessionPageContent() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  const showToastMsg = useCallback((type: "success" | "error" | "info" | "warning", message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  }, []);
-
   const attendees: Attendee[] = useMemo(() => {
     if (!sessionData?.attendees) return [];
     return sessionData.attendees
@@ -332,7 +491,148 @@ function LiveSessionPageContent() {
       }));
   }, [sessionData]);
 
-  const handleLeave = () => router.push(`/rooms/${roomId}/sessions`);
+  useEffect(() => {
+    if (!sessionData) return;
+    if (sessionTerminated) return;
+    if (sessionData.status !== "ended") return;
+
+    hasLeftRef.current = true;
+    setSessionTerminated(true);
+    setSessionEndReason((sessionData as any)?.endReason ?? "manual");
+    setSessionEndTimestamp(sessionData.endedAt ?? new Date().toISOString());
+    showToastMsg("info", "The session has ended.");
+
+    const redirectTimer = setTimeout(() => {
+      navigateToSessions();
+    }, 2000);
+
+    return () => clearTimeout(redirectTimer);
+  }, [sessionData, sessionTerminated, showToastMsg, navigateToSessions]);
+
+  const handleLeaveClick = useCallback(() => {
+    if (isHost) {
+      setHostLeaveModalOpen(true);
+    } else {
+      hasLeftRef.current = true;
+      leaveSession({ sessionId, roomId })
+        .then(() => {
+          showToastMsg("success", "You left the session.");
+          navigateToSessions();
+        })
+        .catch(() => {});
+    }
+  }, [isHost, sessionId, roomId, leaveSession, showToastMsg, navigateToSessions]);
+
+  const handleEndForAll = useCallback(async () => {
+    try {
+      await endSession({ sessionId, roomId });
+      hasLeftRef.current = true;
+      setSessionTerminated(true);
+      setSessionEndReason("manual");
+      setSessionEndTimestamp(new Date().toISOString());
+      showToastMsg("success", "Session ended for everyone.");
+      queryClient.invalidateQueries({ queryKey: ["live-session", sessionId, roomId] });
+      queryClient.invalidateQueries({ queryKey: ["live-sessions"] });
+      setTimeout(() => navigateToSessions(), 1500);
+    } catch (error) {
+      toastApiError(error, "Failed to end session.");
+    }
+  }, [endSession, sessionId, roomId, showToastMsg, queryClient, navigateToSessions]);
+
+  const handleLeaveAsHost = useCallback(async () => {
+    try {
+      await leaveSession({ sessionId, roomId, actingHostId: actingHostCandidate || undefined });
+      hasLeftRef.current = true;
+      showToastMsg("success", "You left the session.");
+      setHostLeaveModalOpen(false);
+      navigateToSessions();
+    } catch (error) {
+      toastApiError(error, "Failed to leave session.");
+    }
+  }, [leaveSession, sessionId, roomId, actingHostCandidate, showToastMsg, navigateToSessions]);
+
+  useEffect(() => {
+    if (!sessionId || !roomId) return;
+    if (hasLeftRef.current) return;
+
+    const doJoin = async () => {
+      try {
+        await joinSession({ sessionId, roomId });
+      } catch (error) {
+        console.error("[LiveSession] Failed to join session:", error);
+      }
+    };
+    doJoin();
+  }, [sessionId, roomId, joinSession]);
+
+  useEffect(() => {
+    if (!sessionId || !roomId) return;
+    if (!COMMUNICATION_URL) return;
+
+    let socket: Socket | null = null;
+    let disconnectTimer: NodeJS.Timeout | null = null;
+
+    const initSocket = async () => {
+      const token = await fetchSocketAccessToken();
+      if (!token) return;
+
+      socket = io(COMMUNICATION_URL, {
+        transports: ["websocket", "polling"],
+        auth: { token },
+      });
+      socketRef.current = socket;
+
+      socket.on("connect", () => {
+        console.log("[LiveSession] Socket connected");
+        socket?.emit("joinLiveSession", { sessionId, roomId });
+      });
+
+      socket.on("sessionEnded", (data: { reason?: "manual" | "auto"; endedBy?: string; endedAt?: string }) => {
+        console.log("[LiveSession] Received sessionEnded:", data);
+        if (!hasLeftRef.current) {
+          hasLeftRef.current = true;
+          setSessionTerminated(true);
+          setSessionEndReason(data.reason || "manual");
+          setSessionEndTimestamp(data.endedAt || new Date().toISOString());
+          showToastMsg("info", "The session has ended.");
+          disconnectTimer = setTimeout(() => {
+            navigateToSessions();
+          }, 3000);
+        }
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("[LiveSession] Socket connect error:", err.message);
+      });
+    };
+
+    initSocket();
+
+    return () => {
+      if (disconnectTimer) clearTimeout(disconnectTimer);
+      if (socket) {
+        socket.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [sessionId, roomId, showToastMsg, navigateToSessions]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!hasLeftRef.current && sessionId && roomId) {
+        sendLeavePing(sessionId, roomId);
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [sessionId, roomId]);
+
+  const handleCloseHostLeaveModal = useCallback(() => {
+    if (!isLeaving && !isEnding) {
+      setHostLeaveModalOpen(false);
+      setActingHostCandidate(null);
+    }
+  }, [isLeaving, isEnding]);
 
   const toggleMic = () => {
     if (!myPermissions.canMic) {
@@ -459,6 +759,43 @@ function LiveSessionPageContent() {
 
   const content = (
     <div className="h-screen w-screen bg-[#202124] flex flex-col overflow-hidden relative">
+      {/* Session Terminated Overlay */}
+      {sessionTerminated && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="text-center">
+            <div className="mb-4 text-6xl">👋</div>
+            <h2 className="mb-2 text-2xl font-bold text-white">Session Ended</h2>
+            <p className="mb-4 text-white/70">
+              {sessionEndReason === "manual" ? "The host ended the session." : "The session ended automatically."}
+            </p>
+            {sessionEndTimestamp && (
+              <p className="mb-6 text-sm text-white/50">
+                Ended at: {new Date(sessionEndTimestamp).toLocaleTimeString()}
+              </p>
+            )}
+            <button
+              onClick={navigateToSessions}
+              className="rounded-lg bg-[#1a73e8] px-6 py-2 font-medium text-white transition hover:bg-[#1557b0]"
+            >
+              Return to Sessions
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Host Leave Modal */}
+      <HostLeaveModal
+        isOpen={hostLeaveModalOpen}
+        isEnding={isEnding}
+        isLeaving={isLeaving}
+        attendees={attendees}
+        actingHostId={actingHostCandidate}
+        onChangeActingHost={setActingHostCandidate}
+        onEndForAll={handleEndForAll}
+        onLeaveOnly={handleLeaveAsHost}
+        onClose={handleCloseHostLeaveModal}
+      />
+
       {/* Toast */}
       <AnimatePresence>
         {toast && (
@@ -676,14 +1013,24 @@ function LiveSessionPageContent() {
 
               <div className="w-px h-8 bg-white/20 mx-1" />
 
-              {/* End Call - Direct leave */}
-              <button
-                onClick={handleLeave}
-                className="w-12 h-12 rounded-full bg-[#ea4335] hover:bg-[#d33b28] flex items-center justify-center transition-colors"
-                title="Leave call"
-              >
-                <Phone className="w-5 h-5 text-white" />
-              </button>
+              {/* End Call - Host sees end session, participants see leave */}
+              {isHost ? (
+                <button
+                  onClick={handleLeaveClick}
+                  className="w-12 h-12 rounded-full bg-[#ea4335] hover:bg-[#d33b28] flex items-center justify-center transition-colors"
+                  title="End session for everyone"
+                >
+                  <Phone className="w-5 h-5 text-white" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleLeaveClick}
+                  className="w-12 h-12 rounded-full bg-[#3c4043] hover:bg-[#4a4d52] flex items-center justify-center transition-colors"
+                  title="Leave session"
+                >
+                  <LogOut className="w-5 h-5 text-white" />
+                </button>
+              )}
             </div>
           </div>
 
