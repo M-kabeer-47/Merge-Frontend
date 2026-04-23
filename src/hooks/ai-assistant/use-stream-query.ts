@@ -174,33 +174,39 @@ export default function useStreamQuery() {
                   // conversation event
                   conversationId = parsed.conversation_id;
                   if (conversationId) {
-                    onConversationCreated?.(conversationId);
-
-                    // Cancel any queries for the new conversation too
+                    // Cancel any queries for the new conversation BEFORE
+                    // triggering state changes that would start a refetch
                     await queryClient.cancelQueries({
                       queryKey: ["ai-conversation", conversationId],
                     });
-                  }
 
-                  // If this is a new conversation, add user message now
-                  if (!payload.conversationId) {
-                    queryClient.setQueryData<ConversationWithMessages>(
-                      ["ai-conversation", conversationId],
-                      () => ({
-                        id: conversationId!,
-                        title: "New Conversation",
-                        summary: null,
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                        messages: [optimisticUserMessage],
-                      }),
-                    );
+                    // If this is a new conversation, populate cache BEFORE
+                    // calling onConversationCreated (which sets activeSessionId
+                    // and triggers useFetchConversation). Without this, the
+                    // refetch races with the backend saving the user message
+                    // and returns empty messages, causing the user's message
+                    // to disappear.
+                    if (!payload.conversationId) {
+                      queryClient.setQueryData<ConversationWithMessages>(
+                        ["ai-conversation", conversationId],
+                        () => ({
+                          id: conversationId!,
+                          title: "New Conversation",
+                          summary: null,
+                          createdAt: new Date().toISOString(),
+                          updatedAt: new Date().toISOString(),
+                          messages: [optimisticUserMessage],
+                        }),
+                      );
 
-                    // Clear pending user message since it's now in cache
-                    setStreamingState((prev) => ({
-                      ...prev,
-                      pendingUserMessage: null,
-                    }));
+                      // Clear pending user message since it's now in cache
+                      setStreamingState((prev) => ({
+                        ...prev,
+                        pendingUserMessage: null,
+                      }));
+                    }
+
+                    onConversationCreated?.(conversationId);
                   }
                 } else if (currentEvent === "title" || parsed.title) {
                   // title event
@@ -248,8 +254,7 @@ export default function useStreamQuery() {
                         const messages = [...entry.messages];
                         const idx = messages.findIndex(
                           (m) =>
-                            m.id === assistantMessageId ||
-                            m.id.startsWith("assistant-streaming"),
+                            m.id === assistantMessageId,
                         );
 
                         const streamMsg: ChatMessage = {
@@ -305,8 +310,7 @@ export default function useStreamQuery() {
 
                         const assistantMsgIndex = messages.findIndex(
                           (m) =>
-                            m.id === assistantMessageId ||
-                            m.id.startsWith("assistant-streaming"),
+                            m.id === assistantMessageId,
                         );
 
                         const finalMessage: ChatMessage = {
@@ -367,8 +371,7 @@ export default function useStreamQuery() {
               const messages = [...entry.messages];
               const idx = messages.findIndex(
                 (m) =>
-                  m.id === assistantMessageId ||
-                  m.id.startsWith("assistant-streaming"),
+                  m.id === assistantMessageId,
               );
 
               const fallbackMessage: ChatMessage = {
@@ -404,6 +407,13 @@ export default function useStreamQuery() {
           queryKey: ["ai-conversations"],
         });
 
+        // Refetch the conversation to replace optimistic IDs with real server IDs
+        if (conversationId) {
+          queryClient.invalidateQueries({
+            queryKey: ["ai-conversation", conversationId],
+          });
+        }
+
         setStreamingState((prev) => ({
           ...prev,
           isStreaming: false,
@@ -424,8 +434,7 @@ export default function useStreamQuery() {
               const messages = [...entry.messages];
               const idx = messages.findIndex(
                 (m) =>
-                  m.id === assistantMessageId ||
-                  m.id.startsWith("assistant-streaming"),
+                  m.id === assistantMessageId,
               );
 
               const partialMessage: ChatMessage = {

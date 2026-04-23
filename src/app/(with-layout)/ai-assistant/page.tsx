@@ -56,11 +56,7 @@ export default function AIAssistantPage() {
   // During streaming, filter out the assistant message from cached messages
   // to avoid duplicate rendering (it's shown via streamingMessage instead)
   const displayMessages = streamingMessage
-    ? messages.filter(
-        (m) =>
-          m.id !== streamingMessage.id &&
-          !m.id.startsWith("assistant-streaming"),
-      )
+    ? messages.filter((m) => m.id !== streamingMessage.id)
     : messages;
 
   // Smart auto-scroll: only scroll if user is already at bottom, with throttling
@@ -350,7 +346,7 @@ export default function AIAssistantPage() {
                   />
                 ))}
 
-                {/* Show streaming message with smooth typing effect */}
+                {/* Show streaming message */}
                 {streamingMessage && (
                   <ChatMessage
                     key={streamingMessage.id}

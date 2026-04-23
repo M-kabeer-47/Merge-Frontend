@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import api from "@/utils/api";
 import { toastApiError } from "@/utils/toast-helpers";
 import { CreateNoteType } from "@/types/note-operations";
+import { revalidateNotesCache } from "@/server-actions/notes";
 import { useRouter } from "next/navigation";
 
 export default function useCreateNote() {
@@ -28,6 +29,9 @@ export default function useCreateNote() {
           notes: [...(old.notes || []), data],
         };
       });
+      // Invalidate server cache so NotesDataWrapper gets fresh data on navigation
+      revalidateNotesCache();
+
       localStorage.removeItem("note-draft");
       toast.success("Note created successfully!");
       router.push(`/notes/${folderId ? `?folderId=${folderId}` : ""}`);
