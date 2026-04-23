@@ -5,6 +5,10 @@ import type { Session } from "./types";
 import { formatSessionDate } from "./utils";
 
 export default function PastSessionCard({ session }: { session: Session }) {
+  const hostName = session.host
+    ? `${session.host.firstName} ${session.host.lastName}`
+    : "Unknown";
+
   return (
     <article className="bg-background border border-light-border rounded-lg p-4 sm:p-6 mb-4 shadow-sm hover:shadow-md transition-shadow">
       {/* Top Section */}
@@ -31,28 +35,35 @@ export default function PastSessionCard({ session }: { session: Session }) {
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-2 text-sm text-para">
             <div className="relative left-[-5px]">
-              <Avatar profileImage={session.hostedBy.avatar} size="sm" />
+              <Avatar profileImage={session.host?.image} size="sm" />
             </div>
-            <span>Hosted by {session.hostedBy.name}</span>
+            <span>Hosted by {hostName}</span>
           </div>
-          {session.hostedBy.role && (
-            <span className="px-2 py-0.5 bg-secondary/10 text-secondary rounded-full text-xs font-medium">
-              {session.hostedBy.role}
-            </span>
-          )}
         </div>
 
         {/* Date & Duration */}
         <div className="flex items-center gap-2 text-sm text-para-muted">
           <Calendar className="w-4 h-4" />
-          <span>{formatSessionDate(session.dateTime, session.duration)}</span>
+          <span>
+            {formatSessionDate(
+              session.startedAt || session.createdAt,
+              session.durationMinutes
+            )}
+          </span>
         </div>
 
         {/* Attendees */}
         <div className="flex items-center gap-2 text-sm text-para-muted">
           <Users className="w-4 h-4" />
-          <span>{session.attendees.count} attendees</span>
+          <span>{session.attendeeCount} attendees</span>
         </div>
+
+        {/* Description */}
+        {session.description && (
+          <p className="text-sm text-para-muted line-clamp-2 mt-1">
+            {session.description}
+          </p>
+        )}
       </div>
 
       {/* Action Buttons */}
@@ -61,12 +72,6 @@ export default function PastSessionCard({ session }: { session: Session }) {
           <Users className="w-4 h-4 mr-2" />
           View Attendees
         </Button>
-        {session.lectureSummary && (
-          <Button size="sm" className="w-[195px]" variant={"outline"}>
-            <FileText className="w-4 h-4 mr-2" />
-            View Lecture Summary
-          </Button>
-        )}
       </div>
     </article>
   );

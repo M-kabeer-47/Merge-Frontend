@@ -19,6 +19,7 @@ interface AttendeesPanelProps {
   onGrantCanvasEdit?: (id: string) => void;
   onPromoteAttendee?: (id: string) => void;
   onRemoveAttendee?: (id: string) => void;
+  darkMode?: boolean;
 }
 
 type RoleFilter = "all" | "host" | "co-host" | "participant";
@@ -32,6 +33,7 @@ export default function AttendeesPanel({
   onGrantCanvasEdit,
   onPromoteAttendee,
   onRemoveAttendee,
+  darkMode = false,
 }: AttendeesPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
