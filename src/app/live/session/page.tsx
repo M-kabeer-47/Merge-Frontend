@@ -34,8 +34,10 @@ import {
   LayoutGrid,
   Settings,
   UserCog,
+  ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast as sonnerToast } from "sonner";
 import Toast from "@/components/live-session/Toast";
 import AttendeesPanel from "@/components/live-session/AttendeesPanel";
 import ChatPanel from "@/components/live-session/ChatPanel";
@@ -54,6 +56,13 @@ import PermissionEnforcer, { type PermissionKey } from "@/components/live-sessio
 import HandRaiseSync from "@/components/live-session/HandRaiseSync";
 import { useLiveQna } from "@/hooks/live-qna/use-live-qna";
 import { toastApiError } from "@/utils/toast-helpers";
+import FocusTrackerController from "@/components/live-session/FocusTrackerController";
+import FocusTrackerToggle from "@/components/live-session/FocusTrackerToggle";
+import FocusAlert from "@/components/live-session/FocusAlert";
+import FocusReportDialog from "@/components/live-session/FocusReportDialog";
+import { useFocusReportUpload, sendFocusReportBeacon, stashPendingReport, flushPendingReports } from "@/hooks/focus-tracker/use-focus-report-upload";
+import { useFocusAudioAlert } from "@/hooks/focus-tracker/use-focus-audio-alert";
+import type { FrameKind, SessionReport, Sensitivity, FocusMetrics } from "@/lib/focus-tracker/types";
 
 function decodeLivekitTokenIdentity(token: string): string | null {
   try {
@@ -405,6 +414,23 @@ function LiveSessionPageContent() {
   const [showCaptions, setShowCaptions] = useState(false);
   const [raisedHand, setRaisedHand] = useState(false);
 
+  // ─── Focus Tracker State ───────────────────────────────────────────
+  const [focusEnabled, setFocusEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(`focus-enabled-${sessionId}`) === "true";
+  });
+  const [focusSensitivity, setFocusSensitivity] = useState<Sensitivity>("normal");
+  const [focusState, setFocusState] = useState<FrameKind | "idle">("idle");
+  const [isFocusDistracted, setIsFocusDistracted] = useState(false);
+  const [focusReport, setFocusReport] = useState<SessionReport | null>(null);
+  const [showFocusReport, setShowFocusReport] = useState(false);
+  const [showFocusIntro, setShowFocusIntro] = useState(false);
+  const focusReportRef = useRef<SessionReport | null>(null);
+  const focusReportGeneratorRef = useRef<(() => SessionReport | null) | null>(null);
+  const { uploadReport, isUploading: isUploadingFocusReport } = useFocusReportUpload();
+  const { muted: focusAlertMuted, setMuted: setFocusAlertMuted } =
+    useFocusAudioAlert(focusEnabled && isFocusDistracted);
+
   const initialMediaApplied = useRef(false);
 
   useEffect(() => {
@@ -418,6 +444,58 @@ function LiveSessionPageContent() {
     setCameraOn(false);
     initialMediaApplied.current = true;
   }, [currentUserId, sessionData]);
+
+  // Persist focus toggle to sessionStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem(`focus-enabled-${sessionId}`, String(focusEnabled));
+  }, [focusEnabled, sessionId]);
+
+  // Flush any pending focus reports from previous sessions on mount
+  useEffect(() => {
+    flushPendingReports().catch(() => {});
+  }, []);
+
+  // Focus tracker toggle handler with intro modal
+  const handleFocusToggle = useCallback((checked: boolean) => {
+    if (checked) {
+      const hasSeenIntro = localStorage.getItem("focus-tracker-intro-seen");
+      if (!hasSeenIntro) {
+        setShowFocusIntro(true);
+        return;
+      }
+    }
+    setFocusEnabled(checked);
+    if (checked) {
+      sonnerToast.info("Focus tracking started");
+    } else {
+      sonnerToast.info("Focus tracking stopped");
+    }
+  }, []);
+
+  const confirmFocusIntro = useCallback(() => {
+    localStorage.setItem("focus-tracker-intro-seen", "true");
+    setShowFocusIntro(false);
+    setFocusEnabled(true);
+    sonnerToast.info("Focus tracking started");
+  }, []);
+
+  // Focus tracker callbacks
+  const handleFocusStateChange = useCallback((state: FrameKind | "idle", distracted: boolean) => {
+    setFocusState(state);
+    setIsFocusDistracted(distracted);
+  }, []);
+
+  const handleFocusCameraChange = useCallback((available: boolean) => {
+    if (!available && focusEnabled) {
+      sonnerToast.info("Focus tracking paused — camera is off.");
+    }
+  }, [focusEnabled]);
+
+  const handleFocusReport = useCallback((report: SessionReport) => {
+    setFocusReport(report);
+    focusReportRef.current = report;
+  }, []);
 
   // Panels
   const [rightPanel, setRightPanel] = useState<"chat" | "people" | null>(null);
@@ -509,7 +587,25 @@ function LiveSessionPageContent() {
     return () => clearTimeout(redirectTimer);
   }, [sessionData, sessionTerminated, showToastMsg, navigateToSessions]);
 
-  const handleLeaveClick = useCallback(() => {
+  const handleLeaveClick = useCallback(async () => {
+    // Grab a fresh snapshot from the still-running tracker. The hook's
+    // onReport only fires after the tracker stops, which is AFTER we leave —
+    // so relying on focusReportRef alone causes every upload to be skipped.
+    const liveReport = focusReportGeneratorRef.current?.() ?? focusReportRef.current;
+    if (liveReport && sessionId) {
+      focusReportRef.current = liveReport;
+      setFocusReport(liveReport);
+      setShowFocusReport(true);
+      try {
+        await uploadReport({ sessionId, report: liveReport });
+      } catch {
+        // Stash for later if upload fails
+        stashPendingReport(sessionId, liveReport);
+      }
+      // Small delay so the dialog's render settles before navigation fires.
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
     if (isHost) {
       setHostLeaveModalOpen(true);
     } else {
@@ -517,11 +613,11 @@ function LiveSessionPageContent() {
       leaveSession({ sessionId, roomId })
         .then(() => {
           showToastMsg("success", "You left the session.");
-          navigateToSessions();
+          if (!showFocusReport) navigateToSessions();
         })
         .catch(() => {});
     }
-  }, [isHost, sessionId, roomId, leaveSession, showToastMsg, navigateToSessions]);
+  }, [isHost, sessionId, roomId, leaveSession, showToastMsg, navigateToSessions, uploadReport, showFocusReport]);
 
   const handleEndForAll = useCallback(async () => {
     try {
@@ -621,6 +717,16 @@ function LiveSessionPageContent() {
     const handleBeforeUnload = () => {
       if (!hasLeftRef.current && sessionId && roomId) {
         sendLeavePing(sessionId, roomId);
+      }
+      // Send focus report via beacon on tab close. Prefer a fresh snapshot
+      // from the still-running tracker; fall back to the last stored report.
+      const beaconReport =
+        focusReportGeneratorRef.current?.() ?? focusReportRef.current;
+      if (beaconReport && sessionId) {
+        const sent = sendFocusReportBeacon(sessionId, beaconReport);
+        if (!sent) {
+          stashPendingReport(sessionId, beaconReport);
+        }
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -898,6 +1004,15 @@ function LiveSessionPageContent() {
         <div className="flex-1 relative">
           {/* Video Stage - Stage or Grid View */}
           <div className="absolute inset-0">
+              {/* Focus Alert - persistent distraction banner */}
+              {focusEnabled && (
+                <FocusAlert
+                  currentState={focusState}
+                  isDistracted={isFocusDistracted}
+                  muted={focusAlertMuted}
+                  onToggleMute={() => setFocusAlertMuted(!focusAlertMuted)}
+                />
+              )}
             {livekitToken ? (
               <>
                 <LiveKitControlsBridge
@@ -972,8 +1087,18 @@ function LiveSessionPageContent() {
                 onClick={() => setRaisedHand((p) => !p)}
                 active={!raisedHand}
                 activeColor={raisedHand ? "bg-[#f9ab00]" : "bg-[#3c4043] hover:bg-[#494c50]"}
-                icon={<Hand className={`w-5 h-5 ${raisedHand ? "text-white" : "text-white"}`} />}
+                icon={<Hand className={`w-5 h-5 ${raisedHand ? "text-white" : "text-white"}`} />
+                }
                 title={raisedHand ? "Lower hand" : "Raise hand"}
+              />
+
+              {/* Focus Tracker Toggle */}
+              <FocusTrackerToggle
+                checked={focusEnabled}
+                onChange={handleFocusToggle}
+                currentState={focusState}
+                isDistracted={isFocusDistracted}
+                cameraOn={cameraOn}
               />
 
               {/* Screen Share */}
@@ -1121,7 +1246,74 @@ function LiveSessionPageContent() {
           localRaisedHand={raisedHand}
           onHandRaiseChange={handleHandRaiseChange}
         />
+        <FocusTrackerController
+          enabled={focusEnabled}
+          sessionId={sessionId}
+          userId={currentUserId || ""}
+          sensitivity={focusSensitivity}
+          onStateChange={handleFocusStateChange}
+          onReport={handleFocusReport}
+          onCameraAvailabilityChange={handleFocusCameraChange}
+          reportGeneratorRef={focusReportGeneratorRef}
+        />
         {content}
+        {/* Focus Intro Modal */}
+        <AnimatePresence>
+          {showFocusIntro && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full max-w-md rounded-xl border border-white/10 bg-[#202124] p-6 text-white shadow-2xl mx-4"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#1a73e8]/20 flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-[#8ab4f8]" />
+                  </div>
+                  <h2 className="text-xl font-semibold">Track your focus?</h2>
+                </div>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Your webcam will be <strong>analysed locally in your browser</strong> to help
+                  you stay focused. Nothing is sent to the server until the session ends.
+                  You can turn this off anytime.
+                </p>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => setShowFocusIntro(false)}
+                    className="px-4 py-2 text-sm rounded-lg text-white/70 hover:bg-white/10 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmFocusIntro}
+                    className="px-5 py-2 text-sm rounded-lg bg-[#1a73e8] hover:bg-[#1557b0] font-medium transition-colors"
+                  >
+                    Enable
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {/* Focus Report Dialog */}
+        {focusReport && (
+          <FocusReportDialog
+            isOpen={showFocusReport}
+            onClose={() => {
+              setShowFocusReport(false);
+              if (hasLeftRef.current) navigateToSessions();
+            }}
+            report={focusReport}
+            mode="live"
+            isUploading={isUploadingFocusReport}
+          />
+        )}
       </LiveKitRoom>
     );
   }

@@ -30,6 +30,11 @@ export interface ChatMessage {
   chunksRetrieved?: number;
   processingTimeMs?: number;
   createdAt: string;
+  // Attachment sent alongside this user message (optional, user messages only).
+  attachmentOriginalName?: string | null;
+  attachmentType?: "pdf" | "docx" | "txt" | "pptx" | "image" | null;
+  attachmentFileSize?: number | null;
+  attachmentUrl?: string | null;
 }
 
 // Context file for uploaded attachments
@@ -110,7 +115,7 @@ export interface StreamQueryPayload {
   message: string;
   contextFileId?: string;
   attachmentS3Url?: string;
-  attachmentType?: 'pdf' | 'docx' | 'txt' | 'pptx' | 'xlsx';
+  attachmentType?: 'pdf' | 'docx' | 'txt' | 'pptx' | 'image';
   attachmentOriginalName?: string;
   attachmentFileSize?: number;
   topK?: number;

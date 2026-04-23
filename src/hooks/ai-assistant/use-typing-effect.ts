@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState, useRef } from "react";
 
 /**
@@ -40,24 +42,27 @@ export function useTypingEffect(
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - lastUpdateRef.current;
-      
+
       // Calculate how many characters to add based on elapsed time
       const charactersToAdd = Math.floor(elapsed / speed);
-      
+
       if (charactersToAdd > 0) {
         lastUpdateRef.current = currentTime;
-        
+
         const currentLength = displayedLengthRef.current;
         const targetLength = targetText.length;
-        
+
         if (currentLength < targetLength) {
           // Add characters up to the calculated amount
-          const newLength = Math.min(currentLength + charactersToAdd, targetLength);
+          const newLength = Math.min(
+            currentLength + charactersToAdd,
+            targetLength,
+          );
           displayedLengthRef.current = newLength;
           setDisplayedText(targetText.slice(0, newLength));
         }
       }
-      
+
       // Continue animation if not complete
       if (displayedLengthRef.current < targetText.length) {
         animationFrameRef.current = requestAnimationFrame(animate);

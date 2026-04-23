@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion } from "motion/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import {
   Copy,
   Check,
@@ -11,6 +12,8 @@ import {
   FileText,
   Sparkles,
   BookmarkPlus,
+  FileImage,
+  FileType2,
 } from "lucide-react";
 import type { ChatMessage as ChatMessageType } from "@/types/ai-chat";
 
@@ -21,7 +24,46 @@ interface ChatMessageProps {
   onRegenerate?: (messageId: string) => void;
 }
 
-export default function ChatMessage({
+function formatFileSize(bytes?: number | null): string {
+  if (!bytes || bytes <= 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function AttachmentPill({
+  name,
+  type,
+  size,
+  onUserBubble,
+}: {
+  name: string;
+  type?: string | null;
+  size?: number | null;
+  onUserBubble: boolean;
+}) {
+  const Icon = type === "image" ? FileImage : FileType2;
+  const sizeStr = formatFileSize(size);
+  return (
+    <div
+      className={`inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs max-w-full ${
+        onUserBubble
+          ? "bg-white/15 text-white border border-white/20"
+          : "bg-secondary/10 text-secondary border border-secondary/20"
+      }`}
+    >
+      <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+      <span className="truncate max-w-[220px] font-medium">{name}</span>
+      {sizeStr && (
+        <span className={onUserBubble ? "text-white/60" : "text-para-muted"}>
+          · {sizeStr}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ChatMessageInner({
   message,
   isStreaming = false,
   onSaveToNotes,
@@ -90,15 +132,127 @@ export default function ChatMessage({
             }`}
           >
             {isAssistant ? (
-              <div className="prose prose-sm dark:prose-invert max-w-none prose-p:mb-2 prose-p:last:mb-0 prose-headings:text-heading prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-strong:text-heading prose-strong:font-semibold prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-blockquote:border-primary/40 prose-blockquote:text-para-muted prose-hr:border-light-border prose-table:text-sm prose-th:text-heading prose-td:text-para">
+              <div className="ai-markdown-body">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
                   components={{
+                    /* ---------- Headings ---------- */
+                    h1({ children }) {
+                      return (
+                        <h1 className="text-xl font-bold text-heading mt-6 mb-3 first:mt-0 pb-2 border-b border-light-border">
+                          {children}
+                        </h1>
+                      );
+                    },
+                    h2({ children }) {
+                      return (
+                        <h2 className="text-lg font-semibold text-heading mt-5 mb-2 first:mt-0 flex items-center gap-2">
+                          <span className="inline-block w-1 h-5 rounded-full bg-gradient-to-b from-primary to-secondary flex-shrink-0" />
+                          {children}
+                        </h2>
+                      );
+                    },
+                    h3({ children }) {
+                      return (
+                        <h3 className="text-base font-semibold text-heading mt-4 mb-1.5 first:mt-0">
+                          {children}
+                        </h3>
+                      );
+                    },
+
+                    /* ---------- Paragraph ---------- */
+                    p({ children }) {
+                      return (
+                        <p className="mb-3 last:mb-0 leading-[1.75] text-para">
+                          {children}
+                        </p>
+                      );
+                    },
+
+                    /* ---------- Bold / Strong ---------- */
+                    strong({ children }) {
+                      return (
+                        <strong className="font-semibold text-heading">
+                          {children}
+                        </strong>
+                      );
+                    },
+
+                    /* ---------- Links ---------- */
+                    a({ href, children }) {
+                      return (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary font-medium underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
+                        >
+                          {children}
+                        </a>
+                      );
+                    },
+
+                    /* ---------- Unordered List ---------- */
+                    ul({ children }) {
+                      return (
+                        <ul className="my-2 ml-1 space-y-1.5 list-none ai-ul">
+                          {children}
+                        </ul>
+                      );
+                    },
+
+                    /* ---------- Ordered List ---------- */
+                    ol({ children, start }) {
+                      return (
+                        <ol
+                          start={start}
+                          className="my-2 ml-1 space-y-1.5 list-none ai-ol"
+                          style={{ counterReset: `ai-list-counter ${(start || 1) - 1}` }}
+                          data-ordered="true"
+                        >
+                          {children}
+                        </ol>
+                      );
+                    },
+
+                    /* ---------- List Item ---------- */
+                    li({ children, node }) {
+                      // Determine if parent is ol by checking if node's parent tagName is "ol"
+                      const isOrdered = node?.position
+                        ? false // fallback, will be overridden by CSS
+                        : false;
+                      return (
+                        <li className="flex gap-2 text-para leading-[1.75] ai-li">
+                          <span className="flex-shrink-0 mt-[0.35em] ai-li-marker">
+                            <span className="ai-li-bullet inline-block w-1.5 h-1.5 rounded-full bg-primary/60 mt-0.5" />
+                            <span className="ai-li-number hidden items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-semibold" />
+                          </span>
+                          <span className="flex-1">{children}</span>
+                        </li>
+                      );
+                    },
+
+                    /* ---------- Blockquote ---------- */
+                    blockquote({ children }) {
+                      return (
+                        <blockquote className="my-3 px-4 py-2 border-l-3 border-primary/40 bg-primary/5 rounded-r-lg text-para-muted italic">
+                          {children}
+                        </blockquote>
+                      );
+                    },
+
+                    /* ---------- Horizontal Rule ---------- */
+                    hr() {
+                      return (
+                        <hr className="my-4 border-none h-px bg-gradient-to-r from-transparent via-light-border to-transparent" />
+                      );
+                    },
+
+                    /* ---------- Code (inline + block) ---------- */
                     code({ className, children, ...props }) {
                       const match = /language-(\w+)/.exec(className || "");
                       const codeString = String(children).replace(/\n$/, "");
-                      // Code blocks (fenced ```) either have a language class OR contain newlines
-                      // Inline code (`code`) is single-line with no className
                       const isInline =
                         !match && !className && !codeString.includes("\n");
                       const codeId = `code-${message.id}-${codeString.slice(0, 20)}`;
@@ -106,7 +260,7 @@ export default function ChatMessage({
                       if (isInline) {
                         return (
                           <code
-                            className="px-1.5 py-0.5 rounded-md bg-secondary/10 text-secondary font-mono text-[13px]"
+                            className="px-1.5 py-0.5 rounded-md bg-secondary/10 text-secondary font-mono text-[13px] border border-secondary/10"
                             {...props}
                           >
                             {children}
@@ -115,26 +269,34 @@ export default function ChatMessage({
                       }
 
                       return (
-                        <div className="relative group/code my-3">
-                          <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e2e] dark:bg-[#0a0812] rounded-t-lg border border-b-0 border-light-border">
-                            <span className="text-xs text-para-muted font-mono">
+                        <div className="relative group/code my-3 rounded-xl overflow-hidden border border-light-border shadow-sm">
+                          <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e2e] dark:bg-[#0a0812]">
+                            <span className="text-xs text-gray-400 font-mono uppercase tracking-wide">
                               {match?.[1] || "code"}
                             </span>
                             <button
-                              onClick={() => handleCopyCode(codeString, codeId)}
-                              className="text-para-muted hover:text-para transition-colors p-1 rounded"
+                              onClick={() =>
+                                handleCopyCode(codeString, codeId)
+                              }
+                              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors px-2 py-1 rounded-md hover:bg-white/5"
                               title="Copy code"
                             >
                               {copiedCodeBlock === codeId ? (
-                                <Check className="w-3.5 h-3.5 text-success" />
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span>Copied!</span>
+                                </>
                               ) : (
-                                <Copy className="w-3.5 h-3.5" />
+                                <>
+                                  <Copy className="w-3.5 h-3.5" />
+                                  <span>Copy</span>
+                                </>
                               )}
                             </button>
                           </div>
-                          <pre className="!mt-0 !rounded-t-none bg-[#1e1e2e] dark:bg-[#0a0812] border border-t-0 border-light-border overflow-x-auto">
+                          <pre className="!mt-0 !rounded-none !rounded-b-xl bg-[#1e1e2e] dark:bg-[#0a0812] overflow-x-auto p-4">
                             <code
-                              className={`text-sm font-mono ${className || ""}`}
+                              className={`text-sm font-mono leading-relaxed ${className || ""}`}
                               {...props}
                             >
                               {children}
@@ -146,18 +308,34 @@ export default function ChatMessage({
                     pre({ children }) {
                       return <>{children}</>;
                     },
+
+                    /* ---------- Table ---------- */
                     table({ children }) {
                       return (
-                        <div className="overflow-x-auto my-3 rounded-lg border border-light-border">
-                          <table className="!my-0">{children}</table>
+                        <div className="overflow-x-auto my-3 rounded-xl border border-light-border shadow-sm">
+                          <table className="w-full text-sm">{children}</table>
                         </div>
+                      );
+                    },
+                    thead({ children }) {
+                      return (
+                        <thead className="bg-secondary/5 border-b border-light-border">
+                          {children}
+                        </thead>
                       );
                     },
                     th({ children }) {
                       return (
-                        <th className="!bg-secondary/5 !font-semibold">
+                        <th className="text-left px-4 py-2.5 font-semibold text-heading text-xs uppercase tracking-wider">
                           {children}
                         </th>
+                      );
+                    },
+                    td({ children }) {
+                      return (
+                        <td className="px-4 py-2.5 text-para border-t border-light-border/50">
+                          {children}
+                        </td>
                       );
                     },
                   }}
@@ -166,12 +344,26 @@ export default function ChatMessage({
                 </ReactMarkdown>
               </div>
             ) : (
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              <>
+                {message.attachmentOriginalName && (
+                  <div className="mb-2">
+                    <AttachmentPill
+                      name={message.attachmentOriginalName}
+                      type={message.attachmentType}
+                      size={message.attachmentFileSize}
+                      onUserBubble={true}
+                    />
+                  </div>
+                )}
+                {message.content && (
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                )}
+              </>
             )}
           </div>
 
-          {/* Context File Indicator */}
-          {message.contextFileId && (
+          {/* Context File Indicator (legacy room-file path) */}
+          {isAssistant && message.contextFileId && (
             <div className="mt-3 flex flex-wrap gap-2">
               <div className="text-xs px-2 py-1 rounded-md bg-secondary/10 text-secondary border border-secondary/20 flex items-center gap-1">
                 <FileText className="w-3 h-3" />
@@ -220,3 +412,20 @@ export default function ChatMessage({
     </motion.div>
   );
 }
+
+// React.memo prevents re-renders of stable messages while an assistant
+// reply is streaming. Previously every SSE chunk caused every ChatMessage
+// in the list to re-render (and re-parse its markdown), producing the
+// flashy/laggy feel. With the cache no longer being written on every
+// chunk (see use-stream-query.ts), message prop references stay stable,
+// so shallow equality is enough.
+const ChatMessage = React.memo(ChatMessageInner, (prev, next) => {
+  return (
+    prev.message === next.message &&
+    prev.isStreaming === next.isStreaming &&
+    prev.onSaveToNotes === next.onSaveToNotes &&
+    prev.onRegenerate === next.onRegenerate
+  );
+});
+
+export default ChatMessage;

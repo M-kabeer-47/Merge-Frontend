@@ -51,6 +51,10 @@ export default function useStreamQuery() {
         content: payload.message,
         contextFileId: payload.contextFileId || null,
         createdAt: new Date().toISOString(),
+        attachmentOriginalName: payload.attachmentOriginalName || null,
+        attachmentType: payload.attachmentType || null,
+        attachmentFileSize: payload.attachmentFileSize || null,
+        attachmentUrl: payload.attachmentS3Url || null,
       };
       userMessageId = optimisticUserMessage.id;
 
@@ -230,54 +234,29 @@ export default function useStreamQuery() {
                   currentEvent === "chunk" ||
                   parsed.text !== undefined
                 ) {
-                  // chunk event - progressive text streaming
+                  // chunk event - progressive text streaming.
+                  // IMPORTANT: only update the dedicated streamingMessage
+                  // state here. Writing to the React Query cache on every
+                  // chunk cascades re-renders through the whole page
+                  // (sidebar, every prior ChatMessage, markdown re-parse)
+                  // and is what made streaming feel choppy. The cache is
+                  // updated once on the "complete" event below.
                   const chunkText = parsed.text || "";
                   accumulatedAnswer += chunkText;
 
-                  // Create streaming message for real-time display
                   if (!assistantMessageId) {
                     assistantMessageId = `assistant-streaming-${Date.now()}`;
                   }
 
-                  // Update streaming message state for real-time display
                   setStreamingState((prev) => ({
                     ...prev,
                     streamingMessage: {
                       id: assistantMessageId!,
                       role: "assistant",
                       content: accumulatedAnswer,
-                      createdAt: new Date().toISOString(),
+                      createdAt: prev.streamingMessage?.createdAt ?? new Date().toISOString(),
                     },
                   }));
-
-                  // Also persist to cache so the message survives streamingMessage clearing
-                  if (conversationId) {
-                    queryClient.setQueryData<ConversationWithMessages>(
-                      ["ai-conversation", conversationId],
-                      (old) => {
-                        const entry = ensureCacheEntry(old);
-                        const messages = [...entry.messages];
-                        const idx = messages.findIndex(
-                          (m) => m.id === assistantMessageId,
-                        );
-
-                        const streamMsg: ChatMessage = {
-                          id: assistantMessageId!,
-                          role: "assistant",
-                          content: accumulatedAnswer,
-                          createdAt: new Date().toISOString(),
-                        };
-
-                        if (idx !== -1) {
-                          messages[idx] = streamMsg;
-                        } else {
-                          messages.push(streamMsg);
-                        }
-
-                        return { ...entry, messages };
-                      },
-                    );
-                  }
                 } else if (currentEvent === "sources" || parsed.fileId) {
                   // sources event
                   const source: SourceEvent = {
@@ -296,7 +275,13 @@ export default function useStreamQuery() {
                   parsed.messageId ||
                   parsed.processing_time_ms !== undefined
                 ) {
-                  // complete event - finalize the streaming message
+                  // complete event - finalize the streaming message in cache.
+                  // IMPORTANT: keep the id equal to assistantMessageId (the
+                  // streaming id). When the streaming bubble unmounts and the
+                  // cached copy takes over in the main message list, the
+                  // React key stays the same across the transition so
+                  // framer-motion's entry animation does NOT replay.
+                  // The server-assigned id is preserved as a non-key field.
                   completedSuccessfully = true;
                   const finalMessageId = parsed.messageId || parsed.message_id;
                   const processingTime =
@@ -304,7 +289,6 @@ export default function useStreamQuery() {
                   const chunksRetrieved =
                     parsed.chunks_retrieved ?? parsed.totalChunks;
 
-                  // Finalize the assistant message in cache
                   if (conversationId && assistantMessageId) {
                     queryClient.setQueryData<ConversationWithMessages>(
                       ["ai-conversation", conversationId],
@@ -317,10 +301,12 @@ export default function useStreamQuery() {
                         );
 
                         const finalMessage: ChatMessage = {
-                          id: finalMessageId || assistantMessageId,
+                          id: assistantMessageId!,
                           role: "assistant",
                           content: accumulatedAnswer,
-                          createdAt: new Date().toISOString(),
+                          createdAt:
+                            messages[assistantMsgIndex]?.createdAt ??
+                            new Date().toISOString(),
                           processingTimeMs: processingTime,
                           chunksRetrieved: chunksRetrieved,
                           sources:
@@ -334,6 +320,9 @@ export default function useStreamQuery() {
                                 }))
                               : undefined,
                         };
+                        // Track the real server id for future API calls
+                        // without using it as the React key.
+                        (finalMessage as any).serverId = finalMessageId || null;
 
                         if (assistantMsgIndex !== -1) {
                           messages[assistantMsgIndex] = finalMessage;
@@ -404,17 +393,20 @@ export default function useStreamQuery() {
           );
         }
 
-        // Invalidate conversations list AFTER streaming ends (not mid-stream)
+        // Invalidate conversations list so the sidebar picks up the new
+        // title / last-message preview.
         queryClient.invalidateQueries({
           queryKey: ["ai-conversations"],
         });
 
-        // Refetch the conversation to replace optimistic IDs with real server IDs
-        if (conversationId) {
-          queryClient.invalidateQueries({
-            queryKey: ["ai-conversation", conversationId],
-          });
-        }
+        // NOTE: we intentionally do NOT invalidate ["ai-conversation", id]
+        // here. The cache already contains the final messages (written from
+        // the SSE complete event). An immediate refetch would replace our
+        // local message ids with server-assigned ids, which changes the
+        // React keys for every bubble and triggers framer-motion entry
+        // animations a second time right after the reply finishes. The
+        // cached data becomes naturally stale (staleTime=30s in
+        // use-fetch-conversation) and will refetch on next use.
 
         setStreamingState((prev) => ({
           ...prev,

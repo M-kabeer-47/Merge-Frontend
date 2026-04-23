@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "motion/react";
 import { PanelRightOpen } from "lucide-react";
 import { toast } from "sonner";
@@ -50,17 +50,20 @@ export default function AIAssistantPage() {
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
-  // Smooth typing effect for streaming message
-  const { displayedText } = useTypingEffect(
-    streamingMessage?.content || null,
-    15, // 15ms per character for smooth, fast typing effect
-  );
-
-  // During streaming, filter out the assistant message from cached messages
-  // to avoid duplicate rendering (it's shown via streamingMessage instead)
-  const displayMessages = streamingMessage
-    ? messages.filter((m) => m.id !== streamingMessage.id)
-    : messages;
+  // Build the single list that the main map renders. During streaming we
+  // append the live streamingMessage after the cached messages (also
+  // filtering any cached copy with the same id to avoid duplicates). When
+  // the stream ends, the same id exists in `messages` (written on the
+  // complete event in use-stream-query.ts), so the array transitions
+  // smoothly: [..., streamingMessage(id=S)] → [..., cachedFinal(id=S)].
+  // Because the position and key are preserved, React reuses the DOM
+  // node and framer-motion doesn't replay the entry animation.
+  const displayMessages = React.useMemo(() => {
+    const base = streamingMessage
+      ? messages.filter((m) => m.id !== streamingMessage.id)
+      : messages;
+    return streamingMessage ? [...base, streamingMessage] : base;
+  }, [messages, streamingMessage]);
 
   // Smart auto-scroll: only scroll if user is already at bottom, with throttling
   useEffect(() => {
@@ -174,20 +177,33 @@ export default function AIAssistantPage() {
   const handleSendMessage = async (content: string, files: ContextFile[]) => {
     const attachmentData = files.length > 0 ? files[0] : null;
 
-    // Map file type to attachment type
+    // Map file MIME or filename to attachment type. Falls back to the
+    // filename extension when the browser reports a generic/unknown MIME
+    // (e.g. application/octet-stream) — otherwise the backend drops the
+    // attachment because attachmentType is required for it to be forwarded
+    // to FastAPI.
     const mapFileTypeToAttachmentType = (
       fileType: string,
-    ): "pdf" | "docx" | "txt" | "pptx" | "xlsx" | undefined => {
-      const lowerType = fileType.toLowerCase();
-      if (lowerType.includes("pdf")) return "pdf";
-      if (lowerType.includes("docx") || lowerType.includes("document"))
-        return "docx";
-      if (lowerType.includes("txt") || lowerType.includes("text/plain"))
-        return "txt";
-      if (lowerType.includes("pptx") || lowerType.includes("presentation"))
-        return "pptx";
-      if (lowerType.includes("xlsx") || lowerType.includes("spreadsheet"))
-        return "xlsx";
+      fileName?: string,
+    ): "pdf" | "docx" | "txt" | "pptx" | "image" | undefined => {
+      const lowerType = (fileType || "").toLowerCase();
+      const lowerName = (fileName || "").toLowerCase();
+      const has = (needle: string) =>
+        lowerType.includes(needle) || lowerName.endsWith("." + needle);
+
+      if (has("pdf")) return "pdf";
+      if (has("docx") || lowerType.includes("document")) return "docx";
+      if (has("txt") || lowerType.includes("text/plain")) return "txt";
+      if (has("pptx") || lowerType.includes("presentation")) return "pptx";
+      if (
+        lowerType.includes("image") ||
+        has("png") ||
+        has("jpg") ||
+        has("jpeg") ||
+        has("gif") ||
+        has("webp")
+      )
+        return "image";
       return undefined;
     };
 
@@ -196,17 +212,29 @@ export default function AIAssistantPage() {
       ? attachmentData.id
       : undefined;
 
+    const resolvedAttachmentType = attachmentData
+      ? mapFileTypeToAttachmentType(attachmentData.type, attachmentData.name)
+      : undefined;
+
+    if (attachmentData && !contextFileId && !resolvedAttachmentType) {
+      toast.error(
+        `Unsupported file type: ${attachmentData.name}. Please upload a PDF, DOCX, PPTX, TXT, or image.`,
+      );
+      return;
+    }
+
+    // Clear context files immediately after clicking send so they disappear from composer
+    setContextFiles([]);
+
     await streamQuery(
       {
         conversationId: activeSessionId || undefined,
         message: content,
         contextFileId,
-        attachmentS3Url: attachmentData?.url,
-        attachmentType: attachmentData
-          ? mapFileTypeToAttachmentType(attachmentData.type)
-          : undefined,
-        attachmentOriginalName: attachmentData?.name,
-        attachmentFileSize: attachmentData?.size,
+        attachmentS3Url: contextFileId ? undefined : attachmentData?.url,
+        attachmentType: contextFileId ? undefined : resolvedAttachmentType,
+        attachmentOriginalName: contextFileId ? undefined : attachmentData?.name,
+        attachmentFileSize: contextFileId ? undefined : attachmentData?.size,
       },
       (conversationId) => {
         // On conversation created
@@ -256,20 +284,25 @@ export default function AIAssistantPage() {
     setContextFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
-  // Handle save to notes
-  const handleSaveToNotes = (messageId: string) => {
-    const message = messages.find((m) => m.id === messageId);
+  // Stable references so React.memo(ChatMessage) can short-circuit
+  // during per-chunk streaming re-renders of the parent.
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  const handleSaveToNotes = useCallback((messageId: string) => {
+    const message = messagesRef.current.find((m) => m.id === messageId);
     if (message) {
       console.log("Save to notes:", message.content);
       // TODO: Implement save to notes functionality
       toast.info("Feature coming soon: Save message to notes");
     }
-  };
+  }, []);
 
-  // Handle regenerate (resend last user message)
-  const handleRegenerate = async (messageId: string) => {
+  const handleRegenerate = useCallback(async (_messageId: string) => {
     toast.info("Feature coming soon: Regenerate response");
-  };
+  }, []);
 
   const composerProps = {
     onSendMessage: handleSendMessage,
@@ -353,25 +386,20 @@ export default function AIAssistantPage() {
                     />
                   )}
 
+                {/* Single render path: streamingMessage is appended to
+                    displayMessages as the last item. When the stream ends,
+                    the cached final message (same id, same position) takes
+                    its place in-situ — React reuses the same component
+                    instance, so the entry animation only fires ONCE. */}
                 {displayMessages.map((message) => (
                   <ChatMessage
                     key={message.id}
                     message={message}
+                    isStreaming={message.id === streamingMessage?.id}
                     onSaveToNotes={handleSaveToNotes}
                     onRegenerate={handleRegenerate}
                   />
                 ))}
-
-                {/* Show streaming message with live chunks */}
-                {streamingMessage && (
-                  <ChatMessage
-                    key={streamingMessage.id}
-                    message={streamingMessage}
-                    isStreaming={true}
-                    onSaveToNotes={handleSaveToNotes}
-                    onRegenerate={handleRegenerate}
-                  />
-                )}
 
                 {isStreaming && !streamingMessage && <TypingIndicator />}
 
