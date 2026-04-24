@@ -9,6 +9,7 @@ import useCreateSession from "@/hooks/live-sessions/use-create-session";
 import useStartSession from "@/hooks/live-sessions/use-start-session";
 import useDeleteSession from "@/hooks/live-sessions/use-delete-session";
 import useJoinSession from "@/hooks/live-sessions/use-join-session";
+import { useLiveSessionSocket } from "@/hooks/live-sessions/use-live-session-socket";
 import UpcomingSessionCard from "./UpcomingSessionCard";
 import PastSessionCard from "./PastSessionCard";
 import { EmptyUpcomingState, EmptyPastState } from "./empty-states";
@@ -24,6 +25,9 @@ export default function SessionsTab() {
   const isAdmin = userRole === "instructor";
 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+
+  // Realtime updates
+  useLiveSessionSocket({ roomId });
 
   // Fetch all sessions for this room
   const { data, isLoading } = useFetchSessions({ roomId });
@@ -65,7 +69,7 @@ export default function SessionsTab() {
     router.push(`/rooms/${roomId}/live?sessionId=${sessionId}`);
   };
 
-  const handleDeleteSession = async (sessionId: string) => {
+  const handleCancelSession = async (sessionId: string) => {
     await deleteSession({ sessionId, roomId });
   };
 
@@ -122,9 +126,9 @@ export default function SessionsTab() {
                 session={session}
                 onJoin={handleJoinSession}
                 onStart={handleStartScheduledSession}
-                onDelete={handleDeleteSession}
+                onCancel={handleCancelSession}
                 isStarting={isStarting}
-                isDeleting={isDeleting}
+                isCancelling={isDeleting}
               />
             ))}
           </div>
@@ -141,7 +145,7 @@ export default function SessionsTab() {
         {pastSessions.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {pastSessions.map((session) => (
-              <PastSessionCard key={session.id} session={session} />
+              <PastSessionCard key={session.id} session={session} isAdmin={isAdmin} roomId={roomId} />
             ))}
           </div>
         ) : (

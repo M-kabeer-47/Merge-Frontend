@@ -32,11 +32,11 @@ export default function useDeleteSession({
       queryClient.invalidateQueries({
         queryKey: ["live-sessions", variables.roomId],
       });
-      toast.success("Session deleted.");
+      toast.success("Session cancelled.");
       onSuccess?.();
     },
     onError: (error: unknown) => {
-      toastApiError(error, "Failed to delete session.");
+      toastApiError(error, "Failed to cancel session.");
     },
   });
 
