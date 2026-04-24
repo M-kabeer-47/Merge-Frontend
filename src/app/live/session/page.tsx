@@ -1120,6 +1120,30 @@ registerProcessor('pcm-processor', PCMProcessor);
     [attendees]
   );
 
+  // Kick an attendee (host only)
+  const handleKickAttendee = useCallback(
+    async (targetUserId: string) => {
+      if (!isHost || !sessionId) return;
+      try {
+        const res = await fetch(
+          `${BACKEND_URL}/live-sessions/${sessionId}/kick?roomId=${roomId}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ targetUserId }),
+          }
+        );
+        if (!res.ok) throw new Error("Failed to kick");
+        showToastMsg("success", "Attendee removed from session");
+        queryClient.invalidateQueries({ queryKey: ["live-session", sessionId, roomId] });
+      } catch {
+        showToastMsg("error", "Failed to remove attendee");
+      }
+    },
+    [isHost, sessionId, roomId, showToastMsg, queryClient]
+  );
+
   // ═══════════════════════════════════════════════════════════════════
   // RENDER CONTENT
   // ═══════════════════════════════════════════════════════════════════
@@ -1490,6 +1514,7 @@ registerProcessor('pcm-processor', PCMProcessor);
                       onGrantCanvasEdit={handleGrantCanvasEdit}
                       onPermissionToggle={handlePermissionToggle}
                       onBulkPermission={handleBulkPermission}
+                      onKickAttendee={handleKickAttendee}
                       darkMode
                     />
                   </div>
@@ -1516,6 +1541,7 @@ registerProcessor('pcm-processor', PCMProcessor);
           isHost={isHost}
           onPermissionChange={handlePermissionChange}
           onPermissionDenied={(msg) => showToastMsg("warning", msg)}
+          onKicked={handleLeaveClick}
         />
         <HandRaiseSync
           localRaisedHand={raisedHand}

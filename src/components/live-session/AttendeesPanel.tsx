@@ -18,6 +18,7 @@ import {
   MicOff,
   Video,
   VideoOff,
+  UserX,
 } from "lucide-react";
 import type { Attendee } from "@/types/live-session";
 
@@ -29,6 +30,7 @@ interface AttendeesPanelProps {
   onGrantCanvasEdit?: (id: string) => void;
   onPromoteAttendee?: (id: string) => void;
   onRemoveAttendee?: (id: string) => void;
+  onKickAttendee?: (id: string) => void;
   onMuteAll?: () => void;
   onUnmuteAll?: () => void;
   onDisableCameraAll?: () => void;
@@ -41,6 +43,7 @@ export default function AttendeesPanel({
   isHost = false,
   onMuteAttendee,
   onStopCamera,
+  onKickAttendee,
   onMuteAll,
   onUnmuteAll,
   onDisableCameraAll,
@@ -132,6 +135,7 @@ export default function AttendeesPanel({
             isHost={isHost}
             onToggleMic={onMuteAttendee}
             onToggleCamera={onStopCamera}
+            onKick={onKickAttendee}
             textPrimary={textPrimary}
             textSecondary={textSecondary}
             hoverBg={hoverBg}
@@ -163,6 +167,7 @@ function AttendeeRow({
   isHost,
   onToggleMic,
   onToggleCamera,
+  onKick,
   textPrimary,
   textSecondary,
   hoverBg,
@@ -173,6 +178,7 @@ function AttendeeRow({
   isHost: boolean;
   onToggleMic?: (id: string) => void;
   onToggleCamera?: (id: string) => void;
+  onKick?: (id: string) => void;
   textPrimary: string;
   textSecondary: string;
   hoverBg: string;
@@ -257,6 +263,15 @@ function AttendeeRow({
             ) : (
               <VideoOff className="w-3.5 h-3.5 text-red-400" />
             )}
+          </button>
+          <button
+            onClick={() => onKick?.(attendee.id)}
+            className={`${iconBtn(darkMode)} ${
+              darkMode ? "bg-red-500/20 hover:bg-red-500/40" : "bg-red-500/10 hover:bg-red-500/20"
+            }`}
+            title="Remove from session"
+          >
+            <UserX className="w-3.5 h-3.5 text-red-400" />
           </button>
         </div>
       ) : (

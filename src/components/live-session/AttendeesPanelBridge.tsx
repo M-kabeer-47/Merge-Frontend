@@ -12,6 +12,7 @@ interface AttendeesPanelBridgeProps {
   onGrantCanvasEdit?: (id: string) => void;
   onPermissionToggle?: (participantId: string, permission: "canMic" | "canCamera", value: boolean) => void;
   onBulkPermission?: (permission: "canMic" | "canCamera", value: boolean) => void;
+  onKickAttendee?: (id: string) => void;
   darkMode?: boolean;
 }
 
@@ -26,6 +27,7 @@ export default function AttendeesPanelBridge({
   onGrantCanvasEdit,
   onPermissionToggle,
   onBulkPermission,
+  onKickAttendee,
   darkMode = false,
 }: AttendeesPanelBridgeProps) {
   const room = useRoomContext();
@@ -78,6 +80,22 @@ export default function AttendeesPanelBridge({
     onBulkPermission?.("canCamera", true);
   }, [room, isHost, onBulkPermission]);
 
+  const handleKick = useCallback(
+    async (id: string) => {
+      if (!isHost) return;
+      // Send data-channel kick message so target disconnects immediately
+      try {
+        const encoder = new TextEncoder();
+        const msg = encoder.encode(JSON.stringify({ type: "kicked", target: id }));
+        await room.localParticipant.publishData(msg, { reliable: true });
+      } catch (e) {
+        console.error("Failed to send kick message:", e);
+      }
+      onKickAttendee?.(id);
+    },
+    [room, isHost, onKickAttendee]
+  );
+
   return (
     <AttendeesPanel
       attendees={attendees}
@@ -85,6 +103,7 @@ export default function AttendeesPanelBridge({
       onMuteAttendee={handleMuteAttendee}
       onStopCamera={handleStopCamera}
       onGrantCanvasEdit={onGrantCanvasEdit}
+      onKickAttendee={handleKick}
       onMuteAll={handleMuteAll}
       onUnmuteAll={handleUnmuteAll}
       onDisableCameraAll={handleDisableCameraAll}

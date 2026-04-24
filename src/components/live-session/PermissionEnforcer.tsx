@@ -13,10 +13,16 @@ interface PermissionMessage {
   allowed: boolean;
 }
 
+interface KickMessage {
+  type: "kicked";
+  target: string;
+}
+
 interface PermissionEnforcerProps {
   isHost: boolean;
   onPermissionDenied?: (message: string) => void;
   onPermissionChange?: (permission: PermissionKey, allowed: boolean) => void;
+  onKicked?: () => void;
 }
 
 /**
@@ -28,6 +34,7 @@ export default function PermissionEnforcer({
   isHost,
   onPermissionDenied,
   onPermissionChange,
+  onKicked,
 }: PermissionEnforcerProps) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
@@ -40,6 +47,20 @@ export default function PermissionEnforcer({
       try {
         const decoder = new TextDecoder();
         const parsed = JSON.parse(decoder.decode(payload));
+
+        // Handle kick
+        if (parsed?.type === "kicked") {
+          const data = parsed as KickMessage;
+          const isForMe =
+            data.target === "*" ||
+            data.target === localParticipant.identity ||
+            data.target === localParticipant.sid;
+          if (isForMe) {
+            onPermissionDenied?.("You have been removed from the session");
+            onKicked?.();
+          }
+          return;
+        }
 
         if (parsed?.type !== "permission_update") return;
         const data = parsed as PermissionMessage;
@@ -100,7 +121,7 @@ export default function PermissionEnforcer({
     return () => {
       room.off(RoomEvent.DataReceived, handleData);
     };
-  }, [room, localParticipant, isHost, onPermissionDenied, onPermissionChange]);
+  }, [room, localParticipant, isHost, onPermissionDenied, onPermissionChange, onKicked]);
 
   return null;
 }
