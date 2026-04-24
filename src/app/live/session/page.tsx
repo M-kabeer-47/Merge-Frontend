@@ -711,19 +711,19 @@ function LiveSessionPageContent() {
       const token = await fetchSocketAccessToken();
       if (!token) return;
 
-      socket = io(COMMUNICATION_URL, {
+      socket = io(`${COMMUNICATION_URL}/live-session`, {
         transports: ["websocket", "polling"],
         auth: { token },
       });
       socketRef.current = socket;
 
       socket.on("connect", () => {
-        console.log("[LiveSession] Socket connected");
-        socket?.emit("joinLiveSession", { sessionId, roomId });
+        console.log("[LiveSession] Socket connected to /live-session");
+        socket?.emit("join-session", sessionId);
       });
 
-      socket.on("sessionEnded", (data: { reason?: "manual" | "auto"; endedBy?: string; endedAt?: string }) => {
-        console.log("[LiveSession] Received sessionEnded:", data);
+      socket.on("session-ended", (data: { reason?: "manual" | "auto"; endedBy?: string; endedAt?: string }) => {
+        console.log("[LiveSession] Received session-ended:", data);
         if (!hasLeftRef.current) {
           hasLeftRef.current = true;
           setSessionTerminated(true);

@@ -11,18 +11,18 @@ interface UpcomingSessionCardProps {
   session: Session;
   onJoin?: (sessionId: string) => void;
   onStart?: (sessionId: string) => void;
-  onDelete?: (sessionId: string) => void;
+  onCancel?: (sessionId: string) => void;
   isStarting?: boolean;
-  isDeleting?: boolean;
+  isCancelling?: boolean;
 }
 
 export default function UpcomingSessionCard({
   session,
   onJoin,
   onStart,
-  onDelete,
+  onCancel,
   isStarting,
-  isDeleting,
+  isCancelling,
 }: UpcomingSessionCardProps) {
   const { userRole } = useRoom();
   const isLive = session.status === "live";
@@ -134,14 +134,15 @@ export default function UpcomingSessionCard({
             size="sm"
             variant="outline"
             className="text-destructive hover:bg-destructive/5"
-            onClick={() => onDelete?.(session.id)}
-            disabled={isDeleting}
+            onClick={() => onCancel?.(session.id)}
+            disabled={isCancelling}
           >
-            {isDeleting ? (
+            {isCancelling ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Trash2 className="w-4 h-4" />
             )}
+            Cancel
           </Button>
         )}
       </div>
