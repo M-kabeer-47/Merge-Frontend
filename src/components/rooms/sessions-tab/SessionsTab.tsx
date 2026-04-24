@@ -141,7 +141,7 @@ export default function SessionsTab() {
         {pastSessions.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {pastSessions.map((session) => (
-              <PastSessionCard key={session.id} session={session} />
+              <PastSessionCard key={session.id} session={session} isAdmin={isAdmin} roomId={roomId} />
             ))}
           </div>
         ) : (

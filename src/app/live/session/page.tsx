@@ -34,6 +34,7 @@ import {
   Settings,
   UserCog,
   ShieldCheck,
+  PenTool,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast as sonnerToast } from "sonner";
@@ -53,6 +54,8 @@ import LiveKitControlsBridge from "@/components/live-session/LiveKitControlsBrid
 import AttendeesGridView from "@/components/live-session/AttendeesGridView";
 import PermissionEnforcer, { type PermissionKey } from "@/components/live-session/PermissionEnforcer";
 import HandRaiseSync from "@/components/live-session/HandRaiseSync";
+import CanvasStage from "@/components/live-session/CanvasStage";
+import CanvasDrawerPanel from "@/components/live-session/CanvasDrawerPanel";
 import { useLiveQna } from "@/hooks/live-qna/use-live-qna";
 import { toastApiError } from "@/utils/toast-helpers";
 import FocusTrackerController from "@/components/live-session/FocusTrackerController";
@@ -529,8 +532,14 @@ function LiveSessionPageContent() {
   const [rightPanel, setRightPanel] = useState<"chat" | "people" | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
-  // View mode: "stage" (speaker view) or "grid" (all participants)
-  const [viewMode, setViewMode] = useState<"stage" | "grid">("stage");
+  // View mode: "stage" (speaker view), "grid" (all participants), or "canvas"
+  const [viewMode, setViewMode] = useState<"stage" | "grid" | "canvas">("stage");
+
+  // ─── Canvas Board State ──────────────────────────────────────────
+  const [canvasDraw, setCanvasDraw] = useState(false);
+  const [canvasDrawers, setCanvasDrawers] = useState<string[]>([]);
+  const canvasSocketRef = useRef<Socket | null>(null);
+  const [canvasToken, setCanvasToken] = useState<string | null>(null);
 
   // Permissions management (host view)
   interface AttendeePermission {
@@ -879,6 +888,79 @@ registerProcessor('pcm-processor', PCMProcessor);
     };
   }, [isHost, sessionId, sessionTerminated, transcriptionLang]);
 
+  // ─── Canvas Permission Socket ──────────────────────────────────
+  useEffect(() => {
+    if (!sessionId || !BACKEND_URL || sessionTerminated) return;
+
+    let socket: Socket | null = null;
+
+    const init = async () => {
+      const token = await fetchSocketAccessToken();
+      if (!token) return;
+      setCanvasToken(token);
+
+      socket = io(`${BACKEND_URL}/canvas`, {
+        path: "/socket.io",
+        transports: ["websocket", "polling"],
+        auth: { token },
+      });
+      canvasSocketRef.current = socket;
+
+      socket.on("connect", () => {
+        console.log("[Canvas] Permission socket connected");
+        socket?.emit("joinCanvas", { sessionId, isHost });
+      });
+
+      socket.on("canvasPermissions", (data: { canDraw: boolean; drawers: string[] }) => {
+        setCanvasDraw(isHost ? true : data.canDraw);
+        setCanvasDrawers(data.drawers);
+      });
+
+      socket.on("drawPermissionChanged", (data: { userId: string; canDraw: boolean; drawers: string[] }) => {
+        setCanvasDrawers(data.drawers);
+        if (data.userId === currentUserId) {
+          setCanvasDraw(data.canDraw);
+          showToastMsg(
+            data.canDraw ? "success" : "info",
+            data.canDraw ? "You can now draw on the canvas!" : "Your draw permission was revoked."
+          );
+        }
+      });
+
+      socket.on("canvasError", (data: { message: string }) => {
+        showToastMsg("warning", data.message);
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("[Canvas] Permission socket error:", err.message);
+      });
+    };
+
+    init();
+
+    return () => {
+      if (socket) {
+        socket.disconnect();
+        canvasSocketRef.current = null;
+      }
+    };
+  }, [sessionId, sessionTerminated, isHost, currentUserId]);
+
+  const handleGrantCanvasEdit = useCallback(
+    (targetUserId: string) => {
+      const socket = canvasSocketRef.current;
+      if (!socket || !isHost || !sessionId) return;
+
+      const alreadyDrawer = canvasDrawers.includes(targetUserId);
+      if (alreadyDrawer) {
+        socket.emit("revokeDraw", { sessionId, targetUserId });
+      } else {
+        socket.emit("grantDraw", { sessionId, targetUserId });
+      }
+    },
+    [isHost, sessionId, canvasDrawers]
+  );
+
   const toggleMic = () => {
     if (!myPermissions.canMic) {
       showToastMsg("warning", "Microphone has been disabled by the host");
@@ -1146,6 +1228,16 @@ registerProcessor('pcm-processor', PCMProcessor);
                 <LayoutGrid className="w-5 h-5 text-white" />
               )}
             </button>
+            <button
+              onClick={() => setViewMode(viewMode === "canvas" ? "stage" : "canvas")}
+              className={`
+                w-10 h-10 rounded-full flex items-center justify-center transition-colors
+                ${viewMode === "canvas" ? "bg-[#1a73e8]" : "hover:bg-white/10"}
+              `}
+              title={viewMode === "canvas" ? "Close canvas" : "Open canvas board"}
+            >
+              <PenTool className="w-5 h-5 text-white" />
+            </button>
           </div>
         </div>
       )}
@@ -1175,7 +1267,23 @@ registerProcessor('pcm-processor', PCMProcessor);
                   onCameraChange={handleCameraChange}
                   onScreenShareChange={handleScreenShareChange}
                 />
-                {viewMode === "stage" ? (
+                {viewMode === "canvas" ? (
+                  <>
+                    <CanvasStage
+                      sessionId={sessionId}
+                      canDraw={isHost || canvasDraw}
+                      backendUrl={BACKEND_URL}
+                      token={canvasToken || ""}
+                    />
+                    {isHost && (
+                      <CanvasDrawerPanel
+                        attendees={attendees}
+                        drawers={canvasDrawers}
+                        onToggleDraw={handleGrantCanvasEdit}
+                      />
+                    )}
+                  </>
+                ) : viewMode === "stage" ? (
                   <LiveKitStage
                     sessionTitle={sessionData?.title || "Meeting"}
                     screenSharing={screenSharing}
@@ -1368,7 +1476,7 @@ registerProcessor('pcm-processor', PCMProcessor);
                       isHost={isHost}
                       onMuteAttendee={() => {}}
                       onStopCamera={() => {}}
-                      onGrantCanvasEdit={() => {}}
+                      onGrantCanvasEdit={handleGrantCanvasEdit}
                       onPromoteAttendee={() => {}}
                       onRemoveAttendee={() => {}}
                       darkMode
