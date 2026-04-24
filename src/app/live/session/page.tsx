@@ -17,7 +17,6 @@ import {
   Video,
   VideoOff,
   MonitorUp,
-  MoreVertical,
   Users,
   MessageSquare,
   X,
@@ -39,7 +38,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast as sonnerToast } from "sonner";
 import Toast from "@/components/live-session/Toast";
-import AttendeesPanel from "@/components/live-session/AttendeesPanel";
+import AttendeesPanelBridge from "@/components/live-session/AttendeesPanelBridge";
 import ChatPanel from "@/components/live-session/ChatPanel";
 import type { Attendee } from "@/types/live-session";
 import { LiveKitRoom } from "@livekit/components-react";
@@ -530,7 +529,6 @@ function LiveSessionPageContent() {
 
   // Panels
   const [rightPanel, setRightPanel] = useState<"chat" | "people" | null>(null);
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   // View mode: "stage" (speaker view), "grid" (all participants), or "canvas"
   const [viewMode, setViewMode] = useState<"stage" | "grid" | "canvas">("stage");
@@ -590,21 +588,25 @@ function LiveSessionPageContent() {
     if (!sessionData?.attendees) return [];
     return sessionData.attendees
       .filter((a) => !a.leftAt)
-      .map((a) => ({
-        id: a.user?.id || a.id,
-        name: a.user ? `${a.user.firstName} ${a.user.lastName}` : "Unknown",
-        avatar: a.user?.image,
-        role: sessionData.host?.id === a.user?.id ? "host" : "participant",
-        webcamOn: true,
-        micOn: true,
-        speakerActive: false,
-        raiseHand: false,
-        networkQuality: "good" as const,
-        canEdit: sessionData.host?.id === a.user?.id,
-        screenSharing: false,
-        joinedAt: new Date(a.joinedAt),
-      }));
-  }, [sessionData]);
+      .map((a) => {
+        const uid = a.user?.id || a.id;
+        const perms = attendeePermissions[uid];
+        return {
+          id: uid,
+          name: a.user ? `${a.user.firstName} ${a.user.lastName}` : "Unknown",
+          avatar: a.user?.image,
+          role: sessionData.host?.id === uid ? "host" : "participant" as const,
+          webcamOn: perms ? perms.canCamera : true,
+          micOn: perms ? perms.canMic : true,
+          speakerActive: false,
+          raiseHand: false,
+          networkQuality: "good" as const,
+          canEdit: sessionData.host?.id === uid,
+          screenSharing: false,
+          joinedAt: new Date(a.joinedAt),
+        };
+      });
+  }, [sessionData, attendeePermissions]);
 
   useEffect(() => {
     if (!sessionData) return;
@@ -1080,6 +1082,44 @@ registerProcessor('pcm-processor', PCMProcessor);
     [attendees, isHost, showToastMsg]
   );
 
+  // Bridge callbacks for AttendeesPanelBridge → local state
+  const handlePermissionToggle = useCallback(
+    (participantId: string, permission: "canMic" | "canCamera", value: boolean) => {
+      setAttendeePermissions((prev) => ({
+        ...prev,
+        [participantId]: {
+          canMic: prev[participantId]?.canMic ?? true,
+          canCamera: prev[participantId]?.canCamera ?? true,
+          canScreenShare: prev[participantId]?.canScreenShare ?? true,
+          canChat: prev[participantId]?.canChat ?? true,
+          [permission]: value,
+        },
+      }));
+    },
+    []
+  );
+
+  const handleBulkPermission = useCallback(
+    (permission: "canMic" | "canCamera", value: boolean) => {
+      setAttendeePermissions((prev) => {
+        const updated: Record<string, AttendeePermission> = { ...prev };
+        attendees.forEach((a) => {
+          if (a.role !== "host") {
+            updated[a.id] = {
+              canMic: updated[a.id]?.canMic ?? true,
+              canCamera: updated[a.id]?.canCamera ?? true,
+              canScreenShare: updated[a.id]?.canScreenShare ?? true,
+              canChat: updated[a.id]?.canChat ?? true,
+              [permission]: value,
+            };
+          }
+        });
+        return updated;
+      });
+    },
+    [attendees]
+  );
+
   // ═══════════════════════════════════════════════════════════════════
   // RENDER CONTENT
   // ═══════════════════════════════════════════════════════════════════
@@ -1374,33 +1414,6 @@ registerProcessor('pcm-processor', PCMProcessor);
                 </button>
               )}
 
-              {/* More Options */}
-              <div className="relative">
-                <ControlButton
-                  onClick={() => setShowMoreMenu(!showMoreMenu)}
-                  active={true}
-                  icon={<MoreVertical className="w-5 h-5 text-white" />}
-                  title="More options"
-                />
-                {showMoreMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#3c4043] rounded-lg shadow-xl py-2 min-w-[200px] z-50">
-                      <button className="w-full px-4 py-2 text-left text-white hover:bg-white/10 text-sm">
-                        Settings
-                      </button>
-                      <button className="w-full px-4 py-2 text-left text-white hover:bg-white/10 text-sm">
-                        Change layout
-                      </button>
-                      <button className="w-full px-4 py-2 text-left text-white hover:bg-white/10 text-sm">
-                        Fullscreen
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="w-px h-8 bg-white/20 mx-1" />
 
               {/* End Call - Host sees end session, participants see leave */}
               {isHost ? (
@@ -1471,14 +1484,12 @@ registerProcessor('pcm-processor', PCMProcessor);
                     </button>
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <AttendeesPanel
+                    <AttendeesPanelBridge
                       attendees={attendees}
                       isHost={isHost}
-                      onMuteAttendee={() => {}}
-                      onStopCamera={() => {}}
                       onGrantCanvasEdit={handleGrantCanvasEdit}
-                      onPromoteAttendee={() => {}}
-                      onRemoveAttendee={() => {}}
+                      onPermissionToggle={handlePermissionToggle}
+                      onBulkPermission={handleBulkPermission}
                       darkMode
                     />
                   </div>
