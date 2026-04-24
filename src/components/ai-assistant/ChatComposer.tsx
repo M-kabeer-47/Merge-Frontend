@@ -11,8 +11,18 @@ interface ChatComposerProps {
   onUploadFile: (file: File) => void;
   contextFiles: ContextFile[];
   onRemoveContextFile: (fileId: string) => void;
+  // `disabled` blocks send + attachment buttons (upload in progress OR
+  // assistant is streaming). The textarea only respects `isStreaming` so
+  // the user can keep typing their question while a file uploads.
   disabled?: boolean;
+  isStreaming?: boolean;
   uploadProgress?: AttachmentUploadProgress | null;
+  /** How many files are already attached to this conversation. */
+  attachmentCount?: number;
+  /** Max files allowed per conversation (backend-enforced). */
+  maxAttachments?: number;
+  /** True when attachmentCount >= maxAttachments. Disables attach buttons. */
+  atAttachmentCap?: boolean;
 }
 
 export default function ChatComposer({
@@ -22,7 +32,11 @@ export default function ChatComposer({
   contextFiles,
   onRemoveContextFile,
   disabled = false,
+  isStreaming = false,
   uploadProgress,
+  attachmentCount = 0,
+  maxAttachments = 2,
+  atAttachmentCap = false,
 }: ChatComposerProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -139,7 +153,7 @@ export default function ChatComposer({
                 onChange={handleTextareaChange}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask anything or attach files from a room..."
-                disabled={disabled}
+                disabled={isStreaming}
                 className="text-para bg-transparent w-full focus:outline-none resize-none max-h-[20px] text-sm overflow-y-auto placeholder:text-para-muted/70"
                 rows={1}
               />
@@ -160,9 +174,13 @@ export default function ChatComposer({
                 {/* Upload Local File */}
                 <button
                   onClick={handleUploadClick}
-                  className="p-2 rounded-lg hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors"
-                  title="Upload file from device"
-                  disabled={disabled}
+                  className="p-2 rounded-lg hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={
+                    atAttachmentCap
+                      ? `Max ${maxAttachments} files per conversation reached`
+                      : "Upload file from device"
+                  }
+                  disabled={disabled || atAttachmentCap}
                   aria-label="Upload file from your device"
                 >
                   <Paperclip className="h-[18px] w-[18px] text-para-muted" />
@@ -171,27 +189,63 @@ export default function ChatComposer({
                 {/* Add from Rooms */}
                 <button
                   onClick={onAddContext}
-                  className="p-2 rounded-lg hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors"
-                  title="Add files from rooms"
-                  disabled={disabled}
+                  className="p-2 rounded-lg hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={
+                    atAttachmentCap
+                      ? `Max ${maxAttachments} files per conversation reached`
+                      : "Add files from rooms"
+                  }
+                  disabled={disabled || atAttachmentCap}
                   aria-label="Add files from your rooms"
                 >
                   <FolderOpen className="h-[18px] w-[18px] text-secondary" />
                 </button>
+
+                {/* Attachment count indicator (only when at least one file
+                    is already attached to the conversation) */}
+                {attachmentCount > 0 && (
+                  <span
+                    className={`ml-1 text-xs ${
+                      atAttachmentCap ? "text-destructive" : "text-para-muted"
+                    }`}
+                    title="Files attached to this conversation"
+                  >
+                    {attachmentCount}/{maxAttachments} files
+                  </span>
+                )}
               </div>
 
               {/* Send Button */}
-              <button
-                onClick={handleSend}
-                disabled={!message.trim() && contextFiles.length === 0}
-                className={`p-2.5 rounded-xl transition-all duration-200 flex items-center justify-center ${
-                  message.trim() || contextFiles.length > 0
-                    ? "bg-primary text-white hover:bg-primary/90 shadow-md dark:shadow-primary/30 hover:scale-105 active:scale-95"
-                    : "bg-primary/30 dark:bg-white/5 text-white/40 dark:text-para-muted/40 cursor-not-allowed"
-                }`}
-              >
-                <ArrowUp className="h-4 w-4" />
-              </button>
+              {(() => {
+                const hasContent =
+                  message.trim().length > 0 || contextFiles.length > 0;
+                const canSend = hasContent && !disabled;
+                return (
+                  <button
+                    onClick={handleSend}
+                    disabled={!canSend}
+                    title={
+                      disabled && hasContent
+                        ? uploadProgress?.status === "uploading"
+                          ? "Waiting for upload to finish..."
+                          : "Please wait..."
+                        : "Send"
+                    }
+                    className={`p-2.5 rounded-xl transition-all duration-200 flex items-center justify-center ${
+                      canSend
+                        ? "bg-primary text-white hover:bg-primary/90 shadow-md dark:shadow-primary/30 hover:scale-105 active:scale-95"
+                        : "bg-primary/30 dark:bg-white/5 text-white/40 dark:text-para-muted/40 cursor-not-allowed"
+                    }`}
+                  >
+                    {disabled &&
+                    uploadProgress?.status === "uploading" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowUp className="h-4 w-4" />
+                    )}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>

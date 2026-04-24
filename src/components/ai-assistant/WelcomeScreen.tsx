@@ -12,7 +12,11 @@ interface WelcomeScreenProps {
   contextFiles: ContextFile[];
   onRemoveContextFile: (fileId: string) => void;
   disabled: boolean;
+  isStreaming?: boolean;
   uploadProgress?: AttachmentUploadProgress | null;
+  attachmentCount?: number;
+  maxAttachments?: number;
+  atAttachmentCap?: boolean;
 }
 
 export default function WelcomeScreen({
@@ -23,7 +27,11 @@ export default function WelcomeScreen({
   contextFiles,
   onRemoveContextFile,
   disabled,
+  isStreaming,
   uploadProgress,
+  attachmentCount,
+  maxAttachments,
+  atAttachmentCap,
 }: WelcomeScreenProps) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6">
@@ -53,7 +61,11 @@ export default function WelcomeScreen({
           contextFiles={contextFiles}
           onRemoveContextFile={onRemoveContextFile}
           disabled={disabled}
+          isStreaming={isStreaming}
           uploadProgress={uploadProgress}
+          attachmentCount={attachmentCount}
+          maxAttachments={maxAttachments}
+          atAttachmentCap={atAttachmentCap}
         />
       </div>
     </div>

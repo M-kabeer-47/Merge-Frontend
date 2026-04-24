@@ -43,12 +43,18 @@ export default function AIAssistantPage() {
   // Fetch conversations and active conversation
   const { conversations, isLoading: loadingConversations } =
     useFetchConversations();
-  const { messages, isLoading: loadingMessages } = useFetchConversation(
-    activeSessionId,
-    isStreaming,
-  );
+  const { conversation, messages, isLoading: loadingMessages } =
+    useFetchConversation(activeSessionId, isStreaming);
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
+
+  // Max attachments allowed per conversation (mirror of backend cap).
+  const MAX_ATTACHMENTS_PER_CONVERSATION = 2;
+  const conversationAttachmentCount =
+    conversation?.attachments?.length ?? 0;
+  const atAttachmentCap =
+    !!activeSessionId &&
+    conversationAttachmentCount >= MAX_ATTACHMENTS_PER_CONVERSATION;
 
   // Build the single list that the main map renders. During streaming we
   // append the live streamingMessage after the cached messages (also
@@ -254,6 +260,12 @@ export default function AIAssistantPage() {
 
   // Handle file upload from device
   const handleUploadFile = async (file: File) => {
+    if (atAttachmentCap) {
+      toast.error(
+        `This conversation already has ${MAX_ATTACHMENTS_PER_CONVERSATION} files. Start a new chat to attach another.`,
+      );
+      return;
+    }
     try {
       const uploaded = await uploadAttachment(file);
 
@@ -273,6 +285,12 @@ export default function AIAssistantPage() {
 
   // Handle context file management
   const handleAddContext = () => {
+    if (atAttachmentCap) {
+      toast.error(
+        `This conversation already has ${MAX_ATTACHMENTS_PER_CONVERSATION} files. Start a new chat to attach another.`,
+      );
+      return;
+    }
     setIsFilePickerOpen(true);
   };
 
@@ -310,8 +328,15 @@ export default function AIAssistantPage() {
     onUploadFile: handleUploadFile,
     contextFiles,
     onRemoveContextFile: handleRemoveContextFile,
+    // disabled blocks the send button + attach buttons; textarea is only
+    // blocked while the assistant is streaming, so the user can keep
+    // typing their question while a file uploads in the background.
     disabled: isStreaming || isUploading,
+    isStreaming,
     uploadProgress,
+    attachmentCount: conversationAttachmentCount,
+    maxAttachments: MAX_ATTACHMENTS_PER_CONVERSATION,
+    atAttachmentCap,
   };
 
   return (

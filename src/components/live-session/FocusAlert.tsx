@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   EyeOff,
   UserX,
-  ArrowDown,
   Coffee,
   AppWindow,
   Users,
@@ -56,13 +55,8 @@ const ALERT_CONFIG: Record<
   },
   drowsy: {
     icon: <Coffee className="w-4 h-4" />,
-    message: "Looking drowsy — take a short break?",
+    message: "You've had your eyes closed for a while — are you still with us?",
     color: "from-indigo-500/90 to-indigo-600/90",
-  },
-  looking_down: {
-    icon: <ArrowDown className="w-4 h-4" />,
-    message: "Looking down — eyes back on the session.",
-    color: "from-orange-500/90 to-orange-600/90",
   },
   tab_switched: {
     icon: <AppWindow className="w-4 h-4" />,

@@ -40,17 +40,18 @@ function formatDuration(ms: number): string {
 function phraseEvent(event: SessionEvent): string {
   const clock = formatClock(event.startedAt);
   const dur = formatDuration(event.durationMs);
-  switch (event.state as FrameKind) {
+  // Use loose matching so legacy event states (e.g. "looking_down" in reports
+  // saved before we collapsed the taxonomy) still render sensibly.
+  switch (event.state as string) {
     case "focused":
       return `Focused for ${dur}`;
     case "looking_away":
-      return `Looked away at ${clock} for ${dur}`;
     case "looking_down":
-      return `Looked down at ${clock} for ${dur} — possibly checking a phone or notes`;
+      return `Looked away at ${clock} for ${dur}`;
     case "eyes_closed":
       return `Closed eyes at ${clock} for ${dur}`;
     case "drowsy":
-      return `Signs of drowsiness at ${clock} (yawn / prolonged eye closure)`;
+      return `Signs of drowsiness at ${clock} — prolonged eye closure`;
     case "no_face":
       return `Left the frame at ${clock} for ${dur}`;
     case "tab_switched":
@@ -58,7 +59,7 @@ function phraseEvent(event: SessionEvent): string {
     case "multi_face":
       return `Another person entered the frame at ${clock}`;
     default:
-      return `Unknown state at ${clock}`;
+      return `Distraction at ${clock}`;
   }
 }
 
@@ -126,13 +127,6 @@ export function buildSuggestions(report: SessionReport): string[] {
   if (noFaceMs > report.totalDurationMs * 0.15) {
     suggestions.push(
       "Your face was often out of frame. Adjust your camera angle so your face stays visible throughout.",
-    );
-  }
-
-  const lookingDownMs = durations["looking_down"] || 0;
-  if (lookingDownMs > report.totalDurationMs * 0.1) {
-    suggestions.push(
-      "You were looking down often. Move your notes onto the same screen or open them beside this one.",
     );
   }
 

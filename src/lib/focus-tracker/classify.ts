@@ -3,17 +3,23 @@
  *
  * Pure function that takes MediaPipe FaceLandmarker output and classifies
  * the current frame. Decision order:
- *   1. Multiple faces in frame          → multi_face
- *   2. No face detected                 → no_face
- *   3. Both eyes closed (blink > T)     → eyes_closed   (tracker may reclassify to drowsy)
- *   4. Jaw open (yawn, blendshape > T)  → drowsy        (tracker enforces hold)
- *   5. Head turned (yaw/pitch > T)      → looking_away:head
- *   6. Gaze down (eyeLookDown avg > T)  → looking_down
- *   7. Gaze shifted sideways            → looking_away:gaze
- *   8. Otherwise                        → focused
+ *   1. Multiple faces in frame      → multi_face
+ *   2. No face detected             → no_face
+ *   3. Both eyes closed (blink > T) → eyes_closed   (tracker may reclassify to drowsy)
+ *   4. Head turned (yaw/pitch > T)  → looking_away:head
+ *   5. Gaze shifted off-center      → looking_away:gaze
+ *   6. Otherwise                    → focused
  *
- * The classifier stays pure — cross-frame durations (e.g. "eyes closed ≥ 4s
- * ⇒ drowsy") are handled by the FocusTracker state machine.
+ * We deliberately do not try to identify specific distraction *directions*
+ * (looking_down, yawning-via-jaw). MediaPipe's blendshapes are designed for
+ * 3D avatar animation, not for classification — they false-fire on normal
+ * speech (jawOpen) and on reading content near the bottom of the screen
+ * (eyeLookDown). Any non-focused gaze folds into the generic `looking_away`
+ * state, which is reliable and honest about what we can actually detect.
+ *
+ * Drowsiness is still detected — but only via prolonged eye closure in the
+ * FocusTracker state machine, which is the PERCLOS-style signal the drowsy-
+ * detection literature actually validates.
  */
 
 import type { FrameState, SensitivityThresholds } from "./types";
@@ -53,20 +59,9 @@ export function classifyFrame(
     return { kind: "eyes_closed" };
   }
 
-  const jawOpen = getBlendshapeValue(blendshapeCategories, "jawOpen");
-  if (jawOpen > thresholds.yawn) {
-    return { kind: "drowsy", reason: "yawn" };
-  }
-
   const { yaw, pitch } = decomposeMatrix(transformMatrix);
   if (Math.abs(yaw) > thresholds.yawDeg || Math.abs(pitch) > thresholds.pitchDeg) {
     return { kind: "looking_away", reason: "head" };
-  }
-
-  const lookDownL = getBlendshapeValue(blendshapeCategories, "eyeLookDownLeft");
-  const lookDownR = getBlendshapeValue(blendshapeCategories, "eyeLookDownRight");
-  if ((lookDownL + lookDownR) / 2 > thresholds.lookDown) {
-    return { kind: "looking_down" };
   }
 
   const lookOutL = getBlendshapeValue(blendshapeCategories, "eyeLookOutLeft");

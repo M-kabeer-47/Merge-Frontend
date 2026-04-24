@@ -63,6 +63,13 @@ export interface ChatSession {
   isPinned?: boolean; // Client-side only
 }
 
+export interface ConversationAttachmentSummary {
+  url: string;
+  type: string;
+  originalName: string;
+  inVectorDB?: boolean;
+}
+
 // Conversation with messages
 export interface ConversationWithMessages {
   id: string;
@@ -71,6 +78,8 @@ export interface ConversationWithMessages {
   createdAt: string;
   updatedAt: string;
   messages: ChatMessage[];
+  /** All attachments currently active on this conversation (cap: 2). */
+  attachments?: ConversationAttachmentSummary[];
 }
 
 // API Response Types
