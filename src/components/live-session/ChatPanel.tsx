@@ -20,6 +20,7 @@ import {
   Copy,
   CheckCircle2,
   X,
+  Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import type { LiveQnaQuestion } from "@/types/live-qna";
@@ -35,6 +36,8 @@ interface ChatPanelProps {
   onRemoveQuestion?: (questionId: string) => void;
   onMarkAnswered?: (questionId: string) => void;
   onMarkOpen?: (questionId: string) => void;
+  onAskAiBot?: (questionId: string) => void;
+  askingBotFor?: Set<string>;
   topQuestionId?: string | null;
   darkMode?: boolean;
   isLoading?: boolean;
@@ -53,6 +56,8 @@ export default function ChatPanel({
   onRemoveQuestion,
   onMarkAnswered,
   onMarkOpen,
+  onAskAiBot,
+  askingBotFor,
   topQuestionId,
   darkMode = false,
   isLoading = false,
@@ -151,15 +156,19 @@ export default function ChatPanel({
     });
   }, [questions, topQuestionId]);
 
-  // Extract bot replies from messages
-  const extractedBotReplies = useMemo(() => {
-    const replies: BotReply[] = [];
-    questions.forEach((question) => {
-      if ((question as any).botReply) {
-        replies.push((question as any).botReply);
-      }
-    });
-    return replies;
+  // Extract bot replies from questions that have an AI answer
+  const extractedBotReplies = useMemo<BotReply[]>(() => {
+    return questions
+      .filter((q) => q.aiAnswer)
+      .map((q) => ({
+        id: q.id,
+        question: q.content,
+        answer: q.aiAnswer!,
+        content: q.aiAnswer!,
+        timestamp: new Date(q.aiAnsweredAt ?? q.updatedAt),
+        helpful: null,
+        sources: q.aiAnswerSources ?? [],
+      }));
   }, [questions]);
 
   // Use extracted replies if botReplies prop is empty
@@ -409,6 +418,21 @@ export default function ChatPanel({
                                         <Pin className="w-4 h-4" />
                                         {answered ? "Mark as open" : "Mark as answered"}
                                       </button>
+                                      <button
+                                        onClick={() => {
+                                          onAskAiBot?.(question.id);
+                                          setShowMenu(null);
+                                        }}
+                                        disabled={askingBotFor?.has(question.id)}
+                                        className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors disabled:opacity-50 ${theme.menuItem}`}
+                                      >
+                                        {askingBotFor?.has(question.id) ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <Sparkles className="w-4 h-4" />
+                                        )}
+                                        Ask AI to answer
+                                      </button>
                                       <div className={`h-px mx-3 my-2 ${theme.divider}`} />
                                       <button
                                         onClick={() => {
@@ -437,6 +461,44 @@ export default function ChatPanel({
                       </div>
                     </div>
                   </div>
+
+                  {/* Inline AI answer — shown when bot has answered */}
+                  {question.aiAnswer && (
+                    <div className={`rounded-xl border px-4 py-3 ${theme.botCard}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 rounded-lg bg-primary text-white">
+                          <Bot className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                          AI Assistant
+                        </span>
+                        {question.aiAnsweredAt && (
+                          <span className={`text-xs ml-auto ${theme.meta}`}>
+                            {formatDistanceToNow(new Date(question.aiAnsweredAt), { addSuffix: true })}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-sm leading-relaxed whitespace-pre-wrap ${theme.body}`}>
+                        {question.aiAnswer}
+                      </p>
+                      {question.aiAnswerSources && question.aiAnswerSources.length > 0 && (
+                        <div className={`mt-2 pt-2 border-t flex flex-wrap gap-1.5 ${theme.divider}`}>
+                          {question.aiAnswerSources.map((source, idx) => (
+                            <span
+                              key={idx}
+                              className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                                darkMode
+                                  ? "bg-white/5 border-white/10 text-white/70"
+                                  : "bg-secondary/10 border-secondary/20 text-para"
+                              }`}
+                            >
+                              {source}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -456,7 +518,14 @@ export default function ChatPanel({
               key={reply.id}
               className={`p-5 rounded-2xl border transition-colors ${theme.botCard}`}
             >
-              <div className="flex items-center gap-3 mb-4">
+              {/* Original question */}
+              <div className={`mb-3 pb-3 border-b ${theme.divider}`}>
+                <p className={`text-xs font-medium mb-1 ${theme.meta}`}>Question</p>
+                <p className={`text-sm leading-relaxed whitespace-pre-wrap ${theme.body}`}>
+                  {reply.question}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 rounded-xl bg-primary text-white shadow-lg">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
@@ -500,7 +569,7 @@ export default function ChatPanel({
             <Bot className={`w-12 h-12 mb-3 ${theme.emptyIcon}`} />
             <p className={`font-medium ${theme.body}`}>No bot answers yet</p>
             <p className={`text-sm mt-1 ${theme.meta}`}>
-              Enable "Ask Bot" when submitting a question
+              Admin can ask AI to answer questions from the menu
             </p>
           </div>
         )}

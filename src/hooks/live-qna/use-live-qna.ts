@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
 import type { LiveQnaQuestion, LiveQnaUser } from "@/types/live-qna";
-import { fetchLiveQnaQuestions } from "@/server-api/live-qna";
+import { fetchLiveQnaQuestions, askAiBotToAnswer } from "@/server-api/live-qna";
 
 const COMMUNICATION_URL = process.env.NEXT_PUBLIC_COMMUNICATION_URL || "";
 
@@ -92,6 +92,7 @@ export function useLiveQna({
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [askingBotFor, setAskingBotFor] = useState<Set<string>>(new Set());
 
   const socketRef = useRef<Socket | null>(null);
   const questionsRef = useRef<LiveQnaQuestion[]>([]);
@@ -422,6 +423,26 @@ export function useLiveQna({
     [currentUserId, emitWithAck, roomId, sessionId],
   );
 
+  const askAiBot = useCallback(
+    async (questionId: string) => {
+      if (!roomId || !sessionId) return;
+      setAskingBotFor((prev) => new Set(prev).add(questionId));
+      try {
+        await askAiBotToAnswer(roomId, sessionId, questionId);
+        // Answer arrives via 'questionUpdated' WebSocket event — no optimistic update needed
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || "AI could not answer this question");
+      } finally {
+        setAskingBotFor((prev) => {
+          const next = new Set(prev);
+          next.delete(questionId);
+          return next;
+        });
+      }
+    },
+    [roomId, sessionId],
+  );
+
   const topQuestionId = useMemo(() => {
     if (!questions.length) return null;
     const sorted = [...questions].sort((a, b) => {
@@ -442,5 +463,7 @@ export function useLiveQna({
     removeQuestion,
     markAnswered: (questionId: string) => updateQuestionStatus(questionId, "answered"),
     markOpen: (questionId: string) => updateQuestionStatus(questionId, "open"),
+    askAiBot,
+    askingBotFor,
   };
 }

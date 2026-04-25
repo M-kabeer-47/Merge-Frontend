@@ -992,6 +992,8 @@ registerProcessor('pcm-processor', PCMProcessor);
     removeQuestion,
     markAnswered,
     markOpen,
+    askAiBot,
+    askingBotFor,
     topQuestionId,
     isLoading: isLoadingQna,
   } = useLiveQna({
@@ -1491,6 +1493,8 @@ registerProcessor('pcm-processor', PCMProcessor);
                     onRemoveQuestion={removeQuestion}
                     onMarkAnswered={markAnswered}
                     onMarkOpen={markOpen}
+                    onAskAiBot={isHost ? askAiBot : undefined}
+                    askingBotFor={askingBotFor}
                     isLoading={isLoadingQna}
                     darkMode
                     onClose={() => setRightPanel(null)}

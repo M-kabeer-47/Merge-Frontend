@@ -11,3 +11,10 @@ export async function fetchLiveQnaQuestions(roomId: string, sessionId: string) {
   );
   return response.data.questions;
 }
+
+export async function askAiBotToAnswer(roomId: string, sessionId: string, questionId: string) {
+  const { data } = await api.post<LiveQnaQuestion>(
+    `/rooms/${roomId}/live-sessions/${sessionId}/live-qna/questions/${questionId}/ask-ai`
+  );
+  return data;
+}

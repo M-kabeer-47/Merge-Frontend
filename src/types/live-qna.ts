@@ -19,6 +19,9 @@ export interface LiveQnaQuestion {
   author: LiveQnaUser;
   answeredBy?: LiveQnaUser | null;
   answeredAt?: string | null;
+  aiAnswer?: string | null;
+  aiAnswerSources?: string[] | null;
+  aiAnsweredAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
