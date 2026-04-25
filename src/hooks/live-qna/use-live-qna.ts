@@ -428,8 +428,18 @@ export function useLiveQna({
       if (!roomId || !sessionId) return;
       setAskingBotFor((prev) => new Set(prev).add(questionId));
       try {
-        await askAiBotToAnswer(roomId, sessionId, questionId);
-        // Answer arrives via 'questionUpdated' WebSocket event — no optimistic update needed
+        const updated = await askAiBotToAnswer(roomId, sessionId, questionId);
+        // Update state directly from REST response so the admin sees the answer
+        // immediately, regardless of whether the Socket.IO broadcast arrives.
+        if (updated) {
+          setQuestions((prev) => {
+            const next = prev.map((item) =>
+              item.id === questionId ? { ...item, ...updated } : item,
+            );
+            questionsRef.current = next;
+            return next;
+          });
+        }
       } catch (err: any) {
         toast.error(err?.response?.data?.message || "AI could not answer this question");
       } finally {

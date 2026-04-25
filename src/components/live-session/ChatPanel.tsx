@@ -65,7 +65,6 @@ export default function ChatPanel({
 }: ChatPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>("messages");
   const [messageInput, setMessageInput] = useState("");
-  const [askBot, setAskBot] = useState(false);
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -177,9 +176,8 @@ export default function ChatPanel({
 
   const handleSendMessage = () => {
     if (messageInput.trim()) {
-      onSendQuestion?.(messageInput, askBot);
+      onSendQuestion?.(messageInput, false);
       setMessageInput("");
-      setAskBot(false);
       inputRef.current?.focus();
     }
   };
@@ -579,30 +577,6 @@ export default function ChatPanel({
       {/* Message Composer */}
       {activeTab === "messages" && (
         <div className={`p-5 border-t ${theme.divider}`}>
-          {/* Ask Bot Toggle */}
-          <label className="flex items-center gap-2.5 mb-4 cursor-pointer group select-none">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={askBot}
-                onChange={(e) => setAskBot(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 rounded-full bg-secondary/30 peer-checked:bg-primary transition-colors" />
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5 shadow" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Sparkles
-                className={`w-4 h-4 ${askBot ? "text-primary" : theme.meta}`}
-              />
-              <span
-                className={`text-sm font-medium ${askBot ? "text-primary" : theme.body}`}
-              >
-                Ask Bot to answer
-              </span>
-            </div>
-          </label>
-
           {/* Input Area */}
           <div className="flex items-end gap-3">
             <div className="flex-1 relative">
