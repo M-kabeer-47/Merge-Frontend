@@ -1,9 +1,6 @@
 /**
  * Firebase Messaging Service Worker
- * VERSION: 4.0.0 - With dedup, focused-check, and config from main app
- *
- * Firebase config is passed from the main app via postMessage during
- * SW registration. Falls back to stored config in IndexedDB.
+ * VERSION: 4.3.0 - Fixed "Site updated in background" and Redirects
  */
 
 // Import Firebase scripts for Service Worker
@@ -11,23 +8,24 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 const DEFAULT_ICON = "/dark-mode-logo.svg";
-
 let messaging = null;
 
-// Initialize Firebase with config (called once)
+// Force immediate activation and control of all clients
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(clients.claim()));
+
 function initFirebase(config) {
   if (firebase.apps.length > 0) return;
   try {
     firebase.initializeApp(config);
     messaging = firebase.messaging();
     setupBackgroundHandler();
-    console.log("[SW] Firebase initialized with provided config");
+    console.log("[SW] Firebase initialized");
   } catch (e) {
     console.error("[SW] Firebase init failed:", e);
   }
 }
 
-// Try to load config from IndexedDB cache (for when SW starts without a client message)
 async function loadCachedConfig() {
   try {
     const cache = await caches.open("firebase-config");
@@ -36,136 +34,143 @@ async function loadCachedConfig() {
       const config = await response.json();
       initFirebase(config);
     }
-  } catch (e) {
-    // No cached config available
-  }
+  } catch (e) {}
 }
 
-// Save config to cache for future SW restarts
 async function cacheConfig(config) {
   try {
     const cache = await caches.open("firebase-config");
     await cache.put("config", new Response(JSON.stringify(config)));
-  } catch (e) {
-    // Caching failed, non-critical
-  }
+  } catch (e) {}
 }
 
-// Listen for config from main app
 self.addEventListener("message", (event) => {
   if (event.data?.type === "FIREBASE_CONFIG") {
-    const config = event.data.config;
-    cacheConfig(config);
-    initFirebase(config);
+    cacheConfig(event.data.config);
+    initFirebase(event.data.config);
   }
 });
 
-// Try to init from cache on SW startup
-loadCachedConfig();
-
 /**
- * Handle foreground messages - send to client for toast
- * This runs BEFORE Firebase's internal handler
+ * FIXED PUSH HANDLER
+ * Ensures showNotification is ALWAYS called and awaited.
  */
 self.addEventListener("push", (event) => {
+  console.log("[SW] Push received", event);
+  
+  if (!event.data) {
+    console.warn("[SW] Push event but no data");
+    return;
+  }
+
+  // We MUST return the promise to event.waitUntil to prevent "Site updated in background"
   event.waitUntil(
     (async () => {
-      // Check if any client is focused
+      let payload;
+      try {
+        payload = event.data.json();
+      } catch (e) {
+        console.error("[SW] Push data was not JSON", e);
+        // Show a fallback so we don't get the default browser warning
+        return self.registration.showNotification("New Notification", {
+          body: "Click to view updates",
+          icon: DEFAULT_ICON
+        });
+      }
+
+      console.log("[SW] Payload parsed:", payload);
+
       const windowClients = await clients.matchAll({
         type: "window",
         includeUncontrolled: true,
       });
-
-      const focusedClient = windowClients.find((client) => client.focused);
-
-      if (focusedClient && event.data) {
-        // App is FOCUSED - send to client for toast, skip native notification
-        let payload;
-        try {
-          payload = event.data.json();
-        } catch (e) {
-          return;
-        }
-
-        console.log("[SW] App focused, sending to client for toast");
-        focusedClient.postMessage({
-          type: "FCM_NOTIFICATION",
-          payload: payload,
-        });
+      
+      // Only skip if the app is actually FOCUSED
+      const isAppFocused = windowClients.some((client) => client.focused);
+      if (isAppFocused) {
+        console.log("[SW] App focused, letting onMessage handle it");
+        return;
       }
-      // If no focused client, do nothing here - onBackgroundMessage will handle it
+
+      const data = payload.data || {};
+      const notification = payload.notification || {};
+
+      // PRIORITY 1: Values explicitly in the 'notification' block from FCM
+      // PRIORITY 2: Values in our custom 'data' block
+      // PRIORITY 3: Hardcoded defaults
+      const title = 
+        notification.title || 
+        data.title || 
+        data.announcementTitle || 
+        data.assignmentTitle || 
+        data.quizTitle || 
+        "New Update";
+
+      const body = 
+        notification.body || 
+        data.body || 
+        data.assignmentTitle || 
+        data.quizTitle || 
+        data.announcementTitle || 
+        data.roomTitle || 
+        "Click to see what's new";
+
+      // IMPORTANT: Absolute URL for the icon
+      const icon = self.location.origin + DEFAULT_ICON;
+
+      return self.registration.showNotification(title, {
+        body: body,
+        icon: icon,
+        badge: icon,
+        // Tag prevents duplicate popups for the same entity
+        tag: data.announcementId || data.assignmentId || data.quizId || `notification-${Date.now()}`,
+        data: {
+          // Pass the actionUrl into the notification metadata for the click handler
+          actionUrl: data.actionUrl || "/",
+        },
+        requireInteraction: true,
+      });
     })()
   );
 });
 
 /**
- * Setup background message handler
- * Called after Firebase is initialized
- */
-function setupBackgroundHandler() {
-  if (!messaging) return;
-
-  messaging.onBackgroundMessage(async (payload) => {
-    console.log("[SW] Background message received:", payload);
-
-    // If a client is focused, the push event handler already sent
-    // it via postMessage for toast display - skip native notification
-    const windowClients = await clients.matchAll({
-      type: "window",
-      includeUncontrolled: true,
-    });
-    if (windowClients.some((client) => client.focused)) {
-      console.log("[SW] Client focused, skipping native notification (handled via toast)");
-      return;
-    }
-
-    const data = payload.data || {};
-
-    const title = data.announcementTitle || data.title || payload.notification?.title || "New Notification";
-    const body = data.roomTitle || payload.notification?.body || "";
-    const actionUrl = data.actionUrl || "/";
-
-    const notificationOptions = {
-      body: body,
-      icon: DEFAULT_ICON,
-      badge: DEFAULT_ICON,
-      tag: data.announcementId || data.assignmentId || data.quizId || `notification-${Date.now()}`,
-      data: {
-        actionUrl: actionUrl,
-        ...data
-      },
-      requireInteraction: true,
-    };
-
-    return self.registration.showNotification(title, notificationOptions);
-  });
-}
-
-/**
- * Handle notification click - navigate to the action URL
+ * FIXED CLICK HANDLER
+ * Correctly prepends the origin to relative paths.
  */
 self.addEventListener("notificationclick", (event) => {
-  console.log("[SW] Notification clicked:", event.notification.data);
-
   event.notification.close();
+  
+  const actionUrl = event.notification.data?.actionUrl || "/";
+  // Ensure the URL is absolute
+  const targetUrl = actionUrl.startsWith('http') 
+    ? actionUrl 
+    : self.location.origin + actionUrl;
 
-  const urlToOpen = event.notification.data?.actionUrl
-    ? self.location.origin + event.notification.data.actionUrl
-    : self.location.origin;
+  console.log("[SW] Notification clicked. Target:", targetUrl);
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
-      // Try to focus an existing window
+      // 1. Try to find an existing tab to focus
       for (const client of windowClients) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.navigate(urlToOpen);
-          return client.focus();
+          return client.navigate(targetUrl).then(c => c.focus());
         }
       }
-      // Open a new window if none exists
+      // 2. If no tab open, open a new one
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(targetUrl);
       }
     })
   );
 });
+
+function setupBackgroundHandler() {
+  if (!messaging) return;
+  // This is a dummy to keep FCM SDK happy
+  messaging.onBackgroundMessage((p) => {
+    console.log("[SW] SDK onBackgroundMessage fired (redundant)");
+  });
+}
+
+loadCachedConfig();
