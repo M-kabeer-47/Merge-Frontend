@@ -64,6 +64,41 @@ self.addEventListener("message", (event) => {
 loadCachedConfig();
 
 /**
+ * Handle foreground messages - send to client for toast
+ * This runs BEFORE Firebase's internal handler
+ */
+self.addEventListener("push", (event) => {
+  event.waitUntil(
+    (async () => {
+      // Check if any client is focused
+      const windowClients = await clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      const focusedClient = windowClients.find((client) => client.focused);
+
+      if (focusedClient && event.data) {
+        // App is FOCUSED - send to client for toast, skip native notification
+        let payload;
+        try {
+          payload = event.data.json();
+        } catch (e) {
+          return;
+        }
+
+        console.log("[SW] App focused, sending to client for toast");
+        focusedClient.postMessage({
+          type: "FCM_NOTIFICATION",
+          payload: payload,
+        });
+      }
+      // If no focused client, do nothing here - onBackgroundMessage will handle it
+    })()
+  );
+});
+
+/**
  * Setup background message handler
  * Called after Firebase is initialized
  */
@@ -73,22 +108,21 @@ function setupBackgroundHandler() {
   messaging.onBackgroundMessage(async (payload) => {
     console.log("[SW] Background message received:", payload);
 
-    // If a client is focused, skip native notification (handled via onMessage in main app)
+    // If a client is focused, the push event handler already sent
+    // it via postMessage for toast display - skip native notification
     const windowClients = await clients.matchAll({
       type: "window",
       includeUncontrolled: true,
     });
-
     if (windowClients.some((client) => client.focused)) {
-      console.log("[SW] Client focused, skipping native notification");
+      console.log("[SW] Client focused, skipping native notification (handled via toast)");
       return;
     }
 
     const data = payload.data || {};
-    const notification = payload.notification || {};
 
-    const title = data.title || data.announcementTitle || notification.title || "New Notification";
-    const body = data.body || data.roomTitle || notification.body || "";
+    const title = data.announcementTitle || data.title || payload.notification?.title || "New Notification";
+    const body = data.roomTitle || payload.notification?.body || "";
     const actionUrl = data.actionUrl || "/";
 
     const notificationOptions = {
