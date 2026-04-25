@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { X, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import useCreateSession from "@/hooks/live-sessions/use-create-session";
+import DateTimePicker from "@/components/ui/DateTimePicker";
 
 interface ScheduleSessionModalProps {
   roomId: string;
@@ -16,8 +17,7 @@ export default function ScheduleSessionModal({
 }: ScheduleSessionModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [scheduledDate, setScheduledDate] = useState("");
-  const [scheduledTime, setScheduledTime] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
 
   const { createSession, isCreating } = useCreateSession({
     onSuccess: onClose,
@@ -25,11 +25,7 @@ export default function ScheduleSessionModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !scheduledDate || !scheduledTime) return;
-
-    const scheduledAt = new Date(
-      `${scheduledDate}T${scheduledTime}`
-    ).toISOString();
+    if (!title.trim() || !scheduledAt) return;
 
     await createSession({
       roomId,
@@ -102,32 +98,17 @@ export default function ScheduleSessionModal({
           </div>
 
           {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-heading mb-1">
-                Date *
-              </label>
-              <input
-                type="date"
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                className="w-full px-3 py-2 border border-light-border rounded-lg text-sm text-para focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-heading mb-1">
-                Time *
-              </label>
-              <input
-                type="time"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="w-full px-3 py-2 border border-light-border rounded-lg text-sm text-para focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                required
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-heading mb-1">
+              Date & Time *
+            </label>
+            <DateTimePicker
+              value={scheduledAt}
+              onChange={setScheduledAt}
+              placeholder="Select date and time"
+              minDate={new Date()}
+              expandUp={true}
+            />
           </div>
 
           {/* Actions */}
@@ -143,7 +124,7 @@ export default function ScheduleSessionModal({
             <Button
               type="submit"
               size="sm"
-              disabled={isCreating || !title.trim() || !scheduledDate || !scheduledTime}
+              disabled={isCreating || !title.trim() || !scheduledAt}
             >
               {isCreating ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

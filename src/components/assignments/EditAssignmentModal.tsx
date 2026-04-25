@@ -237,6 +237,7 @@ export default function EditAssignmentModal({
                   placeholder="Select due date and time"
                   disabled={isEditing}
                   error={errors.endAt?.message}
+                  expandUp={true}
                 />
               </FormField>
             )}
