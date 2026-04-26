@@ -5,7 +5,7 @@ export type User = {
   firstName: string;
   lastName: string;
   new_user: boolean;
-  role: "student" | "instructor" | null;
+  role: "student" | "instructor" | "super_admin" | null;
   isVerified: boolean;
   googleAccount: boolean;
   hashedRefreshToken: string;
