@@ -9,6 +9,7 @@ const publicRoutes = [
   "/forgot-password",
   "/reset-password",
   "/verify",
+  "/admin-login",
 ];
 
 // Routes that should skip middleware entirely (API routes, static files, etc.)
