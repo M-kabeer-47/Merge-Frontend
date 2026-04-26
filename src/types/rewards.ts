@@ -20,6 +20,7 @@ export interface UserBadge {
   id: string;
   badge: Badge;
   earnedAt: string;
+  periodMonth: string;
   isRedeemed: boolean;
   lsDiscountCode?: string | null;
 }
@@ -27,6 +28,18 @@ export interface UserBadge {
 export interface BadgeWithStatus {
   badge: Badge;
   userBadge: UserBadge | null;
+}
+
+// Per-tier progress *within the current calendar month*. Drives the
+// X / threshold display on the badge cards.
+export interface MonthlyProgress {
+  completed: number;
+  threshold: number;
+}
+
+export interface BadgeHistoryEntry {
+  periodMonth: string; // "YYYY-MM"
+  badges: BadgeWithStatus[];
 }
 
 export interface ChallengeProgress {
@@ -39,7 +52,6 @@ export interface ChallengeProgress {
   currentCount: number;
   target: number;
   isCompleted: boolean;
-  consecutiveCount: number;
   points: number;
   periodStart: string;
   expiresAt: string;
@@ -48,6 +60,8 @@ export interface ChallengeProgress {
 export interface RewardsProfile {
   streak: UserStreak;
   badges: BadgeWithStatus[];
+  monthlyProgress: Record<ChallengeTier, MonthlyProgress>;
+  badgeHistory: BadgeHistoryEntry[];
   totalPoints: number;
   challenges: ChallengeProgress[];
 }

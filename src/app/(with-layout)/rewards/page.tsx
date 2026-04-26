@@ -13,7 +13,7 @@ import useRewardsProfile from "@/hooks/rewards/use-rewards-profile";
 import StreakDisplay from "@/components/rewards/StreakDisplay";
 import BadgeCard from "@/components/rewards/BadgeCard";
 import RewardBadge from "@/components/rewards/RewardBadge";
-import type { ChallengeTier, ChallengeProgress } from "@/types/rewards";
+import type { ChallengeTier, ChallengeProgress, BadgeHistoryEntry } from "@/types/rewards";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
@@ -185,20 +185,6 @@ function ChallengeEntry({ challenge }: { challenge: ChallengeProgress }) {
               </span>
             ) : (
               <span />
-            )}
-            {challenge.consecutiveCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-para-muted">
-                <Flame className="h-3 w-3 text-accent" />
-                <span className="font-semibold text-heading">
-                  {challenge.consecutiveCount}
-                </span>
-                {challenge.type === "daily"
-                  ? "d"
-                  : challenge.type === "weekly"
-                    ? "w"
-                    : "mo"}{" "}
-                streak
-              </span>
             )}
           </div>
         </div>
@@ -429,25 +415,132 @@ export default function RewardsPage() {
         </div>
       </motion.div>
 
-      {/* Badges */}
+      {/* Current month's badges */}
       <motion.div variants={item}>
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-para-muted" />
             <h2 className="text-base font-semibold text-heading">
-              Badges &amp; Discounts
+              This month&apos;s badges
             </h2>
           </div>
           <p className="text-xs text-para-muted">
-            Earn badges to unlock discounts
+            Resets on the 1st of every month
           </p>
         </div>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           {allBadges.map(({ badge, userBadge }) => (
-            <BadgeCard key={badge.tier} badge={badge} userBadge={userBadge} />
+            <BadgeCard
+              key={badge.tier}
+              badge={badge}
+              userBadge={userBadge}
+              monthlyProgress={profile?.monthlyProgress?.[badge.tier]}
+            />
           ))}
         </div>
       </motion.div>
+
+      {/* Past months — timeline of historical badges */}
+      <PastMonthsTimeline
+        history={profile?.badgeHistory ?? []}
+        currentMonthKey={getCurrentMonthKey()}
+      />
+    </motion.div>
+  );
+}
+
+// ─── Past months timeline ────────────────────────────────────────────────────
+
+function getCurrentMonthKey(): string {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatMonthLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+const TIER_ORDER: ChallengeTier[] = ["daily", "weekly", "monthly"];
+
+function PastMonthsTimeline({
+  history,
+  currentMonthKey,
+}: {
+  history: BadgeHistoryEntry[];
+  currentMonthKey: string;
+}) {
+  const past = history.filter((h) => h.periodMonth !== currentMonthKey);
+  if (past.length === 0) return null;
+
+  return (
+    <motion.div variants={item}>
+      <div className="mb-4 flex items-center gap-2">
+        <Trophy className="h-4 w-4 text-para-muted" />
+        <h2 className="text-base font-semibold text-heading">Past months</h2>
+      </div>
+      <div className="space-y-4">
+        {past.map((entry) => {
+          const earnedByTier = new Map(entry.badges.map((b) => [b.badge.tier, b]));
+          return (
+            <div
+              key={entry.periodMonth}
+              className="rounded-2xl bg-background p-5 ring-1 ring-light-border"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-raleway text-sm font-bold uppercase tracking-wider text-para">
+                  {formatMonthLabel(entry.periodMonth)}
+                </h3>
+                <span className="text-[11px] font-semibold text-para-muted">
+                  {entry.badges.length} / 3 earned
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {TIER_ORDER.map((tier) => {
+                  const earned = earnedByTier.get(tier);
+                  if (earned) {
+                    return (
+                      <div
+                        key={tier}
+                        className="flex flex-col items-center rounded-xl bg-accent/5 p-3 ring-1 ring-accent/20"
+                      >
+                        <RewardBadge
+                          tier={tier}
+                          earned
+                          size={48}
+                        />
+                        <p className="mt-2 text-center font-raleway text-xs font-bold text-heading">
+                          {earned.badge.name}
+                        </p>
+                        <span className="mt-1 inline-flex items-center rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent">
+                          {earned.badge.discountPercentage}% off
+                        </span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div
+                      key={tier}
+                      className="flex flex-col items-center rounded-xl border border-dashed border-light-border bg-secondary/[0.03] p-3"
+                    >
+                      <div className="opacity-25">
+                        <RewardBadge tier={tier} earned={false} size={48} />
+                      </div>
+                      <p className="mt-2 text-center font-raleway text-xs font-medium uppercase tracking-wider text-para-muted">
+                        Not earned
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </motion.div>
   );
 }
