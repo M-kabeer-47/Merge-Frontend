@@ -18,6 +18,8 @@ import {
 import { useRegisterFCMToken } from "@/hooks/notifications/use-register-fcm-token";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getFirebaseMessaging } from "@/lib/firebase";
+import { onMessage } from "firebase/messaging";
 import {
   addNotificationToCache,
   invalidateStudentAssignmentsCache,
@@ -241,52 +243,51 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     };
   }, [isAuthenticated, handleIncomingNotification]);
 
-  // Listen for FCM messages from service worker (when app is focused)
+  // Listen for FCM messages (foreground)
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === "FCM_NOTIFICATION") {
-        const data = event.data.payload?.data || {};
+    const messaging = getFirebaseMessaging();
+    if (!messaging) return;
 
-        // Build notification payload from FCM data
-        const notificationId =
-          data.announcementId ||
-          data.assignmentId ||
-          data.quizId ||
-          data.eventId ||
-          `fcm-${Date.now()}`;
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log("[FCM] Foreground message received:", payload);
+      const data = payload.data || {};
 
-        const notification: NotificationPayload = {
-          id: notificationId,
-          content:
-            data.title ||
-            data.announcementTitle ||
-            data.assignmentTitle ||
-            data.quizTitle ||
-            "New Notification",
-          isRead: false,
-          metadata: {
-            actionUrl: data.actionUrl,
-            roomId: data.roomId,
-            roomTitle: data.roomTitle || data.body,
-            announcementId: data.announcementId,
-            assignmentId: data.assignmentId,
-            quizId: data.quizId,
-          },
-          expiresAt: null,
-          createdAt: new Date().toISOString(),
-        };
+      // Build notification payload from FCM data
+      const notificationId =
+        data.announcementId ||
+        data.assignmentId ||
+        data.quizId ||
+        data.eventId ||
+        `fcm-${Date.now()}`;
 
-        handleIncomingNotification(notification);
-      }
-    };
+      const notification: NotificationPayload = {
+        id: notificationId,
+        content:
+          data.title ||
+          data.announcementTitle ||
+          data.assignmentTitle ||
+          data.quizTitle ||
+          payload.notification?.title ||
+          "New Notification",
+        isRead: false,
+        metadata: {
+          actionUrl: data.actionUrl,
+          roomId: data.roomId,
+          roomTitle: data.roomTitle || data.body || payload.notification?.body,
+          announcementId: data.announcementId,
+          assignmentId: data.assignmentId,
+          quizId: data.quizId,
+        },
+        expiresAt: null,
+        createdAt: new Date().toISOString(),
+      };
 
-    navigator.serviceWorker?.addEventListener("message", handleMessage);
+      handleIncomingNotification(notification);
+    });
 
-    return () => {
-      navigator.serviceWorker?.removeEventListener("message", handleMessage);
-    };
+    return () => unsubscribe();
   }, [isAuthenticated, handleIncomingNotification]);
 
   // Refresh caches when user returns to app (after being in background)

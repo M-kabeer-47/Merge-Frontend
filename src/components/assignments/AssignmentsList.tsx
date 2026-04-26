@@ -8,6 +8,7 @@ import useDeleteAssignment from "@/hooks/assignments/use-delete-assignment";
 import AssignmentCard from "./AssignmentCard";
 import AssignmentCardsSkeleton from "./AssignmentCardsSkeleton";
 import EditAssignmentModal from "./EditAssignmentModal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   EmptyAssignments,
   NoSearchResults,
@@ -42,6 +43,9 @@ export default function AssignmentsList({
   // Edit modal state
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
 
+  // Delete modal state
+  const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null);
+
   // Fetch assignments based on role
   const { data: assignments = [], isLoading } = useFetchRoleBasedAssignments({
     roomId,
@@ -53,7 +57,7 @@ export default function AssignmentsList({
   });
 
   // Delete assignment hook
-  const { deleteAssignment } = useDeleteAssignment();
+  const { deleteAssignment, isDeleting } = useDeleteAssignment();
 
   const handleViewDetails = (id: string) => {
     router.push(`/rooms/${roomId}/assignments/${id}`);
@@ -70,13 +74,14 @@ export default function AssignmentsList({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (
-      confirm(
-        "Are you sure you want to delete this assignment? This action cannot be undone.",
-      )
-    ) {
-      await deleteAssignment({ assignmentId: id, roomId });
+  const handleDelete = (id: string) => {
+    setAssignmentToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (assignmentToDelete) {
+      await deleteAssignment({ assignmentId: assignmentToDelete, roomId });
+      setAssignmentToDelete(null);
     }
   };
 
@@ -97,6 +102,20 @@ export default function AssignmentsList({
       roomId={roomId}
     />
   ) : null;
+
+  // Delete modal
+  const deleteModal = (
+    <ConfirmDialog
+      isOpen={!!assignmentToDelete}
+      onClose={() => setAssignmentToDelete(null)}
+      onConfirm={confirmDelete}
+      title="Delete Assignment"
+      message="Are you sure you want to delete this assignment? This action cannot be undone."
+      confirmText="Delete"
+      variant="danger"
+      isLoading={isDeleting}
+    />
+  );
 
   // Show skeleton while loading or role is not yet determined
   if (isLoading || !userRole) {
@@ -149,6 +168,7 @@ export default function AssignmentsList({
           </div>
         </div>
         {editModal}
+        {deleteModal}
       </>
     );
   }
@@ -171,6 +191,7 @@ export default function AssignmentsList({
         </div>
       </div>
       {editModal}
+      {deleteModal}
     </>
   );
 }

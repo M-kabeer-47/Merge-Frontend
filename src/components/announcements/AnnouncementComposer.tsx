@@ -150,6 +150,7 @@ export default function AnnouncementComposer({
             onChange={(val) => setScheduledFor(val ? new Date(val) : undefined)}
             placeholder="Select date and time"
             minDate={new Date()}
+            expandUp={true}
           />
         </div>
       )}

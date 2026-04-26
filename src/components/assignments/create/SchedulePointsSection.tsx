@@ -87,6 +87,7 @@ export default function SchedulePointsSection({
                 disabled={isDisabled}
                 minDate={new Date()}
                 error={errors.endAt?.message}
+                expandUp={true}
               />
             </FormField>
           )}
@@ -149,6 +150,7 @@ export default function SchedulePointsSection({
                     disabled={isDisabled}
                     minDate={new Date()}
                     error={errors.scheduledAt?.message}
+                    expandUp={true}
                   />
                   <p className="text-xs text-para-muted mt-1.5">
                     Assignment will be visible to students from this date

@@ -245,6 +245,7 @@ export default function CanvasStage({
       <Tldraw
         onMount={handleMount}
         autoFocus
+        licenseKey={process.env.NEXT_PUBLIC_TLDRAW_LISCENCE_KEY}
       />
     </div>
   );
