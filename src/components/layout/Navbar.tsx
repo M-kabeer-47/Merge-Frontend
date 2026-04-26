@@ -4,28 +4,9 @@ import ToggleSwitch from "./navbar/DarkModeToggle";
 import NotificationDropdown from "./navbar/Notifications";
 import ProfileDropdown from "./navbar/ProfileDropdown";
 import useLogout from "@/hooks/auth/use-logout";
-import Image from "next/image";
-interface NavbarProps {
-  notificationCount?: number;
-}
 
-export default function Navbar({ notificationCount = 3 }: NavbarProps) {
+export default function Navbar() {
   const { logout } = useLogout();
-
-  const handleNotificationClick = (notification: any) => {
-    console.log("Notification clicked:", notification);
-    // Handle notification click logic here
-  };
-
-  const handleViewAllNotifications = () => {
-    console.log("View all notifications");
-    // Navigate to notifications page
-  };
-
-  const handleMarkAllRead = () => {
-    console.log("Mark all notifications as read");
-    // Mark all notifications as read logic
-  };
 
   // Profile dropdown options
   const profileOptions = [
@@ -56,12 +37,8 @@ export default function Navbar({ notificationCount = 3 }: NavbarProps) {
           <ToggleSwitch size="md" />
 
           {/* Notifications */}
-          <NotificationDropdown
-            notificationCount={notificationCount}
-            onNotificationClick={handleNotificationClick}
-            onViewAll={handleViewAllNotifications}
-            onMarkAllRead={handleMarkAllRead}
-          />
+          <NotificationDropdown />
+
           {/* User Profile Dropdown */}
           <ProfileDropdown
             onSignOut={logout}

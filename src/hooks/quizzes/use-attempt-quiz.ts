@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import { toastApiError } from "@/utils/toast-helpers";
+import useInvalidateRewards from "@/hooks/rewards/use-invalidate-rewards";
 import type {
   AttemptQuizPayload,
   AttemptQuizResponse,
@@ -24,6 +25,7 @@ export default function useAttemptQuiz({
   onSuccess,
 }: UseAttemptQuizOptions = {}) {
   const queryClient = useQueryClient();
+  const invalidateRewards = useInvalidateRewards();
 
   // Helper to update quiz in a list cache
   // Handles both array format and object format (with .quizzes property)
@@ -117,6 +119,7 @@ export default function useAttemptQuiz({
         `Quiz submitted! Score: ${data.score}/${data.quiz.totalScore} (${percentage}%)`
       );
 
+      invalidateRewards();
       onSuccess?.(data);
     },
     onError: (error: any) => {

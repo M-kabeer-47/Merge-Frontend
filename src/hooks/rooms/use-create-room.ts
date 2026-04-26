@@ -5,9 +5,11 @@ import { toastApiError } from "@/utils/toast-helpers";
 import { CreateRoomType } from "@/schemas/room/create-room";
 import { RoomsResponse, Room } from "@/server-api/rooms";
 import { refreshRoomsCache } from "@/server-actions/rooms";
+import useInvalidateRewards from "@/hooks/rewards/use-invalidate-rewards";
 
 export default function useCreateRoom() {
   const queryClient = useQueryClient();
+  const invalidateRewards = useInvalidateRewards();
 
   const createRoomFunction = async (data: CreateRoomType) => {
     const response = await api.post("/room/create", data);
@@ -63,8 +65,8 @@ export default function useCreateRoom() {
       toast.success("Room created successfully!");
     },
     onSettled: async () => {
-      
       refreshRoomsCache("all");
+      invalidateRewards();
     },
   });
 

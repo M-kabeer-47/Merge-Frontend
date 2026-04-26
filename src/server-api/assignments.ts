@@ -81,7 +81,7 @@ export async function getInstructorAssignments(
     InstructorAssignmentsResponse | InstructorAssignment[]
   >(`${API_BASE_URL}/assignments/instructor?${queryParams.toString()}`, {
     next: {
-      revalidate: false,
+      revalidate: 0,
       tags: ["assignments", `instructor-assignments-${roomId}`],
     },
   });
@@ -99,7 +99,7 @@ export async function getAssignmentById(assignmentId: string) {
 
   const data = await getWithAuth(url, {
     next: {
-      revalidate: false,
+      revalidate: 0,
       tags: ["assignments", `assignment-${assignmentId}`],
     },
   });

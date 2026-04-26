@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&text=0123456789.,%25%2B-');
 @import "tailwindcss";
 @import "highlight.js/styles/github-dark-dimmed.css";
 
@@ -45,7 +46,7 @@
 }
 
 body {
-  font-family: var(--font-roboto);
+  font-family: 'Inter', var(--font-roboto);
 }
 
 @theme inline {

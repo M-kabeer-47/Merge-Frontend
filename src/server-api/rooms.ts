@@ -84,7 +84,7 @@ export async function getRooms(
     `${API_BASE_URL}/user/rooms?${queryParams.toString()}`,
     {
       next: {
-        revalidate: false, // Cache forever until manual invalidation
+        revalidate: 0, // Cache forever until manual invalidation
         tags: ["rooms", `rooms-${filter}`],
       },
     },
@@ -129,7 +129,7 @@ export async function getRoomMembers(
     `${API_BASE_URL}/room/${roomId}/members`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: ["room-members", `room-members-${roomId}`],
       },
     },

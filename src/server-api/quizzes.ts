@@ -61,7 +61,7 @@ export async function getQuizzes(params: FetchQuizzesParams): Promise<Quiz[]> {
     `${API_BASE_URL}/quiz?${queryParams.toString()}`,
     {
       next: {
-        revalidate: false, // Cache for 60 seconds
+        revalidate: 0, // Cache for 60 seconds
         tags: ["quizzes", `quizzes-${roomId}`], // For manual invalidation
       },
     }
@@ -86,7 +86,7 @@ export async function getQuizById(
     `${API_BASE_URL}/quiz/${quizId}?roomId=${roomId}`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: ["quizzes", `quiz-${quizId}`],
       },
     }
@@ -114,7 +114,7 @@ export async function getMyQuizAttempt(
     `${API_BASE_URL}/quiz/${quizId}/my-attempt?roomId=${roomId}`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: ["quiz-attempt", `quiz-attempt-${quizId}`],
       },
     }

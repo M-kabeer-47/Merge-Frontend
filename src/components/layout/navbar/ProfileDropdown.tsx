@@ -2,12 +2,24 @@
 
 import React, { useState, useRef } from "react";
 import { IconChevronDown, IconLogin, IconUser } from "@tabler/icons-react";
+import { Crown, Sparkles, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Avatar from "../../ui/Avatar";
 import DropdownMenu, { DropdownOption } from "@/components/ui/Dropdown";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
+import useMySubscription from "@/hooks/subscription/use-my-subscription";
+
+const PLAN_STYLE: Record<
+  string,
+  { icon: typeof Sparkles; chip: string }
+> = {
+  free:  { icon: Sparkles, chip: "bg-secondary/15 text-para-muted" },
+  basic: { icon: Zap,      chip: "bg-secondary/20 text-secondary" },
+  pro:   { icon: Crown,    chip: "bg-primary/10 text-primary" },
+  max:   { icon: Crown,    chip: "bg-accent/15 text-accent" },
+};
 
 interface ProfileDropdownProps {
   onSignOut?: () => void;
@@ -25,8 +37,14 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   options = [],
 }) => {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const { subscription } = useMySubscription();
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const tier = subscription?.plan?.name ?? "free";
+  const planName = subscription?.plan?.displayName ?? "Free";
+  const planStyle = PLAN_STYLE[tier] ?? PLAN_STYLE.free;
+  const PlanIcon = planStyle.icon;
 
   useOnClickOutside(dropdownRef, () => setProfileOpen(false), profileOpen);
 
@@ -84,16 +102,22 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
             </div>
           )}
           <div className="hidden md:block text-left">
-            <div className={`text-sm font-raleway font-semibold text-heading`}>
+            <div className="text-sm font-raleway font-semibold text-heading">
               {userName}
             </div>
-            {showRole && userRole && (
-              <div
-                className={`text-xs font-raleway font-semibold text-para-muted`}
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${planStyle.chip}`}
               >
-                {userRole}
-              </div>
-            )}
+                <PlanIcon className="h-2.5 w-2.5" />
+                {planName}
+              </span>
+              {showRole && userRole && (
+                <span className="text-[10px] font-medium text-para-muted capitalize">
+                  · {userRole}
+                </span>
+              )}
+            </div>
           </div>
           <IconChevronDown className="h-4 w-4 text-white/70" />
         </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import { Sun, Moon } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface WelcomeSectionProps {
-  userName: string;
+  userName?: string;
   userRole?: "student" | "instructor";
 }
 
@@ -29,9 +30,12 @@ const getWelcomeMessage = (role?: "student" | "instructor") => {
 
 export default function WelcomeSection({
   userName,
-  userRole = "student",
+  userRole,
 }: WelcomeSectionProps) {
+  const { user } = useAuth();
   const GreetingIcon = getGreetingIcon();
+  const displayName = userName || user?.firstName || "there";
+  const role = userRole || (user?.role === "instructor" ? "instructor" : "student");
 
   return (
     <div className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 text-white relative overflow-hidden mb-6">
@@ -48,12 +52,12 @@ export default function WelcomeSection({
           </div>
           <div>
             <h1 className="text-2xl font-bold font-raleway">
-              {getGreeting()}, {userName}! 👋
+              {getGreeting()}, {displayName}! 👋
             </h1>
           </div>
         </div>
         <div className="mt-3">
-          <p className="text-white/90 text-sm">{getWelcomeMessage(userRole)}</p>
+          <p className="text-white/90 text-sm">{getWelcomeMessage(role)}</p>
         </div>
       </div>
     </div>

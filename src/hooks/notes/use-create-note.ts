@@ -5,10 +5,12 @@ import { toastApiError } from "@/utils/toast-helpers";
 import { CreateNoteType } from "@/types/note-operations";
 import { revalidateNotesCache } from "@/server-actions/notes";
 import { useRouter } from "next/navigation";
+import useInvalidateRewards from "@/hooks/rewards/use-invalidate-rewards";
 
 export default function useCreateNote() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const invalidateRewards = useInvalidateRewards();
   const createNoteFunction = async (data: CreateNoteType) => {
     const response = await api.post("/notes/create", data);
     return response.data;
@@ -31,6 +33,7 @@ export default function useCreateNote() {
       });
       // Invalidate server cache so NotesDataWrapper gets fresh data on navigation
       revalidateNotesCache();
+      invalidateRewards();
 
       localStorage.removeItem("note-draft");
       toast.success("Note created successfully!");

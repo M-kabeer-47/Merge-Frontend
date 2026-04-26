@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/utils/api";
 import { toastApiError } from "@/utils/toast-helpers";
+import useInvalidateRewards from "@/hooks/rewards/use-invalidate-rewards";
 
 interface UseJoinSessionOptions {
   onSuccess?: () => void;
@@ -14,6 +15,7 @@ export default function useJoinSession({
   onSuccess,
 }: UseJoinSessionOptions = {}) {
   const queryClient = useQueryClient();
+  const invalidateRewards = useInvalidateRewards();
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async ({
@@ -32,6 +34,7 @@ export default function useJoinSession({
       queryClient.invalidateQueries({
         queryKey: ["live-sessions", variables.roomId],
       });
+      invalidateRewards();
       onSuccess?.();
     },
     onError: (error: unknown) => {

@@ -9,6 +9,8 @@ import {
   IconRobot,
   IconDashboard,
   IconCalendar,
+  IconTrophy,
+  IconCreditCard,
 } from "@tabler/icons-react";
 import { useState } from "react";
 import MobileNavbarOptions from "./navbar/MobileNavbarOptions";
@@ -53,6 +55,16 @@ const sidebarLinks: Links[] = [
     label: "Calendar",
     href: "/calendar",
     icon: <IconCalendar className="h-5 w-5" />,
+  },
+  {
+    label: "Rewards",
+    href: "/rewards",
+    icon: <IconTrophy className="h-5 w-5" />,
+  },
+  {
+    label: "Billing",
+    href: "/billing",
+    icon: <IconCreditCard className="h-5 w-5" />,
   },
 ];
 

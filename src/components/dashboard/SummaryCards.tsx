@@ -4,11 +4,15 @@ import {
   House,
   ClipboardList,
   Calendar,
-  TrendingUp,
+  Flame,
   type LucideIcon,
 } from "lucide-react";
 import WelcomeSection from "./WelcomeSection";
 import SummaryCard from "./SummaryCard";
+import useGetUserRooms from "@/hooks/rooms/use-get-user-rooms";
+import useCalendarTasks from "@/hooks/calendar/use-calendar-tasks";
+import useRewardsProfile from "@/hooks/rewards/use-rewards-profile";
+import { isToday, isAfter } from "date-fns";
 
 interface SummaryCardData {
   id: string;
@@ -21,53 +25,82 @@ interface SummaryCardData {
   additionalInfoColor?: string;
 }
 
-const summaryData: SummaryCardData[] = [
-  {
-    id: "rooms",
-    icon: House,
-    iconBgColor: "bg-secondary/10",
-    iconColor: "text-primary",
-    metric: "12",
-    label: "Rooms Joined",
-    additionalInfo: "Active learning groups",
-    additionalInfoColor: "text-para-muted",
-  },
-  {
-    id: "assignments",
-    icon: ClipboardList,
-    iconBgColor: "bg-secondary/10",
-    iconColor: "text-primary",
-    metric: "5",
-    label: "Assignments Pending",
-    additionalInfo: "2 due this week",
-    additionalInfoColor: "text-para-muted",
-  },
-  {
-    id: "tasks",
-    icon: Calendar,
-    iconBgColor: "bg-secondary/10",
-    iconColor: "text-primary",
-    metric: "8",
-    label: "Scheduled Tasks",
-    additionalInfo: "3 for today",
-    additionalInfoColor: "text-para-muted",
-  },
-  {
-    id: "focus",
-    icon: TrendingUp,
-    iconBgColor: "bg-secondary/10",
-    iconColor: "text-primary",
-    metric: "87%",
-    label: "Focus Score",
-    additionalInfo: "↑ +5% from last week",
-    additionalInfoColor: "text-success",
-  },
-];
-
 export default function SummaryCards() {
+  const { rooms } = useGetUserRooms({ filter: "all" });
+  const { tasks } = useCalendarTasks();
+  const { profile } = useRewardsProfile();
+
+  const now = new Date();
+  const pendingTasks = tasks.filter(
+    (t) => t.taskStatus === "pending" && isAfter(new Date(t.deadline), now),
+  );
+  const dueTodayTasks = tasks.filter(
+    (t) => t.taskStatus === "pending" && isToday(new Date(t.deadline)),
+  );
+  const pendingAssignments = pendingTasks.filter(
+    (t) => t.taskCategory === "assignment",
+  );
+  const dueThisWeekAssignments = pendingAssignments.filter((t) => {
+    const days = Math.ceil(
+      (new Date(t.deadline).getTime() - now.getTime()) / (24 * 60 * 60 * 1000),
+    );
+    return days <= 7;
+  });
+
+  const summaryData: SummaryCardData[] = [
+    {
+      id: "rooms",
+      icon: House,
+      iconBgColor: "bg-secondary/10",
+      iconColor: "text-primary",
+      metric: String(rooms?.length ?? 0),
+      label: "Rooms",
+      additionalInfo: rooms?.length
+        ? "Active learning groups"
+        : "Join your first room",
+      additionalInfoColor: "text-para-muted",
+    },
+    {
+      id: "assignments",
+      icon: ClipboardList,
+      iconBgColor: "bg-secondary/10",
+      iconColor: "text-primary",
+      metric: String(pendingAssignments.length),
+      label: "Pending Assignments",
+      additionalInfo: dueThisWeekAssignments.length
+        ? `${dueThisWeekAssignments.length} due this week`
+        : "Nothing urgent",
+      additionalInfoColor: "text-para-muted",
+    },
+    {
+      id: "tasks",
+      icon: Calendar,
+      iconBgColor: "bg-secondary/10",
+      iconColor: "text-primary",
+      metric: String(pendingTasks.length),
+      label: "Scheduled Tasks",
+      additionalInfo: dueTodayTasks.length
+        ? `${dueTodayTasks.length} for today`
+        : "None for today",
+      additionalInfoColor: "text-para-muted",
+    },
+    {
+      id: "streak",
+      icon: Flame,
+      iconBgColor: "bg-accent/10",
+      iconColor: "text-accent",
+      metric: String(profile?.streak.currentStreak ?? 0),
+      label: "Day Streak",
+      additionalInfo: profile?.streak.longestStreak
+        ? `Best: ${profile.streak.longestStreak} days`
+        : "Start your streak today!",
+      additionalInfoColor: "text-para-muted",
+    },
+  ];
+
   return (
     <>
-      <WelcomeSection userName="Sarah" userRole="student" />
+      <WelcomeSection />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {summaryData.map((card) => (

@@ -7,6 +7,7 @@ import type { Assignment, SubmissionStatus } from "@/types/assignment";
 import { useRouter } from "next/navigation";
 import { refreshStudentAssignmentCache } from "@/server-actions/assignments";
 import { studentAssignmentQueryKey } from "./use-student-assignment";
+import useInvalidateRewards from "@/hooks/rewards/use-invalidate-rewards";
 
 export interface SubmitAssignmentData {
   assignmentId: string;
@@ -36,6 +37,7 @@ interface AssignmentsResponse {
 export default function useSubmitAssignment() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const invalidateRewards = useInvalidateRewards();
 
   // Upload a single file and return its URL
   const uploadFile = async (
@@ -160,6 +162,7 @@ export default function useSubmitAssignment() {
       // Invalidate Next.js server cache for this assignment
       refreshStudentAssignmentCache(data.roomId, data.assignmentId);
 
+      invalidateRewards();
       toast.success("Assignment submitted successfully!");
     },
     onError: (error: any) => {

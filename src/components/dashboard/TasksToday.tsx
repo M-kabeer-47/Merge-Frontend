@@ -71,7 +71,7 @@ export default function TasksToday({ selectedDate, tasks }: TasksTodayProps) {
               </div>
               <div className="space-y-2">
                 {assignments.map((task, idx) => (
-                  <TaskItem task={task} index={idx} />
+                  <TaskItem key={task.id} task={task} index={idx} />
                 ))}
               </div>
             </div>

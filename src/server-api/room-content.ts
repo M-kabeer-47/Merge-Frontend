@@ -52,7 +52,7 @@ export async function getRoomContent(
 
   const { data, error } = await getWithAuth<RoomContentResponse>(url, {
     next: {
-      revalidate: false,
+      revalidate: 0,
       tags: [
         "room-content",
         `room-content-${roomId}`,

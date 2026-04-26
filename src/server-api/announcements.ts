@@ -21,7 +21,7 @@ export async function getAnnouncements({
     `${API_BASE_URL}/announcements?roomId=${roomId}&filter=${filter}`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: ["announcements", `announcements-${roomId}`],
       },
     },

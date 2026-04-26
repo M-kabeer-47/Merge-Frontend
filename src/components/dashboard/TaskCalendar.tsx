@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   format,
@@ -44,7 +44,13 @@ export default function TaskCalendar({
   onDateSelect,
 }: TaskCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+
+  // Fire selection of today on mount so the parent shows today's tasks
+  useEffect(() => {
+    onDateSelect(new Date());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ═════════════════════════════════════════════════════════════════
   // CALENDAR GENERATION LOGIC
@@ -159,29 +165,41 @@ export default function TaskCalendar({
           const hasTasks = day.tasks.length > 0;
           const isSelected = selectedDate && isSameDay(day.date, selectedDate);
 
+          // Determine task category dot colors (up to 3 dots, deduped by category)
+          const dotCategories = Array.from(
+            new Set(day.tasks.map((t) => t.taskCategory)),
+          ).slice(0, 3);
+          const categoryColor = (cat: string) => {
+            switch (cat) {
+              case "assignment":
+                return "bg-accent";
+              case "quiz":
+                return "bg-info";
+              case "video-session":
+                return "bg-primary";
+              default:
+                return "bg-secondary";
+            }
+          };
+
           // Determine cell styling
           let cellClasses =
-            "aspect-square relative flex items-center justify-center rounded-lg transition-all duration-200 ";
+            "aspect-square relative flex flex-col items-center justify-center rounded-lg transition-all duration-200 cursor-pointer ";
 
           if (!day.isCurrentMonth) {
-            // Empty cells (previous/next month dates)
-            cellClasses += "text-para-muted cursor-default";
+            cellClasses += "text-para-muted/60 hover:bg-secondary/5";
+          } else if (day.isToday && isSelected) {
+            cellClasses += "bg-primary text-white font-bold ring-2 ring-primary/30";
           } else if (day.isToday) {
-            // Today
-            cellClasses +=
-              "bg-primary text-white font-bold hover:bg-primary/90 cursor-pointer";
+            cellClasses += "bg-primary text-white font-bold hover:bg-primary/90";
           } else if (isSelected) {
-            // Selected date
             cellClasses +=
-              "bg-secondary/20 text-heading font-semibold border-2 border-primary cursor-pointer";
+              "bg-secondary/15 text-heading font-semibold ring-2 ring-primary";
           } else if (hasTasks) {
-            // Dates with tasks
             cellClasses +=
-              "bg-secondary/20 text-para font-semibold hover:bg-secondary/10 cursor-pointer";
+              "bg-secondary/10 text-para font-semibold hover:bg-secondary/20";
           } else {
-            // Regular dates
-            cellClasses +=
-              "text-para font-medium hover:bg-secondary/5 cursor-pointer";
+            cellClasses += "text-para font-medium hover:bg-secondary/5";
           }
 
           const ariaLabel = `${format(day.date, "MMMM d, yyyy")}${
@@ -206,9 +224,43 @@ export default function TaskCalendar({
               }}
             >
               <span className="text-sm">{day.dateNumber}</span>
+
+              {/* Task indicator dots */}
+              {hasTasks && (
+                <div className="absolute bottom-1 flex gap-0.5">
+                  {dotCategories.map((cat) => (
+                    <span
+                      key={cat}
+                      className={`h-1 w-1 rounded-full ${
+                        day.isToday ? "bg-white" : categoryColor(cat)
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-light-border pt-3">
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+          <span className="text-[10px] text-para-muted">Assignment</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-info" />
+          <span className="text-[10px] text-para-muted">Quiz</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          <span className="text-[10px] text-para-muted">Session</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
+          <span className="text-[10px] text-para-muted">Personal</span>
+        </div>
       </div>
     </div>
   );

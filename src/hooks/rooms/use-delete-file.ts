@@ -60,7 +60,7 @@ export default function useDeleteFile({
           },
         };
       });
-      refreshFolderCache(roomId);
+      refreshFolderCache(roomId, folderId);
       toast.success("File deleted successfully!");
     },
     onError: (error: any) => {

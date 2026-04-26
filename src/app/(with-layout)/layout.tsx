@@ -5,6 +5,7 @@ import AuthProviderServer from "@/providers/AuthProviderServer";
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import NotificationTrigger from "@/components/notifications/NotificationTrigger";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
+import RewardsTracker from "@/components/providers/RewardsTracker";
 
 export default function WithLayoutLayout({
   children,
@@ -20,6 +21,7 @@ export default function WithLayoutLayout({
         </Suspense>
 
         <OnboardingModal />
+        <RewardsTracker />
 
         <div className="flex md:flex-row flex-col h-screen w-full bg-main-background overflow-hidden">
           {/* Sidebar */}

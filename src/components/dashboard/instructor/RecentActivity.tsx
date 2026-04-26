@@ -1,82 +1,16 @@
 "use client";
 
-import { Activity, MessageSquare, FileCheck, HelpCircle, UserPlus } from "lucide-react";
-
-interface ActivityItem {
-  id: string;
-  type: "submission" | "question" | "message" | "enrollment";
-  studentName: string;
-  action: string;
-  details: string;
-  time: string;
-  roomName: string;
-}
+import { Activity, Bell } from "lucide-react";
+import formatDistanceToNow from "date-fns/formatDistanceToNow";
+import { useFetchNotifications } from "@/hooks/notifications/use-fetch-notifications";
+import { useRouter } from "next/navigation";
+import type { NotificationPayload } from "@/types/notification";
 
 export default function RecentActivity() {
-  const activities: ActivityItem[] = [
-    {
-      id: "1",
-      type: "submission",
-      studentName: "Sarah Johnson",
-      action: "Submitted Assignment",
-      details: "React Component Library",
-      time: "10m ago",
-      roomName: "Advanced React Development",
-    },
-    {
-      id: "2",
-      type: "question",
-      studentName: "Michael Chen",
-      action: "Asked a Question",
-      details: "How to implement useContext with TypeScript?",
-      time: "25m ago",
-      roomName: "Web Development Fundamentals",
-    },
-    {
-      id: "3",
-      type: "enrollment",
-      studentName: "Emma Davis",
-      action: "Enrolled in Course",
-      details: "Just joined your class",
-      time: "1h ago",
-      roomName: "UI/UX Design Principles",
-    },
-    {
-      id: "4",
-      type: "message",
-      studentName: "James Wilson",
-      action: "Posted in Discussion",
-      details: "Question about database normalization techniques",
-      time: "2h ago",
-      roomName: "Database Systems",
-    },
-  ];
+  const router = useRouter();
+  const { notifications, isLoading } = useFetchNotifications();
 
-  const getActivityIcon = (type: ActivityItem["type"]) => {
-    switch (type) {
-      case "submission":
-        return FileCheck;
-      case "question":
-        return HelpCircle;
-      case "message":
-        return MessageSquare;
-      case "enrollment":
-        return UserPlus;
-    }
-  };
-
-  const getActivityColor = (type: ActivityItem["type"]) => {
-    switch (type) {
-      case "submission":
-        return "text-primary";
-      case "question":
-        return "text-secondary";
-      case "message":
-        return "text-primary";
-      case "enrollment":
-        return "text-primary";
-    }
-  };
+  const recent: NotificationPayload[] = (notifications ?? []).slice(0, 5);
 
   return (
     <div className="h-full flex flex-col">
@@ -87,74 +21,57 @@ export default function RecentActivity() {
             Recent Activity
           </h2>
         </div>
-        <button className="text-primary hover:text-primary/80 text-sm font-medium transition-colors">
-          View All
-        </button>
       </div>
 
-      <div className="space-y-3 flex-1">
-        {activities.map((activity) => {
-          // Extract first letter of first and last name for avatar
-          const nameParts = activity.studentName.split(" ");
-          const initials =
-            nameParts.length >= 2
-              ? `${nameParts[0][0]}${nameParts[1][0]}`
-              : activity.studentName.substring(0, 2);
-
-          const Icon = getActivityIcon(activity.type);
-          const iconColor = getActivityColor(activity.type);
-
-          return (
-            <div
-              key={activity.id}
-              className="bg-background rounded-lg p-4 shadow-md hover:shadow-lg transition-all cursor-pointer border border-light-border"
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 bg-secondary/10 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : recent.length === 0 ? (
+        <div className="bg-background border border-light-border rounded-xl p-6 text-center flex-1 flex flex-col justify-center">
+          <Bell className="w-8 h-8 text-para-muted mx-auto mb-2 opacity-50" />
+          <p className="text-sm text-heading font-medium">No recent activity</p>
+          <p className="text-xs text-para-muted mt-1">
+            Student submissions and questions will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2 flex-1">
+          {recent.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => {
+                if (n.metadata?.actionUrl) router.push(n.metadata.actionUrl);
+              }}
+              className={`w-full text-left bg-background border rounded-lg p-3 hover:border-primary/30 transition-colors ${
+                n.isRead ? "border-light-border" : "border-primary/30 bg-primary/5"
+              }`}
             >
-              {/* Header with Room Name and Time */}
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-heading truncate">
-                  {activity.roomName}
-                </h3>
-                <span className="text-xs text-para-muted flex-shrink-0 ml-2">
-                  {activity.time}
-                </span>
-              </div>
-
-              {/* Main Content */}
               <div className="flex items-start gap-3">
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-semibold text-sm">
-                    {initials}
-                  </span>
-                </div>
-
-                {/* Activity Details */}
+                <div
+                  className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                    n.isRead ? "bg-para-muted/40" : "bg-primary"
+                  }`}
+                />
                 <div className="flex-1 min-w-0">
-                  {/* Student Name and Action */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-heading text-sm">
-                      {activity.studentName}
-                    </p>
-                    <div className={`flex items-center gap-1 ${iconColor}`}>
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-
-                  {/* Action Type */}
-                  <p className="text-xs text-para-muted mb-1">
-                    {activity.action}
+                  <p
+                    className={`text-sm leading-snug ${
+                      n.isRead ? "text-para" : "text-heading font-medium"
+                    }`}
+                  >
+                    {n.content}
                   </p>
-
-                  {/* Details */}
-                  <p className="text-sm text-para font-semibold line-clamp-2">
-                    {activity.details}
+                  <p className="text-[10px] text-para-muted mt-1">
+                    {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                   </p>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

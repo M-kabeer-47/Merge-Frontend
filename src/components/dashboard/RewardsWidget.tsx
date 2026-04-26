@@ -1,17 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import {
-  Trophy,
-  Users,
-  Video,
-  FileText,
-  Download,
-  CheckCircle,
-  Flame,
-  Star,
-  Award,
+  Trophy, Flame, BookOpen, CheckCircle, FileText, Users, Target,
+  CalendarCheck, Video, HelpCircle, PlusCircle, PenLine, Monitor,
+  ClipboardCheck, Award, Star, Upload, Book,
 } from "lucide-react";
+import useRewardsProfile from "@/hooks/rewards/use-rewards-profile";
+import { ChallengeProgress, BadgeWithStatus } from "@/types/rewards";
 
 interface Achievement {
   id: string;
@@ -26,110 +21,79 @@ interface Achievement {
   unlocked: boolean;
 }
 
+// Maps the icon string from the backend challenge definition to a Lucide icon
+const ICON_MAP: Record<string, React.ElementType> = {
+  "check-circle": CheckCircle, "file-text": FileText, "users": Users,
+  "target": Target, "calendar-check": CalendarCheck, "book-open": BookOpen,
+  "video": Video, "help-circle": HelpCircle, "plus-circle": PlusCircle,
+  "trophy": Trophy, "pen-line": PenLine, "monitor": Monitor,
+  "clipboard-check": ClipboardCheck, "flame": Flame, "award": Award,
+  "star": Star, "upload": Upload, "book": Book,
+};
+
+const TIER_COLOR: Record<string, { color: string; bg: string }> = {
+  daily:   { color: "text-info",      bg: "bg-info/10" },
+  weekly:  { color: "text-accent",    bg: "bg-accent/10" },
+  monthly: { color: "text-secondary", bg: "bg-secondary/10" },
+};
+
+function toAchievement(ch: ChallengeProgress): Achievement {
+  const tierColor = TIER_COLOR[ch.type] ?? TIER_COLOR.daily;
+  return {
+    id: ch.id,
+    title: ch.name,
+    description: ch.description,
+    icon: ICON_MAP[ch.icon] ?? CheckCircle,
+    iconColor: tierColor.color,
+    iconBg: tierColor.bg,
+    progress: ch.currentCount,
+    total: ch.target,
+    points: ch.points,
+    unlocked: ch.isCompleted,
+  };
+}
+
+function badgeToAchievement(bs: BadgeWithStatus): Achievement {
+  const tierColor = TIER_COLOR[bs.badge.tier as keyof typeof TIER_COLOR] ?? TIER_COLOR.daily;
+  return {
+    id: `badge-${bs.badge.id}`,
+    title: bs.badge.name,
+    description: bs.badge.description,
+    icon: ICON_MAP[bs.badge.icon] ?? Trophy,
+    iconColor: tierColor.color,
+    iconBg: tierColor.bg,
+    progress: bs.userBadge ? 1 : 0,
+    total: 1,
+    points: bs.badge.discountPercentage * 10, // crude xp conversion
+    unlocked: !!bs.userBadge,
+  };
+}
+
 export default function RewardsWidget() {
-  const [achievements] = useState<Achievement[]>([
-    {
-      id: "1",
-      title: "Room Explorer",
-      description: "Join your first room",
-      icon: Users,
-      iconColor: "text-primary",
-      iconBg: "bg-primary/10",
-      progress: 1,
-      total: 1,
-      points: 10,
-      unlocked: true,
-    },
-    {
-      id: "2",
-      title: "Active Learner",
-      description: "Attend 5 live sessions",
-      icon: Video,
-      iconColor: "text-info",
-      iconBg: "bg-info/10",
-      progress: 3,
-      total: 5,
-      points: 25,
-      unlocked: false,
-    },
-    {
-      id: "3",
-      title: "Note Master",
-      description: "Create 10 notes",
-      icon: FileText,
-      iconColor: "text-accent",
-      iconBg: "bg-accent/10",
-      progress: 7,
-      total: 10,
-      points: 20,
-      unlocked: false,
-    },
-    {
-      id: "4",
-      title: "Resource Hunter",
-      description: "Download 5 files",
-      icon: Download,
-      iconColor: "text-secondary",
-      iconBg: "bg-secondary/10",
-      progress: 5,
-      total: 5,
-      points: 15,
-      unlocked: true,
-    },
-    {
-      id: "5",
-      title: "Assignment Hero",
-      description: "Submit 3 assignments on time",
-      icon: CheckCircle,
-      iconColor: "text-success",
-      iconBg: "bg-success/10",
-      progress: 2,
-      total: 3,
-      points: 30,
-      unlocked: false,
-    },
-    {
-      id: "6",
-      title: "Week Warrior",
-      description: "Maintain 7-day focus streak",
-      icon: Flame,
-      iconColor: "text-accent",
-      iconBg: "bg-accent/10",
-      progress: 4,
-      total: 7,
-      points: 50,
-      unlocked: false,
-    },
-    {
-      id: "7",
-      title: "Perfect Score",
-      description: "Score 100% on an assignment",
-      icon: Star,
-      iconColor: "text-accent",
-      iconBg: "bg-accent/10",
-      progress: 0,
-      total: 1,
-      points: 40,
-      unlocked: false,
-    },
-    {
-      id: "8",
-      title: "Top Contributor",
-      description: "Share 10 resources in rooms",
-      icon: Award,
-      iconColor: "text-primary",
-      iconBg: "bg-primary/10",
-      progress: 3,
-      total: 10,
-      points: 35,
-      unlocked: false,
-    },
-  ]);
+  const { profile, isLoading } = useRewardsProfile();
+
+  const achievements: Achievement[] = [
+    ...(profile?.challenges ?? []).map(toAchievement),
+    ...(profile?.badges ?? []).map(badgeToAchievement),
+  ];
 
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
-  const totalPoints = achievements
-    .filter((a) => a.unlocked)
-    .reduce((sum, a) => sum + a.points, 0);
+  const totalPoints = profile?.totalPoints ?? 0;
+
+  if (isLoading) {
+    return (
+      <div className="bg-background border border-light-border rounded-xl shadow-sm flex flex-col max-h-[735px]">
+        <div className="p-5 space-y-3">
+          <div className="h-4 w-32 bg-secondary/10 rounded animate-pulse" />
+          <div className="h-16 bg-secondary/10 rounded-lg animate-pulse" />
+          <div className="h-2 bg-secondary/10 rounded-full animate-pulse" />
+        </div>
+        <div className="flex-1 px-5 pb-5 space-y-2">
+          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-secondary/10 rounded-lg animate-pulse" />)}
+        </div>
+      </div>
+    );
+  }
 
   // Sort: pending first, then completed
   const displayedAchievements = [...achievements].sort((a, b) => {

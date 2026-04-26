@@ -1,29 +1,33 @@
 "use client";
 
 import { Flame } from "lucide-react";
-import { useState } from "react";
+import useRewardsProfile from "@/hooks/rewards/use-rewards-profile";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-
 export default function StreakCounter() {
-  const [streakDays] = useState(4);
-  const [userName] = useState("Anna");
+  const { profile } = useRewardsProfile();
+  const streakDays = profile?.streak.currentStreak ?? 0;
+  const lastActivityDate = profile?.streak.lastActivityDate ?? null;
 
-  // Get current week days (last 7 days)
   const getWeekDays = () => {
     const days = [];
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const last = lastActivityDate ? new Date(lastActivityDate) : null;
+    if (last) last.setHours(0, 0, 0, 0);
 
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
+      // Mark as completed if this day is within the current streak window
+      const daysAgo = i;
+      const isCompleted = last !== null && daysAgo < streakDays && date <= last;
       days.push({
         day: date.toLocaleDateString("en-US", { weekday: "short" }).charAt(0),
         date: date.getDate(),
-        isCompleted: i < 4, // Last 4 days completed
+        isCompleted,
         isToday: i === 0,
       });
     }
-
     return days;
   };
 
@@ -34,14 +38,13 @@ export default function StreakCounter() {
       {/* Flame Icon Circle */}
       <div className="flex justify-center mb-4">
         <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center relative">
-          <div className="w-20 h-20 rounded-full bg-background border-4 border-accent/20 flex items-center justify-center">
-            {/* <DotLottieReact
+          <div className="rounded-full bg-accent/10 flex items-center justify-center">
+            <DotLottieReact
               src="/Fire.lottie"
               autoplay
               loop
-              style={{ width: "58px", height: "58px" }}
-            /> */}
-            <Flame className="w-12 h-12 text-accent fill-accent" />
+              style={{ width: "70px", height: "70px" }}
+            />
           </div>
         </div>
       </div>
@@ -60,7 +63,9 @@ export default function StreakCounter() {
 
       {/* Encouragement Message */}
       <p className="text-center text-sm text-para-muted mb-6">
-        You are doing really great, {userName}!
+        {streakDays > 0
+          ? `${streakDays > 3 ? "You're on fire!" : "Keep it up!"} 🔥`
+          : "Complete tasks to start your streak!"}
       </p>
 
       {/* Week Days Grid */}
@@ -80,8 +85,8 @@ export default function StreakCounter() {
                   day.isCompleted
                     ? "bg-accent text-white"
                     : day.isToday
-                    ? "border-2 border-primary text-heading bg-background"
-                    : "bg-background border border-light-border text-para-muted"
+                      ? "border-2 border-primary text-heading bg-background"
+                      : "bg-background border border-light-border text-para-muted"
                 }
               `}
             >

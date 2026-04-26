@@ -21,7 +21,7 @@ export async function getAssignmentForInstructor(
     `${API_BASE_URL}/assignments/instructor/${assignmentId}?roomId=${roomId}`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: [
           "assignments",
           `assignment-${assignmentId}`,
@@ -58,7 +58,7 @@ export async function getAssignmentForStudent(
     `${API_BASE_URL}/assignments/student/${assignmentId}?roomId=${roomId}`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: [
           "assignments",
           `assignment-${assignmentId}`,

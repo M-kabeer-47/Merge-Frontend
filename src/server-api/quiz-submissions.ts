@@ -15,7 +15,7 @@ export async function getQuizSubmissions(
     `${API_BASE_URL}/quiz/instructor/${quizId}?roomId=${roomId}`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: ["quizzes", `quiz-${quizId}`, `quiz-submissions-${quizId}`],
       },
     }

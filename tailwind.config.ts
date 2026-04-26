@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        roboto: ["var(--font-roboto)"],
-        raleway: ["var(--font-raleway)"],
+        roboto: ["'Inter'", "var(--font-roboto)"],
+        raleway: ["'Inter'", "var(--font-raleway)"],
       },
       colors: {
         primary: "var(--primary)",

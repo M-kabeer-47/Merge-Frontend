@@ -14,7 +14,7 @@ export async function getRoomDetails(
     `${API_BASE_URL}/room/${roomId}`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: ["room", `room-${roomId}`],
       },
     }

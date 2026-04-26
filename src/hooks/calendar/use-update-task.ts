@@ -3,10 +3,12 @@ import api from "@/utils/api";
 import { toastApiError } from "@/utils/toast-helpers";
 import { revalidateCalendarTasks } from "@/server-actions/calendar";
 import { CalendarTask, TaskStatus } from "@/types/calendar";
+import useInvalidateRewards from "@/hooks/rewards/use-invalidate-rewards";
 
 type UpdateTaskData = { id: string; status: TaskStatus };
 export default function useUpdateTask() {
   const queryClient = useQueryClient();
+  const invalidateRewards = useInvalidateRewards();
 
   const { isPending, mutateAsync } = useMutation({
     mutationFn: async (data: UpdateTaskData) => {
@@ -34,6 +36,7 @@ export default function useUpdateTask() {
     onSettled: async () => {
       await revalidateCalendarTasks();
       await queryClient.invalidateQueries({ queryKey: ["calendar-tasks"] });
+      invalidateRewards();
     },
   });
 

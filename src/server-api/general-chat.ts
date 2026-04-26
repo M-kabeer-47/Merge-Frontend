@@ -42,7 +42,7 @@ export async function getGeneralChatMessages(
     `${API_BASE_URL}/general-chat?${queryParams.toString()}`,
     {
       next: {
-        revalidate: false, // Don't cache chat messages
+        revalidate: 0, // Don't cache chat messages
         tags: ["general-chat", `general-chat-${roomId}`],
       },
     },

@@ -4,9 +4,11 @@ import api from "@/utils/api";
 import { toastApiError } from "@/utils/toast-helpers";
 import { JoinRoomType } from "@/schemas/room/join-room";
 import { RoomsResponse } from "./use-get-user-rooms";
+import useInvalidateRewards from "@/hooks/rewards/use-invalidate-rewards";
 
 export default function useJoinRoom() {
   const queryClient = useQueryClient();
+  const invalidateRewards = useInvalidateRewards();
 
   const joinRoomFunction = async (data: JoinRoomType) => {
     const response = await api.post("/room/join", data);
@@ -33,6 +35,7 @@ export default function useJoinRoom() {
 
         // Invalidate rooms query to refetch with new room included
         queryClient.invalidateQueries({ queryKey: ["rooms"] });
+        invalidateRewards();
 
         // Optionally add the room directly to the cache for instant UI update
         if (data?.room) {

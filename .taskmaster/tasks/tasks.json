@@ -1,0 +1,436 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Create Reward & Subscription Database Entities",
+        "description": "Create 7 new TypeORM entity files in merge-backend/src/entities/ and add subscriptionTier field to user.entity.ts",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [],
+        "details": "Create the following entity files:\n1. user-streak.entity.ts: id(uuid), user(ManyToOne→User), currentStreak(number,default 0), longestStreak(number,default 0), lastActivityDate(Date nullable), updatedAt(UpdateDateColumn)\n2. badge.entity.ts: id(uuid), name(string), description(string), icon(string), tier(enum: daily|weekly|monthly), discountPercentage(number), isActive(boolean,default true)\n3. user-badge.entity.ts: id(uuid), user(ManyToOne→User), badge(ManyToOne→Badge), earnedAt(Date), lsDiscountCode(string nullable), isRedeemed(boolean,default false), createdAt(CreateDateColumn)\n4. user-challenge-progress.entity.ts: id(uuid), user(ManyToOne→User), challengeType(enum: daily|weekly|monthly), periodStart(Date), currentCount(number,default 0), isCompleted(boolean,default false), completedAt(Date nullable), consecutiveCount(number,default 0), updatedAt(UpdateDateColumn). Add unique constraint on (user, challengeType, periodStart).\n5. subscription-plan.entity.ts: id(uuid), name(enum: free|basic|pro|max), displayName(string), priceMonthly(number), currency(string,default PKR), lsVariantId(string nullable), features(simple-json array), roomLimit(number), noteLimit(number; -1=unlimited), hasLectureSummary(boolean), hasFocusTracker(boolean), isActive(boolean,default true)\n6. user-subscription.entity.ts: id(uuid), user(OneToOne→User), plan(ManyToOne→SubscriptionPlan), status(enum: active|cancelled|expired|past_due|trialing,default active), lsSubscriptionId(string nullable unique), lsCustomerId(string nullable), currentPeriodStart(Date nullable), currentPeriodEnd(Date nullable), cancelAtPeriodEnd(boolean,default false), appliedDiscountPercentage(number,default 0), createdAt, updatedAt\n7. payment-record.entity.ts: id(uuid), user(ManyToOne→User), subscription(ManyToOne→UserSubscription nullable), amountPkr(number), status(enum: paid|failed|refunded), lsOrderId(string nullable), invoiceUrl(string nullable), paidAt(Date nullable), createdAt\n\nAlso add to user.entity.ts: subscriptionTier(enum: free|basic|pro|max, default free).",
+        "testStrategy": "Verify TypeORM can compile and sync entities without errors. Check that all foreign keys and indexes are created correctly.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create user-streak.entity.ts",
+            "description": "Create user streak tracking entity in d:/FYP/merge-backend/src/entities/user-streak.entity.ts",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Entity: @Entity('user_streaks'). Fields: id (PrimaryGeneratedColumn uuid), user (ManyToOne(() => User, { onDelete: 'CASCADE' }), JoinColumn), currentStreak (Column default 0), longestStreak (Column default 0), lastActivityDate (Column nullable), updatedAt (UpdateDateColumn)",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Create badge.entity.ts",
+            "description": "Create static badge definitions entity in d:/FYP/merge-backend/src/entities/badge.entity.ts",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Entity: @Entity('badges'). Export enum BadgeTier { DAILY='daily', WEEKLY='weekly', MONTHLY='monthly' }. Fields: id (uuid), name, description, icon, tier (enum BadgeTier), discountPercentage (number), isActive (boolean default true)",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Create user-badge.entity.ts",
+            "description": "Create entity for badges earned by users in d:/FYP/merge-backend/src/entities/user-badge.entity.ts",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Entity: @Entity('user_badges'). Fields: id (uuid), user (ManyToOne User), badge (ManyToOne Badge, eager: true), earnedAt (Column type date), lsDiscountCode (Column nullable), isRedeemed (Column default false), createdAt (CreateDateColumn)",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Create user-challenge-progress.entity.ts",
+            "description": "Create challenge progress tracking entity in d:/FYP/merge-backend/src/entities/user-challenge-progress.entity.ts",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Entity: @Entity('user_challenge_progress'). Export enum ChallengeType { DAILY='daily', WEEKLY='weekly', MONTHLY='monthly' }. Fields: id, user (ManyToOne), challengeType (enum ChallengeType), periodStart (Date), currentCount (default 0), isCompleted (default false), completedAt (nullable), consecutiveCount (default 0), updatedAt. Add @Unique(['user', 'challengeType', 'periodStart']) constraint on class.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Create subscription-plan.entity.ts",
+            "description": "Create subscription plan definitions entity in d:/FYP/merge-backend/src/entities/subscription-plan.entity.ts",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Entity: @Entity('subscription_plans'). Export enum PlanTier { FREE='free', BASIC='basic', PRO='pro', MAX='max' }. Fields: id, name (enum PlanTier unique), displayName, priceMonthly (number), currency (default 'PKR'), lsVariantId (nullable), features (Column type simple-json), roomLimit (number), noteLimit (number), hasLectureSummary (boolean), hasFocusTracker (boolean), isActive (boolean default true)",
+            "parentId": "undefined"
+          },
+          {
+            "id": 6,
+            "title": "Create user-subscription.entity.ts",
+            "description": "Create user subscription entity in d:/FYP/merge-backend/src/entities/user-subscription.entity.ts",
+            "status": "pending",
+            "dependencies": [
+              5
+            ],
+            "details": "Entity: @Entity('user_subscriptions'). Export enum SubscriptionStatus { ACTIVE='active', CANCELLED='cancelled', EXPIRED='expired', PAST_DUE='past_due', TRIALING='trialing' }. Fields: id, user (OneToOne User, JoinColumn), plan (ManyToOne SubscriptionPlan, eager true), status (enum default active), lsSubscriptionId (nullable, unique), lsCustomerId (nullable), currentPeriodStart (nullable), currentPeriodEnd (nullable), cancelAtPeriodEnd (boolean default false), appliedDiscountPercentage (number default 0), createdAt, updatedAt",
+            "parentId": "undefined"
+          },
+          {
+            "id": 7,
+            "title": "Create payment-record.entity.ts",
+            "description": "Create payment record entity in d:/FYP/merge-backend/src/entities/payment-record.entity.ts",
+            "status": "pending",
+            "dependencies": [
+              6
+            ],
+            "details": "Entity: @Entity('payment_records'). Export enum PaymentStatus { PAID='paid', FAILED='failed', REFUNDED='refunded' }. Fields: id, user (ManyToOne User), subscription (ManyToOne UserSubscription nullable), amountPkr (number), status (enum PaymentStatus), lsOrderId (nullable), invoiceUrl (nullable), paidAt (nullable), createdAt (CreateDateColumn)",
+            "parentId": "undefined"
+          },
+          {
+            "id": 8,
+            "title": "Add subscriptionTier to user.entity.ts",
+            "description": "Add subscriptionTier column to existing User entity",
+            "status": "pending",
+            "dependencies": [
+              5
+            ],
+            "details": "In d:/FYP/merge-backend/src/entities/user.entity.ts, import PlanTier enum from subscription-plan.entity. Add field: @Column({ type: 'enum', enum: PlanTier, default: PlanTier.FREE }) subscriptionTier: PlanTier;",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-04-25T11:47:30.193Z"
+      },
+      {
+        "id": "2",
+        "title": "Write SQL Migration for Rewards & Subscription Tables",
+        "description": "Create SQL migration file that creates all 7 new tables plus seed data for badges and subscription plans",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "details": "Create d:/FYP/merge-backend/migrations/2026-04-25-add-rewards-and-subscription.sql\n\nTables to create:\n- user_streaks (id uuid PK, user_id uuid FK→users, current_streak int default 0, longest_streak int default 0, last_activity_date date nullable, updated_at timestamp)\n- badges (id uuid PK, name varchar unique, description text, icon varchar, tier varchar, discount_percentage int, is_active boolean default true)\n- user_badges (id uuid PK, user_id uuid FK→users, badge_id uuid FK→badges, earned_at timestamp, ls_discount_code varchar nullable, is_redeemed boolean default false, created_at timestamp)\n- user_challenge_progress (id uuid PK, user_id uuid FK→users, challenge_type varchar, period_start date, current_count int default 0, is_completed boolean default false, completed_at timestamp nullable, consecutive_count int default 0, updated_at timestamp, UNIQUE(user_id, challenge_type, period_start))\n- subscription_plans (id uuid PK, name varchar unique, display_name varchar, price_monthly numeric, currency varchar default 'PKR', ls_variant_id varchar nullable, features jsonb, room_limit int, note_limit int, has_lecture_summary boolean, has_focus_tracker boolean, is_active boolean default true)\n- user_subscriptions (id uuid PK, user_id uuid FK→users unique, plan_id uuid FK→subscription_plans, status varchar default 'active', ls_subscription_id varchar unique nullable, ls_customer_id varchar nullable, current_period_start timestamp nullable, current_period_end timestamp nullable, cancel_at_period_end boolean default false, applied_discount_percentage int default 0, created_at timestamp, updated_at timestamp)\n- payment_records (id uuid PK, user_id uuid FK→users, subscription_id uuid FK→user_subscriptions nullable, amount_pkr numeric, status varchar, ls_order_id varchar nullable, invoice_url varchar nullable, paid_at timestamp nullable, created_at timestamp)\n\nALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_tier varchar DEFAULT 'free';\n\nSeed badges:\n- Daily Champion: tier=daily, discount=10\n- Weekly Scholar: tier=weekly, discount=20\n- Monthly Master: tier=monthly, discount=30\n\nSeed subscription_plans:\n- free: price=0, room_limit=2, note_limit=5, has_lecture_summary=false, has_focus_tracker=false\n- basic: price=100, room_limit=5, note_limit=10, has_lecture_summary=false, has_focus_tracker=false\n- pro: price=200, room_limit=10, note_limit=20, has_lecture_summary=true, has_focus_tracker=true\n- max: price=500, room_limit=50, note_limit=-1, has_lecture_summary=true, has_focus_tracker=true",
+        "testStrategy": "Run migration against local dev database. Verify all tables exist, foreign keys are valid, and seed data is inserted.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:44:45.823Z"
+      },
+      {
+        "id": "3",
+        "title": "Build Rewards NestJS Module",
+        "description": "Create src/rewards/ module with service and controller for tracking streaks, challenges, and badges",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "details": "Create d:/FYP/merge-backend/src/rewards/ with rewards.module.ts, rewards.service.ts, rewards.controller.ts.\n\nKey service methods:\n- onTaskCompleted(userId, completedAt): Update streak. Get/create challenge progress for current daily/weekly/monthly periods. Increment counts. If count >= target (3/10/30), mark completed, increment consecutiveCount. Call checkAndAwardBadges. Wrap everything in try/catch.\n- checkAndAwardBadges(userId, challengeType): Check threshold (daily=7 consecutive, weekly=4, monthly=1). If not already earned, create UserBadge, call createLsDiscountCode(), notify user via NotificationService.\n- createLsDiscountCode(discountPercent): POST to https://api.lemonsqueezy.com/v1/discounts with Bearer auth. Create code BADGE-{uuid}, amount_type=percent, amount=discountPercent, is_limited_to_products=false, is_limited_redemptions=true, max_redemptions=1. Return discount code string.\n- getUserRewardsProfile(userId): Return streak + badges (with badge relation) + challenges for current periods + totalPoints (daily badge=100pts, weekly=200pts, monthly=300pts)\n- getUserChallenges(userId): Return current daily/weekly/monthly progress objects with target counts.",
+        "testStrategy": "Test onTaskCompleted by completing tasks and verifying streak + challenge progress increments. Verify badge award after consecutive completions.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create rewards.module.ts",
+            "description": "Create rewards module file with TypeORM feature registration and NotificationModule import",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Module imports: TypeOrmModule.forFeature([UserStreak, Badge, UserBadge, UserChallengeProgress, User]), NotificationModule. Exports: RewardsService. Providers: RewardsService. Controllers: RewardsController.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Create rewards.service.ts - streak and challenge logic",
+            "description": "Implement onTaskCompleted, streak update, and challenge progress tracking",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement onTaskCompleted() which: (1) Finds or creates UserStreak. Updates lastActivityDate. If last activity was yesterday, increment currentStreak; if today, skip; if >1 day gap, reset to 1. Update longestStreak if needed. Save. (2) For each of daily/weekly/monthly, get current period start date (start of today / start of this week Monday / start of this month). Find or create UserChallengeProgress. If already completed for this period, skip. Increment currentCount. Check if >= target. If just completed, set isCompleted=true, completedAt=now, increment consecutiveCount. Save. Call checkAndAwardBadges if newly completed.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Create rewards.service.ts - badge award and LemonSqueezy discount",
+            "description": "Implement checkAndAwardBadges and createLsDiscountCode methods",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "checkAndAwardBadges(userId, challengeType): Query latest challenge progress for type, check consecutiveCount against threshold (daily=7, weekly=4, monthly=1). Check if user already has this badge type. If not: create UserBadge. Call createLsDiscountCode(badge.discountPercentage). Store code in userBadge.lsDiscountCode. Save. Then call NotificationService to send in-app notification: 'You earned the [Badge Name] badge! You have a [X]% discount available.'.\n\ncreateLsDiscountCode(): Use node-fetch or axios to POST to LemonSqueezy API. Handle errors gracefully — if LS API fails, still save the badge but with null discount code.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Create rewards.service.ts - profile and challenges query methods",
+            "description": "Implement getUserRewardsProfile and getUserChallenges",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "getUserRewardsProfile: Find UserStreak (or return default). Find UserBadges with badge relation eager. Calculate totalPoints from earned badges (100/200/300 per tier). Get current challenges via getUserChallenges. Return combined object.\n\ngetUserChallenges: For each type, compute current periodStart. Find UserChallengeProgress. If none found, return default { currentCount:0, isCompleted:false, consecutiveCount:0 }. Include target (3/10/30) in returned object.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Create rewards.controller.ts",
+            "description": "Create REST controller with GET /rewards/profile and GET /rewards/challenges endpoints",
+            "status": "pending",
+            "dependencies": [
+              4
+            ],
+            "details": "@Controller('rewards'), uses global JwtAuthGuard. GET /rewards/profile → getUserRewardsProfile(req.user.id). GET /rewards/challenges → getUserChallenges(req.user.id). Both return plain JSON.",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-04-25T11:44:55.818Z"
+      },
+      {
+        "id": "4",
+        "title": "Hook Rewards into Calendar Task Completion",
+        "description": "Modify CalendarService.updateStatus() to trigger RewardsService.onTaskCompleted() when a task is marked completed",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [
+          "3"
+        ],
+        "details": "In d:/FYP/merge-backend/src/calendar/calendar.service.ts:\n- Inject RewardsService in constructor\n- In updateStatus() method, after saving the event: if (dto.status === TaskStatus.COMPLETED) { try { await this.rewardsService.onTaskCompleted(userId, new Date()); } catch (e) { this.logger.error('Rewards tracking failed', e); } }\n\nIn d:/FYP/merge-backend/src/calendar/calendar.module.ts:\n- Import RewardsModule. Since CalendarModule is already imported in AppModule and RewardsModule will also be there, use forwardRef if circular dependency occurs: imports: [forwardRef(() => RewardsModule)]",
+        "testStrategy": "Mark a task as completed via API. Check that UserStreak and UserChallengeProgress records are created/updated in the DB.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:45:06.224Z"
+      },
+      {
+        "id": "5",
+        "title": "Build Subscription NestJS Module",
+        "description": "Create src/subscription/ module with LemonSqueezy integration for checkout, webhook processing, and payment history",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "details": "Run: npm install @lemonsqueezy/lemonsqueezy.js (in merge-backend directory).\n\nCreate d:/FYP/merge-backend/src/subscription/plan-limits.const.ts with PLAN_LIMITS constant map.\n\nCreate subscription.module.ts, subscription.service.ts, subscription.controller.ts.\n\nKey service methods:\n- getPlans(): Return all active SubscriptionPlans ordered by priceMonthly ASC\n- getUserSubscription(userId): Find UserSubscription with plan relation. If none, return free plan object.\n- createCheckout(userId, planId): Init LS with lemonSqueezySetup({ apiKey: process.env.LEMON_SQUEEZY_API_KEY }). Find plan. Find best unspent UserBadge. Build checkout data with variantId, redirectUrl (FRONTEND_URL/billing?success=true), cancelUrl (FRONTEND_URL/billing?cancelled=true). If discount code available, include in checkout. Return { checkoutUrl }.\n- cancelSubscription(userId): Call LS cancelSubscription API. Set cancelAtPeriodEnd=true.\n- getPaymentHistory(userId, page, limit): Return paginated PaymentRecords.\n- handleWebhook(rawBody, signature): Verify HMAC. Parse. Switch on event type. Handle: subscription_created, subscription_updated, subscription_cancelled, subscription_expired, order_created, subscription_payment_failed.\n\nIn main.ts, add raw body middleware for /subscriptions/webhook before global JSON parser.",
+        "testStrategy": "Test checkout URL generation. Simulate webhook events with test tool. Verify subscription status updates in DB.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install LemonSqueezy SDK and create plan-limits.const.ts",
+            "description": "Install @lemonsqueezy/lemonsqueezy.js and create the plan limits constant",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Run: npm install @lemonsqueezy/lemonsqueezy.js in d:/FYP/merge-backend/.\n\nCreate src/subscription/plan-limits.const.ts:\nexport const PLAN_LIMITS = {\n  free:  { roomLimit: 2,  noteLimit: 5,   hasLectureSummary: false, hasFocusTracker: false },\n  basic: { roomLimit: 5,  noteLimit: 10,  hasLectureSummary: false, hasFocusTracker: false },\n  pro:   { roomLimit: 10, noteLimit: 20,  hasLectureSummary: true,  hasFocusTracker: true  },\n  max:   { roomLimit: 50, noteLimit: -1,  hasLectureSummary: true,  hasFocusTracker: true  },\n};",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Create subscription.module.ts",
+            "description": "Create subscription module with TypeORM, Bull queue, and NotificationModule imports",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "details": "Module imports: TypeOrmModule.forFeature([SubscriptionPlan, UserSubscription, PaymentRecord, User, UserBadge]), BullModule.registerQueue({ name: 'subscription' }), NotificationModule. Exports: SubscriptionService.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Create subscription.service.ts - plans and checkout",
+            "description": "Implement getPlans, getUserSubscription, and createCheckout methods",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "getPlans(): find all active plans ordered by priceMonthly ASC.\ngetUserSubscription(userId): find UserSubscription with plan relation. If null, return { plan: freePlan, status: 'active', ... } virtual object.\ncreateCheckout(userId, planId): (1) lemonSqueezySetup({ apiKey }). (2) Find SubscriptionPlan by id. (3) Find user's best unspent UserBadge by highest discountPercentage. (4) Call createCheckout from @lemonsqueezy/lemonsqueezy.js with storeId, variantId, checkoutOptions: { redirectUrl, cancelUrl }. If discount code exists, add to checkout. (5) Return { checkoutUrl: data.data.attributes.url }.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Create subscription.service.ts - webhook handler",
+            "description": "Implement handleWebhook with HMAC verification and all subscription event handlers",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "details": "handleWebhook(rawBody: Buffer, signature: string):\n1. Verify: const digest = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex'). Throw UnauthorizedException if mismatch.\n2. Parse: const payload = JSON.parse(rawBody.toString()).\n3. Switch payload.meta.event_name:\n  - subscription_created: upsert UserSubscription with lsSubscriptionId, lsCustomerId, status, period dates. Update user.subscriptionTier to match plan. Schedule renewal reminder Bull job.\n  - subscription_updated: update status, period dates, cancelAtPeriodEnd.\n  - subscription_cancelled: set cancelAtPeriodEnd=true.\n  - subscription_expired: set status=expired, update user.subscriptionTier='free'. Send notification.\n  - order_created: create PaymentRecord with amountPkr, lsOrderId, invoiceUrl, status=paid.\n  - subscription_payment_failed: set status=past_due. Send notification via NotificationService.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Create subscription.service.ts - cancel and payment history",
+            "description": "Implement cancelSubscription and getPaymentHistory methods",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "details": "cancelSubscription(userId): Find active UserSubscription. Call LS updateSubscription API to cancel. Set cancelAtPeriodEnd=true. Save.\ngetPaymentHistory(userId, page=1, limit=10): Return paginated PaymentRecords for user ordered by createdAt DESC. Return { data, total, page, limit }.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 6,
+            "title": "Create subscription.controller.ts",
+            "description": "Create REST controller with all subscription endpoints including raw body webhook",
+            "status": "pending",
+            "dependencies": [
+              5
+            ],
+            "details": "@Controller('subscriptions').\nGET /subscriptions/plans — @Public().\nGET /subscriptions/my — JwtAuthGuard.\nPOST /subscriptions/checkout — JwtAuthGuard, @Body() body: { planId: string }.\nDELETE /subscriptions/my — JwtAuthGuard.\nGET /subscriptions/payments — JwtAuthGuard, @Query() { page?, limit? }.\nPOST /subscriptions/webhook — @Public(), inject raw body from request: in handleWebhook pass req.rawBody (Buffer) and req.headers['x-signature'] (string).",
+            "parentId": "undefined"
+          },
+          {
+            "id": 7,
+            "title": "Configure raw body middleware in main.ts",
+            "description": "Add raw body parsing for webhook route in NestJS main.ts before global JSON middleware",
+            "status": "pending",
+            "dependencies": [
+              6
+            ],
+            "details": "In d:/FYP/merge-backend/src/main.ts, add before app.init(): app.use('/subscriptions/webhook', express.raw({ type: 'application/json' })); Import express from 'express'. This must be registered before the global body parser so the webhook route gets raw Buffer body instead of parsed JSON.",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-04-25T11:45:16.142Z"
+      },
+      {
+        "id": "6",
+        "title": "Add Feature Gating to Existing Services",
+        "description": "Enforce plan limits in room, note, transcription, and focus tracker services by checking user.subscriptionTier",
+        "status": "done",
+        "priority": "medium",
+        "dependencies": [
+          "5"
+        ],
+        "details": "Pattern for each service: import PLAN_LIMITS from subscription/plan-limits.const. Get user from repo. Check user.subscriptionTier. Compare against limit.\n\n1. d:/FYP/merge-backend/src/room/room.service.ts: In create() method, after fetching user, count existing rooms: const roomCount = await this.roomRepo.count({ where: { creator: { id: userId } } }); if (roomCount >= PLAN_LIMITS[user.subscriptionTier].roomLimit) throw new ForbiddenException('Room limit reached. Please upgrade your plan.');\n\n2. d:/FYP/merge-backend/src/note/note.service.ts: In create() method, count user's notes. If noteLimit !== -1 and count >= limit, throw ForbiddenException.\n\n3. d:/FYP/merge-backend/src/transcription/transcription.service.ts: At the start of the main transcription trigger method, check PLAN_LIMITS[user.subscriptionTier].hasLectureSummary. If false, throw ForbiddenException('Lecture summary requires Pro or Max plan.').\n\n4. Focus tracker: Find the relevant service/controller for focus tracker and add hasFocusTracker check similarly.",
+        "testStrategy": "Test with a free user account: try creating 3rd room → should get 403. Try using transcription on free plan → should get 403.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:45:26.078Z"
+      },
+      {
+        "id": "7",
+        "title": "Register New Modules and Configure AppModule",
+        "description": "Add RewardsModule and SubscriptionModule to app.module.ts imports and add env variable documentation",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [
+          "3",
+          "5"
+        ],
+        "details": "In d:/FYP/merge-backend/src/app.module.ts:\n- Import RewardsModule from './rewards/rewards.module'\n- Import SubscriptionModule from './subscription/subscription.module'\n- Add both to the imports array\n\nIn d:/FYP/merge-backend/.env (add the following new variables):\nLEMON_SQUEEZY_API_KEY=your_test_api_key_here\nLEMON_SQUEEZY_STORE_ID=your_store_id_here\nLEMON_SQUEEZY_WEBHOOK_SECRET=your_webhook_secret_here\nLEMON_SQUEEZY_BASIC_VARIANT_ID=variant_id_for_basic\nLEMON_SQUEEZY_PRO_VARIANT_ID=variant_id_for_pro\nLEMON_SQUEEZY_MAX_VARIANT_ID=variant_id_for_max\nFRONTEND_URL=http://localhost:3000",
+        "testStrategy": "Backend starts without errors. All new endpoints are accessible.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:45:36.043Z"
+      },
+      {
+        "id": "8",
+        "title": "Create Frontend TypeScript Types",
+        "description": "Create rewards.ts and subscription.ts type definition files in d:/FYP/merge/src/types/",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [],
+        "details": "Create d:/FYP/merge/src/types/rewards.ts with types: ChallengeTier, BadgeTier, UserStreak, Badge, UserBadge, ChallengeProgress, RewardsProfile.\n\nCreate d:/FYP/merge/src/types/subscription.ts with types: PlanTier, SubscriptionStatus, SubscriptionPlan, UserSubscription, PaymentRecord.\n\nSee the detailed type definitions in the PRD for exact field names and types.",
+        "testStrategy": "TypeScript compilation succeeds with no type errors.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:45:46.372Z"
+      },
+      {
+        "id": "9",
+        "title": "Create Frontend Server API Files and React Query Hooks",
+        "description": "Create server-api files and all 7 React Query hooks for rewards and subscription data fetching",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [
+          "8"
+        ],
+        "details": "Follow the exact pattern used in d:/FYP/merge/src/server-api/calendar.ts and d:/FYP/merge/src/hooks/calendar/use-calendar-tasks.ts.\n\nCreate d:/FYP/merge/src/server-api/rewards.ts:\n- getRewardsProfile(): GET /rewards/profile\n- getChallenges(): GET /rewards/challenges\n\nCreate d:/FYP/merge/src/server-api/subscription.ts:\n- getPlans(): GET /subscriptions/plans\n- getMySubscription(): GET /subscriptions/my\n- getPaymentHistory(page): GET /subscriptions/payments?page={page}&limit=10\n- createCheckout(planId): POST /subscriptions/checkout { planId }\n- cancelSubscription(): DELETE /subscriptions/my\n\nCreate hooks:\n- src/hooks/rewards/use-rewards-profile.ts: useQuery(['rewards','profile'], getRewardsProfile)\n- src/hooks/rewards/use-challenges.ts: useQuery(['rewards','challenges'], getChallenges)\n- src/hooks/subscription/use-plans.ts: useQuery(['subscription','plans'], getPlans, staleTime 5min)\n- src/hooks/subscription/use-my-subscription.ts: useQuery(['subscription','my'], getMySubscription)\n- src/hooks/subscription/use-payment-history.ts: useQuery(['subscription','payments'], () => getPaymentHistory(1))\n- src/hooks/subscription/use-checkout.ts: useMutation(createCheckout), onSuccess: window.location.href = data.checkoutUrl\n- src/hooks/subscription/use-cancel-subscription.ts: useMutation(cancelSubscription), onSuccess: invalidate ['subscription','my'], show sonner toast",
+        "testStrategy": "Hooks return data without errors when backend is running. TypeScript has no errors.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:45:56.187Z"
+      },
+      {
+        "id": "10",
+        "title": "Build Reward UI Components",
+        "description": "Create StreakDisplay, ChallengeCard, and BadgeCard components in src/components/rewards/",
+        "status": "done",
+        "priority": "medium",
+        "dependencies": [
+          "8"
+        ],
+        "details": "Use Tailwind CSS design tokens: bg-main-background, text-heading, text-para-muted, border-light-border, text-primary, bg-primary/10, text-accent, bg-accent/10, text-success. Use Lucide React icons. Match the visual style of existing RewardsWidget.\n\n1. StreakDisplay.tsx: Show Flame icon + currentStreak in large bold font. Longest streak as secondary text. 7 small circles (filled primary if active, muted if inactive) representing last 7 days based on lastActivityDate. Motivational message (e.g. '🔥 Keep it up!' for streak > 3).\n\n2. ChallengeCard.tsx: Props: challenge: ChallengeProgress. Type badge (Daily=blue/info, Weekly=purple/accent, Monthly=gold/secondary). SVG circular progress ring. currentCount/target display. '7 consecutive days' counter below. Framer Motion scale animation on complete.\n\n3. BadgeCard.tsx: Props: badge: Badge, userBadge?: UserBadge. Unlocked: colored icon, badge name, discount % chip in accent. Locked: opacity-50, lock icon overlay, 'Complete X challenges to unlock'.",
+        "testStrategy": "Components render correctly with mock data. Progress rings show correct percentages. Locked/unlocked states display properly.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:46:05.995Z"
+      },
+      {
+        "id": "11",
+        "title": "Build Subscription UI Components",
+        "description": "Create PlanCard, CurrentPlanStatus, DiscountBanner, and PaymentHistoryTable components in src/components/subscription/",
+        "status": "done",
+        "priority": "medium",
+        "dependencies": [
+          "8"
+        ],
+        "details": "1. PlanCard.tsx: Props: plan, isCurrentPlan, onUpgrade, isLoading, discountPercent?. Show plan name, original price with strikethrough if discount, discounted price. Feature list with Check/X icons. CTA: 'Current Plan' (disabled, primary border), 'Upgrade' (primary button), 'Downgrade' (outline button). 'Most Popular' badge on Pro plan. Highlighted border on current plan.\n\n2. CurrentPlanStatus.tsx: Props: subscription. Plan name chip + renewal date formatted with date-fns ('Renews on 15 May 2026'). If cancelAtPeriodEnd, show 'Cancels on [date]' in warning. If past_due, show red 'Payment failed' alert. Cancel link with Radix AlertDialog confirmation.\n\n3. DiscountBanner.tsx: Props: badges: UserBadge[]. Find highest unspent discount. Show info banner with Tag icon: 'You have a X% discount from [Badge]! Will be applied at checkout.' Hidden if no unspent badges.\n\n4. PaymentHistoryTable.tsx: Props: payments: PaymentRecord[]. Table: Date | Amount (Rs. XXX) | Status chip (green/red/orange) | Invoice (ExternalLink icon, opens invoiceUrl). Empty state message if no payments.",
+        "testStrategy": "Components render with mock data. Discount banner shows/hides correctly. Plan cards show correct pricing with discounts.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:46:16.142Z"
+      },
+      {
+        "id": "12",
+        "title": "Build the Rewards Page",
+        "description": "Create /rewards page at src/app/(with-layout)/rewards/page.tsx showing streak, challenges, and badges",
+        "status": "done",
+        "priority": "medium",
+        "dependencies": [
+          "10",
+          "9"
+        ],
+        "details": "Create d:/FYP/merge/src/app/(with-layout)/rewards/page.tsx as 'use client' component.\n\nUse useRewardsProfile() hook. Show loading skeleton while fetching.\n\nLayout:\n- Page header: 'Rewards & Achievements' with Trophy icon. Total XP counter top-right.\n- Grid layout: Left column (streak display + 'Go to Billing' CTA if any unspent badge discount). Center/main: 3 ChallengeCard components in a grid (1 col on mobile, 3 col on desktop). Right/Bottom: BadgeCard grid for all 3 badges.\n- If any badge is unspent: show a prominent CTA: 'You have a discount waiting! → Go to Billing'\n\nUse Framer Motion for entrance animation: stagger children fade-in + slide-up (same pattern as other pages if they use it).",
+        "testStrategy": "Page renders with data from backend. Challenges show correct progress. Badges show locked/unlocked state correctly.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:46:25.922Z"
+      },
+      {
+        "id": "13",
+        "title": "Build the Billing Page",
+        "description": "Create /billing page at src/app/(with-layout)/billing/page.tsx with plan comparison, checkout, and payment history",
+        "status": "done",
+        "priority": "medium",
+        "dependencies": [
+          "11",
+          "9"
+        ],
+        "details": "Create d:/FYP/merge/src/app/(with-layout)/billing/page.tsx as 'use client' component.\n\nUse hooks: usePlans(), useMySubscription(), usePaymentHistory(), useCheckout(), useCancelSubscription().\n\nLayout:\n- Top: CurrentPlanStatus component\n- If unspent badge: DiscountBanner component\n- Middle: 4 PlanCard components in responsive grid (1 col mobile → 2 col tablet → 4 col desktop)\n  - Upgrade/downgrade click: call checkout mutation → redirect to LemonSqueezy\n  - Pass discountPercent from best unspent badge to PlanCard\n- Bottom: 'Payment History' section header + PaymentHistoryTable\n\nHandle URL params on mount:\n- ?success=true: show sonner toast.success('Subscription activated! Welcome to [plan name]!'). Refetch subscription.\n- ?cancelled=true: show sonner toast.info('Checkout cancelled.')\n\nShow loading skeletons for all sections.",
+        "testStrategy": "Test complete checkout flow: click Upgrade → redirect to LemonSqueezy test checkout → complete with test card 4242 4242 4242 4242 → return to /billing?success=true → active plan shown.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:46:36.237Z"
+      },
+      {
+        "id": "14",
+        "title": "Update Dashboard Widgets with Real Rewards Data",
+        "description": "Replace hardcoded mock data in RewardsWidget.tsx and StreakCounter.tsx with live data from the rewards API",
+        "status": "done",
+        "priority": "medium",
+        "dependencies": [
+          "9"
+        ],
+        "details": "1. d:/FYP/merge/src/components/dashboard/RewardsWidget.tsx (currently uses hardcoded useState):\n- Add useRewardsProfile() hook\n- Map the returned profile.badges (UserBadge[]) and profile.challenges (ChallengeProgress[]) to the existing Achievement interface shape: { id, title: badge.badge.name or challenge type name, description, icon: mapped from tier, progress: currentCount, total: target, points, unlocked: isCompleted/earned }\n- Keep ALL existing JSX and styling exactly as-is — only change the data source\n- Add loading skeleton (or keep showing last data) while fetching\n\n2. d:/FYP/merge/src/components/dashboard/StreakCounter.tsx:\n- Import useRewardsProfile hook\n- Replace hardcoded streak number with profile.streak.currentStreak\n- Replace hardcoded 7-day array with real computation from profile.streak.lastActivityDate\n- Show loading state gracefully",
+        "testStrategy": "Dashboard shows real streak and achievement data. Completing a calendar task causes the dashboard widgets to update after React Query cache invalidation.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:46:46.231Z"
+      },
+      {
+        "id": "15",
+        "title": "Add Rewards and Billing Navigation Links",
+        "description": "Add Rewards (/rewards) and Billing (/billing) links to the sidebar navigation",
+        "status": "done",
+        "priority": "low",
+        "dependencies": [
+          "12",
+          "13"
+        ],
+        "details": "Find the sidebar navigation component. Based on the project structure it's likely in d:/FYP/merge/src/components/layout/ or referenced in src/app/(with-layout)/layout.tsx.\n\nAdd two new nav items following the exact same pattern and styling as existing nav items:\n- Rewards: href='/rewards', icon=Trophy (from lucide-react), label='Rewards'\n- Billing: href='/billing', icon=CreditCard (from lucide-react), label='Billing'\n\nPlace Rewards near the top of nav (after Dashboard). Place Billing near the bottom (near Profile/Settings).",
+        "testStrategy": "Nav links appear in sidebar. Clicking navigates to correct pages. Active state highlights correctly on current route.",
+        "subtasks": [],
+        "updatedAt": "2026-04-25T11:46:56.739Z"
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-04-25T11:47:30.195Z",
+      "taskCount": 15,
+      "completedCount": 15,
+      "tags": [
+        "master"
+      ]
+    }
+  }
+}

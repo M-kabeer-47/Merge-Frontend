@@ -99,10 +99,17 @@ export default function RoomLayoutClient({
   // Check if current user is the room owner (only owner can see settings)
   const isOwner = Boolean(user?.id) && user?.id === room?.admin?.id;
 
-  // Filter tabs: only show Settings tab to the room owner
-  const TABS = isOwner
-    ? ALL_TABS
-    : ALL_TABS.filter((tab) => tab.id !== "settings"); // Fetch join requests for instructors
+  // Student-created rooms are for group study, not class management — strip teaching tabs
+  const isStudentRoom = room?.admin?.role === "student";
+  const STUDENT_HIDDEN_TABS = ["announcements", "assignments", "quizzes"];
+
+  // Filter tabs: only show Settings tab to the room owner; hide teaching tabs in student rooms
+  const TABS = ALL_TABS.filter((tab) => {
+    if (tab.id === "settings" && !isOwner) return false;
+    if (isStudentRoom && STUDENT_HIDDEN_TABS.includes(tab.id)) return false;
+    return true;
+  });
+  // Fetch join requests for instructors
   const { data: joinRequests } = useFetchJoinRequests({
     roomId: id,
     enabled: isInstructor,
@@ -130,9 +137,14 @@ export default function RoomLayoutClient({
         "settings",
       ].includes(lastSegment)
     ) {
+      // Block direct URL access to teaching tabs in student-created rooms
+      if (isStudentRoom && STUDENT_HIDDEN_TABS.includes(lastSegment)) {
+        router.replace(`/rooms/${id}/general-chat`);
+        return;
+      }
       setActiveTab(lastSegment);
     }
-  }, [pathname, id]);
+  }, [pathname, id, isStudentRoom, router]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);

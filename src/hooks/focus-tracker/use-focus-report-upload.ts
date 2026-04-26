@@ -7,9 +7,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/utils/api";
 import type { SessionReport } from "@/lib/focus-tracker/types";
+import useInvalidateRewards from "@/hooks/rewards/use-invalidate-rewards";
 
 export function useFocusReportUpload() {
   const queryClient = useQueryClient();
+  const invalidateRewards = useInvalidateRewards();
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -39,6 +41,7 @@ export function useFocusReportUpload() {
       queryClient.invalidateQueries({
         queryKey: ["focus-report", variables.sessionId],
       });
+      invalidateRewards();
     },
   });
 

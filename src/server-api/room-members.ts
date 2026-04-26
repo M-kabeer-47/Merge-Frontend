@@ -31,7 +31,7 @@ export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
     `${API_BASE_URL}/room/${roomId}/members`,
     {
       next: {
-        revalidate: false,
+        revalidate: 0,
         tags: ["room-members", `room-${roomId}-members`],
       },
     },

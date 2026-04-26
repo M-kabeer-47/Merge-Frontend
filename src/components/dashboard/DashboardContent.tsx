@@ -1,25 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import PendingAssignments from "@/components/dashboard/PendingAssignments";
 import Announcements from "@/components/dashboard/Announcements";
 import MyRooms from "@/components/dashboard/MyRooms";
-import FocusAnalytics from "@/components/dashboard/FocusAnalytics";
 import TasksToday from "@/components/dashboard/TasksToday";
 import StreakCounter from "@/components/dashboard/StreakCounter";
 import RewardsWidget from "@/components/dashboard/RewardsWidget";
-import { isSameDay } from "date-fns";
+import { isSameDay, format } from "date-fns";
 import { setAuthTokens } from "@/utils/auth-tokens";
-import { CalendarTask as Task } from "@/types/calendar";
+import useCalendarTasks from "@/hooks/calendar/use-calendar-tasks";
+import { CalendarTask } from "@/types/calendar";
+import { Task } from "@/components/dashboard/TaskItem";
 import TaskCalendar from "./TaskCalendar";
+
+/** Maps a backend CalendarTask to the dashboard Task shape */
+function calendarTaskToDashboardTask(t: CalendarTask): Task {
+  const d = new Date(t.deadline);
+  const typeMap: Record<string, Task["type"]> = {
+    assignment: "assignment",
+    quiz: "assignment",
+    "video-session": "session",
+    personal: "personal",
+  };
+  return {
+    id: t.id,
+    title: t.title,
+    type: typeMap[t.taskCategory] ?? "personal",
+    date: d,
+    time: format(d, "HH:mm"),
+    description: t.description,
+    completed: t.taskStatus === "completed",
+  };
+}
 
 export default function DashboardContent() {
   const searchParams = useSearchParams();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
-  const sampleTasks: Task[] = [];
+  const { tasks: calendarTasks } = useCalendarTasks();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   useEffect(() => {
     const accessToken = searchParams?.get("token");
@@ -29,19 +49,20 @@ export default function DashboardContent() {
     }
   }, [searchParams]);
 
-  // Initialize with today's tasks
-  useEffect(() => {
-    const today = new Date();
-    const todayTasks = sampleTasks.filter((task) =>
-      isSameDay(task.date, today),
-    );
-    setSelectedDate(today);
-    setSelectedTasks(todayTasks);
-  }, []);
+  // Convert real calendar tasks to the dashboard Task shape
+  const allTasks = useMemo<Task[]>(
+    () => calendarTasks.map(calendarTaskToDashboardTask),
+    [calendarTasks],
+  );
 
-  const handleDateSelect = (date: Date, tasks: Task[]) => {
+  // Tasks for the currently selected date (defaults to today)
+  const selectedTasks = useMemo<Task[]>(() => {
+    if (!selectedDate) return [];
+    return allTasks.filter((t) => isSameDay(t.date, selectedDate));
+  }, [allTasks, selectedDate]);
+
+  const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
-    setSelectedTasks(tasks);
   };
 
   return (
@@ -59,10 +80,7 @@ export default function DashboardContent() {
 
           {/* Assignments & Announcements Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Pending Assignments */}
             <PendingAssignments />
-
-            {/* Announcements */}
             <Announcements />
           </div>
 
@@ -71,27 +89,14 @@ export default function DashboardContent() {
 
           {/* My Rooms */}
           <MyRooms />
-
-          {/* Divider */}
-          <div className="border-t border-light-border" />
-
-          {/* Focus Analytics */}
-          {/* <FocusAnalytics /> */}
         </div>
 
         {/* Right Sidebar Widgets */}
         <div className="w-80 hidden lg:block top-6">
           <div className="space-y-4">
-            {/* Calendar */}
-            <TaskCalendar onDateSelect={handleDateSelect} />
-
-            {/* Tasks Today */}
+            <TaskCalendar tasks={calendarTasks} onDateSelect={handleDateSelect} />
             <TasksToday selectedDate={selectedDate} tasks={selectedTasks} />
-
-            {/* Streak Counter */}
             <StreakCounter />
-
-            {/* Rewards Widget */}
             <RewardsWidget />
           </div>
         </div>

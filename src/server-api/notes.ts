@@ -41,7 +41,7 @@ export async function getNotes(
 
   const { data, error } = await getWithAuth<NotesResponse>(url, {
     next: {
-      revalidate: false, // Cache forever until manual invalidation
+      revalidate: 0,
       tags: ["notes", `notes-folder-${folderId || "root"}`],
     },
   });
