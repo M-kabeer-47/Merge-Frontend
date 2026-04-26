@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { getUser } from "@/server-api/user";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
+// Standalone admin shell — does NOT inherit (with-layout)'s AppSidebar.
+// Lives at /admin/* directly so the operator console is fully isolated
+// from the user-facing navigation.
 export default async function AdminLayout({
   children,
 }: {
@@ -13,11 +16,11 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-screen w-full bg-main-background">
       <AdminSidebar />
-      <div className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-7xl">{children}</div>
-      </div>
+      </main>
     </div>
   );
 }
