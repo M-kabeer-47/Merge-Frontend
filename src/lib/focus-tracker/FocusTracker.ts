@@ -538,12 +538,17 @@ export class FocusTracker {
 
     // Transition confirmed!
     const prevState = this.currentDebouncedState;
+
+    // CRITICAL: flush time-in-bucket BEFORE switching state so the elapsed
+    // time gets credited to the previous state, not the new one. Swapping
+    // these two lines was zeroing out distractedMs because every transition
+    // back to focused was crediting the just-spent distracted time to the
+    // focused bucket.
+    this.updateRunningMetrics(now);
+
     this.currentDebouncedState = rawKind;
     this.pendingState = null;
     this.pendingStateSince = 0;
-
-    // Update metrics for the previous state
-    this.updateRunningMetrics(now);
 
     // Close previous event
     if (this.currentEvent) {
