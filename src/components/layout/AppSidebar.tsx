@@ -78,17 +78,16 @@ export default function AppSidebar() {
   const { user } = useAuth();
   const isDarkMode = theme === "dark";
   const isActive = (href: string) => pathname.includes(href);
-  const links: Links[] =
-    user?.role === "super_admin"
-      ? [
-          ...sidebarLinks,
-          {
-            label: "Admin",
-            href: "/admin",
-            icon: <IconShieldLock className="h-5 w-5" />,
-          },
-        ]
-      : sidebarLinks;
+  const links: Links[] = user?.isAdmin
+    ? [
+        ...sidebarLinks,
+        {
+          label: "Admin",
+          href: "/admin",
+          icon: <IconShieldLock className="h-5 w-5" />,
+        },
+      ]
+    : sidebarLinks;
   return (
     <Sidebar open={open} setOpen={setOpen}>
       <SidebarBody className="justify-between gap-10 h-full">

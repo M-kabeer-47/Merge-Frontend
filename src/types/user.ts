@@ -6,6 +6,9 @@ export type User = {
   lastName: string;
   new_user: boolean;
   role: "student" | "instructor" | "super_admin" | null;
+  // True when the user's email is in SUPER_ADMIN_EMAILS on the backend.
+  // Source of truth lives in the deploy env, not the database.
+  isAdmin: boolean;
   isVerified: boolean;
   googleAccount: boolean;
   hashedRefreshToken: string;

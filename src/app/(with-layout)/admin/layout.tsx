@@ -8,7 +8,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await getUser();
-  if (!user || user.role !== "super_admin") {
+  if (!user || !user.isAdmin) {
     redirect("/dashboard");
   }
 
