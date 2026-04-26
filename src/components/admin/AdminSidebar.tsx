@@ -2,24 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  CreditCard,
-  Trophy,
-  Building2,
-  Radio,
-  Megaphone,
-} from "lucide-react";
+import { Users, Trophy } from "lucide-react";
 
 const NAV: Array<{ href: string; label: string; icon: React.ElementType }> = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/billing", label: "Billing", icon: CreditCard },
   { href: "/admin/rewards", label: "Rewards", icon: Trophy },
-  { href: "/admin/rooms", label: "Rooms", icon: Building2 },
-  { href: "/admin/sessions", label: "Live Sessions", icon: Radio },
-  { href: "/admin/broadcast", label: "Broadcast", icon: Megaphone },
 ];
 
 export default function AdminSidebar() {
@@ -36,10 +23,7 @@ export default function AdminSidebar() {
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV.map(({ href, label, icon: Icon }) => {
-          const isActive =
-            href === "/admin"
-              ? pathname === "/admin"
-              : pathname.startsWith(href);
+          const isActive = pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -58,10 +42,10 @@ export default function AdminSidebar() {
       </nav>
       <div className="border-t border-light-border p-4">
         <Link
-          href="/dashboard"
+          href="/admin-login"
           className="text-xs font-medium text-para-muted hover:text-heading"
         >
-          ← Back to app
+          ← Sign out
         </Link>
       </div>
     </aside>

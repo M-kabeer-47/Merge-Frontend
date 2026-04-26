@@ -170,6 +170,52 @@ function ChallengesTab() {
   );
 }
 
+// Convert any input date string (YYYY-MM-DD or YYYY-MM) into a label that
+// describes the actual schedule window the backend will compute.
+function describeSchedule(tier: string, value: string): string {
+  if (!value) return "";
+  try {
+    if (tier === "daily") {
+      const [y, m, d] = value.split("-").map(Number);
+      if (!y || !m || !d) return "";
+      const date = new Date(Date.UTC(y, m - 1, d));
+      return `Runs on ${date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+      })}`;
+    }
+    if (tier === "weekly") {
+      const [y, m, d] = value.split("-").map(Number);
+      if (!y || !m || !d) return "";
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      const day = dt.getUTCDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      const mon = new Date(Date.UTC(y, m - 1, d + diff));
+      const sun = new Date(mon);
+      sun.setUTCDate(sun.getUTCDate() + 6);
+      const fmt = (x: Date) =>
+        x.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+      return `Runs the week of ${fmt(mon)} – ${fmt(sun)}`;
+    }
+    if (tier === "monthly") {
+      const [y, m] = value.split("-").map(Number);
+      if (!y || !m) return "";
+      const date = new Date(Date.UTC(y, m - 1, 1));
+      return `Runs throughout ${date.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      })}`;
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
 function ChallengeForm({
   open, initial, onClose, onSubmit,
 }: {
@@ -180,12 +226,35 @@ function ChallengeForm({
 }) {
   const [form, setForm] = useState<any>({});
   useEffect(() => {
-    setForm(initial ?? {
-      name: "", description: "", icon: "check-circle",
-      tier: "daily", actionType: "calendar_task_completed",
-      target: 1, points: 10, minPlanTier: "free", isActive: true,
-    });
+    if (initial) {
+      // Pre-fill periodStart from the existing challenge — using YYYY-MM-DD or
+      // YYYY-MM depending on tier so the input control accepts it.
+      const periodStartStr = initial.periodStart
+        ? new Date(initial.periodStart).toISOString().slice(0, initial.tier === "monthly" ? 7 : 10)
+        : "";
+      setForm({ ...initial, periodStart: periodStartStr });
+    } else {
+      setForm({
+        name: "", description: "",
+        tier: "daily", actionType: "calendar_task_completed",
+        target: 1, points: 10, minPlanTier: "free", isActive: true,
+        periodStart: "",
+      });
+    }
   }, [initial, open]);
+
+  // When tier changes, clear the date so user picks a fresh value with the
+  // right input type (date vs month).
+  const handleTierChange = (newTier: string) => {
+    setForm({ ...form, tier: newTier, periodStart: "" });
+  };
+
+  const isMonthly = (form.tier ?? "daily") === "monthly";
+  const dateLabel =
+    form.tier === "monthly" ? "Month"
+    : form.tier === "weekly" ? "Week (pick any day in the week)"
+    : "Date";
+  const scheduleHint = describeSchedule(form.tier ?? "daily", form.periodStart ?? "");
 
   return (
     <Modal open={open} onClose={onClose} title={initial ? "Edit challenge" : "Create challenge"}>
@@ -193,7 +262,7 @@ function ChallengeForm({
         <Input label="Name" value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <Input label="Description" value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Tier" options={TIER_OPTIONS} value={form.tier ?? "daily"} onChange={(e) => setForm({ ...form, tier: e.target.value })} />
+          <Select label="Tier" options={TIER_OPTIONS} value={form.tier ?? "daily"} onChange={(e) => handleTierChange(e.target.value)} />
           <Select label="Min plan" options={PLAN_OPTIONS} value={form.minPlanTier ?? "free"} onChange={(e) => setForm({ ...form, minPlanTier: e.target.value })} />
         </div>
         <Select label="Action type" options={ACTION_OPTIONS} value={form.actionType ?? "calendar_task_completed"} onChange={(e) => setForm({ ...form, actionType: e.target.value })} />
@@ -201,14 +270,29 @@ function ChallengeForm({
           <Input label="Target" type="number" min={1} value={form.target ?? 1} onChange={(e) => setForm({ ...form, target: Number(e.target.value) })} />
           <Input label="Points" type="number" min={0} value={form.points ?? 0} onChange={(e) => setForm({ ...form, points: Number(e.target.value) })} />
         </div>
-        <Input label="Icon (lucide name)" value={form.icon ?? ""} onChange={(e) => setForm({ ...form, icon: e.target.value })} />
+        <div>
+          <Input
+            label={dateLabel}
+            type={isMonthly ? "month" : "date"}
+            value={form.periodStart ?? ""}
+            onChange={(e) => setForm({ ...form, periodStart: e.target.value })}
+          />
+          {scheduleHint && (
+            <p className="mt-1 text-[11px] text-para-muted">{scheduleHint}</p>
+          )}
+        </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={!!form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
           <span className="text-heading font-medium">Active</span>
         </label>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSubmit(form)}>Save</Button>
+          <Button
+            onClick={() => onSubmit(form)}
+            disabled={!form.name || !form.description || !form.periodStart}
+          >
+            Save
+          </Button>
         </div>
       </div>
     </Modal>
