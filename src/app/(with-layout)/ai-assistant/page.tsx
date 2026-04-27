@@ -53,8 +53,9 @@ export default function AIAssistantPage() {
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
-  // Max attachments allowed per conversation (mirror of backend cap).
-  const MAX_ATTACHMENTS_PER_CONVERSATION = 2;
+  // Max attachments allowed per conversation (mirror of backend cap;
+  // see AiAssistantService.MAX_ATTACHMENTS_PER_CONVERSATION).
+  const MAX_ATTACHMENTS_PER_CONVERSATION = 3;
   const conversationAttachmentCount =
     conversation?.attachments?.length ?? 0;
   const atAttachmentCap =
@@ -242,9 +243,14 @@ export default function AIAssistantPage() {
         conversationId: activeSessionId || undefined,
         message: content,
         contextFileId,
+        // For personal-file attachments we send the S3 URL/type/size; the
+        // backend will download + extract. For room-file picks (contextFileId
+        // is set), we pass only the name through so the message bubble and
+        // optimistic attachment-cap update can render it — backend resolves
+        // the rest from the files table.
         attachmentS3Url: contextFileId ? undefined : attachmentData?.url,
         attachmentType: contextFileId ? undefined : resolvedAttachmentType,
-        attachmentOriginalName: contextFileId ? undefined : attachmentData?.name,
+        attachmentOriginalName: attachmentData?.name,
         attachmentFileSize: contextFileId ? undefined : attachmentData?.size,
       },
       (conversationId) => {

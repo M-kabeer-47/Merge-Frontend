@@ -40,13 +40,13 @@ export async function getStudentAssignments(
     filter,
   });
 
+  // Per-student assignment list — status changes (submission, grading,
+  // new assignments published) need to surface immediately, not after
+  // the prior 60s server-cache window expires.
   const { data, error } = await getWithAuth<
     StudentAssignmentsResponse | StudentAssignment[]
   >(`${API_BASE_URL}/assignments/student?${queryParams.toString()}`, {
-    next: {
-      revalidate: 60,
-      tags: ["assignments", `student-assignments-${roomId}`],
-    },
+    cache: "no-store",
   });
 
   if (error || !data) {

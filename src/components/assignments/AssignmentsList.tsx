@@ -38,7 +38,7 @@ export default function AssignmentsList({
   const router = useRouter();
   const { userRole } = useRoom();
 
-  const isInstructor = userRole === "instructor" || userRole === "moderator";
+  const isInstructor = userRole === "instructor";
 
   // Edit modal state
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);

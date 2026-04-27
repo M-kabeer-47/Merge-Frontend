@@ -1,9 +1,9 @@
 "use client";
 
 import { Activity, Bell } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { formatRelativeTime } from "@/utils/date-helpers";
 import { useFetchNotifications } from "@/hooks/notifications/use-fetch-notifications";
-import { useRouter } from "next/navigation";
 import type { NotificationPayload } from "@/types/notification";
 
 export default function RecentActivity() {
@@ -26,7 +26,10 @@ export default function RecentActivity() {
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-secondary/10 rounded-lg animate-pulse" />
+            <div
+              key={i}
+              className="h-16 bg-secondary/10 rounded-lg animate-pulse"
+            />
           ))}
         </div>
       ) : recent.length === 0 ? (
@@ -34,7 +37,7 @@ export default function RecentActivity() {
           <Bell className="w-8 h-8 text-para-muted mx-auto mb-2 opacity-50" />
           <p className="text-sm text-heading font-medium">No recent activity</p>
           <p className="text-xs text-para-muted mt-1">
-            Student submissions and questions will appear here.
+            Graded assignments, announcements and new content will appear here.
           </p>
         </div>
       ) : (
@@ -46,7 +49,9 @@ export default function RecentActivity() {
                 if (n.metadata?.actionUrl) router.push(n.metadata.actionUrl);
               }}
               className={`w-full text-left bg-background border rounded-lg p-3 hover:border-primary/30 transition-colors ${
-                n.isRead ? "border-light-border" : "border-primary/30 bg-primary/5"
+                n.isRead
+                  ? "border-light-border"
+                  : "border-primary/30 bg-primary/5"
               }`}
             >
               <div className="flex items-start gap-3">

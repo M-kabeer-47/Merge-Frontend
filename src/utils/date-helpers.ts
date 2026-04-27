@@ -5,6 +5,33 @@
  * that were previously duplicated inline across multiple components.
  */
 
+import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+
+/**
+ * Parse a date value coming from the backend.
+ *
+ * Why: Postgres `timestamp without time zone` (TypeORM @CreateDateColumn default)
+ * serializes without a `Z` suffix. `new Date("2026-04-28T10:30:00")` then parses
+ * it as LOCAL time, producing wrong relative timestamps off by the user's TZ
+ * offset. We assume timestamps without a TZ marker are UTC.
+ */
+export function parseServerDate(date: Date | string): Date {
+  if (date instanceof Date) return date;
+  const hasTimezone = /[Zz]|[+-]\d{2}:?\d{2}$/.test(date);
+  return new Date(hasTimezone ? date : date + "Z");
+}
+
+/**
+ * Relative "time ago" string using date-fns, safe against missing timezone markers.
+ */
+export function formatRelativeTime(date: Date | string): string {
+  try {
+    return formatDistanceToNow(parseServerDate(date), { addSuffix: true });
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Relative "time ago" string for past dates.
  *
@@ -16,7 +43,7 @@ export function getTimeAgo(
   compact: boolean = true,
 ): string {
   const now = new Date();
-  const diffMs = now.getTime() - new Date(date).getTime();
+  const diffMs = now.getTime() - parseServerDate(date).getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
@@ -41,13 +68,13 @@ export function getTimeAgo(
   }
 
   if (compact) {
-    return new Date(date).toLocaleDateString("en-US", {
+    return parseServerDate(date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
     });
   }
 
-  return new Date(date).toLocaleDateString();
+  return parseServerDate(date).toLocaleDateString();
 }
 
 /**
@@ -60,7 +87,7 @@ export function formatDueDate(
   date: Date | string,
   compact: boolean = false,
 ): string {
-  const dueDate = new Date(date);
+  const dueDate = parseServerDate(date);
   const now = new Date();
   const diffMs = dueDate.getTime() - now.getTime();
   const diffDays = Math.floor(diffMs / 86400000);
@@ -95,7 +122,7 @@ export function formatDueDate(
  */
 export function formatSubmissionDate(date?: Date | string): string | null {
   if (!date) return null;
-  return new Date(date).toLocaleDateString("en-US", {
+  return parseServerDate(date).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",

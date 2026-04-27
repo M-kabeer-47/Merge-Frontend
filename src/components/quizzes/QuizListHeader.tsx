@@ -28,7 +28,7 @@ export default function QuizListHeader({
   initialSortOrder = "desc",
 }: QuizListHeaderProps) {
   const { userRole } = useRoom();
-  const isInstructor = userRole === "instructor" || userRole === "moderator";
+  const isInstructor = userRole === "instructor";
   const router = useRouter();
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);

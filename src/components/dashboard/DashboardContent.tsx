@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import PendingAssignments from "@/components/dashboard/PendingAssignments";
 import Announcements from "@/components/dashboard/Announcements";
+import RecentActivity from "@/components/dashboard/RecentActivity";
 import MyRooms from "@/components/dashboard/MyRooms";
 import TasksToday from "@/components/dashboard/TasksToday";
 import StreakCounter from "@/components/dashboard/StreakCounter";
@@ -83,6 +84,12 @@ export default function DashboardContent() {
             <PendingAssignments />
             <Announcements />
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-light-border" />
+
+          {/* Recent Activity */}
+          <RecentActivity />
 
           {/* Divider */}
           <div className="border-t border-light-border" />

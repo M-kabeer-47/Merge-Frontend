@@ -25,7 +25,7 @@ import {
   Loader2,
   Lightbulb,
 } from "lucide-react";
-import type { SessionReport, FrameKind } from "@/lib/focus-tracker/types";
+import type { SessionReport } from "@/lib/focus-tracker/types";
 import { buildNarrative, buildSuggestions } from "@/lib/focus-tracker/narrative";
 
 interface FocusReportDialogProps {
@@ -38,28 +38,6 @@ interface FocusReportDialogProps {
   isUploading?: boolean;
   uploadError?: unknown;
 }
-
-const STATE_COLORS: Record<FrameKind, string> = {
-  focused: "#22c55e",
-  no_face: "#f59e0b",
-  looking_away: "#ef4444",
-  eyes_closed: "#8b5cf6",
-  drowsy: "#6366f1",
-  looking_down: "#f97316",
-  tab_switched: "#e11d48",
-  multi_face: "#14b8a6",
-};
-
-const STATE_LABELS: Record<FrameKind, string> = {
-  focused: "Focused",
-  no_face: "No Face",
-  looking_away: "Looking Away",
-  eyes_closed: "Eyes Closed",
-  drowsy: "Drowsy",
-  looking_down: "Looking Down",
-  tab_switched: "Tab Switched",
-  multi_face: "Multiple Faces",
-};
 
 function formatDuration(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -109,12 +87,6 @@ export default function FocusReportDialog({
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  // Count events by type
-  const eventCounts: Record<string, number> = {};
-  for (const ev of distractionEvents) {
-    eventCounts[ev.state] = (eventCounts[ev.state] || 0) + 1;
-  }
 
   return (
     <AnimatePresence>
@@ -230,33 +202,7 @@ export default function FocusReportDialog({
               </div>
             </div>
 
-            {/* Distraction breakdown */}
-            {Object.keys(eventCounts).length > 0 && (
-              <div className="px-5 py-3 border-b border-white/5">
-                <div className="text-xs text-white/50 mb-2">
-                  Distraction Breakdown
-                </div>
-                <div className="flex gap-3 flex-wrap">
-                  {Object.entries(eventCounts).map(([state, count]) => (
-                    <div key={state} className="flex items-center gap-1.5 text-xs">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor:
-                            STATE_COLORS[state as FrameKind] || "#666",
-                        }}
-                      />
-                      <span className="text-white/70">
-                        {STATE_LABELS[state as FrameKind] || state}
-                      </span>
-                      <span className="text-white/40">×{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Timeline Strip */}
+            {/* Timeline Strip — green = focused, red = distracted */}
             {report.events.length > 0 && report.totalDurationMs > 0 && (
               <div className="px-5 py-3 border-b border-white/5">
                 <div className="text-xs text-white/50 mb-2">Timeline</div>
@@ -265,17 +211,17 @@ export default function FocusReportDialog({
                     const widthPct =
                       (ev.durationMs / report.totalDurationMs) * 100;
                     if (widthPct < 0.3) return null; // Skip tiny slivers
+                    const isFocused = ev.state === "focused";
                     return (
                       <div
                         key={i}
                         className="h-full transition-all"
                         style={{
                           width: `${widthPct}%`,
-                          backgroundColor:
-                            STATE_COLORS[ev.state as FrameKind] || "#444",
+                          backgroundColor: isFocused ? "#22c55e" : "#ef4444",
                           minWidth: "1px",
                         }}
-                        title={`${STATE_LABELS[ev.state as FrameKind] || ev.state} — ${formatDuration(ev.durationMs)}`}
+                        title={`${isFocused ? "Focused" : "Distracted"} — ${formatDuration(ev.durationMs)}`}
                       />
                     );
                   })}
@@ -293,7 +239,7 @@ export default function FocusReportDialog({
                 <div className="text-xs text-white/50 mb-2">What happened</div>
                 <ol className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
                   {narrative.map((seg, i) => {
-                    const color = STATE_COLORS[seg.state] || "#666";
+                    const color = seg.kind === "focused" ? "#22c55e" : "#ef4444";
                     return (
                       <li
                         key={i}

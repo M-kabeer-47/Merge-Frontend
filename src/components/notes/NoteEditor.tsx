@@ -19,7 +19,7 @@ interface NoteEditorProps {
 }
 
 const DRAFT_STORAGE_KEY = "note-draft";
-const DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const DRAFT_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
 const readFreshDraft = (): { title?: string; content?: string } | null => {
   if (typeof window === "undefined") return null;

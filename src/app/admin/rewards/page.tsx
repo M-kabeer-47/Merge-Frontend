@@ -2,13 +2,19 @@
 
 import { useEffect, useState } from "react";
 import {
-  PageHeader, Card, Table, THead, Th, Tr, Td, Badge, Button, Modal, Input, Select,
+  PageHeader, Card, Table, THead, Th, Tr, Td, Badge,
 } from "@/components/admin/AdminUI";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Select } from "@/components/ui/Select";
+import { FormField } from "@/components/ui/FormField";
+import Modal from "@/components/ui/Modal";
 import {
   listChallenges, createChallenge, updateChallenge, deleteChallenge,
   listAdminBadges, updateAdminBadge, listAwardedBadges,
 } from "@/server-api/admin";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -238,8 +244,6 @@ function ChallengeForm({
   const [form, setForm] = useState<any>({});
   useEffect(() => {
     if (initial) {
-      // Pre-fill periodStart from the existing challenge — using YYYY-MM-DD or
-      // YYYY-MM depending on tier so the input control accepts it.
       const periodStartStr = initial.periodStart
         ? new Date(initial.periodStart).toISOString().slice(0, initial.tier === "monthly" ? 7 : 10)
         : "";
@@ -254,8 +258,6 @@ function ChallengeForm({
     }
   }, [initial, open]);
 
-  // When tier changes, clear the date so user picks a fresh value with the
-  // right input type (date vs month).
   const handleTierChange = (newTier: string) => {
     setForm({ ...form, tier: newTier, periodStart: "" });
   };
@@ -266,25 +268,103 @@ function ChallengeForm({
     : form.tier === "weekly" ? "Week (pick any day in the week)"
     : "Date";
   const scheduleHint = describeSchedule(form.tier ?? "daily", form.periodStart ?? "");
+  const canSave = !!form.name && !!form.description && !!form.periodStart;
 
   return (
-    <Modal open={open} onClose={onClose} title={initial ? "Edit challenge" : "Create challenge"}>
-      <div className="space-y-3">
-        <Input label="Name" value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <Input label="Description" value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-        <div className="grid grid-cols-2 gap-3">
-          <Select label="Tier" options={TIER_OPTIONS} value={form.tier ?? "daily"} onChange={(e) => handleTierChange(e.target.value)} />
-          <Select label="Min plan" options={PLAN_OPTIONS} value={form.minPlanTier ?? "free"} onChange={(e) => setForm({ ...form, minPlanTier: e.target.value })} />
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title={initial ? "Edit challenge" : "Create challenge"}
+      description="Configure the schedule, action, and visibility."
+      icon={<div className="rounded-xl bg-primary/10 p-2 text-primary"><Sparkles className="h-5 w-5" /></div>}
+      footer={
+        <div className="flex justify-end gap-2 px-6 py-4">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => onSubmit(form)} disabled={!canSave}>Save</Button>
         </div>
-        <Select label="For role" options={ROLE_OPTIONS} value={form.targetRole ?? "all"} onChange={(e) => setForm({ ...form, targetRole: e.target.value })} />
-        <Select label="Action type" options={ACTION_OPTIONS} value={form.actionType ?? "calendar_task_completed"} onChange={(e) => setForm({ ...form, actionType: e.target.value })} />
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Target" type="number" min={1} value={form.target ?? 1} onChange={(e) => setForm({ ...form, target: Number(e.target.value) })} />
-          <Input label="Points" type="number" min={0} value={form.points ?? 0} onChange={(e) => setForm({ ...form, points: Number(e.target.value) })} />
-        </div>
-        <div>
+      }
+    >
+      <div className="space-y-4">
+        <FormField label="Name" htmlFor="ch-name">
           <Input
-            label={dateLabel}
+            id="ch-name"
+            value={form.name ?? ""}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="e.g. Task Sprinter"
+          />
+        </FormField>
+
+        <FormField label="Description" htmlFor="ch-desc">
+          <Textarea
+            id="ch-desc"
+            value={form.description ?? ""}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Short, action-oriented sentence shown to users."
+            rows={2}
+          />
+        </FormField>
+
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label="Tier" htmlFor="ch-tier">
+            <Select
+              id="ch-tier"
+              options={TIER_OPTIONS}
+              value={form.tier ?? "daily"}
+              onChange={(e) => handleTierChange(e.target.value)}
+            />
+          </FormField>
+          <FormField label="Min plan" htmlFor="ch-minplan">
+            <Select
+              id="ch-minplan"
+              options={PLAN_OPTIONS}
+              value={form.minPlanTier ?? "free"}
+              onChange={(e) => setForm({ ...form, minPlanTier: e.target.value })}
+            />
+          </FormField>
+        </div>
+
+        <FormField label="For role" htmlFor="ch-role">
+          <Select
+            id="ch-role"
+            options={ROLE_OPTIONS}
+            value={form.targetRole ?? "all"}
+            onChange={(e) => setForm({ ...form, targetRole: e.target.value })}
+          />
+        </FormField>
+
+        <FormField label="Action type" htmlFor="ch-action">
+          <Select
+            id="ch-action"
+            options={ACTION_OPTIONS}
+            value={form.actionType ?? "calendar_task_completed"}
+            onChange={(e) => setForm({ ...form, actionType: e.target.value })}
+          />
+        </FormField>
+
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label="Target" htmlFor="ch-target">
+            <Input
+              id="ch-target"
+              type="number"
+              min={1}
+              value={form.target ?? 1}
+              onChange={(e) => setForm({ ...form, target: Number(e.target.value) })}
+            />
+          </FormField>
+          <FormField label="Points" htmlFor="ch-points">
+            <Input
+              id="ch-points"
+              type="number"
+              min={0}
+              value={form.points ?? 0}
+              onChange={(e) => setForm({ ...form, points: Number(e.target.value) })}
+            />
+          </FormField>
+        </div>
+
+        <FormField label={dateLabel} htmlFor="ch-date">
+          <Input
+            id="ch-date"
             type={isMonthly ? "month" : "date"}
             value={form.periodStart ?? ""}
             onChange={(e) => setForm({ ...form, periodStart: e.target.value })}
@@ -292,20 +372,17 @@ function ChallengeForm({
           {scheduleHint && (
             <p className="mt-1 text-[11px] text-para-muted">{scheduleHint}</p>
           )}
-        </div>
+        </FormField>
+
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={!!form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
+          <input
+            type="checkbox"
+            checked={!!form.isActive}
+            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+            className="h-4 w-4 rounded border-light-border accent-primary"
+          />
           <span className="text-heading font-medium">Active</span>
         </label>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button
-            onClick={() => onSubmit(form)}
-            disabled={!form.name || !form.description || !form.periodStart}
-          >
-            Save
-          </Button>
-        </div>
       </div>
     </Modal>
   );
@@ -346,7 +423,7 @@ function BadgesTab() {
         <Table>
           <THead>
             <tr>
-              <Th>Name</Th><Th>Tier</Th><Th>Discount %</Th><Th>Active</Th><Th></Th>
+              <Th>Name</Th><Th>Tier</Th><Th>Required</Th><Th>Discount %</Th><Th>Active</Th><Th></Th>
             </tr>
           </THead>
           <tbody>
@@ -357,6 +434,10 @@ function BadgesTab() {
                   <div className="text-xs text-para-muted">{b.description}</div>
                 </Td>
                 <Td><Badge tone="info">{b.tier}</Badge></Td>
+                <Td>
+                  <span className="font-semibold text-heading">{b.requiredCount}</span>
+                  <span className="ml-1 text-xs text-para-muted">/ month</span>
+                </Td>
                 <Td className="font-semibold text-accent">{b.discountPercentage}%</Td>
                 <Td><Badge tone={b.isActive ? "success" : "neutral"}>{b.isActive ? "Yes" : "No"}</Badge></Td>
                 <Td>
@@ -370,20 +451,72 @@ function BadgesTab() {
         </Table>
       )}
 
-      <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit badge">
-        <div className="space-y-3">
-          <Input label="Name" value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <Input label="Description" value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <Input label="Icon (lucide name)" value={form.icon ?? ""} onChange={(e) => setForm({ ...form, icon: e.target.value })} />
-          <Input label="Discount %" type="number" min={0} max={100} value={form.discountPercentage ?? 0} onChange={(e) => setForm({ ...form, discountPercentage: Number(e.target.value) })} />
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={!!form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
-            <span className="text-heading font-medium">Active</span>
-          </label>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+      <Modal
+        isOpen={!!editing}
+        onClose={() => setEditing(null)}
+        title="Edit badge"
+        description="Tweak the visible badge metadata or its discount."
+        footer={
+          <div className="flex justify-end gap-2 px-6 py-4">
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
             <Button onClick={onSave}>Save</Button>
           </div>
+        }
+      >
+        <div className="space-y-4">
+          <FormField label="Name" htmlFor="b-name">
+            <Input
+              id="b-name"
+              value={form.name ?? ""}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </FormField>
+          <FormField label="Description" htmlFor="b-desc">
+            <Textarea
+              id="b-desc"
+              rows={2}
+              value={form.description ?? ""}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+          </FormField>
+          <FormField label="Icon (lucide name)" htmlFor="b-icon">
+            <Input
+              id="b-icon"
+              value={form.icon ?? ""}
+              onChange={(e) => setForm({ ...form, icon: e.target.value })}
+              placeholder="e.g. flame, trophy, book-open"
+            />
+          </FormField>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Required completions / month" htmlFor="b-req">
+              <Input
+                id="b-req"
+                type="number"
+                min={1}
+                value={form.requiredCount ?? 1}
+                onChange={(e) => setForm({ ...form, requiredCount: Number(e.target.value) })}
+              />
+            </FormField>
+            <FormField label="Discount %" htmlFor="b-disc">
+              <Input
+                id="b-disc"
+                type="number"
+                min={0}
+                max={100}
+                value={form.discountPercentage ?? 0}
+                onChange={(e) => setForm({ ...form, discountPercentage: Number(e.target.value) })}
+              />
+            </FormField>
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={!!form.isActive}
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              className="h-4 w-4 rounded border-light-border accent-primary"
+            />
+            <span className="text-heading font-medium">Active</span>
+          </label>
         </div>
       </Modal>
     </Card>

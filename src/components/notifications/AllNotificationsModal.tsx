@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { formatRelativeTime } from "@/utils/date-helpers";
 import Modal from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useFetchNotifications } from "@/hooks/notifications/use-fetch-notifications";
@@ -26,14 +26,6 @@ interface NotificationItemProps {
 function NotificationItem({ notification, onClick }: NotificationItemProps) {
   const type = getNotificationType(notification.metadata);
   const icon = getNotificationIcon(type);
-
-  const formatTime = (dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch {
-      return "";
-    }
-  };
 
   return (
     <motion.div
@@ -60,7 +52,7 @@ function NotificationItem({ notification, onClick }: NotificationItemProps) {
             {notification.content}
           </p>
           <p className="text-xs text-para-muted mt-1.5">
-            {formatTime(notification.createdAt)}
+            {formatRelativeTime(notification.createdAt)}
           </p>
         </div>
 

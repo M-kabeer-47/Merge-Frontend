@@ -198,9 +198,25 @@ export function useLiveQna({
         const normalized = normalizeQuestion(question, currentUserId);
         setQuestions((prev) => {
           const exists = prev.find((item) => item.id === normalized.id);
-          if (exists) {
-            return prev;
+          if (exists) return prev;
+
+          // If the broadcast arrives before our own ACK, replace any pending
+          // optimistic temp we created for the same content.
+          if (normalized.author?.id === currentUserId) {
+            const tempIdx = prev.findIndex(
+              (item) =>
+                item.id.startsWith("temp-") &&
+                item.author?.id === currentUserId &&
+                item.content === normalized.content,
+            );
+            if (tempIdx >= 0) {
+              const next = [...prev];
+              next[tempIdx] = normalized;
+              questionsRef.current = next;
+              return next;
+            }
           }
+
           const next = [...prev, normalized];
           questionsRef.current = next;
           return next;
@@ -277,17 +293,77 @@ export function useLiveQna({
   const sendQuestion = useCallback(
     (content: string) => {
       if (!roomId || !sessionId) return;
+      const trimmed = content.trim();
+      if (!trimmed) return;
+
+      // Optimistic insert so the sender sees their own message instantly,
+      // without waiting for the server ACK round-trip. The temp ID is
+      // replaced with the real one on ACK (or by the broadcast handler if
+      // it arrives first).
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const nowIso = new Date().toISOString();
+
+      if (currentUserId && currentUserProfile) {
+        const optimistic: LiveQnaQuestion = {
+          id: tempId,
+          roomId,
+          sessionId,
+          content: trimmed,
+          status: "open",
+          votesCount: 0,
+          viewerHasVoted: false,
+          isMine: true,
+          author: {
+            id: currentUserId,
+            firstName: currentUserProfile.firstName,
+            lastName: currentUserProfile.lastName,
+            image: currentUserProfile.image ?? null,
+          },
+          answeredBy: null,
+          answeredAt: null,
+          aiAnswer: null,
+          aiAnswerSources: null,
+          aiAnsweredAt: null,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        };
+
+        setQuestions((prev) => {
+          const next = [...prev, optimistic];
+          questionsRef.current = next;
+          return next;
+        });
+      }
+
       emitWithAck<WebSocketResponse<QuestionPayload>>(
         "askQuestion",
-        { roomId, sessionId, content },
+        { roomId, sessionId, content: trimmed },
         (response) => {
-          if (!response.payload?.question) return;
+          if (!response.payload?.question) {
+            // Defensive: if the server returned no question, still cleanup
+            // the optimistic placeholder so we don't leave a phantom.
+            setQuestions((prev) => {
+              const next = prev.filter((item) => item.id !== tempId);
+              questionsRef.current = next;
+              return next;
+            });
+            return;
+          }
           const normalized = normalizeQuestion(response.payload.question, currentUserId);
           setQuestions((prev) => {
-            const exists = prev.find((item) => item.id === normalized.id);
+            const filtered = prev.filter((item) => item.id !== tempId);
+            const exists = filtered.find((item) => item.id === normalized.id);
             const next = exists
-              ? prev.map((item) => (item.id === normalized.id ? normalized : item))
-              : [...prev, normalized];
+              ? filtered.map((item) => (item.id === normalized.id ? normalized : item))
+              : [...filtered, normalized];
+            questionsRef.current = next;
+            return next;
+          });
+        },
+        () => {
+          // ACK failed — remove the optimistic so the user knows it didn't go.
+          setQuestions((prev) => {
+            const next = prev.filter((item) => item.id !== tempId);
             questionsRef.current = next;
             return next;
           });

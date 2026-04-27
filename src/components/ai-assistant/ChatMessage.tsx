@@ -208,7 +208,9 @@ function ChatMessageInner({
                         <ol
                           start={start}
                           className="my-2 ml-1 space-y-1.5 list-none ai-ol"
-                          style={{ counterReset: `ai-list-counter ${(start || 1) - 1}` }}
+                          style={{
+                            counterReset: `ai-list-counter ${(start || 1) - 1}`,
+                          }}
                           data-ordered="true"
                         >
                           {children}
@@ -275,9 +277,7 @@ function ChatMessageInner({
                               {match?.[1] || "code"}
                             </span>
                             <button
-                              onClick={() =>
-                                handleCopyCode(codeString, codeId)
-                              }
+                              onClick={() => handleCopyCode(codeString, codeId)}
                               className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors px-2 py-1 rounded-md hover:bg-white/5"
                               title="Copy code"
                             >
@@ -375,34 +375,38 @@ function ChatMessageInner({
           {/* Sources — when the answer drew from one or more files in the
               user's rooms. We dedupe by filename so a 3-chunk citation of
               the same lecture shows up as one chip. */}
-          {isAssistant && !isStreaming && message.sources && message.sources.length > 0 && (() => {
-            const uniqueFiles = Array.from(
-              new Set(
-                message.sources
-                  .map((s) => s.fileName)
-                  .filter((n): n is string => Boolean(n)),
-              ),
-            );
-            if (uniqueFiles.length === 0) return null;
-            return (
-              <div className="mt-3 pt-3 border-t border-light-border">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-para-muted mb-1.5">
-                  Sources
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {uniqueFiles.map((name) => (
-                    <span
-                      key={name}
-                      className="inline-flex items-center gap-1 rounded-md bg-secondary/10 px-2 py-1 text-[11px] font-medium text-secondary ring-1 ring-secondary/20"
-                    >
-                      <FileText className="w-3 h-3" />
-                      {name}
-                    </span>
-                  ))}
+          {isAssistant &&
+            !isStreaming &&
+            message.sources &&
+            message.sources.length > 0 &&
+            (() => {
+              const uniqueFiles = Array.from(
+                new Set(
+                  message.sources
+                    .map((s) => s.fileName)
+                    .filter((n): n is string => Boolean(n)),
+                ),
+              );
+              if (uniqueFiles.length === 0) return null;
+              return (
+                <div className="mt-3 pt-3 border-t border-light-border">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-para-muted mb-1.5">
+                    Sources
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {uniqueFiles.map((name) => (
+                      <span
+                        key={name}
+                        className="inline-flex items-center gap-1 rounded-md bg-secondary/10 px-2 py-1 text-[11px] font-medium text-secondary ring-1 ring-secondary/20"
+                      >
+                        <FileText className="w-3 h-3" />
+                        {name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
         </div>
 
         {/* Timestamp */}
@@ -423,20 +427,6 @@ function ChatMessageInner({
               ) : (
                 <Copy className="w-4 h-4" />
               )}
-            </button>
-            <button
-              onClick={() => onSaveToNotes?.(message.id)}
-              className="p-1.5 rounded-lg hover:bg-secondary/10 transition-colors text-para-muted hover:text-para"
-              title="Save to notes"
-            >
-              <BookmarkPlus className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onRegenerate?.(message.id)}
-              className="p-1.5 rounded-lg hover:bg-secondary/10 transition-colors text-para-muted hover:text-para"
-              title="Regenerate"
-            >
-              <RefreshCw className="w-4 h-4" />
             </button>
           </div>
         )}

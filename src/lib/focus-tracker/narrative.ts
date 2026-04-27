@@ -40,27 +40,14 @@ function formatDuration(ms: number): string {
 function phraseEvent(event: SessionEvent): string {
   const clock = formatClock(event.startedAt);
   const dur = formatDuration(event.durationMs);
-  // Use loose matching so legacy event states (e.g. "looking_down" in reports
-  // saved before we collapsed the taxonomy) still render sensibly.
-  switch (event.state as string) {
-    case "focused":
-      return `Focused for ${dur}`;
-    case "looking_away":
-    case "looking_down":
-      return `Looked away at ${clock} for ${dur}`;
-    case "eyes_closed":
-      return `Closed eyes at ${clock} for ${dur}`;
-    case "drowsy":
-      return `Signs of drowsiness at ${clock} — prolonged eye closure`;
-    case "no_face":
-      return `Left the frame at ${clock} for ${dur}`;
-    case "tab_switched":
-      return `Switched away from the session tab at ${clock} for ${dur}`;
-    case "multi_face":
-      return `Another person entered the frame at ${clock}`;
-    default:
-      return `Distraction at ${clock}`;
+  // Generic phrasing — we deliberately don't call out which kind of
+  // distraction it was. The underlying state still drives detection,
+  // sound alerts, and the timeline strip's color, but the user-facing
+  // text just says "distracted."
+  if (event.state === "focused") {
+    return `Focused for ${dur}`;
   }
+  return `Distracted at ${clock} for ${dur}`;
 }
 
 /**
@@ -89,60 +76,45 @@ export function buildNarrative(report: SessionReport): NarrativeSegment[] {
 }
 
 /**
- * Rule-based suggestions driven by event aggregates.
+ * Rule-based suggestions driven by aggregate metrics only — no per-state
+ * callouts. Score and overall distraction frequency drive the advice.
  */
 export function buildSuggestions(report: SessionReport): string[] {
+  if (!report.events || report.totalDurationMs <= 0) {
+    return ["Focus tracking captured no data this session."];
+  }
+
+  const distractionCount = report.events.filter((e) => e.state !== "focused").length;
+  const sessionMinutes = report.totalDurationMs / 60000;
+  const distractionsPerHour =
+    sessionMinutes > 0 ? distractionCount / (sessionMinutes / 60) : 0;
   const suggestions: string[] = [];
 
-  if (!report.events) return ["Focus tracking captured no data this session."];
-
-  const counts: Record<string, number> = {};
-  const durations: Record<string, number> = {};
-  for (const e of report.events) {
-    counts[e.state] = (counts[e.state] || 0) + 1;
-    durations[e.state] = (durations[e.state] || 0) + e.durationMs;
-  }
-
-  const sessionMinutes = report.totalDurationMs / 60000;
-
-  if (report.focusScore < 60 && sessionMinutes > 30) {
+  if (report.focusScore >= 85) {
+    suggestions.push("Strong focus this session — keep this setup.");
+  } else if (report.focusScore >= 70) {
+    suggestions.push("Solid focus overall — small improvements only.");
+  } else if (report.focusScore >= 50) {
     suggestions.push(
-      "Try shorter focused bursts — a 20–25 minute Pomodoro often works better than pushing through.",
+      "Focus dipped a few times. A quieter environment and fewer open apps usually help.",
+    );
+  } else {
+    suggestions.push(
+      "Focus was hard to hold this session. Try a shorter focused burst (20–25 min Pomodoro) and remove obvious distractions before starting.",
     );
   }
 
-  if ((counts["tab_switched"] || 0) >= 3) {
+  if (distractionsPerHour > 12) {
     suggestions.push(
-      "You switched tabs several times. Close non-essential tabs before your next session to reduce pull.",
+      "Distractions were frequent. Closing extra tabs and silencing notifications before your next session should help.",
     );
   }
 
-  if ((counts["drowsy"] || 0) >= 1) {
+  if (sessionMinutes > 45 && report.focusScore < 70) {
     suggestions.push(
-      "Drowsiness was detected. Consider a short break, some water, or studying at a different time of day.",
+      "Long sessions amplify drift — consider breaking your work into shorter chunks with brief breaks.",
     );
   }
 
-  const noFaceMs = durations["no_face"] || 0;
-  if (noFaceMs > report.totalDurationMs * 0.15) {
-    suggestions.push(
-      "Your face was often out of frame. Adjust your camera angle so your face stays visible throughout.",
-    );
-  }
-
-  if ((counts["multi_face"] || 0) >= 1) {
-    suggestions.push(
-      "Other people entered the camera frame. A quieter environment helps sustain focus.",
-    );
-  }
-
-  if (suggestions.length === 0) {
-    if (report.focusScore >= 80) {
-      suggestions.push("Strong focus this session — keep this setup.");
-    } else {
-      suggestions.push("Your focus was mostly good — only small improvements needed.");
-    }
-  }
-
-  return suggestions.slice(0, 4);
+  return suggestions.slice(0, 3);
 }

@@ -95,8 +95,12 @@ export default function ChatPanel({
       meta: darkMode ? "text-[#9aa3c7]" : "text-para-muted",
       body: darkMode ? "text-[#dadfff]" : "text-para",
       chip: darkMode
-        ? "bg-primary/20 text-primary border border-primary/40"
+        ? "bg-primary/40 text-white border border-primary/60"
         : "bg-primary/10 text-primary border border-primary/20",
+      authorName: darkMode ? "text-white" : "text-heading",
+      avatar: darkMode
+        ? "bg-primary/30 text-white"
+        : "bg-primary/15 text-primary",
       answeredChip: darkMode
         ? "bg-emerald-400/20 text-emerald-200 border border-emerald-400/40"
         : "bg-emerald-100 text-emerald-600 border border-emerald-200",
@@ -300,7 +304,7 @@ export default function ChatPanel({
                   <div className={cardBase}>
                     <div className="flex items-start gap-3">
                       {/* Avatar */}
-                      <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${theme.avatar}`}>
                         {(question.author.firstName + " " + question.author.lastName)
                           .split(" ")
                           .map((n) => n[0])
@@ -313,7 +317,7 @@ export default function ChatPanel({
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-semibold text-heading">
+                            <span className={`text-sm font-semibold ${theme.authorName}`}>
                             {question.author.firstName} {question.author.lastName}
                             {question.isMine && " (You)"}
                           </span>

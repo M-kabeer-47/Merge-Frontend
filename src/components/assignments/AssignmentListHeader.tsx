@@ -29,7 +29,7 @@ export default function AssignmentListHeader({
 }: AssignmentListHeaderProps) {
   const { userRole } = useRoom();
   const router = useRouter();
-  const isInstructor = userRole === "instructor" || userRole === "moderator";
+  const isInstructor = userRole === "instructor";
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [activeFilter, setActiveFilter] =
     useState<AssignmentFilterType>(initialFilter);
