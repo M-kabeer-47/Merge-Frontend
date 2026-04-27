@@ -56,7 +56,6 @@ export default function AnnouncementsList({ roomId }: { roomId: string }) {
     title: string;
     content: string;
     scheduledFor?: Date;
-    attachments: File[];
   }) => {
     createAnnouncement(
       {
@@ -65,7 +64,6 @@ export default function AnnouncementsList({ roomId }: { roomId: string }) {
         content: data.content,
         scheduledAt: data.scheduledFor?.toISOString(),
         isPublished: !data.scheduledFor,
-        // Attachments ignored for now as per API spec limitation mentioned in plan
       },
       {
         onSuccess: () => setShowComposer(false),
