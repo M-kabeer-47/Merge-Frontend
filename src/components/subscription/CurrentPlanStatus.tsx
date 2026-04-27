@@ -10,34 +10,46 @@ interface Props {
   isCancelling: boolean;
 }
 
+const FREE_THEME = {
+  gradient: "from-para via-para-muted to-para",
+  ring: "ring-light-border",
+  glow: "shadow-para/10",
+  icon: Sparkles,
+};
+const STARTER_THEME = {
+  gradient: "from-primary via-secondary to-primary",
+  ring: "ring-secondary/30",
+  glow: "shadow-primary/20",
+  icon: Zap,
+};
+const MID_THEME = {
+  gradient: "from-primary via-secondary to-accent",
+  ring: "ring-secondary/40",
+  glow: "shadow-primary/30",
+  icon: Crown,
+};
+const TOP_THEME = {
+  gradient: "from-accent via-secondary to-primary",
+  ring: "ring-accent/40",
+  glow: "shadow-accent/30",
+  icon: Crown,
+};
+
 const TIER_THEME: Record<
   string,
   { gradient: string; ring: string; glow: string; icon: typeof Crown }
 > = {
-  free: {
-    gradient: "from-para via-para-muted to-para",
-    ring: "ring-light-border",
-    glow: "shadow-para/10",
-    icon: Sparkles,
-  },
-  basic: {
-    gradient: "from-primary via-secondary to-primary",
-    ring: "ring-secondary/30",
-    glow: "shadow-primary/20",
-    icon: Zap,
-  },
-  pro: {
-    gradient: "from-primary via-secondary to-accent",
-    ring: "ring-secondary/40",
-    glow: "shadow-primary/30",
-    icon: Crown,
-  },
-  max: {
-    gradient: "from-accent via-secondary to-primary",
-    ring: "ring-accent/40",
-    glow: "shadow-accent/30",
-    icon: Crown,
-  },
+  // New role-specific tiers
+  student_free:        FREE_THEME,
+  student_plus:        MID_THEME,
+  instructor_starter:  STARTER_THEME,
+  instructor_educator: MID_THEME,
+  instructor_pro:      TOP_THEME,
+  // Legacy
+  free:  FREE_THEME,
+  basic: STARTER_THEME,
+  pro:   MID_THEME,
+  max:   TOP_THEME,
 };
 
 export default function CurrentPlanStatus({

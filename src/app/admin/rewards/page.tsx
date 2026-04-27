@@ -27,6 +27,12 @@ const PLAN_OPTIONS = [
   { value: "max", label: "Max" },
 ];
 
+const ROLE_OPTIONS = [
+  { value: "all", label: "Both (students + instructors)" },
+  { value: "student", label: "Students only" },
+  { value: "instructor", label: "Instructors only" },
+];
+
 const ACTION_OPTIONS = [
   { value: "calendar_task_completed", label: "Task completed" },
   { value: "note_created", label: "Note created" },
@@ -123,7 +129,7 @@ function ChallengesTab() {
         <Table>
           <THead>
             <tr>
-              <Th>Name</Th><Th>Tier</Th><Th>Action</Th><Th>Target</Th><Th>Points</Th><Th>Min plan</Th><Th>Active</Th><Th></Th>
+              <Th>Name</Th><Th>Tier</Th><Th>For</Th><Th>Action</Th><Th>Target</Th><Th>Points</Th><Th>Min plan</Th><Th>Active</Th><Th></Th>
             </tr>
           </THead>
           <tbody>
@@ -134,6 +140,11 @@ function ChallengesTab() {
                   <div className="text-xs text-para-muted">{c.description}</div>
                 </Td>
                 <Td><Badge tone="info">{c.tier}</Badge></Td>
+                <Td>
+                  <Badge tone={c.targetRole === "all" ? "neutral" : "accent"}>
+                    {c.targetRole === "student" ? "Students" : c.targetRole === "instructor" ? "Instructors" : "All"}
+                  </Badge>
+                </Td>
                 <Td className="text-xs">{c.actionType}</Td>
                 <Td>{c.target}</Td>
                 <Td>{c.points}</Td>
@@ -237,7 +248,7 @@ function ChallengeForm({
       setForm({
         name: "", description: "",
         tier: "daily", actionType: "calendar_task_completed",
-        target: 1, points: 10, minPlanTier: "free", isActive: true,
+        target: 1, points: 10, minPlanTier: "free", targetRole: "all", isActive: true,
         periodStart: "",
       });
     }
@@ -265,6 +276,7 @@ function ChallengeForm({
           <Select label="Tier" options={TIER_OPTIONS} value={form.tier ?? "daily"} onChange={(e) => handleTierChange(e.target.value)} />
           <Select label="Min plan" options={PLAN_OPTIONS} value={form.minPlanTier ?? "free"} onChange={(e) => setForm({ ...form, minPlanTier: e.target.value })} />
         </div>
+        <Select label="For role" options={ROLE_OPTIONS} value={form.targetRole ?? "all"} onChange={(e) => setForm({ ...form, targetRole: e.target.value })} />
         <Select label="Action type" options={ACTION_OPTIONS} value={form.actionType ?? "calendar_task_completed"} onChange={(e) => setForm({ ...form, actionType: e.target.value })} />
         <div className="grid grid-cols-2 gap-3">
           <Input label="Target" type="number" min={1} value={form.target ?? 1} onChange={(e) => setForm({ ...form, target: Number(e.target.value) })} />

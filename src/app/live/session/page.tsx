@@ -59,6 +59,7 @@ import { useLiveQna } from "@/hooks/live-qna/use-live-qna";
 import { toastApiError } from "@/utils/toast-helpers";
 import FocusTrackerController from "@/components/live-session/FocusTrackerController";
 import FocusTrackerToggle from "@/components/live-session/FocusTrackerToggle";
+import useMySubscription from "@/hooks/subscription/use-my-subscription";
 import FocusAlert from "@/components/live-session/FocusAlert";
 import FocusReportDialog from "@/components/live-session/FocusReportDialog";
 import { useFocusReportUpload, sendFocusReportBeacon, stashPendingReport, flushPendingReports } from "@/hooks/focus-tracker/use-focus-report-upload";
@@ -354,6 +355,7 @@ function LiveSessionPageContent() {
   const queryClient = useQueryClient();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [hostLeaveModalOpen, setHostLeaveModalOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [actingHostCandidate, setActingHostCandidate] = useState<string | null>(null);
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [sessionEndReason, setSessionEndReason] = useState<"manual" | "auto" | null>(null);
@@ -445,6 +447,11 @@ function LiveSessionPageContent() {
   const [raisedHand, setRaisedHand] = useState(false);
 
   // ─── Focus Tracker State ───────────────────────────────────────────
+  // Gate: focus tracker is a paid feature (Student Plus). Hide the toggle
+  // entirely on plans that don't include it.
+  const { subscription } = useMySubscription();
+  const hasFocusTracker = !!subscription?.plan?.hasFocusTracker;
+
   const [focusEnabled, setFocusEnabled] = useState(() => {
     if (typeof window === "undefined") return false;
     return sessionStorage.getItem(`focus-enabled-${sessionId}`) === "true";
@@ -486,21 +493,21 @@ function LiveSessionPageContent() {
     flushPendingReports().catch(() => {});
   }, []);
 
-  // Focus tracker toggle handler with intro modal
+  // Focus tracker toggle handler.
+  // - Enabling: always show a confirm modal (focus tracking is a commitment
+  //   for the rest of the session — see below).
+  // - Disabling: blocked. Once enabled, focus tracking runs until the user
+  //   leaves or the session ends. Stopping mid-session would corrupt the
+  //   report and let users opt out of accountability after distraction is
+  //   already detected. Show an explanatory toast instead.
   const handleFocusToggle = useCallback((checked: boolean) => {
     if (checked) {
-      const hasSeenIntro = localStorage.getItem("focus-tracker-intro-seen");
-      if (!hasSeenIntro) {
-        setShowFocusIntro(true);
-        return;
-      }
+      setShowFocusIntro(true);
+      return;
     }
-    setFocusEnabled(checked);
-    if (checked) {
-      sonnerToast.info("Focus tracking started");
-    } else {
-      sonnerToast.info("Focus tracking stopped");
-    }
+    sonnerToast.info(
+      "Focus tracking can't be turned off mid-session. It will stop when you leave.",
+    );
   }, []);
 
   const confirmFocusIntro = useCallback(() => {
@@ -626,7 +633,20 @@ function LiveSessionPageContent() {
     return () => clearTimeout(redirectTimer);
   }, [sessionData, sessionTerminated, showToastMsg, navigateToSessions]);
 
-  const handleLeaveClick = useCallback(async () => {
+  // Click handler for the Leave buttons. Opens the right confirmation modal;
+  // actual leave logic runs only after the user confirms via `confirmLeave`.
+  const handleLeaveClick = useCallback(() => {
+    if (isHost) {
+      setHostLeaveModalOpen(true);
+    } else {
+      setLeaveConfirmOpen(true);
+    }
+  }, [isHost]);
+
+  // Run the actual leave flow once the non-host user confirms in the modal.
+  const confirmLeave = useCallback(async () => {
+    setLeaveConfirmOpen(false);
+
     // Grab a fresh snapshot from the still-running tracker. The hook's
     // onReport only fires after the tracker stops, which is AFTER we leave —
     // so relying on focusReportRef alone causes every upload to be skipped.
@@ -645,18 +665,14 @@ function LiveSessionPageContent() {
       await new Promise((r) => setTimeout(r, 100));
     }
 
-    if (isHost) {
-      setHostLeaveModalOpen(true);
-    } else {
-      hasLeftRef.current = true;
-      leaveSession({ sessionId, roomId })
-        .then(() => {
-          showToastMsg("success", "You left the session.");
-          if (!showFocusReport) navigateToSessions();
-        })
-        .catch(() => {});
-    }
-  }, [isHost, sessionId, roomId, leaveSession, showToastMsg, navigateToSessions, uploadReport, showFocusReport]);
+    hasLeftRef.current = true;
+    leaveSession({ sessionId, roomId })
+      .then(() => {
+        showToastMsg("success", "You left the session.");
+        if (!showFocusReport) navigateToSessions();
+      })
+      .catch(() => {});
+  }, [sessionId, roomId, leaveSession, showToastMsg, navigateToSessions, uploadReport, showFocusReport]);
 
   const handleEndForAll = useCallback(async () => {
     try {
@@ -1315,7 +1331,7 @@ registerProcessor('pcm-processor', PCMProcessor);
           {/* Video Stage - Stage or Grid View */}
           <div className="absolute inset-0">
               {/* Focus Alert - persistent distraction banner */}
-              {focusEnabled && (
+              {focusEnabled && hasFocusTracker && (
                 <FocusAlert
                   currentState={focusState}
                   isDistracted={isFocusDistracted}
@@ -1410,14 +1426,16 @@ registerProcessor('pcm-processor', PCMProcessor);
                 title={raisedHand ? "Lower hand" : "Raise hand"}
               />
 
-              {/* Focus Tracker Toggle */}
-              <FocusTrackerToggle
-                checked={focusEnabled}
-                onChange={handleFocusToggle}
-                currentState={focusState}
-                isDistracted={isFocusDistracted}
-                cameraOn={cameraOn}
-              />
+              {/* Focus Tracker Toggle — only visible to users on a plan that includes it */}
+              {hasFocusTracker && (
+                <FocusTrackerToggle
+                  checked={focusEnabled}
+                  onChange={handleFocusToggle}
+                  currentState={focusState}
+                  isDistracted={isFocusDistracted}
+                  cameraOn={cameraOn}
+                />
+              )}
 
               {/* Screen Share */}
               <ControlButton
@@ -1545,14 +1563,14 @@ registerProcessor('pcm-processor', PCMProcessor);
           isHost={isHost}
           onPermissionChange={handlePermissionChange}
           onPermissionDenied={(msg) => showToastMsg("warning", msg)}
-          onKicked={handleLeaveClick}
+          onKicked={confirmLeave}
         />
         <HandRaiseSync
           localRaisedHand={raisedHand}
           onHandRaiseChange={handleHandRaiseChange}
         />
         <FocusTrackerController
-          enabled={focusEnabled}
+          enabled={focusEnabled && hasFocusTracker}
           sessionId={sessionId}
           userId={currentUserId || ""}
           sensitivity={focusSensitivity}
@@ -1586,7 +1604,11 @@ registerProcessor('pcm-processor', PCMProcessor);
                 <p className="text-sm text-white/70 leading-relaxed">
                   Your webcam will be <strong>analysed locally in your browser</strong> to help
                   you stay focused. Nothing is sent to the server until the session ends.
-                  You can turn this off anytime.
+                </p>
+                <p className="text-sm text-amber-300/90 leading-relaxed mt-3">
+                  Once enabled, focus tracking <strong>can&apos;t be turned off until you
+                  leave</strong> or the session ends. Make sure you&apos;re ready before
+                  continuing.
                 </p>
                 <div className="flex justify-end gap-3 mt-6">
                   <button
@@ -1600,6 +1622,53 @@ registerProcessor('pcm-processor', PCMProcessor);
                     className="px-5 py-2 text-sm rounded-lg bg-[#1a73e8] hover:bg-[#1557b0] font-medium transition-colors"
                   >
                     Enable
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {/* Leave Session Confirmation (non-host) */}
+        <AnimatePresence>
+          {leaveConfirmOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full max-w-md rounded-xl border border-white/10 bg-[#202124] p-6 text-white shadow-2xl mx-4"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                    <LogOut className="w-5 h-5 text-red-300" />
+                  </div>
+                  <h2 className="text-xl font-semibold">Leave session?</h2>
+                </div>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  You&apos;ll be disconnected from the call.
+                  {focusEnabled && (
+                    <>
+                      {" "}Your focus report will be saved and shown before you go.
+                    </>
+                  )}
+                </p>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => setLeaveConfirmOpen(false)}
+                    className="px-4 py-2 text-sm rounded-lg text-white/70 hover:bg-white/10 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmLeave}
+                    className="px-5 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 font-medium transition-colors"
+                  >
+                    Leave
                   </button>
                 </div>
               </motion.div>

@@ -20,9 +20,14 @@ import useUploadAttachment from "@/hooks/ai-assistant/use-upload-attachment";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ContextFile, ConversationWithMessages } from "@/types/ai-chat";
+import useMySubscription from "@/hooks/subscription/use-my-subscription";
+import LockedFeatureScreen from "@/components/subscription/LockedFeatureScreen";
 
 export default function AIAssistantPage() {
   const { user } = useAuth();
+  const { subscription, isLoading: subLoading } = useMySubscription();
+  const hasAiAssistant = !!subscription?.plan?.hasAiAssistant;
+  const isInstructor = user?.role === "instructor";
   const queryClient = useQueryClient();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(true);
@@ -338,6 +343,24 @@ export default function AIAssistantPage() {
     maxAttachments: MAX_ATTACHMENTS_PER_CONVERSATION,
     atAttachmentCap,
   };
+
+  // Lock screen for users without AI Assistant on their plan.
+  // Wait for the subscription query to settle so we don't flash the lock to users who actually have access.
+  if (!subLoading && !hasAiAssistant) {
+    return (
+      <LockedFeatureScreen
+        featureName="AI Assistant"
+        description="Chat with an AI tutor that knows your room content. Ask questions, get explanations, and study smarter."
+        perks={[
+          "Ask questions about your room files (PDFs, slides, notes)",
+          "Get instant explanations on tough concepts",
+          "Save conversations to revisit later",
+          "Auto-applied discount if you've earned a reward badge",
+        ]}
+        requiredPlan={isInstructor ? "Educator" : "Student Plus"}
+      />
+    );
+  }
 
   return (
     <div className="h-full flex overflow-hidden bg-main-background">

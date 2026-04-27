@@ -173,6 +173,93 @@ export class FocusTracker {
   }
 
   /**
+   * Pause the inference loop without losing accumulated state. Used when the
+   * camera goes off (or the user temporarily disables tracking) and we want
+   * to resume into the SAME session report later — i.e. focusedMs, events,
+   * trackingStartedAt all persist.
+   *
+   * Time spent paused is not credited to any bucket: we close the current
+   * event at the pause moment, and on resume we open a fresh "focused" event.
+   */
+  pause(): void {
+    if (!this.started || !this.running) return;
+
+    this.running = false;
+
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+
+    const now = Date.now();
+    const elapsed = now - this.trackingStartedAt;
+
+    // Flush metrics for the current state up to the pause moment.
+    this.updateRunningMetrics(now);
+
+    // Close the open event so its duration reflects only pre-pause time.
+    if (this.currentEvent && this.currentEvent.endedAt === null) {
+      this.currentEvent.endedAt = elapsed;
+      this.currentEvent.durationMs = elapsed - this.currentEvent.startedAt;
+      this.events.push({ ...this.currentEvent });
+      this.currentEvent = null;
+    }
+
+    // Close the focused streak.
+    if (this.currentFocusedStreakStart !== null) {
+      const streakMs = elapsed - this.currentFocusedStreakStart;
+      if (streakMs > this.longestFocusedStreakMs) this.longestFocusedStreakMs = streakMs;
+      this.currentFocusedStreakStart = null;
+    }
+
+    // Release the camera track so LiveKit can reclaim it.
+    if (this.videoEl) {
+      this.videoEl.srcObject = null;
+    }
+  }
+
+  /**
+   * Resume after pause(). Swaps in a (potentially new) MediaStreamTrack and
+   * restarts the inference loop. Counters and events from before the pause
+   * carry forward unchanged.
+   */
+  async resume(track: MediaStreamTrack): Promise<void> {
+    if (!this.started || this.running) return;
+
+    if (!this.videoEl) {
+      this.videoEl = document.createElement("video");
+      this.videoEl.setAttribute("playsinline", "");
+      this.videoEl.setAttribute("autoplay", "");
+      this.videoEl.muted = true;
+    }
+
+    this.videoEl.srcObject = new MediaStream([track]);
+    await this.videoEl.play();
+
+    const now = Date.now();
+    const elapsed = now - this.trackingStartedAt;
+
+    // Don't credit pause time to any bucket.
+    this.lastMetricsUpdate = now;
+    this.lastInferenceTime = 0;
+
+    // Start fresh in focused state — the next camera frame will reclassify.
+    this.currentDebouncedState = "focused";
+    this.pendingState = null;
+    this.pendingStateSince = 0;
+    this.currentFocusedStreakStart = elapsed;
+    this.currentEvent = {
+      state: "focused",
+      startedAt: elapsed,
+      endedAt: null,
+      durationMs: 0,
+    };
+
+    this.running = true;
+    this.scheduleNextFrame();
+  }
+
+  /**
    * Stop tracking and finalize the timeline.
    * Safe to call before start() or multiple times.
    */

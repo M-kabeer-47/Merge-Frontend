@@ -39,18 +39,37 @@ export default function BillingPage() {
 
   useEffect(() => {
     const success = searchParams.get("success");
+    const activated = searchParams.get("activated");
     const cancelled = searchParams.get("cancelled");
+    const failed = searchParams.get("failed");
+
     if (success === "true") {
-      toast.success("Subscription activated! Updating your account...");
-      // Force everything related to subscription + rewards to refetch so the
-      // new plan + redeemed-badge state shows up immediately.
+      // LemonSqueezy bounced the user back. Hard-reload so React Query cache,
+      // SSR layout state, and the navbar plan badge all pick up the new tier.
+      // We swap the query param to `activated=1` so the post-reload mount knows
+      // to celebrate without re-triggering this branch.
+      window.location.replace("/billing?activated=1");
+      return;
+    }
+
+    if (activated === "1") {
+      toast.success("Subscription activated — your new plan is live.");
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
       queryClient.invalidateQueries({ queryKey: ["rewards"] });
-      // Strip the query params from the URL so a refresh doesn't re-toast
       router.replace("/billing");
-    } else if (cancelled === "true") {
-      toast.info("Checkout cancelled.");
+      return;
+    }
+
+    if (cancelled === "true") {
+      toast.info("Checkout cancelled — no charges were made.");
       router.replace("/billing");
+      return;
+    }
+
+    if (failed === "true") {
+      toast.error("Payment couldn't be processed. Please try again or use a different card.");
+      router.replace("/billing");
+      return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);

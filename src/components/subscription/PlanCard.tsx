@@ -11,6 +11,14 @@ interface Props {
 }
 
 const TIER_TAGLINE: Record<string, string> = {
+  // Student
+  student_free: "For getting started — no commitment.",
+  student_plus: "For students who want everything unlocked.",
+  // Instructor
+  instructor_starter: "For trying out the platform with a small class.",
+  instructor_educator: "For active teachers running real classes.",
+  instructor_pro: "For institutions and power instructors.",
+  // Legacy fallbacks
   free: "For getting started — no commitment.",
   basic: "For learners ready to do a little more.",
   pro: "For students who want everything unlocked.",
@@ -24,8 +32,10 @@ export default function PlanCard({
   isLoading,
   discountPercent,
 }: Props) {
-  const isPopular = plan.name === "pro";
-  const isFree = plan.name === "free";
+  // Highlight the middle paid tier as the recommended one
+  const isPopular = plan.name === "pro" || plan.name === "student_plus" || plan.name === "instructor_educator";
+  // Postgres numeric columns deserialize as strings — coerce before comparing
+  const isFree = Number(plan.priceMonthly) === 0;
   const notConfigured = !isFree && !plan.lsVariantId;
   const discountedPrice = discountPercent
     ? Math.round(plan.priceMonthly * (1 - discountPercent / 100))

@@ -95,10 +95,12 @@ export function useFocusTracker({
     return () => clearInterval(interval);
   }, [localParticipant]);
 
-  // Main effect: start/stop tracker based on enabled + camera
+  // Lifecycle: create tracker on first enable, fully stop on disable / unmount.
+  // Camera availability is handled in a separate effect below — we DO NOT
+  // depend on isCameraAvailable here, otherwise the tracker would be torn
+  // down and recreated on every camera flicker, losing the running counters.
   useEffect(() => {
     if (!debouncedEnabled) {
-      // Stop tracker if running
       if (trackerRef.current) {
         trackerRef.current.stop();
         const finalReport = trackerRef.current.getReport();
@@ -113,24 +115,50 @@ export function useFocusTracker({
       return;
     }
 
-    // Enabled — try to get camera track
+    // Cleanup on unmount or full dependency change.
+    return () => {
+      if (trackerRef.current) {
+        trackerRef.current.stop();
+        const finalReport = trackerRef.current.getReport();
+        setReport(finalReport);
+        trackerRef.current = null;
+      }
+      if (metricsIntervalRef.current) {
+        clearInterval(metricsIntervalRef.current);
+        metricsIntervalRef.current = null;
+      }
+    };
+  }, [debouncedEnabled, sessionId, userId, sensitivity]);
+
+  // Camera lifecycle: create the tracker on first camera availability, then
+  // pause/resume across camera off/on cycles WITHOUT destroying state, so
+  // counters and the events array carry over.
+  useEffect(() => {
+    if (!debouncedEnabled) return;
+
     const pub = localParticipant.getTrackPublication(Track.Source.Camera);
     const mediaTrack = pub?.track?.mediaStreamTrack;
 
-    if (!mediaTrack) {
-      // Camera not available yet — we'll retry via the interval
+    // Camera off: pause the tracker if it exists. Counters preserved.
+    if (!isCameraAvailable || !mediaTrack) {
+      if (trackerRef.current) {
+        trackerRef.current.pause();
+        setCurrentState("idle");
+      }
       return;
     }
 
-    // Don't restart if already running
-    if (trackerRef.current) return;
+    // Camera on, tracker exists: resume into the SAME tracker instance.
+    if (trackerRef.current) {
+      trackerRef.current.resume(mediaTrack).catch((err) => {
+        setError(err instanceof Error ? err : new Error(String(err)));
+      });
+      setCurrentState("focused");
+      return;
+    }
 
-    // Create and start tracker
-    const tracker = new FocusTracker({
-      sessionId,
-      userId,
-      sensitivity,
-    });
+    // First time: create and start.
+    const tracker = new FocusTracker({ sessionId, userId, sensitivity });
 
     tracker.onStateChange((state) => {
       setCurrentState(state);
@@ -148,7 +176,6 @@ export function useFocusTracker({
         setCurrentState("focused");
         setError(null);
 
-        // Poll metrics
         metricsIntervalRef.current = setInterval(() => {
           if (trackerRef.current) {
             setMetrics(trackerRef.current.getMetrics());
@@ -158,40 +185,8 @@ export function useFocusTracker({
       .catch((err) => {
         setError(err instanceof Error ? err : new Error(String(err)));
       });
-
-    // Cleanup on unmount or dependency change
-    return () => {
-      if (trackerRef.current) {
-        trackerRef.current.stop();
-        const finalReport = trackerRef.current.getReport();
-        setReport(finalReport);
-        trackerRef.current = null;
-      }
-      if (metricsIntervalRef.current) {
-        clearInterval(metricsIntervalRef.current);
-        metricsIntervalRef.current = null;
-      }
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedEnabled, isCameraAvailable, sessionId, userId, sensitivity]);
-
-  // Handle camera turning off mid-tracking
-  useEffect(() => {
-    if (!debouncedEnabled || !trackerRef.current) return;
-
-    if (!isCameraAvailable) {
-      // Camera went off — pause tracker
-      trackerRef.current.stop();
-      const finalReport = trackerRef.current.getReport();
-      setReport(finalReport);
-      trackerRef.current = null;
-      setCurrentState("idle");
-      if (metricsIntervalRef.current) {
-        clearInterval(metricsIntervalRef.current);
-        metricsIntervalRef.current = null;
-      }
-    }
-  }, [isCameraAvailable, debouncedEnabled]);
 
   const isDistracted =
     currentState !== "idle" && currentState !== "focused";
