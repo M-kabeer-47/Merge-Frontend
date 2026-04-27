@@ -371,6 +371,38 @@ function ChatMessageInner({
               </div>
             </div>
           )}
+
+          {/* Sources — when the answer drew from one or more files in the
+              user's rooms. We dedupe by filename so a 3-chunk citation of
+              the same lecture shows up as one chip. */}
+          {isAssistant && !isStreaming && message.sources && message.sources.length > 0 && (() => {
+            const uniqueFiles = Array.from(
+              new Set(
+                message.sources
+                  .map((s) => s.fileName)
+                  .filter((n): n is string => Boolean(n)),
+              ),
+            );
+            if (uniqueFiles.length === 0) return null;
+            return (
+              <div className="mt-3 pt-3 border-t border-light-border">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-para-muted mb-1.5">
+                  Sources
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {uniqueFiles.map((name) => (
+                    <span
+                      key={name}
+                      className="inline-flex items-center gap-1 rounded-md bg-secondary/10 px-2 py-1 text-[11px] font-medium text-secondary ring-1 ring-secondary/20"
+                    >
+                      <FileText className="w-3 h-3" />
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Timestamp */}

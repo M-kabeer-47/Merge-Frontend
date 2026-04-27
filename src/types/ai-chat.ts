@@ -11,13 +11,16 @@ export enum AttachmentType {
   TXT = "txt",
 }
 
-// Source chunk from AI response
+// Source chunk from AI response. fileName is added by the NestJS backend
+// after looking up the file_id against the files table — see
+// FileService.enrichSourcesWithFileNames.
 export interface MessageSource {
   file_id: string;
   chunk_index: number;
   content: string;
   relevance_score: number;
   section_title: string;
+  fileName?: string | null;
 }
 
 // Chat message from API
