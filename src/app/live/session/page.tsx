@@ -630,28 +630,30 @@ function LiveSessionPageContent() {
     // onReport only fires after the tracker stops, which is AFTER we leave —
     // so relying on focusReportRef alone causes every upload to be skipped.
     const liveReport = focusReportGeneratorRef.current?.() ?? focusReportRef.current;
-    if (liveReport && sessionId) {
+    const hasReport = Boolean(liveReport && sessionId);
+
+    if (hasReport && liveReport) {
       focusReportRef.current = liveReport;
       setFocusReport(liveReport);
       setShowFocusReport(true);
       try {
         await uploadReport({ sessionId, report: liveReport });
       } catch {
-        // Stash for later if upload fails
         stashPendingReport(sessionId, liveReport);
       }
-      // Small delay so the dialog's render settles before navigation fires.
-      await new Promise((r) => setTimeout(r, 100));
     }
 
     hasLeftRef.current = true;
     leaveSession({ sessionId, roomId })
       .then(() => {
         showToastMsg("success", "You left the session.");
-        if (!showFocusReport) navigateToSessions();
+        // Only auto-navigate when there's no focus report dialog to read.
+        // If the dialog is open, navigation is deferred until the user
+        // clicks Close — see the dialog's onClose handler.
+        if (!hasReport) navigateToSessions();
       })
       .catch(() => {});
-  }, [sessionId, roomId, leaveSession, showToastMsg, navigateToSessions, uploadReport, showFocusReport]);
+  }, [sessionId, roomId, leaveSession, showToastMsg, navigateToSessions, uploadReport]);
 
   const handleEndForAll = useCallback(async () => {
     try {

@@ -16,7 +16,6 @@ import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
-  Download,
   Target,
   Clock,
   AlertTriangle,
@@ -75,18 +74,6 @@ export default function FocusReportDialog({
   const distractionEvents = report.events.filter((e) => e.state !== "focused");
   const narrative = useMemo(() => buildNarrative(report), [report]);
   const suggestions = useMemo(() => buildSuggestions(report), [report]);
-
-  const handleDownloadJson = () => {
-    const blob = new Blob([JSON.stringify(report, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `focus-report-${report.sessionId}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <AnimatePresence>
@@ -275,14 +262,7 @@ export default function FocusReportDialog({
             )}
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-4">
-              <button
-                onClick={handleDownloadJson}
-                className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Download JSON
-              </button>
+            <div className="flex items-center justify-end p-4">
               <button
                 onClick={onClose}
                 className="px-5 py-2 rounded-lg bg-[#1a73e8] hover:bg-[#1557b0] text-sm font-medium transition-colors"
