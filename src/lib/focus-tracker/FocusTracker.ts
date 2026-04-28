@@ -412,23 +412,46 @@ export class FocusTracker {
   // ── Private — MediaPipe initialization ───────────────────────────────────
 
   private async initMediaPipe(): Promise<void> {
-    // Use CDN for WASM assets (Option A from plan)
+    // Pin the WASM bundle to the SAME version as the installed JS package.
+    // Using `@latest` here lets jsdelivr serve a WASM build that's newer
+    // than the JS bundle — MediaPipe crashes inside `_emscripten_glClear`
+    // (with "Cannot read properties of undefined (reading 'clear')") when
+    // the JS↔WASM ABI doesn't line up. Keep this in sync with package.json.
     const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm",
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/wasm",
     );
 
-    this.landmarker = await FaceLandmarker.createFromOptions(vision, {
+    const buildOptions = (delegate: "GPU" | "CPU") => ({
       baseOptions: {
         modelAssetPath: this.config.modelPath,
-        delegate: "GPU",
+        delegate,
       },
-      runningMode: "VIDEO",
+      runningMode: "VIDEO" as const,
       // Allow up to 2 so the multi_face distraction state can fire when
       // someone else walks into the camera frame.
       numFaces: 2,
       outputFaceBlendshapes: true,
       outputFacialTransformationMatrixes: true,
     });
+
+    try {
+      this.landmarker = await FaceLandmarker.createFromOptions(
+        vision,
+        buildOptions("GPU"),
+      );
+    } catch (gpuErr) {
+      // GPU delegate can fail when WebGL is unavailable, blocked, or when
+      // multiple GL contexts collide (e.g. with LiveKit's video pipeline).
+      // Retry on CPU so the tracker still runs instead of dying silently.
+      console.warn(
+        "[FocusTracker] GPU delegate failed, falling back to CPU:",
+        gpuErr,
+      );
+      this.landmarker = await FaceLandmarker.createFromOptions(
+        vision,
+        buildOptions("CPU"),
+      );
+    }
   }
 
   // ── Private — Inference loop ─────────────────────────────────────────────
