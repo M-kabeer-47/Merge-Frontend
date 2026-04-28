@@ -39,18 +39,59 @@ export default function BillingPage() {
 
   useEffect(() => {
     const success = searchParams.get("success");
+    const activated = searchParams.get("activated");
     const cancelled = searchParams.get("cancelled");
+    const failed = searchParams.get("failed");
+
     if (success === "true") {
-      toast.success("Subscription activated! Updating your account...");
-      // Force everything related to subscription + rewards to refetch so the
-      // new plan + redeemed-badge state shows up immediately.
-      queryClient.invalidateQueries({ queryKey: ["subscription"] });
-      queryClient.invalidateQueries({ queryKey: ["rewards"] });
-      // Strip the query params from the URL so a refresh doesn't re-toast
+      // LemonSqueezy bounced the user back to /billing?success=true.
+      // Hard-reload so React Query cache, SSR layout state, and the navbar
+      // plan badge all pick up the new tier from a fresh fetch. The query
+      // param is swapped to `activated=1` so the post-reload mount knows
+      // to celebrate without re-triggering this branch (and so a stray
+      // refresh later doesn't fire the toast again).
+      window.location.replace("/billing?activated=1");
+      return;
+    }
+
+    if (activated === "1") {
+      toast.success("Subscription activated — your new plan is live.");
+
+      // Invalidate immediately. After the hard reload the cache is empty
+      // anyway, but this is harmless and covers the edge where the user
+      // navigates back into /billing?activated=1 without a reload.
+      const invalidateAll = () => {
+        // The "subscription" prefix matches all sub-keys: ["subscription",
+        // "my"], ["subscription", "plans"], ["subscription", "payments"].
+        queryClient.invalidateQueries({ queryKey: ["subscription"] });
+        queryClient.invalidateQueries({ queryKey: ["rewards"] });
+      };
+      invalidateAll();
+
+      // LemonSqueezy webhook → backend DB update is a second or two
+      // behind the user-redirect. The first fetch can still see the old
+      // plan. Re-invalidate at 2s and 5s so the new tier appears as soon
+      // as the webhook settles, without forcing the user to refresh.
+      const t1 = setTimeout(invalidateAll, 2000);
+      const t2 = setTimeout(invalidateAll, 5000);
+
       router.replace("/billing");
-    } else if (cancelled === "true") {
-      toast.info("Checkout cancelled.");
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+
+    if (cancelled === "true") {
+      toast.info("Checkout cancelled — no charges were made.");
       router.replace("/billing");
+      return;
+    }
+
+    if (failed === "true") {
+      toast.error("Payment couldn't be processed. Please try again or use a different card.");
+      router.replace("/billing");
+      return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);

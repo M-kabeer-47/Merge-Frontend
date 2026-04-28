@@ -8,18 +8,19 @@ import RewardBadge from "./RewardBadge";
 interface Props {
   badge: Badge;
   userBadge?: UserBadge | null;
+  monthlyProgress?: { completed: number; threshold: number };
 }
 
-const CRITERIA: Record<string, string> = {
-  daily: "Complete all daily challenges",
-  weekly: "Complete all weekly challenges",
-  monthly: "Complete all monthly challenges",
+const CRITERIA: Record<string, (n: number) => string> = {
+  daily: (n) => `Complete ${n} daily challenges this month`,
+  weekly: (n) => `Complete ${n} weekly challenges this month`,
+  monthly: (n) => `Complete ${n} monthly challenges this month`,
 };
 
-const HOW_TO: Record<string, string> = {
-  daily: "Finish all 3 daily challenges in a single day to unlock this badge.",
-  weekly: "Finish all 3 weekly challenges before the week resets.",
-  monthly: "Finish all monthly challenges before the month resets.",
+const HOW_TO: Record<string, (n: number) => string> = {
+  daily: (n) => `Complete a total of ${n} daily challenges within this calendar month to unlock this badge.`,
+  weekly: (n) => `Complete a total of ${n} weekly challenges within this calendar month to unlock this badge.`,
+  monthly: (n) => `Complete a total of ${n} monthly challenges within this calendar month to unlock this badge.`,
 };
 
 const DISCOUNT_INFO: Record<string, string> = {
@@ -28,7 +29,7 @@ const DISCOUNT_INFO: Record<string, string> = {
   monthly: "30% off Pro or Max plan",
 };
 
-export default function BadgeCard({ badge, userBadge }: Props) {
+export default function BadgeCard({ badge, userBadge, monthlyProgress }: Props) {
   const [copied, setCopied] = useState(false);
   const earned = !!userBadge;
 
@@ -83,9 +84,37 @@ export default function BadgeCard({ badge, userBadge }: Props) {
           {badge.name}
         </h4>
         <p className="mt-1 text-xs leading-relaxed text-para-muted">
-          {earned ? DISCOUNT_INFO[badge.tier] : CRITERIA[badge.tier]}
+          {earned
+            ? DISCOUNT_INFO[badge.tier]
+            : CRITERIA[badge.tier](monthlyProgress?.threshold ?? 0)}
         </p>
       </div>
+
+      {/* Monthly progress bar — shown only when not yet earned this month */}
+      {!earned && monthlyProgress && (
+        <div className="relative mt-4 px-1">
+          <div className="flex items-center justify-between text-[10px] font-medium text-para-muted">
+            <span>Progress this month</span>
+            <span className="font-raleway font-bold tabular-nums text-heading">
+              {monthlyProgress.completed}
+              <span className="font-medium text-para-muted">
+                /{monthlyProgress.threshold}
+              </span>
+            </span>
+          </div>
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary/10">
+            <div
+              className="h-full rounded-full bg-accent transition-all"
+              style={{
+                width: `${Math.min(
+                  (monthlyProgress.completed / monthlyProgress.threshold) * 100,
+                  100,
+                )}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Discount chip */}
       <div className="relative mt-3 flex justify-center">
@@ -164,7 +193,7 @@ export default function BadgeCard({ badge, userBadge }: Props) {
               </p>
             </div>
             <p className="text-[11px] leading-relaxed text-para-muted">
-              {HOW_TO[badge.tier]}
+              {HOW_TO[badge.tier](monthlyProgress?.threshold ?? 0)}
             </p>
           </div>
         )}

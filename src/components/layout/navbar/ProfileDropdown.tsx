@@ -11,14 +11,23 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 import useMySubscription from "@/hooks/subscription/use-my-subscription";
 
-const PLAN_STYLE: Record<
-  string,
-  { icon: typeof Sparkles; chip: string }
-> = {
-  free:  { icon: Sparkles, chip: "bg-secondary/15 text-para-muted" },
-  basic: { icon: Zap,      chip: "bg-secondary/20 text-secondary" },
-  pro:   { icon: Crown,    chip: "bg-primary/10 text-primary" },
-  max:   { icon: Crown,    chip: "bg-accent/15 text-accent" },
+const FREE_STYLE = { icon: Sparkles, chip: "bg-secondary/15 text-para-muted" };
+const LOW_STYLE  = { icon: Zap,      chip: "bg-secondary/20 text-secondary" };
+const MID_STYLE  = { icon: Crown,    chip: "bg-primary/10 text-primary" };
+const TOP_STYLE  = { icon: Crown,    chip: "bg-accent/15 text-accent" };
+
+const PLAN_STYLE: Record<string, { icon: typeof Sparkles; chip: string }> = {
+  // New role-specific tiers
+  student_free:        FREE_STYLE,
+  student_plus:        MID_STYLE,
+  instructor_starter:  LOW_STYLE,
+  instructor_educator: MID_STYLE,
+  instructor_pro:      TOP_STYLE,
+  // Legacy
+  free:  FREE_STYLE,
+  basic: LOW_STYLE,
+  pro:   MID_STYLE,
+  max:   TOP_STYLE,
 };
 
 interface ProfileDropdownProps {

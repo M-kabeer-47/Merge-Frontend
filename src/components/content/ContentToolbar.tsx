@@ -88,7 +88,7 @@ export default function ContentToolbar({
   const roomId = params?.id as string;
   const { userRole } = useRoom();
 
-  const canEdit = userRole === "instructor" || userRole === "moderator";
+  const canUpload = userRole === "instructor" || userRole === "moderator";
 
   // Map UI sort options to API sort params for the modal
   const apiSortBy: ContentSortBy =
@@ -134,7 +134,7 @@ export default function ContentToolbar({
 
           {/* Desktop: Right Actions */}
           <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-            {canEdit && (
+            {canUpload && (
               <>
                 <Button
                   variant="outline"
@@ -212,7 +212,7 @@ export default function ContentToolbar({
         </div>
 
         {/* Mobile: Action buttons row - right aligned */}
-        {canEdit && (
+        {canUpload && (
           <div className="flex sm:hidden items-center justify-end gap-2">
             <Button
               variant="outline"

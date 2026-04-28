@@ -5,14 +5,13 @@ import { format, isValid } from "date-fns";
 import { API_BASE_URL } from "@/lib/constants/api";
 
 export async function getCalendarTasks(): Promise<CalendarTask[]> {
+  // Per-user calendar tasks — must reflect newly added/edited/deleted
+  // events immediately. The previous 60s server cache caused freshly
+  // created events to not appear until the cache expired even after
+  // React Query invalidation.
   const { data, error } = await getWithAuth<CalendarTask[]>(
     `${API_BASE_URL}/calendar`,
-    {
-      next: {
-        revalidate: 60,
-        tags: ["calendar-tasks"],
-      },
-    },
+    { cache: "no-store" },
   );
 
   if (error || !data) {

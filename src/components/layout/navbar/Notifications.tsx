@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { IoNotificationsOutline } from "react-icons/io5";
 import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { formatRelativeTime } from "@/utils/date-helpers";
 import { useFetchNotifications } from "@/hooks/notifications/use-fetch-notifications";
 import { useMarkNotificationRead } from "@/hooks/notifications/use-mark-notification-read";
 import { useMarkAllNotificationsRead } from "@/hooks/notifications/use-mark-all-notifications-read";
@@ -29,14 +29,6 @@ function DropdownItem({ notification, onClick }: DropdownItemProps) {
   const type = getNotificationType(notification.metadata);
   const icon = getNotificationIcon(type);
 
-  const formatTime = (dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch {
-      return "";
-    }
-  };
-
   return (
     <motion.div
       key={notification.id}
@@ -57,7 +49,7 @@ function DropdownItem({ notification, onClick }: DropdownItemProps) {
             {notification.content}
           </p>
           <p className="text-xs text-para-muted mt-1">
-            {formatTime(notification.createdAt)}
+            {formatRelativeTime(notification.createdAt)}
           </p>
         </div>
         {!notification.isRead && (

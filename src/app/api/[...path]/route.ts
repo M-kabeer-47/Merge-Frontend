@@ -78,20 +78,29 @@ async function handler(
     });
   }
 
-  // Handle regular responses (non-streaming)
-  let responseData: any;
+  // Handle empty-body responses (204 No Content, 304 Not Modified, or empty 205)
+  // These statuses must not have a body per HTTP spec, and parsing an empty
+  // body as JSON throws SyntaxError → Next.js converts to a 500.
+  const noBodyStatus = [204, 205, 304].includes(backendResponse.status);
 
-  if (contentType?.includes("application/json")) {
-    responseData = await backendResponse.json();
+  let response: NextResponse;
+  if (noBodyStatus) {
+    response = new NextResponse(null, { status: backendResponse.status });
   } else {
-    responseData = await backendResponse.text();
+    // Read raw text so we can safely handle empty bodies even when the
+    // backend mistakenly sets Content-Type: application/json with no body.
+    const rawBody = await backendResponse.text();
+    if (contentType?.includes("application/json") && rawBody.length > 0) {
+      try {
+        const parsed = JSON.parse(rawBody);
+        response = NextResponse.json(parsed, { status: backendResponse.status });
+      } catch {
+        response = new NextResponse(rawBody, { status: backendResponse.status });
+      }
+    } else {
+      response = new NextResponse(rawBody, { status: backendResponse.status });
+    }
   }
-
-  // Create response
-  const response =
-    typeof responseData === "string"
-      ? new NextResponse(responseData, { status: backendResponse.status })
-      : NextResponse.json(responseData, { status: backendResponse.status });
 
   // Handle Set-Cookie headers from backend (rewrite for localhost)
   const setCookieHeaders = backendResponse.headers.getSetCookie();

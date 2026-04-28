@@ -108,6 +108,21 @@ export async function putWithAuth<T = unknown>(
 }
 
 /**
+ * PATCH request with auth
+ */
+export async function patchWithAuth<T = unknown>(
+  url: string,
+  body?: unknown,
+  options?: Omit<FetchWithAuthOptions, "method" | "body">
+) {
+  return fetchWithAuth<T>(url, {
+    ...options,
+    method: "PATCH",
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+/**
  * DELETE request with auth
  */
 export async function deleteWithAuth<T = unknown>(

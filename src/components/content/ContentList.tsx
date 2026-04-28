@@ -52,7 +52,8 @@ export default function ContentList() {
 
   // Role check
   const { userRole } = useRoom();
-  const canEdit = userRole === "instructor" || userRole === "moderator";
+  const canUpload = userRole === "instructor" || userRole === "moderator";
+  const canManage = userRole === "instructor";
 
   // Map UI sort options to API sort params
   const apiSortBy: ContentSortBy =
@@ -159,7 +160,7 @@ export default function ContentList() {
       const options: MenuOption[] = [
         { title: "Open", action: () => handleFolderClick(id) },
       ];
-      if (canEdit) {
+      if (canManage) {
         options.push(
           { title: "Rename", action: () => onRenameItem(item) },
           { title: "Delete", action: () => onDeleteItem(item) },
@@ -175,7 +176,7 @@ export default function ContentList() {
         action: () => downloadFile(file.filePath, file.originalName),
       },
     ];
-    if (canEdit) {
+    if (canManage) {
       options.push(
         { title: "Rename", action: () => onRenameItem(item) },
         { title: "Delete", action: () => onDeleteItem(item) },
@@ -225,9 +226,9 @@ export default function ContentList() {
             />
           ) : (
             <EmptyFolderState
-              onUpload={canEdit ? onUpload : undefined}
+              onUpload={canUpload ? onUpload : undefined}
               onCreateFolder={
-                canEdit ? () => setIsCreateFolderModalOpen(true) : undefined
+                canUpload ? () => setIsCreateFolderModalOpen(true) : undefined
               }
             />
           )

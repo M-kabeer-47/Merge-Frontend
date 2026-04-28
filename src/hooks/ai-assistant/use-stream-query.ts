@@ -257,19 +257,47 @@ export default function useStreamQuery() {
                       createdAt: prev.streamingMessage?.createdAt ?? new Date().toISOString(),
                     },
                   }));
-                } else if (currentEvent === "sources" || parsed.fileId) {
-                  // sources event
-                  const source: SourceEvent = {
-                    fileId: parsed.fileId,
-                    chunkIndex: parsed.chunkIndex,
-                    content: parsed.content,
-                    relevanceScore: parsed.relevanceScore,
-                  };
-                  accumulatedSources.push(source);
+                } else if (currentEvent === "sources" && Array.isArray(parsed.sources)) {
+                  // sources event from FastAPI carries the array as
+                  //   { sources: [{file_id, chunk_index, relevance_score, section_title}], count }
+                  // (NOT individual fields on the top level — earlier code
+                  // tried to read parsed.fileId which always missed.)
+                  for (const s of parsed.sources) {
+                    accumulatedSources.push({
+                      fileId: s.file_id ?? s.fileId,
+                      chunkIndex: s.chunk_index ?? s.chunkIndex,
+                      content: s.content ?? "",
+                      relevanceScore: s.relevance_score ?? s.relevanceScore ?? 0,
+                    });
+                  }
                   setStreamingState((prev) => ({
                     ...prev,
                     sources: accumulatedSources,
                   }));
+                } else if (
+                  currentEvent === "sources_final" &&
+                  Array.isArray(parsed.sources)
+                ) {
+                  // NestJS sends this AFTER the answer is fully streamed.
+                  // The sources here have fileName populated (looked up
+                  // in the files table), which is what the source pills
+                  // need to render. Patch them onto the cached message
+                  // so they appear without waiting for a refetch.
+                  if (conversationId && assistantMessageId) {
+                    const enriched = parsed.sources;
+                    queryClient.setQueryData<ConversationWithMessages>(
+                      ["ai-conversation", conversationId],
+                      (old) => {
+                        if (!old) return old;
+                        const messages = old.messages.map((m) =>
+                          m.id === assistantMessageId
+                            ? { ...m, sources: enriched }
+                            : m,
+                        );
+                        return { ...old, messages };
+                      },
+                    );
+                  }
                 } else if (
                   currentEvent === "complete" ||
                   parsed.messageId ||
@@ -330,7 +358,51 @@ export default function useStreamQuery() {
                           messages.push(finalMessage);
                         }
 
-                        return { ...entry, messages };
+                        // Optimistically extend conversation.attachments
+                        // when this turn carried a successful upload so
+                        // the "X/N files" indicator updates immediately
+                        // (no refetch needed). Backend will reconcile on
+                        // the next staleTime tick.
+                        let attachments = entry.attachments
+                          ? [...entry.attachments]
+                          : [];
+                        const flowUsed = parsed.flow_used;
+                        const uploadSucceeded =
+                          !!payload.attachmentS3Url &&
+                          (flowUsed === "direct_injection" ||
+                            flowUsed === "vector_storage");
+                        if (uploadSucceeded) {
+                          const url = payload.attachmentS3Url!;
+                          if (!attachments.some((a) => a.url === url)) {
+                            attachments.push({
+                              url,
+                              type: payload.attachmentType || "txt",
+                              originalName:
+                                payload.attachmentOriginalName || "Untitled",
+                              inVectorDB: flowUsed === "vector_storage",
+                            } as any);
+                          }
+                        }
+                        // Same treatment for room-file attachments
+                        // (contextFileId path) — backend stores them as
+                        // a `room-file://<id>` synthetic URL.
+                        if (
+                          payload.contextFileId &&
+                          !payload.attachmentS3Url
+                        ) {
+                          const roomUrl = `room-file://${payload.contextFileId}`;
+                          if (!attachments.some((a) => a.url === roomUrl)) {
+                            attachments.push({
+                              url: roomUrl,
+                              type: "txt",
+                              originalName:
+                                payload.attachmentOriginalName || "Room file",
+                              inVectorDB: false,
+                            } as any);
+                          }
+                        }
+
+                        return { ...entry, messages, attachments };
                       },
                     );
                   }

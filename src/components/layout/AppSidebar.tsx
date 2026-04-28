@@ -11,10 +11,12 @@ import {
   IconCalendar,
   IconTrophy,
   IconCreditCard,
+  IconShieldLock,
 } from "@tabler/icons-react";
 import { useState } from "react";
 import MobileNavbarOptions from "./navbar/MobileNavbarOptions";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface Links {
   label: string;
@@ -73,9 +75,19 @@ export default function AppSidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const isDarkMode = theme === "dark";
   const isActive = (href: string) => pathname.includes(href);
-  const links = sidebarLinks;
+  const links: Links[] = user?.isAdmin
+    ? [
+        ...sidebarLinks,
+        {
+          label: "Admin",
+          href: "/admin",
+          icon: <IconShieldLock className="h-5 w-5" />,
+        },
+      ]
+    : sidebarLinks;
   return (
     <Sidebar open={open} setOpen={setOpen}>
       <SidebarBody className="justify-between gap-10 h-full">

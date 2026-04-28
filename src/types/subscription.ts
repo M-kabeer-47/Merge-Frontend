@@ -1,4 +1,12 @@
-export type PlanTier = 'free' | 'basic' | 'pro' | 'max';
+export type PlanTier =
+  // Legacy tiers (existing users may still be on these)
+  | 'free' | 'basic' | 'pro' | 'max'
+  // Student tiers
+  | 'student_free' | 'student_plus'
+  // Instructor tiers
+  | 'instructor_starter' | 'instructor_educator' | 'instructor_pro';
+
+export type PlanRole = 'student' | 'instructor' | 'all';
 export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'past_due' | 'trialing';
 
 export interface SubscriptionPlan {
@@ -9,10 +17,14 @@ export interface SubscriptionPlan {
   currency: string;
   lsVariantId: string | null;
   features: string[];
+  targetRole: PlanRole;
   roomLimit: number;
   noteLimit: number;
+  studentsPerRoom: number;
   hasLectureSummary: boolean;
   hasFocusTracker: boolean;
+  hasAiAssistant: boolean;
+  hasQaBot: boolean;
 }
 
 export interface UserSubscription {

@@ -23,7 +23,6 @@ export default function EditAnnouncementModal({
     title: string;
     content: string;
     scheduledFor?: Date;
-    attachments: File[];
   }) => {
     updateAnnouncement(
       {

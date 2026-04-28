@@ -18,6 +18,27 @@ interface NoteEditorProps {
   onSuccess?: () => void;
 }
 
+const DRAFT_STORAGE_KEY = "note-draft";
+const DRAFT_TTL_MS = 3 * 60 * 1000; // 3 minutes
+
+const readFreshDraft = (): { title?: string; content?: string } | null => {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const draft = JSON.parse(raw);
+    const savedAt = draft?.timestamp ? Date.parse(draft.timestamp) : NaN;
+    if (!Number.isFinite(savedAt) || Date.now() - savedAt > DRAFT_TTL_MS) {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      return null;
+    }
+    return draft;
+  } catch {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    return null;
+  }
+};
+
 export default function NoteEditor({
   type,
   initialTitle = "",
@@ -29,13 +50,9 @@ export default function NoteEditor({
   const initializeTitle = () => {
     if (type === "update") {
       return initialTitle;
-    } else if (typeof window !== "undefined") {
-      const savedDraft = localStorage.getItem("note-draft");
-      if (savedDraft) {
-        const draftData = JSON.parse(savedDraft);
-        return draftData.title || "";
-      }
     }
+    const draft = readFreshDraft();
+    return draft?.title || "";
   };
 
   const [title, setTitle] = useState<string>(initializeTitle() || "");
@@ -86,7 +103,7 @@ export default function NoteEditor({
           content: html,
           timestamp: new Date().toISOString(),
         };
-        localStorage.setItem("note-draft", JSON.stringify(noteData));
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(noteData));
       } catch (error) {
         console.error("Auto-save failed:", error);
       }
@@ -136,7 +153,7 @@ export default function NoteEditor({
 
       // Clear draft from localStorage on successful save
       if (type === "create") {
-        localStorage.removeItem("note-draft");
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
       }
 
       setHasChanges(false);
@@ -169,25 +186,16 @@ export default function NoteEditor({
       };
       loadContent();
     } else if (type === "create") {
-      // Load draft from localStorage
-      const savedDraft = localStorage.getItem("note-draft");
+      // Load draft from localStorage if it's still within the TTL window
+      const draftData = readFreshDraft();
 
-      if (savedDraft) {
-        try {
-          const draftData = JSON.parse(savedDraft);
-
-          if (draftData.content) {
-            const loadDraft = () => {
-              const blocks = editor.tryParseHTMLToBlocks(draftData.content);
-              editor.replaceBlocks(editor.document, blocks);
-            };
-            loadDraft();
-          }
-          if (draftData.title) {
-            setTitle(draftData.title);
-          }
-        } catch (error) {
-          console.error("Failed to load draft:", error);
+      if (draftData) {
+        if (draftData.content) {
+          const blocks = editor.tryParseHTMLToBlocks(draftData.content);
+          editor.replaceBlocks(editor.document, blocks);
+        }
+        if (draftData.title) {
+          setTitle(draftData.title);
         }
       }
     }

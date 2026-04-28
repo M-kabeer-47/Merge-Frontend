@@ -20,9 +20,14 @@ import useUploadAttachment from "@/hooks/ai-assistant/use-upload-attachment";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ContextFile, ConversationWithMessages } from "@/types/ai-chat";
+import useMySubscription from "@/hooks/subscription/use-my-subscription";
+import LockedFeatureScreen from "@/components/subscription/LockedFeatureScreen";
 
 export default function AIAssistantPage() {
   const { user } = useAuth();
+  const { subscription, isLoading: subLoading } = useMySubscription();
+  const hasAiAssistant = !!subscription?.plan?.hasAiAssistant;
+  const isInstructor = user?.role === "instructor";
   const queryClient = useQueryClient();
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(true);
@@ -48,8 +53,9 @@ export default function AIAssistantPage() {
   const { uploadAttachment, isUploading, uploadProgress } =
     useUploadAttachment();
 
-  // Max attachments allowed per conversation (mirror of backend cap).
-  const MAX_ATTACHMENTS_PER_CONVERSATION = 2;
+  // Max attachments allowed per conversation (mirror of backend cap;
+  // see AiAssistantService.MAX_ATTACHMENTS_PER_CONVERSATION).
+  const MAX_ATTACHMENTS_PER_CONVERSATION = 3;
   const conversationAttachmentCount =
     conversation?.attachments?.length ?? 0;
   const atAttachmentCap =
@@ -237,9 +243,14 @@ export default function AIAssistantPage() {
         conversationId: activeSessionId || undefined,
         message: content,
         contextFileId,
+        // For personal-file attachments we send the S3 URL/type/size; the
+        // backend will download + extract. For room-file picks (contextFileId
+        // is set), we pass only the name through so the message bubble and
+        // optimistic attachment-cap update can render it — backend resolves
+        // the rest from the files table.
         attachmentS3Url: contextFileId ? undefined : attachmentData?.url,
         attachmentType: contextFileId ? undefined : resolvedAttachmentType,
-        attachmentOriginalName: contextFileId ? undefined : attachmentData?.name,
+        attachmentOriginalName: attachmentData?.name,
         attachmentFileSize: contextFileId ? undefined : attachmentData?.size,
       },
       (conversationId) => {
@@ -338,6 +349,24 @@ export default function AIAssistantPage() {
     maxAttachments: MAX_ATTACHMENTS_PER_CONVERSATION,
     atAttachmentCap,
   };
+
+  // Lock screen for users without AI Assistant on their plan.
+  // Wait for the subscription query to settle so we don't flash the lock to users who actually have access.
+  if (!subLoading && !hasAiAssistant) {
+    return (
+      <LockedFeatureScreen
+        featureName="AI Assistant"
+        description="Chat with an AI tutor that knows your room content. Ask questions, get explanations, and study smarter."
+        perks={[
+          "Ask questions about your room files (PDFs, slides, notes)",
+          "Get instant explanations on tough concepts",
+          "Save conversations to revisit later",
+          "Auto-applied discount if you've earned a reward badge",
+        ]}
+        requiredPlan={isInstructor ? "Educator" : "Student Plus"}
+      />
+    );
+  }
 
   return (
     <div className="h-full flex overflow-hidden bg-main-background">

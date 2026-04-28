@@ -21,7 +21,7 @@ export default function AssignmentDetailsPage({
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
   const { userRole } = useRoom();
-  const isInstructor = userRole === "instructor" || userRole === "moderator";
+  const isInstructor = userRole === "instructor";
   useEffect(() => {
     async function redirect() {
       const { id: roomId, assignmentId } = await params;

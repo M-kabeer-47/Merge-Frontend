@@ -30,7 +30,7 @@ export default function QuizzesList({
   const router = useRouter();
   const { userRole } = useRoom();
 
-  const isInstructor = userRole === "instructor" || userRole === "moderator";
+  const isInstructor = userRole === "instructor";
 
   // Fetch quizzes based on role
   const { data: quizzes = [], isLoading } = useFetchRoleBasedQuizzes({

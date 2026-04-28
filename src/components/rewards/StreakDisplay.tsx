@@ -6,16 +6,56 @@ interface Props {
   streak: UserStreak;
 }
 
-function getLast7Days(lastActivityDate: string | null): boolean[] {
+const WEEKDAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+interface StreakDay {
+  date: Date;
+  weekday: string;
+  dayNum: number;
+  monthShort: string;
+  isToday: boolean;
+  isFuture: boolean;
+  isLit: boolean;
+}
+
+// 3 past + today + 3 future. A day is "lit" if it falls inside the user's
+// current streak window: from (lastActivityDate - currentStreak + 1) up to
+// lastActivityDate. Future days are never lit.
+function getStreakWindow(
+  lastActivityDate: string | null,
+  currentStreak: number,
+): StreakDay[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  const last = lastActivityDate ? new Date(lastActivityDate) : null;
+  if (last) last.setHours(0, 0, 0, 0);
+  const litStart =
+    last && currentStreak > 0
+      ? new Date(last.getTime() - (currentStreak - 1) * 86_400_000)
+      : null;
+
   return Array.from({ length: 7 }, (_, i) => {
-    if (!lastActivityDate) return false;
-    const day = new Date(today);
-    day.setDate(today.getDate() - (6 - i));
-    const last = new Date(lastActivityDate);
-    last.setHours(0, 0, 0, 0);
-    return last >= day && last <= day;
+    const date = new Date(today);
+    date.setDate(today.getDate() + (i - 3));
+    const isToday = date.getTime() === today.getTime();
+    const isFuture = date.getTime() > today.getTime();
+    const isLit =
+      !isFuture &&
+      !!litStart &&
+      !!last &&
+      date.getTime() >= litStart.getTime() &&
+      date.getTime() <= last.getTime();
+    return {
+      date,
+      weekday: WEEKDAY_LETTERS[date.getDay()],
+      dayNum: date.getDate(),
+      monthShort: MONTH_SHORT[date.getMonth()],
+      isToday,
+      isFuture,
+      isLit,
+    };
   });
 }
 
@@ -28,10 +68,8 @@ function getMessage(streak: number): string {
 }
 
 export default function StreakDisplay({ streak }: Props) {
-  const days = getLast7Days(streak.lastActivityDate);
-  const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+  const days = getStreakWindow(streak.lastActivityDate, streak.currentStreak);
   const isActive = streak.currentStreak > 0;
-  const todayIdx = 6;
 
   return (
     <div className="flex flex-col items-stretch gap-5 rounded-2xl bg-background p-5 ring-1 ring-light-border md:flex-row md:items-center md:gap-7 md:p-6">
@@ -65,36 +103,42 @@ export default function StreakDisplay({ streak }: Props) {
 
       <div className="hidden h-12 w-px bg-light-border md:block" />
 
-      {/* 7-day strip */}
+      {/* 7-day strip — 3 past + today + 3 future */}
       <div className="flex flex-1 items-center justify-between gap-1.5">
-        {days.map((active, i) => (
-          <div
-            key={i}
-            className="flex flex-1 flex-col items-center gap-1.5"
-          >
+        {days.map((d, i) => (
+          <div key={i} className="flex flex-1 flex-col items-center gap-1">
+            <span
+              className={`text-[10px] font-semibold uppercase tracking-wide ${
+                d.isToday ? "text-accent" : "text-para-muted"
+              }`}
+            >
+              {d.weekday}
+            </span>
             <div
               className={`flex h-9 w-full items-center justify-center rounded-xl transition-all ${
-                active
+                d.isLit
                   ? "bg-accent text-white"
-                  : i === todayIdx
+                  : d.isToday
                     ? "bg-secondary/5 ring-1 ring-dashed ring-accent/40"
-                    : "bg-secondary/5 ring-1 ring-light-border"
+                    : d.isFuture
+                      ? "bg-transparent ring-1 ring-dashed ring-light-border opacity-60"
+                      : "bg-secondary/5 ring-1 ring-light-border"
               }`}
             >
-              {active ? (
+              {d.isLit ? (
                 <Flame className="h-4 w-4" strokeWidth={2.5} />
               ) : (
-                <span className="text-xs text-para-muted">·</span>
+                <span
+                  className={`text-[11px] font-semibold ${
+                    d.isToday ? "text-accent" : "text-para-muted"
+                  }`}
+                >
+                  {d.dayNum}
+                </span>
               )}
             </div>
-            <span
-              className={`text-[10px] font-semibold ${
-                i === todayIdx && !active
-                  ? "text-accent"
-                  : "text-para-muted"
-              }`}
-            >
-              {dayLabels[i]}
+            <span className="text-[9px] font-medium text-para-muted">
+              {d.monthShort}
             </span>
           </div>
         ))}
