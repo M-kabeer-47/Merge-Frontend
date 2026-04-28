@@ -74,6 +74,7 @@ export default function SettingsSection({
                 placeholder="Select deadline"
                 minDate={new Date()}
                 disabled={isDisabled}
+                expandUp={true}
               />
             </FormField>
           )}
