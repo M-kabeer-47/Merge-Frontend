@@ -172,30 +172,9 @@ function HostLeaveModal({
           >
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold">Leave session</h2>
-              <p className="text-sm text-white/70">
-                You are the host. Leaving keeps the session running for others. Promote an acting host or end the
-                session for everyone.
-              </p>
             </div>
 
-            {eligibleActingHosts.length > 0 && (
-              <div className="mt-5 space-y-2">
-                <label className="text-sm font-medium text-white/80">Promote acting host</label>
-                <select
-                  className="w-full rounded-lg border border-white/10 bg-[#2c2f33] px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none"
-                  value={actingHostId ?? ""}
-                  onChange={(event) => onChangeActingHost(event.target.value || null)}
-                  disabled={busy}
-                >
-                  <option value="">No acting host</option>
-                  {eligibleActingHosts.map((attendee) => (
-                    <option key={attendee.id} value={attendee.id}>
-                      {attendee.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+
 
             <div className="mt-6 space-y-3">
               <button
