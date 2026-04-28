@@ -13,11 +13,13 @@ const questionSchema = z.object({
     .max(10, "Question cannot have more than 10 options"),
   correctOption: z.string().min(1, "Correct answer is required"),
   points: z.preprocess(
-    (val) => (val === "" || val === undefined ? 1 : Number(val)),
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
     z
-      .number()
+      .number({
+        error: "Points are required",
+      })
       .min(1, "Points must be at least 1")
-      .max(100, "Points cannot exceed 100")
+      .max(100, "Points cannot exceed 100"),
   ),
 });
 
@@ -32,7 +34,7 @@ export const createQuizSchema = z.object({
     z
       .number()
       .min(5, "Time limit must be at least 5 minutes")
-      .max(180, "Time limit cannot exceed 180 minutes")
+      .max(180, "Time limit cannot exceed 180 minutes"),
   ),
   deadline: z.string().min(1, "Deadline is required"),
   questions: z

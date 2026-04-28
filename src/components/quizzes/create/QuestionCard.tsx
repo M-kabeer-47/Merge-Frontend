@@ -147,7 +147,9 @@ export default function QuestionCard({
                     error={questionErrors?.points?.message}
                     disabled={isDisabled}
                     onChange={(e) =>
-                      field.onChange(Number(e.target.value) || 1)
+                      field.onChange(
+                        e.target.value === "" ? "" : Number(e.target.value)
+                      )
                     }
                   />
                 </FormField>
