@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Sparkles, AlertTriangle, Calendar, Crown, Zap } from "lucide-react";
+import { Sparkles, AlertTriangle, Calendar, Crown, Zap, RotateCcw } from "lucide-react";
 import { UserSubscription } from "@/types/subscription";
 import { format } from "date-fns";
 
@@ -8,6 +8,8 @@ interface Props {
   subscription: UserSubscription | null;
   onCancel: () => void;
   isCancelling: boolean;
+  onResume?: () => void;
+  isResuming?: boolean;
 }
 
 const FREE_THEME = {
@@ -56,13 +58,16 @@ export default function CurrentPlanStatus({
   subscription,
   onCancel,
   isCancelling,
+  onResume,
+  isResuming,
 }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const tier = subscription?.plan?.name ?? "free";
   const planName = subscription?.plan?.displayName ?? "Free";
   const isPastDue = subscription?.status === "past_due";
-  const willCancel = subscription?.cancelAtPeriodEnd;
+  const isExpired = subscription?.status === "expired";
+  const willCancel = subscription?.cancelAtPeriodEnd && !isExpired;
   const renewalDate = subscription?.currentPeriodEnd
     ? format(new Date(subscription.currentPeriodEnd), "dd MMM yyyy")
     : null;
@@ -70,11 +75,13 @@ export default function CurrentPlanStatus({
   const TierIcon = theme.icon;
   const statusLabel = isPastDue
     ? "Payment Failed"
-    : willCancel
-      ? "Cancelling"
-      : tier === "free"
-        ? "Free tier"
-        : "Active";
+    : isExpired
+      ? "Cancelled"
+      : willCancel
+        ? "Cancelled"
+        : tier === "free"
+          ? "Free tier"
+          : "Active";
 
   return (
     <div
@@ -114,7 +121,7 @@ export default function CurrentPlanStatus({
             </div>
           </div>
 
-          {renewalDate && !willCancel && !isPastDue && (
+          {renewalDate && !willCancel && !isPastDue && !isExpired && (
             <div className="mt-5 flex items-center gap-2 text-sm text-white/85">
               <Calendar className="h-3.5 w-3.5" />
               Renews on <span className="font-semibold">{renewalDate}</span>
@@ -127,14 +134,31 @@ export default function CurrentPlanStatus({
               <span className="font-semibold">{renewalDate}</span>
             </div>
           )}
+          {isExpired && renewalDate && (
+            <div className="mt-5 flex items-center gap-2 text-sm text-white/85">
+              <Calendar className="h-3.5 w-3.5" />
+              Access ended on{" "}
+              <span className="font-semibold">{renewalDate}</span>
+            </div>
+          )}
         </div>
 
-        {subscription?.plan?.name && subscription.plan.name !== "free" && !willCancel && (
+        {subscription?.plan?.name && subscription.plan.name !== "free" && !willCancel && !isExpired && (
           <button
             onClick={() => setShowConfirm(true)}
             className="self-start rounded-xl bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm ring-1 ring-white/20 transition-all hover:bg-white/20"
           >
             Cancel subscription
+          </button>
+        )}
+        {willCancel && onResume && (
+          <button
+            onClick={() => onResume()}
+            disabled={isResuming}
+            className="inline-flex items-center gap-1.5 self-start rounded-xl bg-white px-4 py-2 text-xs font-semibold text-primary shadow-md transition-all hover:bg-white/90 disabled:opacity-60"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            {isResuming ? "Renewing…" : "Renew subscription"}
           </button>
         )}
       </div>

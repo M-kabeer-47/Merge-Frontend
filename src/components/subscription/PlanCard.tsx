@@ -8,6 +8,8 @@ interface Props {
   onUpgrade: (planId: string) => void;
   isLoading: boolean;
   discountPercent?: number;
+  /** Price (PKR/month) of the user's current plan — used to label the CTA Upgrade vs Downgrade. */
+  currentPlanPrice?: number;
 }
 
 const TIER_TAGLINE: Record<string, string> = {
@@ -31,6 +33,7 @@ export default function PlanCard({
   onUpgrade,
   isLoading,
   discountPercent,
+  currentPlanPrice,
 }: Props) {
   // Highlight the middle paid tier as the recommended one
   const isPopular = plan.name === "pro" || plan.name === "student_plus" || plan.name === "instructor_educator";
@@ -41,6 +44,15 @@ export default function PlanCard({
     ? Math.round(plan.priceMonthly * (1 - discountPercent / 100))
     : null;
   const tagline = TIER_TAGLINE[plan.name] ?? "";
+  // User is on a paid plan AND this card is cheaper → it's a downgrade.
+  // Only meaningful when the user actually has a paid plan; on free tier
+  // every other card is an upgrade.
+  const isDowngrade =
+    !isCurrentPlan &&
+    !isFree &&
+    typeof currentPlanPrice === "number" &&
+    currentPlanPrice > 0 &&
+    Number(plan.priceMonthly) < currentPlanPrice;
 
   return (
     <div
@@ -181,16 +193,20 @@ export default function PlanCard({
             onClick={() => onUpgrade(plan.id)}
             disabled={isLoading}
             className={`w-full rounded-xl py-3 text-sm font-semibold transition-all disabled:opacity-60 ${
-              isPopular
-                ? "bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/40"
-                : "border border-light-border bg-secondary/5 text-heading hover:border-secondary/40 hover:bg-secondary/10"
+              isDowngrade
+                ? "border border-light-border bg-background text-para hover:border-secondary/40 hover:bg-secondary/5"
+                : isPopular
+                  ? "bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/40"
+                  : "border border-light-border bg-secondary/5 text-heading hover:border-secondary/40 hover:bg-secondary/10"
             }`}
           >
             {isLoading
               ? "Loading..."
-              : isPopular
-                ? `Start with ${plan.displayName}`
-                : "Get started"}
+              : isDowngrade
+                ? `Downgrade to ${plan.displayName}`
+                : isPopular
+                  ? `Start with ${plan.displayName}`
+                  : "Get started"}
           </button>
         )}
       </div>

@@ -11,6 +11,7 @@ import useMySubscription from "@/hooks/subscription/use-my-subscription";
 import usePaymentHistory from "@/hooks/subscription/use-payment-history";
 import useCheckout from "@/hooks/subscription/use-checkout";
 import useCancelSubscription from "@/hooks/subscription/use-cancel-subscription";
+import useResumeSubscription from "@/hooks/subscription/use-resume-subscription";
 import useRewardsProfile from "@/hooks/rewards/use-rewards-profile";
 import PlanCard from "@/components/subscription/PlanCard";
 import CurrentPlanStatus from "@/components/subscription/CurrentPlanStatus";
@@ -28,6 +29,7 @@ export default function BillingPage() {
   const { payments, isLoading: paymentsLoading } = usePaymentHistory();
   const { checkout, isLoading: checkoutLoading } = useCheckout();
   const { cancel, isCancelling } = useCancelSubscription();
+  const { resume, isResuming } = useResumeSubscription();
   const { profile } = useRewardsProfile();
 
   const unspentBadges = (profile?.badges ?? [])
@@ -114,6 +116,8 @@ export default function BillingPage() {
             subscription={subscription}
             onCancel={cancel}
             isCancelling={isCancelling}
+            onResume={resume}
+            isResuming={isResuming}
           />
         )}
       </motion.div>
@@ -156,6 +160,7 @@ export default function BillingPage() {
                 onUpgrade={(id) => checkout(id)}
                 isLoading={checkoutLoading}
                 discountPercent={bestDiscount?.badge.discountPercentage}
+                currentPlanPrice={Number(subscription?.plan?.priceMonthly ?? 0)}
               />
             ))}
           </div>
