@@ -4,6 +4,7 @@ import { API_BASE_URL } from "@/lib/constants/api";
 
 // Routes that don't require authentication
 const publicRoutes = [
+  "/",
   "/sign-in",
   "/sign-up",
   "/forgot-password",
