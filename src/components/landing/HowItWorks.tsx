@@ -208,21 +208,21 @@ const STEPS = [
     title: "Create your account",
     description:
       "Sign up with your email or Google in seconds. Set up your profile, choose your role — student or instructor — and you're in.",
-    image: "/landing/page1.png",
+    image: "/landing/step1.png",
   },
   {
     badge: "Step 2",
     title: "Join or create a room",
     description:
       "Explore public rooms or create your own. Invite students, upload course materials, and set up your space in minutes.",
-    image: "/landing/page2.png",
+    image: "/landing/step2.png",
   },
   {
     badge: "Step 3",
     title: "Learn and collaborate",
     description:
       "Access live sessions, AI assistance, shared canvas, focus tracking, and notes — all without leaving Merge.",
-    image: "/landing/page3.png",
+    image: "/landing/step3.png",
   },
 ];
 
