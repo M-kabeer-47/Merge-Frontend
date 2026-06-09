@@ -37,6 +37,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex lg:flex-1">
             <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2">
+              <img src="/logo.svg" alt="Merge logo" className="w-8 h-8" />
               <span className="font-raleway font-black text-2xl tracking-tighter text-[#2f1a58] ">
                 Merge
               </span>
