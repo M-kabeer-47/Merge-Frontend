@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   motion,
   AnimatePresence,
@@ -22,16 +22,29 @@ export default function Navbar() {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 24);
   });
 
+  // The width animation only matters on desktop; on mobile the bar is full-width,
+  // so keep its width constant to avoid a janky per-scroll layout spring.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex flex-col items-center px-4 pt-3 lg:pt-4">
       <motion.nav
         initial={false}
-        animate={{ width: scrolled ? "min(64rem, 100%)" : "min(87.5rem, 100%)" }}
+        animate={{
+          width: isDesktop ? (scrolled ? "64rem" : "87.5rem") : "100%",
+        }}
         transition={{ type: "spring", stiffness: 380, damping: 34 }}
         className={`relative flex h-16 w-full items-center justify-between rounded-full px-3 transition-[background-color,box-shadow,border-color] duration-300 lg:px-5 ${
           scrolled || open
@@ -101,8 +114,9 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="mt-2 w-full max-w-sm overflow-hidden rounded-3xl border border-light-border bg-background/90 p-3 shadow-[0_20px_50px_-12px_rgba(47,26,88,0.3)] backdrop-blur-xl lg:hidden"
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            style={{ willChange: "transform, opacity" }}
+            className="mt-2 w-full max-w-sm origin-top overflow-hidden rounded-3xl border border-light-border bg-background p-3 shadow-[0_20px_50px_-12px_rgba(47,26,88,0.3)] lg:hidden"
           >
             <div className="flex flex-col">
               {navLinks.map((item) => (

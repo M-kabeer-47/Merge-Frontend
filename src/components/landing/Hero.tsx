@@ -215,7 +215,7 @@ export default function HeroSection() {
             transition={{ duration: 0.9, ease: easeOutExpo }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="relative w-full max-w-[440px] lg:max-w-none"
+            className="relative w-full max-w-[320px] sm:max-w-[400px] lg:max-w-none"
           >
             {/* Ambient glow halo behind device */}
             <div
@@ -407,7 +407,7 @@ export default function HeroSection() {
 
 function DashboardMockup() {
   return (
-    <div className="flex h-[560px] text-[10px]">
+    <div className="flex h-[420px] text-[10px] sm:h-[500px] lg:h-[560px]">
       <Sidebar />
       <MainArea />
     </div>
