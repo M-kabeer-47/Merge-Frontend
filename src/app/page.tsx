@@ -9,8 +9,8 @@ import ProblemSection from "@/components/landing/ProblemSection";
 import Workflow from "@/components/landing/Workflow";
 import Stats from "@/components/landing/Stats";
 import Testimonials from "@/components/landing/Testimonials";
+import Pricing from "@/components/landing/Pricing";
 import FAQ from "@/components/landing/FAQ";
-import CallToAction from "@/components/landing/CallToAction";
 import Footer from "@/components/landing/Footer";
 import HowItWorks from "@/components/landing/HowItWorks";
 
@@ -27,8 +27,8 @@ export default function LandingPage() {
         {/* <Stats /> */}
         <HowItWorks />
         <Testimonials />
+        <Pricing />
         <FAQ />
-        <CallToAction />
       </main>
       <Footer />
     </div>

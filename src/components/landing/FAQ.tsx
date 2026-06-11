@@ -6,29 +6,39 @@ import { Plus, Minus } from "lucide-react";
 
 const faqs = [
   {
-    question: "Is Merge free for students?",
+    question: "Is Merge free to use?",
     answer:
-      "Yes! Merge is completely free for students and individual instructors. We believe in accessible education for everyone.",
+      "Yes — both students and instructors get a free plan, no credit card required. Student Free lets you join unlimited rooms, take notes, and use the calendar, while Instructor Starter lets you run up to 2 rooms with quizzes, assignments, and live sessions. Paid plans unlock the AI Assistant, focus tracking, unlimited notes, and larger classes.",
   },
   {
-    question: "Can I manage multiple classes?",
+    question: "What do the paid plans cost, and what do they unlock?",
     answer:
-      "Absolutely. You can create or join as many rooms as you need, keeping each class's assignments and discussions completely separate.",
+      "Student Plus is Rs. 200/month and adds unlimited notes, the AI Assistant, and the focus tracker. For instructors, Educator is Rs. 500/month (10 rooms, up to 100 students per room, AI lecture summaries) and Instructor Pro is Rs. 1,500/month (unlimited rooms and students, plus an AI bot that answers Live Q&A). You can upgrade or cancel anytime.",
   },
   {
-    question: "How secure is my data?",
+    question: "What can the AI Assistant do?",
     answer:
-      "We use industry-standard encryption and secure role-based access controls to ensure your classroom data remains private and safe.",
+      "The AI Assistant is grounded in your own course materials. Attach files from your rooms or upload your own — PDF, DOCX, PPTX, XLSX, TXT, CSV, and images (up to 50 MB each) — and it answers questions using that content instead of generic guesses. It's available on the Student Plus, Educator, and Instructor Pro plans.",
   },
   {
-    question: "Does it support real-time messaging?",
+    question: "What happens during a live session?",
     answer:
-      "Yes, every room comes with built-in real-time chat, meaning you don't need external tools like WhatsApp or Discord to stay connected.",
+      "Live sessions include real-time video and audio, a collaborative shared canvas, and a Live Q&A where students post and upvote questions so the most relevant ones rise to the top. On Instructor Pro, an AI bot can answer Q&A questions in real time.",
   },
   {
-    question: "What file types can I upload?",
+    question: "How does focus tracking work?",
     answer:
-      "We support all common academic file formats including PDF, DOCX, PPT, ZIP, and images, with generous size limits.",
+      "During live sessions, Merge measures attention and turns it into a focus score from 0–100, plus a post-session report breaking down focused versus distracted time and your longest focus streak. Focus tracking is included on the Student Plus, Educator, and Instructor Pro plans.",
+  },
+  {
+    question: "Can I earn discounts on my subscription?",
+    answer:
+      "Yes. Completing daily, weekly, and monthly challenges earns badges that unlock discounts of up to 30% off at checkout — and the best available discount is applied to your subscription automatically.",
+  },
+  {
+    question: "How do I sign up, and is my account secure?",
+    answer:
+      "You can sign up with your email or with Google in seconds and pick your role — student or instructor. Email sign-ups are verified by email, and you can enable two-factor authentication (2FA) for an extra layer of security. Room content is protected by role-based permissions so only the right people can access it.",
   },
 ];
 
@@ -37,11 +47,13 @@ export default function FAQ() {
 
   return (
     <section className="py-24 bg-main-background" id="faq">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 flex flex-col lg:flex-row gap-16">
+      <div className="mx-auto max-w-[1400px] px-6 lg:px-8 flex flex-col lg:flex-row gap-16">
         {/* Header */}
         <div className="lg:w-1/3">
-          <h2 className="text-primary font-semibold mb-2">Support</h2>
-          <h3 className="text-3xl font-bold font-raleway text-heading sm:text-4xl mb-6">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+            Support
+          </h2>
+          <h3 className="mb-6 font-raleway text-4xl font-black tracking-tight text-heading sm:text-5xl">
             Frequently Asked Questions
           </h3>
           <p className="text-para-muted mb-8">

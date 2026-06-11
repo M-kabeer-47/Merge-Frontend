@@ -196,7 +196,7 @@ export default function ForgotPasswordPage() {
                             transition={{ duration: 0.5 }}
                             className="space-y-3"
                         >
-                            <Button onClick={() => router.push("/signin")} className="w-full">
+                            <Button onClick={() => router.push("/sign-in")} className="w-full">
                                 Back to Sign In
                             </Button>
                             <Button

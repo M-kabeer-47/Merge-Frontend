@@ -1,53 +1,91 @@
 "use client"
 
-import { motion } from "motion/react"
+import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "motion/react"
+import Link from "next/link"
+import { Sparkles, CalendarDays } from "lucide-react"
 
 const easeOutExpo = [0.25, 0.46, 0.45, 0.94] as const
 
 export default function HeroSection() {
+  // Mouse-driven parallax tilt for the device
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const springX = useSpring(mouseX, { stiffness: 150, damping: 18, mass: 0.3 })
+  const springY = useSpring(mouseY, { stiffness: 150, damping: 18, mass: 0.3 })
+  const rotateY = useTransform(springX, [-0.5, 0.5], [-20, -4])
+  const rotateX = useTransform(springY, [-0.5, 0.5], [14, -2])
+  const deviceTransform = useMotionTemplate`rotateY(${rotateY}deg) rotateX(${rotateX}deg) rotateZ(1.5deg)`
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5)
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5)
+  }
+  const handleMouseLeave = () => {
+    mouseX.set(0)
+    mouseY.set(0)
+  }
+
   return (
-    <section className="relative flex w-full items-center overflow-hidden bg-white py-20 lg:min-h-screen lg:py-16">
-      {/* Background gradient */}
+    <section className="relative flex w-full items-center overflow-hidden bg-white pt-28 pb-20 lg:min-h-screen lg:pt-32 lg:pb-16">
+      {/* Layered gradient mesh */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at 80% 10%, rgba(155,93,229,0.08) 0%, transparent 60%)",
+            "radial-gradient(ellipse 80% 50% at 88% 4%, rgba(140,109,201,0.16) 0%, transparent 55%), radial-gradient(ellipse 55% 50% at 0% 100%, rgba(47,26,88,0.06) 0%, transparent 55%)",
         }}
       />
 
-      {/* Decorative connector lines */}
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full opacity-20"
-        aria-hidden="true"
-      >
-        <line x1="55%" y1="8%" x2="78%" y2="2%" stroke="#2f1a58" strokeWidth="1" />
-        <line x1="60%" y1="92%" x2="85%" y2="98%" stroke="#2f1a58" strokeWidth="1" />
-        <line x1="50%" y1="50%" x2="40%" y2="60%" stroke="#2f1a58" strokeWidth="1" />
-      </svg>
+      {/* Subtle dot grid with radial fade */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at center, rgba(47,26,88,0.08) 1px, transparent 1px)",
+          backgroundSize: "26px 26px",
+          maskImage:
+            "radial-gradient(ellipse 75% 65% at 50% 35%, black 0%, transparent 78%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 75% 65% at 50% 35%, black 0%, transparent 78%)",
+        }}
+      />
 
-      {/* Abstract spheres */}
+      {/* Abstract glow spheres */}
       <motion.div
-        animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-        className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-gradient-to-br from-[#2f1a58]/30 to-[#a78bfa]/10 blur-2xl"
+        animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
+        transition={{ duration: 7, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+        className="pointer-events-none absolute -right-10 top-0 h-72 w-72 rounded-full bg-gradient-to-br from-primary/25 to-secondary/10 blur-3xl"
       />
       <motion.div
-        animate={{ scale: [1, 1.05, 1] }}
+        animate={{ scale: [1, 1.06, 1], opacity: [0.6, 0.9, 0.6] }}
         transition={{
           duration: 6,
           repeat: Number.POSITIVE_INFINITY,
           ease: "easeInOut",
           delay: 1,
         }}
-        className="pointer-events-none absolute right-8 top-1/3 h-24 w-24 rounded-full bg-gradient-to-br from-[#9b5de5]/20 to-[#2f1a58]/10 blur-xl"
+        className="pointer-events-none absolute right-8 top-1/3 h-32 w-32 rounded-full bg-gradient-to-br from-secondary/25 to-accent/10 blur-2xl"
       />
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-col items-center gap-16 px-8 lg:flex-row lg:gap-0 lg:px-16">
         {/* LEFT COLUMN */}
         <div className="flex w-full flex-col justify-center lg:w-[45%] lg:pl-8">
+          {/* Eyebrow badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.06] py-1 pl-1 pr-3.5 text-xs font-semibold text-primary backdrop-blur-sm"
+          >
+            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              New
+            </span>
+            AI assistant now built in
+          </motion.div>
+
           {/* Heading */}
-          <h1 className="text-5xl font-black leading-[1.1] tracking-tight text-[#0a0a0a] lg:text-6xl">
+          <h1 className="text-5xl font-black leading-[1.05] tracking-tight text-heading lg:text-[4rem]">
             {["The All-in-One", "Learning Platform"].map((line, i) => (
               <motion.span
                 key={line}
@@ -66,7 +104,7 @@ export default function HeroSection() {
               className="block"
             >
               for{" "}
-              <span className="bg-gradient-to-r from-[#2f1a58] to-[#9b5de5] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                 Students &amp; Instructors
               </span>
             </motion.span>
@@ -77,7 +115,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-5 max-w-md text-base leading-relaxed text-[#555]"
+            className="mt-5 max-w-md text-base leading-relaxed text-para"
           >
             Merge brings live sessions, AI assistance, focus tracking, collaborative notes, and
             room management into one distraction-free space — built for how modern learning
@@ -89,30 +127,80 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.55 }}
-            className="mt-8 flex flex-wrap items-center gap-4"
+            className="mt-8 flex flex-wrap items-center gap-3"
           >
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-3 rounded-full bg-[#2f1a58] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#9b5de5]/30 transition-colors duration-200 hover:bg-[#8b4fd5]"
-            >
-              Get Started Free
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white">
-                {"\u2192"}
-              </span>
-            </motion.button>
+            <Link href="/sign-up">
+              <motion.span
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="group flex items-center gap-3 rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary/30 transition-colors duration-200 hover:bg-secondary"
+              >
+                Get Started Free
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition-transform duration-200 group-hover:translate-x-0.5">
+                  {"\u2192"}
+                </span>
+              </motion.span>
+            </Link>
+            <a href="#how-it-works">
+              <motion.span
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center gap-2.5 rounded-full border border-light-border bg-white px-6 py-3.5 text-base font-semibold text-heading shadow-sm transition-colors duration-200 hover:border-primary/30 hover:text-primary"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  {"\u25b6"}
+                </span>
+                See how it works
+              </motion.span>
+            </a>
+          </motion.div>
+
+          {/* Social proof */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.65 }}
+            className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2.5">
+                {["SK", "AR", "MJ", "Ta"].map((initials) => (
+                  <span
+                    key={initials}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-primary text-[10px] font-bold text-white shadow-sm"
+                  >
+                    {initials}
+                  </span>
+                ))}
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-primary text-[10px] font-bold text-white shadow-sm">
+                  10k+
+                </span>
+              </div>
+              <div>
+                <div className="flex items-center gap-0.5 text-accent">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span key={i} className="text-sm leading-none">
+                      {"\u2605"}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-0.5 text-xs font-medium text-para-muted">
+                  Loved by 10,000+ students &amp; instructors
+                </p>
+              </div>
+            </div>
           </motion.div>
 
           {/* Trust indicators */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.65 }}
-            className="mt-6 flex flex-wrap items-center gap-5"
+            transition={{ duration: 0.5, delay: 0.75 }}
+            className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2"
           >
             {["No credit card required", "Free plan available", "Cancel anytime"].map((t) => (
-              <div key={t} className="flex items-center gap-1.5 text-sm text-[#555]">
-                <span className="font-bold text-[#2f1a58]">{"\u2713"}</span>
+              <div key={t} className="flex items-center gap-1.5 text-sm text-para-muted">
+                <span className="font-bold text-primary">{"\u2713"}</span>
                 {t}
               </div>
             ))}
@@ -125,17 +213,41 @@ export default function HeroSection() {
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.9, ease: easeOutExpo }}
-            className="relative"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="relative w-full max-w-[440px] lg:max-w-none"
           >
+            {/* Ambient glow halo behind device */}
+            <div
+              className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[115%] w-[115%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 45%, rgba(140,109,201,0.30) 0%, rgba(47,26,88,0.10) 42%, transparent 70%)",
+              }}
+            />
+            {/* Decorative slow-rotating dashed ring */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 60, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+              className="pointer-events-none absolute left-1/2 top-1/2 z-0 hidden h-[108%] w-[108%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-primary/15 lg:block"
+            />
+            {/* Grounding floor shadow (breathes opposite to float) */}
+            <motion.div
+              animate={{ scaleX: [1, 0.9, 1], opacity: [0.45, 0.3, 0.45] }}
+              transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              className="pointer-events-none absolute -bottom-8 left-1/2 z-0 h-10 w-3/4 -translate-x-1/2 rounded-[50%] bg-primary/25 blur-2xl"
+            />
+
             <motion.div
               animate={{ y: [0, -12, 0] }}
               transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
               style={{ perspective: "1400px" }}
+              className="relative z-10"
             >
               {/* iPad/Tablet Frame */}
-              <div
+              <motion.div
                 style={{
-                  transform: "rotateY(-12deg) rotateX(6deg) rotateZ(1.5deg)",
+                  transform: deviceTransform,
                   transformStyle: "preserve-3d",
                   backfaceVisibility: "hidden",
                   WebkitBackfaceVisibility: "hidden",
@@ -165,12 +277,28 @@ export default function HeroSection() {
                     }}
                   >
                     {/* Screen glow layer */}
-                    <div className="relative" style={{ background: "#f8f7ff" }}>
+                    <div className="relative overflow-hidden" style={{ background: "#f8f7ff" }}>
                       <div
                         className="pointer-events-none absolute inset-0 z-10"
                         style={{
                           background: "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 50%)",
                           borderRadius: "20px",
+                        }}
+                      />
+                      {/* Periodic light sheen sweep */}
+                      <motion.div
+                        className="pointer-events-none absolute inset-y-0 z-20 w-1/2"
+                        initial={{ x: "-160%" }}
+                        animate={{ x: "260%" }}
+                        transition={{
+                          duration: 1.6,
+                          repeat: Number.POSITIVE_INFINITY,
+                          repeatDelay: 4.5,
+                          ease: "easeInOut",
+                        }}
+                        style={{
+                          background:
+                            "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.45) 50%, transparent 80%)",
                         }}
                       />
                       <DashboardMockup />
@@ -201,33 +329,72 @@ export default function HeroSection() {
                     transformOrigin: "top center",
                   }}
                 />
-              </div>
+              </motion.div>
             </motion.div>
 
-            {/* Floating badges */}
+            {/* Floating product cards */}
+            {/* Focus Score — with progress ring */}
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-              className="absolute right-16 top-8 flex items-center rounded-xl border border-[#f0edf8] bg-white px-4 py-2.5 text-xs font-semibold text-[#0a0a0a] shadow-lg lg:right-32"
+              className="absolute right-16 top-8 z-20 flex items-center gap-2.5 rounded-2xl border border-light-border/80 bg-white/90 px-3.5 py-2.5 shadow-xl shadow-primary/10 backdrop-blur-md lg:right-32"
             >
-              <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-[#10b981]" />
-              Focus Score: 94%
+              <div className="relative h-9 w-9 text-success">
+                <svg viewBox="0 0 36 36" className="h-9 w-9 -rotate-90">
+                  <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="4" />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeDasharray="94.2"
+                    strokeDashoffset="5.7"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-success">
+                  94
+                </span>
+              </div>
+              <div className="leading-tight">
+                <div className="text-[10px] font-medium text-para-muted">Focus Score</div>
+                <div className="text-sm font-bold text-heading">94%</div>
+              </div>
             </motion.div>
+
+            {/* AI Assistant — gradient chip + live status */}
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 3.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.8 }}
-              className="absolute -right-2 top-1/2 flex items-center gap-1.5 rounded-xl border border-[#f0edf8] bg-white px-4 py-2.5 text-xs font-semibold text-[#0a0a0a] shadow-lg lg:-right-6"
+              className="absolute -right-2 top-1/2 z-20 flex items-center gap-2.5 rounded-2xl border border-light-border/80 bg-white/90 px-3.5 py-2.5 shadow-xl shadow-primary/10 backdrop-blur-md lg:-right-6"
             >
-              <span className="h-2 w-2 rounded-full bg-[#2f1a58]" />
-              AI Assistant
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-white shadow-sm shadow-primary/30">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="leading-tight">
+                <div className="text-sm font-bold text-heading">AI Assistant</div>
+                <div className="flex items-center gap-1 text-[10px] font-medium text-para-muted">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+                  Online now
+                </div>
+              </div>
             </motion.div>
+
+            {/* Sessions — accent chip */}
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 1.5 }}
-              className="absolute -bottom-2 left-16 flex items-center gap-1.5 rounded-xl border border-[#f0edf8] bg-white px-4 py-2.5 text-xs font-semibold text-[#0a0a0a] shadow-lg lg:left-24"
+              className="absolute -bottom-2 left-16 z-20 flex items-center gap-2.5 rounded-2xl border border-light-border/80 bg-white/90 px-3.5 py-2.5 shadow-xl shadow-primary/10 backdrop-blur-md lg:left-24"
             >
-              <span className="h-2 w-2 rounded-full bg-[#fbbf24]" />
-              3 sessions today
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/15 text-accent">
+                <CalendarDays className="h-4 w-4" />
+              </div>
+              <div className="leading-tight">
+                <div className="text-sm font-bold text-heading">3 sessions</div>
+                <div className="text-[10px] font-medium text-para-muted">Scheduled today</div>
+              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -371,14 +538,21 @@ function MainArea() {
               <div className="mb-2 text-[9px] font-bold text-[#1a1a1a]">Recent Activity</div>
               <div className="flex flex-col gap-2">
                 {[
-                  { t: "Session is live: Live Session - 26/04/2026", time: "13 minutes ago" },
-                  { t: "New assignment in Next JS: For Task", time: "about 3 hours ago" },
-                  { t: "JS Quiz graded", time: "about 13 hours ago" },
-                  { t: "New room created — Physics 301", time: "1 day ago" },
+                  { t: "Session is live: Live Session - 26/04/2026", time: "13 minutes ago", live: true },
+                  { t: "New assignment in Next JS: For Task", time: "about 3 hours ago", live: false },
+                  { t: "JS Quiz graded", time: "about 13 hours ago", live: false },
+                  { t: "New room created — Physics 301", time: "1 day ago", live: false },
                 ].map((a) => (
                   <div key={a.t} className="rounded-md bg-[#faf9fd] px-2 py-1.5">
                     <div className="flex items-start gap-1.5">
-                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2f1a58]" />
+                      {a.live ? (
+                        <span className="relative mt-1 flex h-1.5 w-1.5 shrink-0">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#10b981] opacity-75" />
+                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#10b981]" />
+                        </span>
+                      ) : (
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2f1a58]" />
+                      )}
                       <div>
                         <div className="text-[8px] leading-tight text-[#1a1a1a]">{a.t}</div>
                         <div className="text-[6.5px] text-[#aaa]">{a.time}</div>
@@ -501,7 +675,12 @@ function MainArea() {
               <span className="font-bold text-[#f59e0b]">40 XP</span>
             </div>
             <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-[#f0f0f0]">
-              <div className="h-full w-1/5 rounded-full bg-[#2f1a58]" />
+              <motion.div
+                className="h-full rounded-full bg-[#2f1a58]"
+                initial={{ width: "0%" }}
+                animate={{ width: "20%" }}
+                transition={{ duration: 1.4, ease: "easeOut", delay: 1 }}
+              />
             </div>
           </div>
         </div>

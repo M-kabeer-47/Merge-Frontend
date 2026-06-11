@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion } from "motion/react"
 
 type Testimonial = {
@@ -96,12 +96,11 @@ const testimonials: Testimonial[] = [
   },
 ]
 
-const STEP = 320 // 300px card + 20px gap
-const MAX_INDEX = testimonials.length - 3
+const STEP = 380 // 360px card + 20px gap
 
 function Stars({ count }: { count: number }) {
   return (
-    <div className="flex items-center gap-0.5 text-base text-[#f5b301]" aria-label={`${count} out of 5 stars`}>
+    <div className="flex items-center gap-0.5 text-base text-accent" aria-label={`${count} out of 5 stars`}>
       {Array.from({ length: 5 }).map((_, i) => (
         <span key={i} aria-hidden="true">
           {i < count ? "★" : "☆"}
@@ -113,38 +112,59 @@ function Stars({ count }: { count: number }) {
 
 export default function Testimonials() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const [maxScroll, setMaxScroll] = useState(0)
+
+  // Measure how far the track can scroll so the last card always lands flush.
+  // Using the viewport's own scrollWidth accounts for its left padding.
+  useEffect(() => {
+    const measure = () => {
+      const el = viewportRef.current
+      if (!el) return
+      setMaxScroll(Math.max(0, el.scrollWidth - el.clientWidth))
+    }
+    measure()
+    window.addEventListener("resize", measure)
+    return () => window.removeEventListener("resize", measure)
+  }, [])
+
+  const maxIndex = Math.ceil(maxScroll / STEP)
 
   const goPrev = () => setCurrentIndex((i) => Math.max(0, i - 1))
-  const goNext = () => setCurrentIndex((i) => Math.min(MAX_INDEX, i + 1))
+  const goNext = () => setCurrentIndex((i) => Math.min(maxIndex, i + 1))
 
-  const progress = (currentIndex / MAX_INDEX) * 100
+  // Clamp the translation so we never scroll past the final card.
+  const offset = Math.min(currentIndex * STEP, maxScroll)
+  const progress = maxIndex === 0 ? 100 : (currentIndex / maxIndex) * 100
 
   return (
     <section id="testimonials" className="relative w-full overflow-hidden bg-white py-16 sm:py-20 lg:py-24">
       {/* Heading + trust row */}
       <motion.div
-        className="mx-auto max-w-7xl px-6 text-center sm:px-8"
+        className="mx-auto max-w-[1400px] px-6 text-center sm:px-8"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <h2 className="text-center text-3xl font-normal tracking-tight text-[#0a0a0a] text-balance font-raleway sm:text-4xl lg:text-5xl">
-          Reviews from <span className="font-black italic">real people</span>
+        <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+          Testimonials
+        </p>
+        <h2 className="font-raleway text-4xl font-black tracking-tight text-heading text-balance sm:text-5xl">
+          Reviews from <span className="text-primary">real people</span>
         </h2>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <span className="text-sm font-semibold text-[#0a0a0a]">4.5/5</span>
-          <span className="text-lg text-[#f5b301]" aria-hidden="true">
+          <span className="text-sm font-semibold text-heading">4.5/5</span>
+          <span className="text-lg text-accent" aria-hidden="true">
             ★
           </span>
-          <span className="text-sm font-bold text-[#0a0a0a]">Trustpilot</span>
-          <span className="h-1 w-1 rounded-full bg-[#ccc]" aria-hidden="true" />
-          <span className="text-sm text-[#999]">Based on 2,400+ reviews</span>
+          <span className="h-1 w-1 rounded-full bg-para-muted/40" aria-hidden="true" />
+          <span className="text-sm text-para-muted">Based on 2,400+ reviews</span>
         </div>
       </motion.div>
 
       {/* Two-column body */}
-      <div className="mx-auto mt-12 flex max-w-7xl flex-col items-start sm:mt-16 lg:flex-row">
+      <div className="mx-auto mt-12 flex max-w-[1400px] flex-col items-start sm:mt-16 lg:flex-row">
         {/* LEFT: label column */}
         <motion.div
           className="w-full flex-shrink-0 px-6 sm:px-8 lg:w-[280px] lg:pr-0 lg:pl-16 lg:pt-4"
@@ -184,7 +204,7 @@ export default function Testimonials() {
             <motion.button
               type="button"
               onClick={goNext}
-              disabled={currentIndex === MAX_INDEX}
+              disabled={currentIndex >= maxIndex}
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.94 }}
               aria-label="Next testimonials"
@@ -197,43 +217,68 @@ export default function Testimonials() {
 
         {/* RIGHT: cards carousel */}
         <motion.div
-          className="mt-8 w-full overflow-hidden pl-6 sm:pl-8 lg:mt-0 lg:w-auto lg:flex-1 lg:pl-10"
+          ref={viewportRef}
+          className="mt-8 w-full overflow-hidden pl-6 sm:pl-8 lg:mt-0 lg:w-auto lg:flex-1 lg:pl-24"
           initial={{ opacity: 0, x: 40 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
         >
           <motion.div
-            className="flex flex-row gap-5"
-            animate={{ x: -currentIndex * STEP }}
-            transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+            className="flex flex-row gap-5 will-change-transform"
+            animate={{ x: -offset }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={i}
-                className="flex w-[300px] flex-shrink-0 flex-col rounded-2xl bg-[#f5f5f5] p-7 shadow-sm"
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.2 + i * 0.08, ease: "easeOut" }}
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="group relative flex min-h-[340px] w-[360px] flex-shrink-0 flex-col overflow-hidden rounded-3xl border border-light-border bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10"
               >
-                <p className="text-sm leading-relaxed text-[#444]">{t.review}</p>
-                <div className="mt-5">
+                {/* Soft top wash */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-primary/[0.05] to-transparent" />
+                {/* Decorative quote watermark — kept inside the card so it isn't clipped */}
+                <span
+                  className="pointer-events-none absolute right-6 top-3 select-none font-raleway text-[96px] leading-none text-primary/[0.10] transition-colors duration-300 group-hover:text-primary/[0.16]"
+                  aria-hidden="true"
+                >
+                  &rdquo;
+                </span>
+
+                <div className="relative">
                   <Stars count={t.stars} />
+                  <p className="mt-4 text-[15px] leading-relaxed text-para">{t.review}</p>
                 </div>
-                <div className="mt-5 flex items-center gap-3">
+
+                {/* Footer pinned to the bottom so avatars align across every card */}
+                <div className="relative mt-auto flex items-center gap-3 border-t border-light-border pt-6">
                   <div
-                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${t.gradient} text-xs font-bold text-white`}
+                    className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white shadow-md shadow-primary/25 ring-2 ring-white"
                     aria-hidden="true"
                   >
                     {t.initials}
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#0a0a0a]">{t.name}</p>
-                    <p className="mt-0.5 text-xs text-[#999]">{t.meta}</p>
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1.5 text-sm font-bold text-heading">
+                      {t.name}
+                      <span className="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-2.5 w-2.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                    </p>
+                    <p className="truncate text-xs text-para-muted">{t.role}</p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </motion.div>
         </motion.div>

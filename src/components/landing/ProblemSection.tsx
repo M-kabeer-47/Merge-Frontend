@@ -109,11 +109,9 @@ function StatCard({ item }: { item: CardItem }) {
   return (
     <motion.div
       variants={cardVariants}
-      whileHover={{ scale: 1.03, y: -6 }}
-      initial="rest"
-      animate="rest"
+      whileHover={{ scale: 1.03, y: -8 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="group relative h-[320px] flex-1 cursor-pointer overflow-hidden rounded-[18px] shadow-[inset_0_0_0_1px_rgba(229,69,69,0)] transition-shadow duration-300 hover:shadow-[inset_0_0_0_1px_rgba(229,69,69,0.4)]"
+      className="group relative h-[380px] flex-1 cursor-pointer overflow-hidden rounded-[20px] ring-1 ring-black/5 shadow-[0_22px_55px_-28px_rgba(47,26,88,0.45)] transition-shadow duration-300 hover:shadow-[0_34px_70px_-20px_rgba(47,26,88,0.55)] sm:h-[460px]"
       style={{ background: IMAGE_FALLBACK }}
     >
       {/* Card image */}
@@ -125,21 +123,29 @@ function StatCard({ item }: { item: CardItem }) {
         className="object-cover transition-transform duration-500 group-hover:scale-105"
       />
 
-      {/* Bottom-darkening overlay */}
+      {/* Brand duotone tint — unifies the four images into one violet palette */}
+      <div className="absolute inset-0 bg-primary/40 mix-blend-multiply" />
+
+      {/* Bottom legibility gradient */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.1) 55%)",
+            "linear-gradient(to top, rgba(11,9,21,0.92) 0%, rgba(11,9,21,0.12) 58%)",
         }}
       />
 
+      {/* Top sheen */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent" />
+
       {/* Bottom content */}
       <div className="absolute inset-x-0 bottom-0 z-10 p-5">
-        <div className="text-4xl font-black leading-none text-white">
+        <div className="text-5xl font-black leading-none text-white tabular-nums">
           <CountUp end={item.end} suffix={item.suffix} />
         </div>
-        <div className="mt-1 text-xs font-normal text-[#aaa]">{item.label}</div>
+        <div className="mt-1.5 text-xs font-medium text-white/75">
+          {item.label}
+        </div>
       </div>
     </motion.div>
   );
@@ -151,8 +157,9 @@ function StatCard({ item }: { item: CardItem }) {
 
 export default function ProblemSection() {
   return (
-    <section id="problem" className="relative w-full bg-main-background py-24">
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] px-6 py-14 sm:px-12 lg:px-16">
+    <section id="problem" className="relative w-full overflow-hidden bg-main-background py-24">
+      <div className="pointer-events-none absolute left-1/2 top-1/4 -z-0 h-1/2 w-2/3 -translate-x-1/2 rounded-full bg-primary/5 blur-[120px]" />
+      <div className="relative z-10 mx-auto max-w-[1400px] rounded-[2rem] px-6 py-14 sm:px-12 lg:px-16">
         {/* Heading block */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -161,29 +168,12 @@ export default function ProblemSection() {
           transition={{ duration: 0.55, ease: "easeOut" }}
           className="text-center"
         >
-          {/* Badge pill with continuous shimmer */}
-          <span className="relative mx-auto flex w-fit items-center gap-2 overflow-hidden rounded-full bg-destructive px-4 py-1.5 text-xs font-medium text-white">
-            <span className="inline-block h-2 w-2 rounded-full bg-white" />
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
             The Problem
-            <motion.span
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%)",
-              }}
-              animate={{ x: ["-120%", "120%"] }}
-              transition={{
-                duration: 2.4,
-                repeat: Infinity,
-                ease: "linear",
-                repeatDelay: 0.6,
-              }}
-            />
-          </span>
+          </p>
 
-          <h2 className="mt-5 text-5xl font-black leading-tight text-heading">
-            Too Many Apps. Zero Focus.
+          <h2 className="mx-auto mt-4 max-w-2xl font-raleway text-4xl font-black leading-tight tracking-tight text-heading text-balance sm:text-5xl">
+            Too Many Apps. <span className="text-primary">Zero Focus.</span>
           </h2>
 
           <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-para-muted">
@@ -199,7 +189,7 @@ export default function ProblemSection() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
-          className="mt-12 flex flex-col gap-4 sm:flex-row"
+          className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           {CARDS.map((item) => (
             <StatCard key={item.label} item={item} />

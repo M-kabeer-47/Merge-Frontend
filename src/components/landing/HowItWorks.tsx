@@ -5,16 +5,28 @@ import { motion, useInView } from "motion/react";
 
 function DeviceFrame({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, scale: 0.96 },
-        visible: { opacity: 1, scale: 1 },
-      }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="relative w-full overflow-hidden rounded-xl border-3 border-black/10 bg-[#0d0d0d] shadow-[0_24px_50px_-24px_rgba(0,0,0,0.45)] ring-1 ring-black/5"
-    >
+    <div className="relative w-full overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_34px_70px_-28px_rgba(47,26,88,0.35)] ring-1 ring-black/5">
+      {/* subtle top sheen */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b from-white/40 to-transparent" />
       {children}
-    </motion.div>
+    </div>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5"
+      aria-hidden="true"
+    >
+      <path d="M5 13l4 4L19 7" />
+    </svg>
   );
 }
 
@@ -209,6 +221,11 @@ const STEPS = [
     description:
       "Sign up with your email or Google in seconds. Set up your profile, choose your role — student or instructor — and you're in.",
     image: "/landing/step1.png",
+    points: [
+      "Email or one-click Google sign-up",
+      "Choose your role — student or instructor",
+      "A personalized dashboard, instantly",
+    ],
   },
   {
     badge: "Step 2",
@@ -216,6 +233,11 @@ const STEPS = [
     description:
       "Explore public rooms or create your own. Invite students, upload course materials, and set up your space in minutes.",
     image: "/landing/step2.png",
+    points: [
+      "Browse public rooms or go invite-only",
+      "Upload course materials & resources",
+      "Add quizzes, assignments & announcements",
+    ],
   },
   {
     badge: "Step 3",
@@ -223,6 +245,11 @@ const STEPS = [
     description:
       "Access live sessions, AI assistance, shared canvas, focus tracking, and notes — all without leaving Merge.",
     image: "/landing/step3.png",
+    points: [
+      "Live sessions with a shared canvas",
+      "Ask the AI trained on your room",
+      "Track focus & take collaborative notes",
+    ],
   },
 ];
 
@@ -232,7 +259,7 @@ export default function HowItWorks() {
 
   return (
     <section id="how-it-works" className="relative w-full bg-[#efefef] py-24">
-      <div className="mx-auto max-w-7xl px-8" ref={ref}>
+      <div className="mx-auto max-w-[1400px] px-8" ref={ref}>
         {/* Eyebrow + heading */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -240,59 +267,79 @@ export default function HowItWorks() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="text-center"
         >
-          <h2 className="mt-3 text-5xl font-black tracking-tight text-[#0a0a0a] text-balance">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+            Get Started
+          </p>
+          <h2 className="font-raleway text-4xl font-black tracking-tight text-heading text-balance sm:text-5xl">
             Here&apos;s how it works
           </h2>
         </motion.div>
 
-        {/* Divider line */}
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={inView ? { scaleX: 1 } : {}}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{ transformOrigin: "left" }}
-          className="mt-16 h-px w-full bg-[#d0d0d0]"
-        />
+        {/* Alternating step rows */}
+        <div className="mt-16 space-y-20 lg:mt-24 lg:space-y-28">
+          {STEPS.map((step, i) => {
+            const flipped = i % 2 === 1;
+            return (
+              <div
+                key={step.badge}
+                className={`flex flex-col items-center gap-10 lg:gap-16 ${
+                  flipped ? "lg:flex-row-reverse" : "lg:flex-row"
+                }`}
+              >
+                {/* Device */}
+                <motion.div
+                  initial={{ opacity: 0, x: flipped ? 40 : -40 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className="w-full lg:w-[56%]"
+                >
+                  <DeviceFrame>
+                    <img src={step.image} alt="" className="block h-auto w-full" />
+                  </DeviceFrame>
+                </motion.div>
 
-        {/* 3 column grid */}
-        <motion.div
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={{ visible: { transition: { staggerChildren: 0.18 } } }}
-          className="grid grid-cols-1 md:grid-cols-3"
-        >
-          {STEPS.map((step, i) => (
-            <motion.div
-              key={step.badge}
-              variants={{
-                hidden: { opacity: 0, y: 28 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.55, ease: "easeOut" }}
-              className="border-b border-[#d0d0d0] px-10 pb-10 pt-8 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0"
-            >
-              
-              <DeviceFrame>
-                <img
-                  src={step.image}
-                  alt=""
-                  className="block h-auto sm:h-[150px] w-full"
-                />
-              </DeviceFrame>
-              <div className="mt-6">
-                <span className="inline-block rounded-md bg-[#2f1a58] px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-                  {step.badge}
-                </span>
-                <h3 className="mt-4 text-2xl font-bold leading-snug text-[#0a0a0a]">
-                  {step.title}
-                </h3>
-                <p className="mt-3 max-w-xs text-sm leading-relaxed text-[#666]">
-                  {step.description}
-                </p>
+                {/* Text */}
+                <motion.div
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.55, ease: "easeOut", delay: 0.1 }}
+                  className="w-full lg:w-[44%]"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {i + 1}
+                    </span>
+                    <span className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">
+                      {step.badge}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-5 font-raleway text-3xl font-black tracking-tight text-heading sm:text-4xl">
+                    {step.title}
+                  </h3>
+                  <p className="mt-4 max-w-md text-base leading-relaxed text-para-muted">
+                    {step.description}
+                  </p>
+
+                  <ul className="mt-6 space-y-3">
+                    {step.points.map((point) => (
+                      <li key={point} className="flex items-center gap-3">
+                        <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                          <CheckIcon />
+                        </span>
+                        <span className="text-sm font-medium text-heading">
+                          {point}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
               </div>
-            </motion.div>
-          ))}
-        </motion.div>
+            );
+          })}
+        </div>
 
         {/* Bottom trust pill */}
         <motion.div

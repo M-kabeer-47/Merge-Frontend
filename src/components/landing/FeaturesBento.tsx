@@ -16,6 +16,10 @@ import {
   Video,
   FileQuestion,
   Megaphone,
+  NotebookPen,
+  ClipboardCheck,
+  Flame,
+  Check,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -106,15 +110,6 @@ function WinChrome({ label }: { label: string }) {
   );
 }
 
-function Bar({ w, dim = false }: { w: string; dim?: boolean }) {
-  return (
-    <div
-      className={`h-2 rounded ${dim ? "bg-secondary/10 dark:bg-white/5" : "bg-secondary/20 dark:bg-white/10"}`}
-      style={{ width: w }}
-    />
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /*  AI Study Assistant — live looping chat (hero, wide card)           */
 /* ------------------------------------------------------------------ */
@@ -136,9 +131,11 @@ function AIChat() {
         whileInView={{ opacity: 1, scale: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ type: "spring", bounce: 0.4 }}
-        className="max-w-[72%] self-end rounded-2xl rounded-tr-none bg-primary px-3 py-2 shadow-sm"
+        className="max-w-[80%] self-end rounded-2xl rounded-tr-none bg-primary px-3 py-2 shadow-sm"
       >
-        <div className="h-2 w-20 rounded bg-white/40" />
+        <p className="text-[11px] leading-snug text-white">
+          Explain backpropagation simply
+        </p>
       </motion.div>
 
       <AnimatePresence mode="wait" initial={false}>
@@ -167,11 +164,12 @@ function AIChat() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ type: "spring", bounce: 0.35 }}
-            className="flex max-w-[88%] flex-col gap-1.5 self-start rounded-2xl rounded-tl-none border border-light-border bg-white px-3 py-2.5 shadow-sm dark:bg-card"
+            className="flex max-w-[90%] flex-col gap-1.5 self-start rounded-2xl rounded-tl-none border border-light-border bg-white px-3 py-2.5 shadow-sm dark:bg-card"
           >
-            <Bar w="8rem" />
-            <Bar w="6rem" />
-            <Bar w="6.8rem" dim />
+            <p className="text-[11px] leading-relaxed text-heading">
+              It sends the output error backward through the network, nudging
+              each weight to shrink it — repeated until predictions improve.
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -223,13 +221,13 @@ function FocusGauge() {
   useEffect(() => {
     if (!inView) return;
     arc.start({
-      strokeDashoffset: 1 - 0.94,
+      strokeDashoffset: 1 - 0.75,
       transition: { duration: 1.4, ease: "easeOut" },
     });
     dot.start({ opacity: 1, transition: { delay: 1.3, duration: 0.4 } });
   }, [inView, arc, dot]);
 
-  const angle = (180 + 0.94 * 180) * (Math.PI / 180);
+  const angle = (180 + 0.75 * 180) * (Math.PI / 180);
   const dx = 100 + 80 * Math.cos(angle);
   const dy = 100 + 80 * Math.sin(angle);
 
@@ -273,7 +271,7 @@ function FocusGauge() {
         />
       </svg>
       <div className="absolute inset-x-0 bottom-0 text-center">
-        <div className="text-3xl font-black text-heading">94%</div>
+        <div className="text-3xl font-black text-heading">75%</div>
         <div className="text-xs text-para-muted">Focus Score</div>
       </div>
     </div>
@@ -431,13 +429,17 @@ function RoomCard() {
               </span>
             </div>
             <div className="flex items-center">
-              <span className="h-5 w-5 rounded-full border-2 border-white bg-primary dark:border-card" />
-              <span className="-ml-1.5 h-5 w-5 rounded-full border-2 border-white bg-secondary dark:border-card" />
-              <span
-                className="-ml-1.5 h-5 w-5 rounded-full border-2 border-white dark:border-card"
-                style={{ background: "var(--info)" }}
-              />
-              <span className="-ml-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-secondary/20 text-[8px] font-bold text-heading dark:border-card">
+              {["MA", "SH", "MK"].map((initials, i) => (
+                <span
+                  key={initials}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-primary text-[7px] font-bold text-white dark:border-card ${
+                    i > 0 ? "-ml-1.5" : ""
+                  }`}
+                >
+                  {initials}
+                </span>
+              ))}
+              <span className="-ml-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-primary/10 text-[7px] font-bold text-primary dark:border-card">
                 +9
               </span>
             </div>
@@ -491,6 +493,152 @@ function RoomCard() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Compact feature cards (third row)                                  */
+/* ------------------------------------------------------------------ */
+
+function MiniCard({
+  icon: Icon,
+  title,
+  desc,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="bg-white dark:bg-card md:col-span-1">
+      <div className="flex h-full flex-col p-6">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+        <h3 className="mt-4 text-lg font-bold text-heading">{title}</h3>
+        <p className="mt-2 text-sm leading-relaxed text-para-muted">{desc}</p>
+        <div className="mt-auto pt-5">{children}</div>
+      </div>
+    </Card>
+  );
+}
+
+function NotesCard() {
+  return (
+    <MiniCard
+      icon={NotebookPen}
+      title="Smart Notes"
+      desc="A block-based editor for structured notes — headings, lists, and code, organized room by room."
+    >
+      <div className="rounded-xl border border-light-border bg-main-background p-3 shadow-sm transition-transform duration-500 group-hover:scale-[1.02]">
+        {/* editor toolbar */}
+        <div className="mb-2.5 flex items-center gap-1.5 border-b border-light-border pb-2">
+          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+            H1
+          </span>
+          <span className="px-0.5 text-[11px] font-bold text-para-muted">B</span>
+          <span className="px-0.5 text-[11px] italic text-para-muted">I</span>
+          <span className="ml-auto text-[10px] text-para-muted">Saved</span>
+        </div>
+        <div className="text-[11px] font-bold text-heading">
+          Lecture 4 — Backprop
+        </div>
+        <p className="mt-1.5 text-[10px] leading-relaxed text-para">
+          Gradients flow backward via the chain rule, from the output layer to
+          each weight.
+        </p>
+        <p className="mt-1.5 text-[10px] leading-relaxed text-para-muted">
+          Steps: forward pass → compute loss → backward pass → update weights.
+        </p>
+      </div>
+    </MiniCard>
+  );
+}
+
+function QuizCard() {
+  const options = [
+    { t: "Gradient descent", correct: true },
+    { t: "Random initialization", correct: false },
+  ];
+  return (
+    <MiniCard
+      icon={ClipboardCheck}
+      title="Quizzes & Assignments"
+      desc="Build quizzes and assignments with instant auto-grading and submission tracking — inside every room."
+    >
+      <div className="rounded-xl border border-light-border bg-main-background p-3 shadow-sm transition-transform duration-500 group-hover:scale-[1.02]">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-heading">Quiz · Q3</span>
+          <span className="rounded-full bg-success/10 px-2 py-0.5 text-[9px] font-bold text-success">
+            Auto-graded
+          </span>
+        </div>
+        <div className="space-y-1.5">
+          {options.map((o) => (
+            <div
+              key={o.t}
+              className={`flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[11px] font-medium ${
+                o.correct
+                  ? "border-primary/30 bg-primary/[0.07] text-heading"
+                  : "border-light-border text-para-muted"
+              }`}
+            >
+              {o.t}
+              {o.correct && (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
+                  <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </MiniCard>
+  );
+}
+
+function RewardsCard() {
+  return (
+    <MiniCard
+      icon={Flame}
+      title="Rewards & Streaks"
+      desc="Daily challenges, XP, and badges that unlock real checkout discounts as you keep your streak alive."
+    >
+      <div className="rounded-xl border border-light-border bg-main-background p-3 shadow-sm transition-transform duration-500 group-hover:scale-[1.02]">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold text-heading">
+            Daily challenge
+          </span>
+          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent">
+            +30 XP
+          </span>
+        </div>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary/15">
+          <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-primary to-secondary" />
+        </div>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-[10px] font-semibold text-para-muted">
+            Streak
+          </span>
+          <div className="flex gap-1">
+            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+              <span
+                key={i}
+                className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${
+                  i < 5
+                    ? "bg-primary text-white"
+                    : "bg-secondary/10 text-para-muted"
+                }`}
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </MiniCard>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Section                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -499,16 +647,18 @@ export default function FeaturesBento() {
     <section className="relative w-full overflow-hidden bg-white py-24" id="features">
       <div className="pointer-events-none absolute left-1/2 top-1/3 -z-10 h-1/2 w-2/3 -translate-x-1/2 rounded-full bg-primary/5 blur-[120px]" />
 
-      <div className="mx-auto mb-12 max-w-7xl px-6 text-center lg:px-8">
-        <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+      <div className="mx-auto mb-14 max-w-3xl px-6 text-center lg:px-8">
+        <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary">
           Features
-        </span>
-        <h2 className="mt-4 text-4xl font-black tracking-tight text-heading">
-          Everything you need, nothing you don&apos;t.
+        </p>
+        <h2 className="font-raleway text-4xl font-black leading-tight tracking-tight text-heading text-balance sm:text-5xl">
+          Everything you need,{" "}
+          <span className="text-primary">nothing you don&apos;t</span>
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-lg text-para-muted">
+        <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-para-muted">
           Every tool students and instructors need — live sessions, AI, focus
-          tracking, and more — unified in one platform.
+          tracking, collaborative notes, and more — unified in one
+          distraction-free platform.
         </p>
       </div>
 
@@ -517,7 +667,7 @@ export default function FeaturesBento() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.6 }}
-        className="mx-auto max-w-7xl px-6 lg:px-8"
+        className="mx-auto max-w-[1400px] px-6 lg:px-8"
       >
         <motion.div
           variants={containerVariants}
@@ -530,6 +680,9 @@ export default function FeaturesBento() {
           <FocusCard />
           <CalendarCard />
           <RoomCard />
+          <NotesCard />
+          <QuizCard />
+          <RewardsCard />
         </motion.div>
       </motion.div>
     </section>
